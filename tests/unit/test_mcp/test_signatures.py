@@ -162,6 +162,27 @@ class TestVerifyToolOutput:
 
 
 class TestSignerEnvVar:
+    @pytest.mark.parametrize("produced", [None, False, 0])
+    def test_enabled_factory_must_return_callable(self, monkeypatch: pytest.MonkeyPatch, produced: object) -> None:
+        """An invalid cached factory result cannot silently disable signing."""
+        import sys
+        import types
+        from unittest.mock import Mock
+
+        module = types.ModuleType("synthetic_invalid_mcp_signer")
+        factory = Mock(return_value=produced)
+        monkeypatch.setattr(module, "make_signer", factory, raising=False)
+        monkeypatch.setitem(sys.modules, module.__name__, module)
+        monkeypatch.setenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, "1")
+        monkeypatch.setenv(EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR, f"{module.__name__}:make_signer")
+        for _ in range(2):
+            with pytest.raises(RuntimeError, match="non-callable"):
+                sign_tool_output({"marker": "synthetic"})
+        factory.assert_called_once_with()
+        monkeypatch.setenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, "")
+        assert sign_tool_output({"marker": "disabled"}).signature is None
+        factory.assert_called_once_with()
+
     def test_no_env_unsigned(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR, raising=False)
         env = sign_tool_output({"x": 1})

@@ -23,12 +23,9 @@ dependencies = [
     "evidentia-core>=0.12.1,<0.13.0",
     "evidentia-ai>=0.12.1,<0.13.0",
     "evidentia-collectors>=0.12.1,<0.13.0",
-    # MCP Python SDK. Includes FastMCP server scaffolding +
-    # protocol types. Floor pinned to 1.27 (the version Evidentia
-    # was tested against during v0.8.0 P0.3 development);
-    # capped below 2.0 until the SDK reaches a stable 1.x and
-    # we have evidence of breaking changes warranting a bump.
-    "mcp>=1.28.1,<2.0",
+    # MCPServer and protocol types. Review each major in a dedicated change
+    # with the frozen tool contract and real protocol regression suite.
+    "mcp>=2.2.0,<3.0",
 ]
 
 [project.urls]

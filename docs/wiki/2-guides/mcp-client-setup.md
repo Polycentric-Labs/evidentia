@@ -12,7 +12,7 @@ scope-gating registry.
 ## Prerequisites
 
 - Evidentia installed **with the `mcp` extra**, which pulls in the MCP Python
-  SDK and the FastMCP server (see [Installation](../1-getting-started/installation.md)):
+  SDK 2.2 and its typed server API (see [Installation](../1-getting-started/installation.md)):
 
   ```bash
   pip install "evidentia[mcp]"
@@ -38,7 +38,7 @@ scope-gating registry.
 ## Step 1 — Confirm the server is launch-ready (`mcp doctor`)
 
 Before wiring anything into a host, run the built-in preflight. `mcp doctor`
-imports the MCP SDK, loads the bundled catalog registry, constructs the FastMCP
+imports the MCP SDK, loads the bundled catalog registry, constructs the MCP
 server (which registers every tool), and confirms the core tools are present. It
 exits `0` on success and `1` on any failure, with a diagnostic on stderr.
 
@@ -46,13 +46,13 @@ exits `0` on success and `1` on any failure, with a diagnostic on stderr.
 evidentia mcp doctor
 ```
 
-Real output on a healthy install:
+Example output using only the bundled catalogs:
 
 ```text
 Evidentia MCP doctor: PASS
   • MCP SDK: importable
-  • Catalog registry: 96 frameworks loaded
-  • FastMCP server: 14 tools registered
+  • Catalog registry: 106 frameworks loaded
+  • MCP server: 14 tools registered
 ```
 
 If you see `1` with an import error instead, the `mcp` extra is missing — re-run
@@ -72,11 +72,11 @@ tears down the server for you over **stdio**.
 | Flag | Default | Purpose |
 | --- | --- | --- |
 | `--transport, -t {stdio\|sse\|http}` | `stdio` | `stdio` is the **canonical MCP transport** used by Claude Desktop, Claude Code, etc. `sse` (server-sent events) and `http` (streamable-http) are the non-local transports for browser-based agents and remote clients. |
-| `--host` | `127.0.0.1` | Bind address for HTTP / SSE only. `0.0.0.0` binds all interfaces and **requires** a reverse-proxy auth layer in front (the server does not gate file-path tool inputs against an allow-root by itself). |
+| `--host` | `127.0.0.1` | Bind address for HTTP / SSE only. Binding all interfaces with `0.0.0.0` requires an authenticated reverse proxy and an explicit `--allow-root` for file-path tools. |
 | `--port, -p` | `8765` | Bind port for HTTP / SSE only. `8765` is chosen to avoid colliding with `evidentia serve`'s default `8000`. |
 | `--allow-root PATH` | unset | Bounds file-path tool inputs (`gap_analyze`, `gap_diff`) to a directory; out-of-root paths surface as a tool error rather than crashing the server. **Strongly recommended for non-loopback HTTP/SSE.** Unset is appropriate for stdio + loopback. |
 | `--cimd-registry FILE` | unset | Loads a per-client scope registry (see [Step 6](#step-6-optional-gate-tools-per-client-with-cimd)). Pair with `--default-client-id` on stdio. |
-| `--default-client-id TEXT` | unset | On stdio the wire protocol carries no per-request client_id, so this flag **is** the client_id for the whole session — set it to a slug in your CIMD registry to enable per-tool scope enforcement. |
+| `--default-client-id TEXT` | unset | Fallback identity when request metadata has no `client_id`, or its value is null or an empty string. A request identity takes precedence on every transport. Use a slug in the CIMD registry. |
 
 > **Do not run `evidentia mcp serve` (stdio) in a foreground terminal to "test"
 > it** — with no client attached it simply waits for stdin and appears to hang.
@@ -85,6 +85,12 @@ tears down the server for you over **stdio**.
 > `evidentia mcp serve --transport http --port 8799` logs
 > `Uvicorn running on http://127.0.0.1:8799` and then accepts connections — and
 > stop it when you're done.
+
+SSE and Streamable HTTP use a 4 MiB request-body limit. The legacy HTTP
+transport keeps stateful sessions with a 1,800-second idle timeout and a
+10,000-session limit. SDK Host/Origin checks apply to loopback binds. For a
+network bind, configure proxy authentication, rate limits and file-path bounds
+for the intended clients; binding a socket does not establish trust.
 
 ## Step 3 — Pick the launch command your host will run
 
@@ -118,7 +124,7 @@ Claude Desktop reads `claude_desktop_config.json` (on Windows:
 }
 ```
 
-Restart Claude Desktop. The 13 Evidentia tools become available to the model.
+Restart Claude Desktop. The 14 Evidentia tools become available to the model.
 
 > **If `evidentia` isn't found**, Claude Desktop launches the command with its own
 > environment, which may not include your virtualenv's scripts directory. Replace
@@ -194,9 +200,10 @@ with a **CIMD (Client ID Metadata Document) registry** — a JSON file mapping e
 }
 ```
 
-Point the server at it and, on stdio, name the active client (the stdio wire
-protocol carries no per-request client_id, so `--default-client-id` is what
-identifies the session):
+Point the server at the registry and configure a fallback identity. Request
+metadata `client_id` takes precedence, including over stdio. Missing, null or
+empty-string metadata uses this fallback; malformed non-string values are
+denied instead of inheriting it:
 
 **Bash / Linux / macOS**
 
@@ -215,6 +222,9 @@ evidentia mcp serve --transport stdio `
 ```
 
 An empty `scope` means deny-all; tool names not in the allowlist are denied.
+With a registry loaded, missing, unknown, malformed and out-of-scope identities
+receive protocol error `-32602` before a handler or signer runs. Each registry
+decision creates one scope audit event.
 
 > **CIMD is metadata + scope, not authentication.** A client that bypasses the
 > transport's auth can claim any `client_id`. On stdio, trust is UID-based; for
@@ -246,6 +256,25 @@ Drop `--dry-run` to write the change. Restrict it to one client with
 `--client-id <slug>`, or grant a different tool set with
 `--tools 'tool_a tool_b'` for future tool additions.
 
+## Optional output signatures
+
+When `EVIDENTIA_MCP_SIGN_OUTPUTS` is enabled, configure
+`EVIDENTIA_MCP_SIGNER_FACTORY` with a callable signer factory. An invalid
+factory, including one returning `None`, causes a tool error. An exception
+inside the signer retains the existing envelope with `signature=null` and a
+`signing_error`; clients requiring signed evidence must reject that result.
+
+The envelope is carried in result metadata under `evidentia/signed-tool-output`.
+Its signature authenticates the `payload` only: the delivered structured JSON
+object, or the established content-only `result` list. It does not authenticate
+the envelope tool name or timestamp, outer error flag, unrelated metadata, or
+display content when the structured object is signed. Verify a present signature
+with `verify_tool_output` and consume its authenticated payload. The signing wrapper leaves future custom non-object structured results and
+SDK input-request control flow unsigned. The modern SDK path can carry these
+shapes; legacy schema validation rejects them. The fourteen registered tools
+declare object outputs. See the
+[API contract](../6-project/api-stability.md#mcp-tool-contract).
+
 ## The 14 MCP tools
 
 Tools are exposed in registration order. Purposes are from the
@@ -267,6 +296,7 @@ the live codebase and is authoritative for the exact signatures.
 | 11 | `tprm_vendor_list` | List every vendor in the local TPRM store. |
 | 12 | `poam_list` | List every POA&M in the local store. |
 | 13 | `verify_signed_artifact` | Verify an OSCAL Assessment Result file's signatures + digests. |
+| 14 | `conmon_series` | Read a cadence evidence series from the local evidence store. |
 
 The tool surface is **append-only** within a major version: new tools may be
 added, but existing names, parameters, and return shapes are not removed or
@@ -276,9 +306,9 @@ changed incompatibly before the next major release.
 
 - **Full flag and signature reference**: [MCP tools](../4-reference/mcp-tools.md)
   and [CLI reference → `evidentia mcp`](../4-reference/cli.md).
-- **Verify what an agent produced**: the `verify_signed_artifact` tool checks the
-  same signatures the [Sign and verify evidence](sign-and-verify-evidence.md)
-  guide produces (including `SignedToolOutput` envelopes on MCP tool output).
+- **Verify an OSCAL artifact**: the `verify_signed_artifact` tool checks the
+  artifact signatures described in [Sign and verify evidence](sign-and-verify-evidence.md).
+  MCP result signatures have the separate payload contract described above.
 - **Drive the CONMON tools end-to-end**: [CONMON deployment](conmon-deployment.md).
 
 ## Got stuck?

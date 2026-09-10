@@ -546,6 +546,31 @@ adding new tools through CIMD registry updates (via
 `evidentia mcp cimd-migrate` in v0.9.7+) is a deployment-time
 concern, not an API contract.
 
+In v0.13, the server uses MCP Python SDK 2.2. Its fourteen tool names,
+descriptions and input/output schemas match the prior locked SDK 1.29.1
+contract. Python SDK attributes use snake case; protocol fields retain their
+wire aliases. The three CLI transport selectors and bind defaults are unchanged.
+
+With a CIMD registry, request metadata `client_id` takes precedence over the
+configured fallback. Missing, null or empty-string metadata uses the fallback;
+other non-string values are denied. Missing, unknown and out-of-scope identities
+return protocol error `-32602` with no error data, before handler or signer
+execution. Ordinary handler failures, invalid arguments and unknown tools use
+tool-error results. Explicit MCP exceptions retain their protocol error code.
+Out-of-root paths remain tool errors, with the SDK's generic error text.
+
+Opt-in signatures authenticate the envelope's `payload`: the delivered JSON
+object from `structuredContent`, or the established content-only `result` list
+with standard optional fields restored. They do not authenticate `tool_name`,
+`signed_at`, the outer error flag, unrelated metadata, or display content when
+the structured object is signed. Clients must check for a signature and verify
+it before trusting the payload. Signer invocation failures retain the existing
+`signature=null` / `signing_error` envelope. Invalid enabled signer factories
+produce an error instead of unsigned success. The signing wrapper leaves non-object structured results and SDK input-request
+control flow unsigned. The modern SDK path can carry these shapes; legacy
+schema validation rejects them. None of the fourteen tools declares such an
+output.
+
 ---
 
 ## Env-var public contract (v0.9.7 NEW)
@@ -600,3 +625,5 @@ cycle.
 | **NORMATIVE** | **2026-09-09** | **Catalog source evidence and nested gap requirements.** Additive `CatalogSourceRow` and optional `CatalogControl.source_rows` (default empty). Rows preserve source hash claims, sheet/row locators, parsed scalar values and whitespace, separate raw and interpreted identifiers, and explicit merge-anchor projections with provenance. Dates become ISO text; finite JSON scalars are required. Parsed mappings do not preserve duplicate input keys. API YAML imports reject non-string mapping keys before JSON conversion can coerce or collapse them. Rows and mappings detach input and resist ordinary mutation; deep copies work and invalid copied evidence is rejected before model serialization. Hash syntax is checked without authenticating the source. Native JSON/YAML imports, saved reloads and framework/control responses retain rows at every enhancement depth. Source rows do not add indexed controls, statements or gap requirements. Gap traversal now includes active descendants at every depth and excludes a withdrawn node's entire subtree, preserving upstream order and existing raw requirement keys. Inventory matching searches IDs and titles at every depth while retaining the existing shallow candidate order, exact-ID priority and fuzzy thresholds. |
 | **NORMATIVE** | **2026-09-09** | **CMS/CJIS source browsing.** CLI catalog control details expose retained source rows as literal JSON values; control and family text render literally in both detail and list views. Console source evidence is read-only and keeps raw cells separate from reviewed merge-anchor projections. No CLI flags, endpoint paths or existing model fields were removed. The new CMS ARS 5.2 and CJIS 6.1 companion IDs are catalog data additions; their historical predecessors remain available without implied control equivalence or assessment migration. |
 | **NORMATIVE** | **2026-09-09** | **CI verification controls.** Repository workflow policy and local admission tooling strengthen development checks without changing runtime models, CLI leaves, API routes, MCP tools or environment-variable contracts. The existing strict docs build is required before merge. |
+| **NORMATIVE** | **2026-09-09** | **MCP SDK 2.2 migration (V13-16).** The fourteen tool names, descriptions and input/output schemas retain their SDK 1.29.1 baseline. Typed dispatch corrects the demonstrated protocol scope/signing bypass. Request metadata overrides fallback; malformed identities deny before execution. Scope denials use protocol -32602 with no error data, ordinary failures remain tool errors, and explicit MCP exceptions retain their protocol code. Signing binds the delivered JSON payload under the existing payload-only envelope; invalid enabled factories fail. Transport selectors and bind defaults are unchanged. |
+| **NORMATIVE** | **2026-09-10** | **MCP description comparison clarification (V13-16).** [Python 3.13 and later strip common docstring indentation during compilation](https://docs.python.org/3.13/whatsnew/3.13.html#other-language-changes). The SDK 1.29.1 fixture was captured on Python 3.12 and remains unchanged. Tests compare descriptions using `inspect.cleandoc`, preserving wording, internal line breaks and relative indentation while normalizing docstring margins and outer blank lines. Tool names and input/output schemas are compared exactly. This clarifies the preceding migration row; it does not change tool source descriptions or runtime dispatch. |

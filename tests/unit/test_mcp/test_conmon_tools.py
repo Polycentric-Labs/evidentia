@@ -1,19 +1,22 @@
 """Unit tests for the v0.9.6 P4 CONMON MCP tools (first-mover wrap).
 
-Tests the 4 new tools registered on the FastMCP server:
+Tests the 4 new tools registered on the MCP server:
 
 - ``conmon_list_cadences`` — bundled-cadence inventory.
 - ``conmon_next_due`` — per-slug next-due computation.
 - ``conmon_check_state`` — state-file → overdue / due_soon / current.
 - ``conmon_health`` — wrapper around v0.9.5 ``health_from_state_file``.
 
-Tests are library-level (direct tool function invocation via the
-FastMCP tool manager), not subprocess-level. The MCP protocol layer
-is exercised by the v0.8.0 test_server.py base suite.
+Tests call the public SDK tool method. The separate protocol tests
+exercise connected clients and the server dispatch boundary.
 """
 
 from __future__ import annotations
 
+import asyncio
+import re
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -22,13 +25,30 @@ import pytest
 from evidentia_core.evidence_store import save_evidence
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.security.paths import PathTraversalError
-from evidentia_mcp.server import build_server
+from evidentia_mcp.server import EvidentiaMCPServer, build_server
+from mcp.server.mcpserver.exceptions import UnexpectedToolError
+from mcp.types import CallToolResult
 
 
-def _invoke_tool(server: Any, tool_name: str, **kwargs: Any) -> Any:
-    """Call a registered tool's underlying Python function directly."""
-    tool = server._tool_manager._tools[tool_name]
-    return tool.fn(**kwargs)
+def _invoke_tool(server: EvidentiaMCPServer, tool_name: str, **kwargs: Any) -> Any:
+    """Call the public SDK method and unpack its structured result."""
+    result = asyncio.run(server.call_tool(tool_name, kwargs))
+    assert isinstance(result, CallToolResult)
+    assert not result.is_error
+    payload = result.structured_content
+    assert payload is not None
+    return payload["result"] if set(payload) == {"result"} else payload
+
+
+@contextmanager
+def _tool_failure(error_type: type[Exception], match: str | None = None) -> Iterator[None]:
+    """Check the SDK error wrapper and the original library failure."""
+    with pytest.raises(UnexpectedToolError) as captured:
+        yield
+    cause = captured.value.__cause__
+    assert isinstance(cause, error_type)
+    if match is not None:
+        assert re.search(match, str(cause)) is not None
 
 
 def _save_artifact(
@@ -114,7 +134,7 @@ class TestNextDue:
 
     def test_unknown_slug_raises_value_error(self) -> None:
         server = build_server()
-        with pytest.raises(ValueError, match="Unknown CONMON cadence"):
+        with _tool_failure(ValueError, match="Unknown CONMON cadence"):
             _invoke_tool(
                 server,
                 "conmon_next_due",
@@ -124,7 +144,7 @@ class TestNextDue:
 
     def test_bad_date_raises_value_error(self) -> None:
         server = build_server()
-        with pytest.raises(ValueError, match="ISO-8601 date"):
+        with _tool_failure(ValueError, match="ISO-8601 date"):
             _invoke_tool(
                 server,
                 "conmon_next_due",
@@ -161,7 +181,7 @@ class TestCheckState:
 
     def test_missing_state_file_raises(self, tmp_path: Path) -> None:
         server = build_server()
-        with pytest.raises(FileNotFoundError):
+        with _tool_failure(FileNotFoundError):
             _invoke_tool(
                 server,
                 "conmon_check_state",
@@ -172,7 +192,7 @@ class TestCheckState:
         bad = tmp_path / "bad.yaml"
         bad.write_text("not: valid: yaml\n", encoding="utf-8")
         server = build_server()
-        with pytest.raises(ValueError):
+        with _tool_failure(ValueError):
             _invoke_tool(
                 server,
                 "conmon_check_state",
@@ -183,7 +203,7 @@ class TestCheckState:
         bad = tmp_path / "list.yaml"
         bad.write_text("- entry-1\n- entry-2\n", encoding="utf-8")
         server = build_server()
-        with pytest.raises(ValueError, match="mapping"):
+        with _tool_failure(ValueError, match="mapping"):
             _invoke_tool(
                 server,
                 "conmon_check_state",
@@ -240,7 +260,7 @@ class TestHealth:
 
     def test_missing_state_file_raises(self, tmp_path: Path) -> None:
         server = build_server()
-        with pytest.raises(FileNotFoundError):
+        with _tool_failure(FileNotFoundError):
             _invoke_tool(
                 server,
                 "conmon_health",
@@ -306,7 +326,7 @@ class TestSeries:
 
     def test_unknown_slug_raises_value_error(self, tmp_path: Path) -> None:
         server = build_server()
-        with pytest.raises(ValueError, match="Unknown CONMON cadence"):
+        with _tool_failure(ValueError, match="Unknown CONMON cadence"):
             _invoke_tool(
                 server,
                 "conmon_series",
@@ -316,7 +336,7 @@ class TestSeries:
 
     def test_bad_date_raises_value_error(self, tmp_path: Path) -> None:
         server = build_server()
-        with pytest.raises(ValueError, match="ISO-8601"):
+        with _tool_failure(ValueError, match="ISO-8601"):
             _invoke_tool(
                 server,
                 "conmon_series",
@@ -327,7 +347,7 @@ class TestSeries:
 
     def test_until_before_since_raises_value_error(self, tmp_path: Path) -> None:
         server = build_server()
-        with pytest.raises(ValueError, match="before"):
+        with _tool_failure(ValueError, match="before"):
             _invoke_tool(
                 server,
                 "conmon_series",
@@ -344,7 +364,7 @@ class TestSeries:
         outside.mkdir()
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "conmon_series",
@@ -388,7 +408,7 @@ class TestSeries:
 class TestToolRegistration:
     def test_all_four_conmon_tools_registered(self) -> None:
         server = build_server()
-        registered = set(server._tool_manager._tools.keys())
+        registered = {tool.name for tool in asyncio.run(server.list_tools())}
         expected = {
             "conmon_list_cadences",
             "conmon_next_due",
@@ -407,7 +427,8 @@ class TestToolRegistration:
             "conmon_health",
             "conmon_series",
         ):
-            tool = server._tool_manager._tools[tool_name]
+            tools = {tool.name: tool for tool in asyncio.run(server.list_tools())}
+            tool = tools[tool_name]
             assert tool.description, (
                 f"CONMON tool {tool_name!r} has no description; "
                 "operators using MCP tool-picker UIs need the "

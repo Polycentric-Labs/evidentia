@@ -1,0 +1,510 @@
+{
+  "sdk_version": "1.29.1",
+  "source_commit": "42a70b7eb850a6712de8873d6b07dc1c7942e56f",
+  "capture": "Installed SDK connected memory client with normal protocol handling",
+  "tools": [
+    {
+      "name": "collect_ocsf",
+      "description": "Ingest OCSF JSON from a local file -> SecurityFinding list.\n\n        Wraps :func:`evidentia_collectors.ocsf.collect_ocsf_file`\n        (v0.10.1). Supports both OCSF Compliance Finding\n        (``class_uid`` 2003 \u2014 Evidentia's own output) and Detection\n        Finding (``class_uid`` 2004 \u2014 Prowler, AWS Security Hub).\n        Trust-boundary aware: third-party input is NEVER allowed to\n        control Evidentia-native fields via the OCSF ``unmapped``\n        block (``trust_unmapped=False`` per the v0.10.1 collector).\n\n        File mode only \u2014 the MCP server intentionally does NOT expose\n        the URL ingest mode (`evidentia_collectors.ocsf.collect_ocsf_url`).\n        URL ingest carries an SSRF surface (F-V101-L1) that operators\n        can accept at the CLI but the MCP server hardens out by\n        construction.\n\n        Args:\n            input_path: Filesystem path to a JSON file containing a\n                single OCSF finding object OR a list of them.\n\n        Returns:\n            ``list[dict]`` of converted ``SecurityFinding`` records\n            (each ``model_dump(mode=\"json\")``).\n\n        Raises:\n            FileNotFoundError: ``input_path`` does not exist.\n            ValueError: file is not valid JSON, contains an\n                unsupported ``class_uid``, or resolves outside the\n                bound ``--allow-root`` directory.\n        ",
+      "inputSchema": {
+        "properties": {
+          "input_path": {
+            "title": "Input Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input_path"
+        ],
+        "title": "collect_ocsfArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "collect_ocsfOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "conmon_check_state",
+      "description": "Read a state-file + report attention-state per cadence.\n\n        Args:\n            state_file_path: Path to a YAML mapping of\n                ``{cadence_slug: ISO-8601-date}``. The file MUST\n                exist; the tool does NOT create it.\n            window_days: Due-soon window in days from today.\n                Default 14.\n\n        Returns:\n            A dict with ``overdue``, ``due_soon``, and ``current``\n            lists of cadences. Each entry carries the slug,\n            framework, activity, next_due date, and days_until_due.\n\n        Raises:\n            FileNotFoundError: ``state_file_path`` does not exist.\n            ValueError: state-file is not valid YAML / does not\n                parse as a mapping.\n        ",
+      "inputSchema": {
+        "properties": {
+          "state_file_path": {
+            "title": "State File Path",
+            "type": "string"
+          },
+          "window_days": {
+            "default": 14,
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "state_file_path"
+        ],
+        "title": "conmon_check_stateArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "conmon_check_stateDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "conmon_health",
+      "description": "Return the CONMON health report for a state-file.\n\n        Args:\n            state_file_path: Path to a YAML mapping of\n                ``{cadence_slug: ISO-8601-date}``.\n\n        Returns:\n            The dict form of the v0.9.5 ``health_from_state_file``\n            report \u2014 overall posture + per-framework breakdown +\n            counts.\n\n        Raises:\n            FileNotFoundError: ``state_file_path`` does not exist.\n            ValueError: state-file is not valid YAML.\n        ",
+      "inputSchema": {
+        "properties": {
+          "state_file_path": {
+            "title": "State File Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state_file_path"
+        ],
+        "title": "conmon_healthArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "conmon_healthDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "conmon_list_cadences",
+      "description": "List bundled continuous-monitoring cadences.\n\n        Args:\n            framework: Optional framework filter (e.g.,\n                ``fedramp-rev5-mod``). When omitted, lists all\n                bundled cadences across all frameworks.\n\n        Returns:\n            One entry per matching cadence with ``slug``,\n            ``framework``, ``activity``, ``frequency``, and\n            ``citation`` fields. Empty list if the filter excludes\n            all cadences.\n\n        v0.9.6 P4: shipped as part of the CONMON MCP first-mover\n        position. See ``docs/positioning-and-value.md`` \u00a76 + \u00a711\n        for the moat-trinity framing.\n        ",
+      "inputSchema": {
+        "properties": {
+          "framework": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Framework"
+          }
+        },
+        "title": "conmon_list_cadencesArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "conmon_list_cadencesOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "conmon_next_due",
+      "description": "Compute the next-due date for a single CONMON cadence.\n\n        Args:\n            slug: Cadence slug (e.g.,\n                ``nist-800-53-rev5-ca7``). Use ``conmon_list_cadences``\n                to discover valid slugs.\n            last_completed: ISO-8601 date (YYYY-MM-DD) of the most\n                recent cycle completion for this cadence.\n\n        Returns:\n            A dict with ``slug``, ``last_completed``, and ``next_due``\n            (ISO-8601 date).\n\n        Raises:\n            ValueError: ``slug`` is not a known cadence OR\n                ``last_completed`` is not a valid ISO-8601 date.\n        ",
+      "inputSchema": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "last_completed": {
+            "title": "Last Completed",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "last_completed"
+        ],
+        "title": "conmon_next_dueArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "conmon_next_dueDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "conmon_series",
+      "description": "Assert the cadence evidence series for a slug over a window (v0.13).\n\n        Reads artifacts linked to ``slug`` via ``metadata.cadence_slug``\n        from the evidence store, inside the resolved window, then asserts\n        the dated series. A gap-free series is evidence of cadence and\n        nothing more; the reported counts are what the evidence store\n        holds, not what was actually performed.\n\n        Args:\n            slug: Cadence slug (e.g., 'pci-dss-11-6-1-weekly').\n            evidence_store_dir: Optional evidence-store root directory.\n                When ``None`` (default), resolves through\n                ``EVIDENTIA_EVIDENCE_STORE_DIR``, else the platform\n                user-data directory. Resolved against ``--allow-root``\n                when set.\n            since: ISO-8601 date; window start. When both ``since`` and\n                ``until`` are omitted, the window is the last\n                ``lookback_days`` days ending today. When only one of\n                the two is given, the other is filled from that same\n                default window (not derived from the given bound).\n            until: ISO-8601 date; window end. See ``since`` for the\n                fill rule.\n            lookback_days: Look-back window in days. Default 365.\n            tolerance_days: Grace period (days) added to the cadence's\n                interval before a spacing counts as a gap. ``None``\n                (default) uses the cadence-appropriate default.\n\n        Returns:\n            ``{\"series\": <CadenceSeries as a dict>, \"description\": <str>}``.\n\n        Raises:\n            ValueError: ``slug`` is not a registered cadence, ``since``/\n                ``until`` are not valid ISO-8601 dates, ``until``\n                precedes ``since``, or (when ``--allow-root`` is set)\n                ``evidence_store_dir`` resolves outside the bound root.\n        ",
+      "inputSchema": {
+        "properties": {
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "evidence_store_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Store Dir"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Since"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Until"
+          },
+          "lookback_days": {
+            "default": 365,
+            "title": "Lookback Days",
+            "type": "integer"
+          },
+          "tolerance_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tolerance Days"
+          }
+        },
+        "required": [
+          "slug"
+        ],
+        "title": "conmon_seriesArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "conmon_seriesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "gap_analyze",
+      "description": "Run a gap analysis against a local control inventory.\n\n        Args:\n            inventory_path: Filesystem path to a control inventory\n                file (JSON / YAML / CSV \u2014 the loader auto-detects).\n                Must already exist on disk; the server does not\n                fetch remote inventories.\n            frameworks: List of catalog IDs to assess against\n                (e.g., ``[\"nist-800-53-rev5-moderate\", \"soc2-tsc\"]``).\n            show_efficiency: Whether to include cross-framework\n                efficiency metrics in the report. Default True.\n\n        Returns:\n            The complete :class:`GapAnalysisReport` as a JSON-\n            serializable dict. Includes per-framework gap counts,\n            severity distribution, control-level findings, and\n            cross-framework efficiency analysis if requested.\n\n        Raises:\n            FileNotFoundError: inventory_path does not exist.\n            ValueError: a framework id is not recognised by the\n                bundled catalog registry. Or \u2014 when the server\n                was started with ``--allow-root`` \u2014 the inventory\n                path resolves outside the bound directory\n                (``PathTraversalError``, a ``ValueError`` subclass).\n        ",
+      "inputSchema": {
+        "properties": {
+          "inventory_path": {
+            "title": "Inventory Path",
+            "type": "string"
+          },
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Frameworks",
+            "type": "array"
+          },
+          "show_efficiency": {
+            "default": true,
+            "title": "Show Efficiency",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inventory_path",
+          "frameworks"
+        ],
+        "title": "gap_analyzeArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "gap_analyzeDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "gap_analyze_sarif",
+      "description": "Run gap analysis + return the report as a SARIF 2.1.0 log.\n\n        Same inputs and analysis pipeline as ``gap_analyze``, but the\n        return is a SARIF 2.1.0 dict instead of the native\n        :class:`GapAnalysisReport`. Use this when the AI client needs\n        to publish the result into a SARIF consumer (GitHub code\n        scanning, GitLab security dashboards, IDE SARIF viewers) or\n        gate a CI pipeline on it.\n\n        Args:\n            inventory_path: Filesystem path to a control inventory\n                file (JSON / YAML / CSV \u2014 the loader auto-detects).\n            frameworks: List of catalog IDs to assess against.\n            show_efficiency: Whether to compute cross-framework\n                efficiency metrics (consumed by the underlying gap\n                analyzer; not rendered in the SARIF output).\n\n        Returns:\n            A SARIF 2.1.0 log dict with one ``result`` per ``ControlGap``\n            and stable ``partialFingerprints`` so consumers can track\n            findings across runs. See\n            :func:`evidentia_core.gap_analyzer.sarif.gap_report_to_sarif`.\n\n        Raises:\n            FileNotFoundError: ``inventory_path`` does not exist.\n            ValueError: framework id is not recognised (or the path\n                resolves outside the bound ``--allow-root``).\n        ",
+      "inputSchema": {
+        "properties": {
+          "inventory_path": {
+            "title": "Inventory Path",
+            "type": "string"
+          },
+          "frameworks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Frameworks",
+            "type": "array"
+          },
+          "show_efficiency": {
+            "default": true,
+            "title": "Show Efficiency",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inventory_path",
+          "frameworks"
+        ],
+        "title": "gap_analyze_sarifArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "gap_analyze_sarifDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "gap_diff",
+      "description": "Diff two gap analysis reports.\n\n        Useful for tracking compliance posture changes over time\n        (release N vs release N+1; pre-remediation vs post-\n        remediation). The diff surfaces which gaps opened, which\n        closed, and which had severity changes.\n\n        Args:\n            base_report_path: Filesystem path to the prior\n                ``GapAnalysisReport`` JSON file (the baseline).\n            head_report_path: Filesystem path to the newer\n                ``GapAnalysisReport`` JSON file (compared against\n                the baseline).\n\n        Returns:\n            The :class:`GapDiff` as a JSON-serializable dict.\n            Includes opened / closed / severity-increased /\n            severity-decreased entry lists + summary counts.\n\n        Raises:\n            FileNotFoundError: either path does not exist.\n            ValueError: a path's contents cannot be parsed as a\n                ``GapAnalysisReport``. Or \u2014 when the server was\n                started with ``--allow-root`` \u2014 either path\n                resolves outside the bound directory\n                (``PathTraversalError``, a ``ValueError`` subclass).\n        ",
+      "inputSchema": {
+        "properties": {
+          "base_report_path": {
+            "title": "Base Report Path",
+            "type": "string"
+          },
+          "head_report_path": {
+            "title": "Head Report Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_report_path",
+          "head_report_path"
+        ],
+        "title": "gap_diffArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "gap_diffDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_control",
+      "description": "Return the raw catalog entry for a single control.\n\n        Args:\n            framework_id: Catalog identifier (e.g.,\n                ``nist-800-53-rev5-moderate``). Use\n                ``list_frameworks`` to discover available IDs.\n            control_id: Control identifier within the catalog\n                (e.g., ``AC-2`` for NIST 800-53 access control).\n\n        Returns:\n            The control's raw catalog entry as a JSON-serializable\n            dict (id + title + description + family + related\n            controls). Tier-C placeholders return the title +\n            stub description but no copyrighted body.\n\n        Raises:\n            ValueError: framework_id is not a known catalog OR\n                control_id is not present in the catalog.\n        ",
+      "inputSchema": {
+        "properties": {
+          "framework_id": {
+            "title": "Framework Id",
+            "type": "string"
+          },
+          "control_id": {
+            "title": "Control Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "framework_id",
+          "control_id"
+        ],
+        "title": "get_controlArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "get_controlDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "list_frameworks",
+      "description": "List the bundled compliance catalogs + their metadata.\n\n        Returns one entry per framework (89 frameworks ship\n        in-tree as of v0.8.0). Each entry carries:\n\n        - ``id``: catalog identifier (e.g., ``nist-800-53-rev5-moderate``)\n        - ``name``: human-readable name\n        - ``version``: catalog version string\n        - ``tier``: ``A`` (authoritative public-domain text), ``B``\n          (authoritative under license), or ``C`` (placeholder \u2014\n          control text is copyrighted; only id + title ship)\n        - ``category``: ``control``, ``regulation``, ``standard``,\n          or ``industry``\n        - ``placeholder``: ``true`` if this is a tier-C placeholder\n          (control descriptions show \"see source\" stubs)\n        - ``license_required``: ``true`` if the catalog requires\n          a separate license to use the full control text\n        ",
+      "inputSchema": {
+        "properties": {},
+        "title": "list_frameworksArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "list_frameworksOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "poam_list",
+      "description": "List every POA&M in the local store.\n\n        Reads from the user-data POA&M store directory (override via\n        ``EVIDENTIA_POAM_STORE_DIR`` env var). Returns the canonical\n        ordering: gap severity (critical \u2192 high \u2192 medium \u2192 low \u2192\n        info), then has-open-milestones flag, then earliest-open-\n        milestone target date, then control id.\n\n        Read-only \u2014 POA&M creation + milestone transitions are\n        deferred to a future release per docs/releases/plans/v0.10.2-plan.md \u00a72.\n\n        Returns:\n            ``list[dict]`` of ``ControlGap`` records (POA&Ms are\n            stored as gaps with milestone history) as JSON-\n            serializable dicts. Empty list if the store directory\n            doesn't exist or contains no records.\n        ",
+      "inputSchema": {
+        "properties": {},
+        "title": "poam_listArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "poam_listOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "tprm_vendor_list",
+      "description": "List every vendor in the local TPRM store.\n\n        Reads from the user-data vendor store directory (override via\n        ``EVIDENTIA_VENDOR_STORE_DIR`` env var). Returns the canonical\n        ordering: criticality tier (critical \u2192 high \u2192 medium \u2192 low),\n        then name case-insensitive.\n\n        Read-only \u2014 vendor mutation tools are deferred to a future\n        release per docs/releases/plans/v0.10.2-plan.md \u00a72.\n\n        Returns:\n            ``list[dict]`` of ``Vendor`` records as JSON-serializable\n            dicts. Empty list if the store directory doesn't exist\n            or contains no records.\n        ",
+      "inputSchema": {
+        "properties": {},
+        "title": "tprm_vendor_listArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Result",
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "tprm_vendor_listOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "verify_signed_artifact",
+      "description": "Verify an OSCAL Assessment Result file's signatures + digests.\n\n        Wraps :func:`evidentia_core.oscal.verify.verify_ar_file` (v0.7.x+)\n        as an MCP-surface tool so AI clients (Claude Desktop, Claude\n        Code) can verify Evidentia-emitted OSCAL ARs end-to-end without\n        shelling out to the CLI. Exposes the supply-chain provenance\n        moat (Sigstore + GPG + back-matter SHA-256 digests) directly to\n        the operator's chat agent \u2014 Evidentia's competitive\n        differentiator \u00a76.1.A moat trinity item 3.\n\n        Notes:\n        - Verifies in this order: back-matter SHA-256 digests, then\n          GPG ``.asc`` signature (if present), then Sigstore bundle\n          (``.sigstore.json`` if present). When ``require_signature``\n          is True (default), EITHER GPG OR Sigstore satisfies the\n          requirement.\n        - Production audit pipelines SHOULD set both\n          ``expected_sigstore_identity`` AND ``expected_sigstore_issuer``\n          to pin signer identity; otherwise the verifier falls back\n          to an UnsafeNoOp policy that accepts any signer (with a\n          structured warning surfaced in the returned report's\n          ``warnings`` list).\n        - Identity pinning is both-or-neither (F-V109-1, the cosign\n          model): supplying exactly one of the two ``expected_sigstore_*``\n          arguments is rejected with a ``ValueError`` rather than\n          silently verifying under the any-signer policy.\n        - Read-only \u2014 never mutates the artifact.\n\n        Args:\n            ar_path: Filesystem path to the ``.oscal-ar.json`` file.\n                Resolved against ``--allow-root`` when set.\n            require_signature: When True (default), absence of any\n                signature is a failure.\n            expected_sigstore_identity: Required signer identity (email\n                or OIDC subject) for Sigstore. Both-or-neither with\n                ``expected_sigstore_issuer``.\n            expected_sigstore_issuer: Required Sigstore identity issuer\n                (e.g., ``https://token.actions.githubusercontent.com``).\n                Both-or-neither with ``expected_sigstore_identity``.\n            verify_key_path: Filesystem path to the PEM-encoded Ed25519\n                or RSA public key used for DSSE envelope verification.\n                Resolved against ``--allow-root`` when set. When ``None``\n                the DSSE path is skipped. Signing stays CLI-only; this\n                tool is read-only.\n            dsse_bundle_path: Filesystem path to an explicit DSSE bundle\n                (``.dsse.json``). Resolved against ``--allow-root`` when\n                set. When ``None`` the verifier looks for the co-located\n                ``<ar>.dsse.json`` sidecar automatically.\n\n        Returns:\n            JSON-serializable verification report \u2014 ``ar_path``,\n            ``digest_checks`` (list of per-back-matter-resource\n            digest outcomes), ``signature_valid``, ``errors`` (list\n            of human-readable failure reasons), ``warnings``,\n            ``dsse_signature_valid`` (bool or None when not checked),\n            ``dsse_signer_key_id`` (SHA-256 hex of the signing key's\n            SPKI), ``dsse_algorithm`` (``\"ed25519\"`` or\n            ``\"rsa-pss-sha256\"``).\n\n        Raises:\n            FileNotFoundError: ``ar_path`` does not exist (or\n                resolves outside the bound ``--allow-root``).\n            ValueError: exactly one of ``expected_sigstore_identity``\n                / ``expected_sigstore_issuer`` was supplied.\n        ",
+      "inputSchema": {
+        "properties": {
+          "ar_path": {
+            "title": "Ar Path",
+            "type": "string"
+          },
+          "require_signature": {
+            "default": true,
+            "title": "Require Signature",
+            "type": "boolean"
+          },
+          "expected_sigstore_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expected Sigstore Identity"
+          },
+          "expected_sigstore_issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expected Sigstore Issuer"
+          },
+          "verify_key_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verify Key Path"
+          },
+          "dsse_bundle_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Dsse Bundle Path"
+          }
+        },
+        "required": [
+          "ar_path"
+        ],
+        "title": "verify_signed_artifactArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "verify_signed_artifactDictOutput",
+        "type": "object"
+      }
+    }
+  ]
+}

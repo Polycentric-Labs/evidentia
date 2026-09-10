@@ -7,14 +7,18 @@
 - ``tprm_vendor_list`` — list vendors from local store
 - ``poam_list`` — list POA&Ms from local store
 
-All read-only. Tests exercise the tool functions directly via the
-``_register_tools`` machinery, mirroring the v0.9.6 conmon tool test
-pattern.
+All read-only. Tests exercise the registered public SDK methods
+and validate their structured output and original library failures.
 """
 
 from __future__ import annotations
 
+import asyncio
+import re
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -23,15 +27,16 @@ pytest.importorskip("py_ocsf_models")
 from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.models.common import Severity
 from evidentia_core.models.finding import ComplianceStatus
-from evidentia_mcp.server import build_server
-from mcp.server.fastmcp import FastMCP
+from evidentia_mcp.server import EvidentiaMCPServer, build_server
+from mcp.server.mcpserver.exceptions import UnexpectedToolError
+from mcp.types import CallToolResult
 
 FIXTURES_GAP = Path(__file__).resolve().parents[2] / "fixtures"
 FIXTURES_OCSF = Path(__file__).resolve().parents[2] / "fixtures" / "ocsf"
 
 
 @pytest.fixture()
-def server() -> FastMCP:
+def server() -> Iterator[EvidentiaMCPServer]:
     """Reset the framework registry singleton + return a fresh server."""
     FrameworkRegistry.reset_instance()
     s = build_server()
@@ -39,17 +44,41 @@ def server() -> FastMCP:
     FrameworkRegistry.reset_instance()
 
 
-def _tool_fn(server: FastMCP, name: str):
-    """Pull the underlying Python function out of a FastMCP tool."""
-    tools = server._tool_manager._tools  # type: ignore[attr-defined]
-    assert name in tools, f"{name} not registered; have: {sorted(tools)}"
-    return tools[name].fn
+def _invoke_tool(server: EvidentiaMCPServer, tool_name: str, **kwargs: Any) -> Any:
+    """Call the public SDK method and unpack its structured result."""
+    result = asyncio.run(server.call_tool(tool_name, kwargs))
+    assert isinstance(result, CallToolResult)
+    assert not result.is_error
+    payload = result.structured_content
+    assert payload is not None
+    return payload["result"] if set(payload) == {"result"} else payload
+
+
+@contextmanager
+def _tool_failure(error_type: type[Exception], match: str | None = None) -> Iterator[None]:
+    """Check the SDK error wrapper and the original library failure."""
+    with pytest.raises(UnexpectedToolError) as captured:
+        yield
+    cause = captured.value.__cause__
+    assert isinstance(cause, error_type)
+    if match is not None:
+        assert re.search(match, str(cause)) is not None
+
+
+def _tool_fn(server: EvidentiaMCPServer, name: str) -> Callable[..., Any]:
+    """Bind the public SDK call helper to a registered tool name."""
+    assert name in {tool.name for tool in asyncio.run(server.list_tools())}
+
+    def invoke(**kwargs: Any) -> Any:
+        return _invoke_tool(server, name, **kwargs)
+
+    return invoke
 
 
 # ── gap_analyze_sarif ─────────────────────────────────────────────────
 
 
-def test_gap_analyze_sarif_returns_sarif_2_1_0(server: FastMCP) -> None:
+def test_gap_analyze_sarif_returns_sarif_2_1_0(server: EvidentiaMCPServer) -> None:
     """The new tool returns a SARIF 2.1.0 log dict, not a GapAnalysisReport."""
     fn = _tool_fn(server, "gap_analyze_sarif")
     sarif = fn(
@@ -65,16 +94,16 @@ def test_gap_analyze_sarif_returns_sarif_2_1_0(server: FastMCP) -> None:
         assert result["level"] in {"error", "warning", "note", "none"}
 
 
-def test_gap_analyze_sarif_missing_inventory_raises(server: FastMCP) -> None:
+def test_gap_analyze_sarif_missing_inventory_raises(server: EvidentiaMCPServer) -> None:
     fn = _tool_fn(server, "gap_analyze_sarif")
-    with pytest.raises(FileNotFoundError):
+    with _tool_failure(FileNotFoundError):
         fn(inventory_path="/no/such/file.yaml", frameworks=["nist-800-53-mod"])
 
 
 # ── collect_ocsf ──────────────────────────────────────────────────────
 
 
-def test_collect_ocsf_ingests_prowler_detection_finding(server: FastMCP) -> None:
+def test_collect_ocsf_ingests_prowler_detection_finding(server: EvidentiaMCPServer) -> None:
     fn = _tool_fn(server, "collect_ocsf")
     findings = fn(input_path=str(FIXTURES_OCSF / "prowler-detection-finding.json"))
     assert len(findings) == 1
@@ -85,7 +114,7 @@ def test_collect_ocsf_ingests_prowler_detection_finding(server: FastMCP) -> None
     assert f["compliance_status"] == ComplianceStatus.FAIL.value
 
 
-def test_collect_ocsf_ingests_mixed_batch(server: FastMCP) -> None:
+def test_collect_ocsf_ingests_mixed_batch(server: EvidentiaMCPServer) -> None:
     fn = _tool_fn(server, "collect_ocsf")
     findings = fn(input_path=str(FIXTURES_OCSF / "mixed-batch.json"))
     assert len(findings) == 2
@@ -94,24 +123,26 @@ def test_collect_ocsf_ingests_mixed_batch(server: FastMCP) -> None:
     assert findings[1]["compliance_status"] == "warning"
 
 
-def test_collect_ocsf_missing_file_raises(server: FastMCP) -> None:
+def test_collect_ocsf_missing_file_raises(server: EvidentiaMCPServer) -> None:
     fn = _tool_fn(server, "collect_ocsf")
-    with pytest.raises(FileNotFoundError):
+    with _tool_failure(FileNotFoundError):
         fn(input_path="/no/such/file.json")
 
 
-def test_collect_ocsf_invalid_json_raises(server: FastMCP, tmp_path: Path) -> None:
+def test_collect_ocsf_invalid_json_raises(server: EvidentiaMCPServer, tmp_path: Path) -> None:
     bad = tmp_path / "broken.json"
     bad.write_text("not valid json", encoding="utf-8")
     fn = _tool_fn(server, "collect_ocsf")
-    with pytest.raises(RuntimeError):  # OCSFIngestError is a RuntimeError
+    with _tool_failure(RuntimeError):  # OCSFIngestError is a RuntimeError
         fn(input_path=str(bad))
 
 
 # ── tprm_vendor_list ──────────────────────────────────────────────────
 
 
-def test_tprm_vendor_list_empty_store(server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_tprm_vendor_list_empty_store(
+    server: EvidentiaMCPServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """When the vendor store is empty, returns an empty list (no error)."""
     monkeypatch.setenv("EVIDENTIA_VENDOR_STORE_DIR", str(tmp_path / "vendors"))
     fn = _tool_fn(server, "tprm_vendor_list")
@@ -119,7 +150,7 @@ def test_tprm_vendor_list_empty_store(server: FastMCP, tmp_path: Path, monkeypat
 
 
 def test_tprm_vendor_list_returns_stored_vendors(
-    server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    server: EvidentiaMCPServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Vendors written to the store come back as JSON-serializable dicts."""
     from evidentia_core.models.tprm import CriticalityTier, Vendor, VendorType
@@ -146,14 +177,16 @@ def test_tprm_vendor_list_returns_stored_vendors(
 # ── poam_list ─────────────────────────────────────────────────────────
 
 
-def test_poam_list_empty_store(server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_poam_list_empty_store(server: EvidentiaMCPServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """When the POA&M store is empty, returns an empty list (no error)."""
     monkeypatch.setenv("EVIDENTIA_POAM_STORE_DIR", str(tmp_path / "poams"))
     fn = _tool_fn(server, "poam_list")
     assert fn() == []
 
 
-def test_poam_list_returns_stored_poams(server: FastMCP, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_poam_list_returns_stored_poams(
+    server: EvidentiaMCPServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from evidentia_core.models.gap import (
         ControlGap,
         GapSeverity,
@@ -184,9 +217,9 @@ def test_poam_list_returns_stored_poams(server: FastMCP, tmp_path: Path, monkeyp
 # ── all 4 tools registered (api-stability NORMATIVE check) ─────────────
 
 
-def test_all_v0_10_2_tools_registered(server: FastMCP) -> None:
+def test_all_v0_10_2_tools_registered(server: EvidentiaMCPServer) -> None:
     """api-stability.md §MCP tool contract lists these 4 as v0.10.2."""
-    tools = server._tool_manager._tools  # type: ignore[attr-defined]
+    tools = {tool.name for tool in asyncio.run(server.list_tools())}
     for name in (
         "gap_analyze_sarif",
         "collect_ocsf",
