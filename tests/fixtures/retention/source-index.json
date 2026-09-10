@@ -1,0 +1,323 @@
+{
+  "ledger_format_version": 1,
+  "stage": "shared_foundation",
+  "scope": {
+    "observation_scope": "configuration",
+    "coverage_scope": "selected_resources",
+    "object_enforcement_assessed": false,
+    "recordset_completeness_assessed": false,
+    "identity_basis": "operator-declared",
+    "authenticated_identity_verified": false
+  },
+  "execution_plan": {
+    "s3": [
+      "s3-object-lock",
+      "s3-versioning"
+    ],
+    "azure": [
+      "azure-account",
+      "azure-blob-service",
+      "azure-container"
+    ],
+    "gcs": [
+      "gcs-bucket"
+    ]
+  },
+  "methods": [
+    {
+      "component_id": "s3-object-lock",
+      "provider": "s3",
+      "operation": "GetObjectLockConfiguration",
+      "method": "GET",
+      "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+      "fixed_url_template": "https://s3.{region}.amazonaws.com/{bucket}?object-lock",
+      "method_documentation": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html",
+      "resource_documentation": [
+        "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html"
+      ],
+      "documentation_review": {
+        "kind": "primary_documentation",
+        "checked_at_utc": "2026-09-10",
+        "retrieval": "web_text_view",
+        "artifact_archived": false
+      },
+      "domain_reader_status": "pending",
+      "field_selection_status": "approved_scope_domain_validation_pending",
+      "selected_field_paths_or_objects": [
+        "ObjectLockEnabled",
+        "Rule.DefaultRetention.Mode",
+        "Rule.DefaultRetention.Days",
+        "Rule.DefaultRetention.Years"
+      ],
+      "fixture_plan": {
+        "kind": "authored_synthetic",
+        "status": "planned_not_recorded",
+        "scenarios": [
+          "days_or_years",
+          "no_default_rule",
+          "exact_absent_configuration_error",
+          "generic_404_reject",
+          "unknown_mode",
+          "duplicate_xml_field_reject"
+        ],
+        "files": []
+      }
+    },
+    {
+      "component_id": "s3-versioning",
+      "provider": "s3",
+      "operation": "GetBucketVersioning",
+      "method": "GET",
+      "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+      "fixed_url_template": "https://s3.{region}.amazonaws.com/{bucket}?versioning",
+      "method_documentation": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html",
+      "resource_documentation": [
+        "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html"
+      ],
+      "documentation_review": {
+        "kind": "primary_documentation",
+        "checked_at_utc": "2026-09-10",
+        "retrieval": "web_text_view",
+        "artifact_archived": false
+      },
+      "domain_reader_status": "pending",
+      "field_selection_status": "approved_scope_domain_validation_pending",
+      "selected_field_paths_or_objects": [
+        "Status",
+        "MFADelete"
+      ],
+      "fixture_plan": {
+        "kind": "authored_synthetic",
+        "status": "planned_not_recorded",
+        "scenarios": [
+          "enabled",
+          "suspended",
+          "empty_never_enabled",
+          "missing_mfa_delete",
+          "unknown_state",
+          "invalid_xml_scalar"
+        ],
+        "files": []
+      }
+    },
+    {
+      "component_id": "azure-account",
+      "provider": "azure",
+      "operation": "Storage Accounts - Get Properties",
+      "method": "GET",
+      "api_contract": "2026-04-01",
+      "fixed_url_template": "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{encoded_resource_group}/providers/Microsoft.Storage/storageAccounts/{account}?api-version=2026-04-01",
+      "method_documentation": "https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2026-04-01",
+      "resource_documentation": [
+        "https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2026-04-01"
+      ],
+      "documentation_review": {
+        "kind": "primary_documentation",
+        "checked_at_utc": "2026-09-10",
+        "retrieval": "web_text_view",
+        "artifact_archived": false
+      },
+      "domain_reader_status": "pending",
+      "field_selection_status": "approved_scope_domain_validation_pending",
+      "selected_field_paths_or_objects": [
+        "id",
+        "properties.isHnsEnabled",
+        "properties.immutableStorageWithVersioning"
+      ],
+      "fixture_plan": {
+        "kind": "authored_synthetic",
+        "status": "planned_not_recorded",
+        "scenarios": [
+          "account_default_policy",
+          "hns_distinction",
+          "missing_null_detail",
+          "unknown_state",
+          "wrong_arm_identity"
+        ],
+        "files": []
+      }
+    },
+    {
+      "component_id": "azure-blob-service",
+      "provider": "azure",
+      "operation": "Blob Services - Get Service Properties",
+      "method": "GET",
+      "api_contract": "2026-04-01",
+      "fixed_url_template": "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{encoded_resource_group}/providers/Microsoft.Storage/storageAccounts/{account}/blobServices/default?api-version=2026-04-01",
+      "method_documentation": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-services/get-service-properties?view=rest-storagerp-2026-04-01",
+      "resource_documentation": [
+        "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-services/get-service-properties?view=rest-storagerp-2026-04-01"
+      ],
+      "documentation_review": {
+        "kind": "primary_documentation",
+        "checked_at_utc": "2026-09-10",
+        "retrieval": "web_text_view",
+        "artifact_archived": false
+      },
+      "domain_reader_status": "pending",
+      "field_selection_status": "approved_scope_domain_validation_pending",
+      "selected_field_paths_or_objects": [
+        "id",
+        "properties.isVersioningEnabled"
+      ],
+      "fixture_plan": {
+        "kind": "authored_synthetic",
+        "status": "planned_not_recorded",
+        "scenarios": [
+          "versioning_enabled",
+          "versioning_disabled",
+          "missing_null_detail",
+          "wrong_scalar",
+          "wrong_arm_identity"
+        ],
+        "files": []
+      }
+    },
+    {
+      "component_id": "azure-container",
+      "provider": "azure",
+      "operation": "Blob Containers - Get",
+      "method": "GET",
+      "api_contract": "2026-04-01",
+      "fixed_url_template": "https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{encoded_resource_group}/providers/Microsoft.Storage/storageAccounts/{account}/blobServices/default/containers/{container}?api-version=2026-04-01",
+      "method_documentation": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2026-04-01",
+      "resource_documentation": [
+        "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2026-04-01"
+      ],
+      "documentation_review": {
+        "kind": "primary_documentation",
+        "checked_at_utc": "2026-09-10",
+        "retrieval": "web_text_view",
+        "artifact_archived": false
+      },
+      "domain_reader_status": "pending",
+      "field_selection_status": "approved_scope_domain_validation_pending",
+      "selected_field_paths_or_objects": [
+        "id",
+        "properties.hasImmutabilityPolicy",
+        "properties.hasLegalHold",
+        "properties.immutabilityPolicy",
+        "properties.immutableStorageWithVersioning",
+        "properties.legalHold"
+      ],
+      "fixture_plan": {
+        "kind": "authored_synthetic",
+        "status": "planned_not_recorded",
+        "scenarios": [
+          "locked_unlocked_policy",
+          "policy_days_append_exceptions",
+          "migration_enablement",
+          "hold_tags_without_personal_identifiers",
+          "contradictory_hold_flags",
+          "account_service_failure_combinations",
+          "wrong_arm_identity"
+        ],
+        "files": []
+      }
+    },
+    {
+      "component_id": "gcs-bucket",
+      "provider": "gcs",
+      "operation": "Buckets: get",
+      "method": "GET",
+      "api_contract": "v1",
+      "fixed_url_template": "https://storage.googleapis.com/storage/v1/b/{bucket}?projection=noAcl",
+      "method_documentation": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+      "resource_documentation": [
+        "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets"
+      ],
+      "documentation_review": {
+        "kind": "primary_documentation",
+        "checked_at_utc": "2026-09-10",
+        "retrieval": "web_text_view",
+        "artifact_archived": false
+      },
+      "domain_reader_status": "pending",
+      "field_selection_status": "approved_scope_domain_validation_pending",
+      "selected_field_paths_or_objects": [
+        "name",
+        "metageneration",
+        "retentionPolicy.retentionPeriod",
+        "retentionPolicy.effectiveTime",
+        "retentionPolicy.isLocked",
+        "versioning.enabled",
+        "objectRetention.mode"
+      ],
+      "fixture_plan": {
+        "kind": "authored_synthetic",
+        "status": "planned_not_recorded",
+        "scenarios": [
+          "policy_absent_null_unlocked_locked",
+          "exact_quoted_integer",
+          "literal_source_timestamp",
+          "object_retention_enablement",
+          "unknown_mode",
+          "wrong_bucket_identity",
+          "numeric_string_type_reject"
+        ],
+        "files": []
+      }
+    }
+  ],
+  "supporting_documentation": [
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html",
+      "use": "Regional path-style addressing; provider deprecation is a future review trigger."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/developerguide/ErrorResponses.html",
+      "use": "Exact ObjectLockConfigurationNotFoundError under 404; distinct error states."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-configure.html",
+      "use": "Object Lock can be enabled on an existing general-purpose bucket; no write operation is authorized."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/storage/blobs/immutable-storage-overview",
+      "use": "Container-level and version-level policy scope differ."
+    },
+    {
+      "url": "https://docs.cloud.google.com/storage/docs/bucket-lock",
+      "use": "Bucket retention policy lock semantics remain configuration observations."
+    },
+    {
+      "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html",
+      "use": "Signature Version 4 protocol background; local pinned-helper review governs implementation."
+    },
+    {
+      "url": "https://www.python-httpx.org/advanced/event-hooks/",
+      "use": "Response hook lifecycle before body-reading decisions; redirect ordering has local regression evidence."
+    }
+  ],
+  "supporting_documentation_checked_at_utc": "2026-09-10",
+  "fixture_evidence_rules": {
+    "authoring": "Synthetic values will be authored under repository terms; documentation is cited rather than copied as a response recording.",
+    "completed_public_fixture_files": [],
+    "recorded_responses": [],
+    "live_provider_acceptance": "not_performed",
+    "provider_or_tenant_calls_for_this_draft": false,
+    "credentials_or_signatures_from_real_requests": false,
+    "required_per_file_metadata": [
+      "provider",
+      "api_contract",
+      "operation",
+      "scenario",
+      "source_documentation_url",
+      "path",
+      "sha256"
+    ],
+    "hash_rule": "Record SHA256 only after the actual reviewed fixture bytes exist; never substitute a documentation or logical-projection hash.",
+    "projection_hash_rule": "canonical_projection_sha256 binds declared logical projection content and is not an original-response hash.",
+    "no_emulator_or_live_fidelity_claim": true
+  },
+  "pending": [
+    "provider_domain_readers",
+    "collector_entry_point",
+    "cli",
+    "api",
+    "console",
+    "public_fixture_files",
+    "complete_provider_milestone_acceptance"
+  ],
+  "control_mappings": []
+}

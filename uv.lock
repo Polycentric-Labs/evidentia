@@ -1043,6 +1043,7 @@ dependencies = [
 [package.optional-dependencies]
 all = [
     { name = "boto3" },
+    { name = "botocore" },
     { name = "databricks-sdk" },
     { name = "defusedxml" },
     { name = "okta" },
@@ -1068,6 +1069,10 @@ ocsf = [
 ]
 okta = [
     { name = "okta" },
+]
+retention = [
+    { name = "botocore" },
+    { name = "defusedxml" },
 ]
 scan = [
     { name = "defusedxml" },
@@ -1098,9 +1103,12 @@ sql-postgres = [
 requires-dist = [
     { name = "boto3", marker = "extra == 'all'", specifier = ">=1.43.46" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.43.46" },
+    { name = "botocore", marker = "extra == 'all'", specifier = "==1.43.89" },
+    { name = "botocore", marker = "extra == 'retention'", specifier = "==1.43.89" },
     { name = "databricks-sdk", marker = "extra == 'all'", specifier = ">=0.30" },
     { name = "databricks-sdk", marker = "extra == 'databricks'", specifier = ">=0.30" },
     { name = "defusedxml", marker = "extra == 'all'", specifier = ">=0.7.1" },
+    { name = "defusedxml", marker = "extra == 'retention'", specifier = ">=0.7.1" },
     { name = "defusedxml", marker = "extra == 'scan'", specifier = ">=0.7.1" },
     { name = "evidentia-core", editable = "packages/evidentia-core" },
     { name = "httpx", specifier = ">=0.27" },
@@ -1125,7 +1133,7 @@ requires-dist = [
     { name = "snowflake-connector-python", marker = "extra == 'all'", specifier = ">=3.10" },
     { name = "snowflake-connector-python", marker = "extra == 'snowflake'", specifier = ">=3.10" },
 ]
-provides-extras = ["aws", "github", "okta", "sql-postgres", "sql-mysql", "sql-sqlite", "sql-mssql", "sql-oracle", "sql", "databricks", "snowflake", "ocsf", "scan", "all"]
+provides-extras = ["aws", "retention", "github", "okta", "sql-postgres", "sql-mysql", "sql-sqlite", "sql-mssql", "sql-oracle", "sql", "databricks", "snowflake", "ocsf", "scan", "all"]
 
 [[package]]
 name = "evidentia-core"
