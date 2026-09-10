@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **MCP protocol regression coverage.** Connected default and legacy clients
+  exercise all fourteen tool contracts, per-request scope decisions, signed
+  payloads, concurrent identities, error recovery and isolated stdio shutdown.
+  In-process transport checks cover valid requests, Host/Origin checks and
+  request-body limits for SSE and Streamable HTTP.
 - **Local secret-scan parity.** The pre-push gate now requires the CI-pinned
   Gitleaks binary and full-history scan. A verified public workflow checksum has
   an exact-value exception; default secret detection remains enabled.
@@ -149,6 +154,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **MCP SDK 2.2 (V13-16).** The server uses the SDK's typed `MCPServer` API.
+  Tool names, descriptions, input/output schemas and CLI transport selectors
+  remain unchanged. Both dependency declarations require `mcp>=2.2.0,<3.0`;
+  future major updates stay isolated in Dependabot. SDK validation and ordinary
+  handler failures use tool-error results; explicit MCP protocol exceptions
+  retain their protocol error code. Out-of-root failures now use the SDK's
+  generic tool-error text.
 - **Catalog source corrections (V13-09).** CISA CPG 2.0 replaces the stale subset
   with 34 goal headings across six functions. CMMC Level 1 now uses the current 15
   FAR-based identifiers instead of 17 older NIST-style rows. NERC carries 13 current
@@ -253,6 +265,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **MCP scope and signing dispatch.** Real protocol calls on the prior locked
+  SDK 1.29.1 could bypass wrappers attached after server construction. The typed
+  dispatch path now checks scope before handler or signer execution. Malformed
+  identity metadata cannot inherit a permitted fallback. Signed payloads use
+  the JSON representation delivered to the client, and an enabled signer
+  factory returning a non-callable value fails instead of silently disabling
+  signing. The existing payload-only signature envelope is unchanged.
 - **CI failure propagation and dependency identity.** Frontend unit-test failures
   now fail their existing job. Container catalog smoke checks cannot lose a
   producer failure when shortening output, and scheduled catalog regeneration

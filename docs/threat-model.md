@@ -3462,6 +3462,48 @@ repository write access.
 
 ---
 
+## v0.13 MCP dispatch and transport delta (2026-09-09)
+
+Real protocol probes against the prior locked MCP SDK 1.29.1 showed that calls
+could bypass scope and signing wrappers installed after server construction.
+The SDK 2.2 integration routes calls through one typed dispatch path, with
+scope enforcement before handler and signer execution. With a CIMD registry,
+missing, unknown, malformed and out-of-scope identities are denied with protocol
+code `-32602`;
+each registry decision records one audit event. Concurrent requests retain
+their own identity context.
+
+`client_id` metadata is a caller claim. A valid request value overrides the
+configured fallback, including over stdio. CIMD does not authenticate it.
+Network deployments still require transport authentication that binds each
+caller to its permitted identity and an explicit file allow-root. Local stdio
+trust follows the process owner and the host's launch configuration.
+
+Opt-in output signing uses the JSON payload delivered under the negotiated
+protocol. The frozen signature authenticates `payload` only. Envelope tool
+names and timestamps, the outer error flag and unrelated metadata are outside
+that signature; display content is also outside it when a structured object is
+signed. Clients must verify a present signature and consume the authenticated
+payload. A signer invocation failure still returns the existing unsigned error
+envelope. An invalid enabled factory is a configuration error. Non-object
+structured outputs and SDK input-request control flow remain unsigned in the
+signing wrapper. The modern SDK path can carry them; legacy schema validation
+rejects them. They are outside the fourteen declared object-output tool contracts.
+
+SSE and Streamable HTTP retain SDK Host/Origin checks for loopback binds and a
+4 MiB request-body limit. Legacy Streamable HTTP sessions are stateful, with a
+1,800-second idle timeout and a 10,000-session limit. Non-loopback binding does
+not establish authentication or a trusted identity boundary. These settings do
+not replace reverse-proxy access control or rate limiting.
+
+Protocol regressions use synthetic signers, temporary catalogs and stores, and
+isolated child environments with an explicit empty configuration. They do not
+contact an operator's signing service or use live evidence. In-process ASGI
+checks cover valid requests as well as denied origins, hosts and oversized
+bodies. Product OS/Python CI remains separate from these local checks.
+
+---
+
 *First published v0.7.7 (2026-05). Origin: promoted from a
 project-internal deep-pass note to a public-surface doc to
 satisfy pre-release-review v4 G5 (threat-model existence gate)

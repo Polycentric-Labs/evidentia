@@ -47,9 +47,10 @@ keyless OIDC avoids the key-material problem entirely).
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from evidentia_core.models.common import EvidentiaModel, utc_now
 from pydantic import Field
@@ -169,16 +170,16 @@ def _resolve_signer_factory() -> SignerCallable | None:
     """
     from evidentia_core.factory_resolver import resolve_factory
 
+    if not os.environ.get(EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR):
+        return None
     signer = resolve_factory(
         EVIDENCE_MCP_SIGN_OUTPUTS_ENV_VAR,
         EVIDENCE_MCP_SIGNER_FACTORY_ENV_VAR,
         purpose="MCP signer",
     )
-    if signer is None:
-        return None
     if not callable(signer):
         raise RuntimeError("MCP signer factory returned a non-callable; expected Callable[[bytes], dict[str, str]]")
-    return signer  # type: ignore[no-any-return]
+    return cast(SignerCallable, signer)
 
 
 def sign_tool_output(

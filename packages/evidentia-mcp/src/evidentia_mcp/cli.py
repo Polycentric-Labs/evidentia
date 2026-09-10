@@ -11,7 +11,7 @@ Wires two CLI verbs:
   an operator-configured bound directory.
 - ``evidentia mcp doctor`` — health check. Verifies the MCP
   SDK imports cleanly + that the bundled catalog registry
-  loads + that the FastMCP server can be constructed without
+  loads + that the MCP server can be constructed without
   errors. Useful for shaking out missing-dep issues post-
   install.
 
@@ -25,9 +25,9 @@ file-path tool inputs (e.g., ``gap_analyze``'s
 ``inventory_path``) are gated against the bound directory
 via ``evidentia_core.security.paths.validate_within``. The
 canonical deployment pattern for non-loopback HTTP/SSE
-remains: bind to 127.0.0.1 + sidecar reverse-proxy for
-cross-network access + AuthProvider middleware (v0.8.1 P3.3)
-for token auth + ``--allow-root`` for filesystem authority.
+is a loopback bind behind an authenticated reverse proxy
+that binds each caller to its permitted identity, with
+``--allow-root`` bounding file-path tool inputs.
 """
 
 from __future__ import annotations
@@ -80,9 +80,8 @@ def serve(
         help=(
             "Bind address for HTTP / SSE transports. Default "
             "``127.0.0.1`` (loopback only). Use ``0.0.0.0`` to "
-            "bind all interfaces — REQUIRES a reverse-proxy "
-            "auth layer; the MCP server doesn't gate file-path "
-            "tool inputs against an allow-root in v0.8.1."
+            "bind all interfaces. Requires an authenticated reverse proxy; "
+            "set --allow-root to bound file-path tool inputs."
         ),
     ),
     port: int = typer.Option(
@@ -114,9 +113,8 @@ def serve(
             "Bound directory for file-path tool inputs (v0.8.2 "
             "F-V81-S1). When set, ``gap_analyze`` + ``gap_diff`` "
             "validate their path inputs against this root via "
-            "``evidentia_core.security.paths.validate_within`` — "
-            "out-of-root paths surface as ``PathTraversalError`` "
-            "(MCP tool error, not server crash). Strongly "
+            "``evidentia_core.security.paths.validate_within``. "
+            "Out-of-root paths return an MCP tool error with generic SDK text. Strongly "
             "RECOMMENDED for non-loopback HTTP / SSE deployments. "
             "When unset, file-path tools accept any path the "
             "server's UID can read (preserves v0.8.1 behavior; "
@@ -144,18 +142,11 @@ def serve(
         None,
         "--default-client-id",
         help=(
-            "v0.8.6 P1: fallback ``client_id`` when the MCP "
-            "request meta does not carry one. On stdio "
-            "(canonical case), the wire protocol does NOT pass "
-            "a per-request client_id, so this flag IS the "
-            "client_id for the entire stdio session — set it "
-            "to a slug registered in the CIMD registry to "
-            "enable per-tool scope enforcement. On HTTP/SSE, "
-            "the flag is a fallback when the MCP client did "
-            "not set ``_meta.client_id``. Documented as "
-            "INFORMATIONAL (audit-trail granularity), NOT a "
-            "security boundary on stdio. See "
-            "``evidentia_mcp.scope`` for the threat model."
+            "Fallback client_id when request metadata is missing, null or an empty string. "
+            "A request _meta.client_id takes precedence on every transport, including stdio. "
+            "Malformed non-string identities are denied. Use a slug in the CIMD registry. "
+            "CIMD is a scope policy, not authentication; network callers need transport "
+            "authentication bound to their permitted identity."
         ),
     ),
 ) -> None:
@@ -202,12 +193,8 @@ def serve(
             err=True,
         )
 
-    # v0.8.6 P1: --default-client-id validation. Without
-    # --cimd-registry the flag is meaningless (no scope to
-    # enforce against). Without --default-client-id but with
-    # --cimd-registry on stdio, every tool call denies because
-    # stdio carries no per-request client_id — surface a warning
-    # so operators don't run a server that denies all tool calls.
+    # A configured fallback only applies when a registry enforces scopes.
+    # Stdio clients without a fallback must provide identity metadata per request.
     if default_client_id is not None and cimd_registry is None:
         typer.echo(
             "WARNING: --default-client-id set without --cimd-registry. Flag is ignored (no scope to enforce against).",
@@ -216,11 +203,9 @@ def serve(
     if cimd_registry is not None and default_client_id is None and transport == _Transport.STDIO:
         typer.echo(
             "WARNING: --cimd-registry set without "
-            "--default-client-id on stdio transport. Stdio "
-            "carries no per-request client_id, so every tool "
-            "call will deny (ambiguous-caller policy). Pair "
-            "--cimd-registry with --default-client-id for "
-            "stdio deployments.",
+            "--default-client-id on stdio transport. Calls without "
+            "a permitted request _meta.client_id will be denied. "
+            "Set --default-client-id if the client does not send identity metadata.",
             err=True,
         )
 
@@ -230,9 +215,8 @@ def serve(
     def _warn_non_loopback(transport_name: str) -> None:
         typer.echo(
             f"WARNING: binding {transport_name} to non-loopback "
-            f"{host}. Front with a reverse-proxy auth layer or "
-            f"use the FastAPI AuthProvider middleware (v0.8.1 "
-            f"P3.3).",
+            f"{host}. Front with an authenticated reverse proxy "
+            f"that binds each caller to its permitted identity.",
             err=True,
         )
         if allow_root is None:
@@ -291,7 +275,7 @@ def doctor() -> None:
 
     1. The ``mcp`` Python SDK imports cleanly.
     2. The bundled catalog registry loads.
-    3. The FastMCP server can be constructed (all tool
+    3. The MCP server can be constructed (all tool
        registrations succeed).
     4. The four core tools are registered.
 
@@ -309,7 +293,7 @@ def doctor() -> None:
 
     # 1. MCP SDK import
     try:
-        import mcp.server.fastmcp  # noqa: F401
+        __import__("mcp.server.mcpserver")
     except Exception as exc:
         failures.append(f"MCP SDK import failed: {exc!r}")
 
@@ -323,7 +307,7 @@ def doctor() -> None:
     except Exception as exc:
         failures.append(f"Catalog registry load failed: {exc!r}")
 
-    # 3. + 4. FastMCP server constructs + has expected tools
+    # 3. + 4. MCP server constructs + has expected tools
     expected_tools = {
         "list_frameworks",
         "get_control",
@@ -346,7 +330,7 @@ def doctor() -> None:
         if missing:
             failures.append(f"Expected tools missing from server: {sorted(missing)}")
     except Exception as exc:
-        failures.append(f"FastMCP server build failed: {exc!r}")
+        failures.append(f"MCP server build failed: {exc!r}")
 
     if failures:
         typer.echo("Evidentia MCP doctor: FAIL", err=True)
@@ -356,7 +340,7 @@ def doctor() -> None:
     typer.echo("Evidentia MCP doctor: PASS")
     typer.echo("  • MCP SDK: importable")
     typer.echo(f"  • Catalog registry: {len(fws)} frameworks loaded")
-    typer.echo(f"  • FastMCP server: {len(registered)} tools registered")
+    typer.echo(f"  • MCP server: {len(registered)} tools registered")
 
 
 #: v0.9.7 P1.2: tools newly added in v0.9.6 that pre-v0.9.6 CIMD

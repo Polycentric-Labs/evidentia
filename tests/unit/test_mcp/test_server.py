@@ -5,8 +5,8 @@ Three test classes mirroring the three layers of the MCP package:
 1. :class:`TestServerBuild` — server construction + tool
    registration (smoke-level; doesn't speak MCP protocol).
 2. :class:`TestToolBehavior` — invoke each tool's underlying
-   Python implementation directly via the FastMCP tool manager
-   and validate the structured output. This is "library-level"
+   public SDK method and validate its structured result and
+   underlying library failures. This is "library-level"
    testing — fast, deterministic, no subprocess.
 3. :class:`TestCLI` — Typer CliRunner-driven tests of
    ``evidentia mcp doctor``. The ``serve`` verb is excluded
@@ -16,8 +16,12 @@ Three test classes mirroring the three layers of the MCP package:
 
 from __future__ import annotations
 
+import asyncio
 import json
+import re
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +35,9 @@ from evidentia_core.models.control import (
 )
 from evidentia_core.security.paths import PathTraversalError
 from evidentia_mcp.cli import app as mcp_cli_app
-from evidentia_mcp.server import build_server
+from evidentia_mcp.server import EvidentiaMCPServer, build_server
+from mcp.server.mcpserver.exceptions import UnexpectedToolError
+from mcp.types import CallToolResult
 from typer.testing import CliRunner
 
 # ── Test fixtures ──────────────────────────────────────────────────
@@ -91,11 +97,12 @@ def tiny_report_paths(tiny_inventory: Path, tmp_path: Path) -> tuple[Path, Path]
 
 
 class TestServerBuild:
-    def test_build_server_returns_fastmcp_instance(self) -> None:
-        from mcp.server.fastmcp import FastMCP
+    def test_build_server_returns_mcp_server_instance(self) -> None:
+        from mcp.server.mcpserver import MCPServer
 
         server = build_server()
-        assert isinstance(server, FastMCP)
+        assert isinstance(server, MCPServer)
+        assert isinstance(server, EvidentiaMCPServer)
 
     def test_server_name_is_evidentia(self) -> None:
         server = build_server()
@@ -133,7 +140,7 @@ class TestServerBuild:
         assert "OSCAL" in tool.description
 
     def test_each_tool_has_a_description(self) -> None:
-        """FastMCP renders the docstring as the MCP tool description."""
+        """The SDK renders the docstring as the MCP tool description."""
         # v0.8.1 F-V08-CR-4: public list_tools() API.
         import asyncio
 
@@ -141,21 +148,32 @@ class TestServerBuild:
         tools = asyncio.run(server.list_tools())
         for tool in tools:
             assert tool.description, (
-                f"Tool {tool.name!r} is missing a description; FastMCP needs the function docstring populated."
+                f"Tool {tool.name!r} is missing a description; the SDK needs the function docstring populated."
             )
 
 
 # ── 2. Tool behavior ───────────────────────────────────────────────
 
 
-def _invoke_tool(server: Any, tool_name: str, **kwargs: Any) -> Any:
-    """Call a registered tool's underlying Python function directly.
+def _invoke_tool(server: EvidentiaMCPServer, tool_name: str, **kwargs: Any) -> Any:
+    """Call the public SDK method and unpack its structured result."""
+    result = asyncio.run(server.call_tool(tool_name, kwargs))
+    assert isinstance(result, CallToolResult)
+    assert not result.is_error
+    payload = result.structured_content
+    assert payload is not None
+    return payload["result"] if set(payload) == {"result"} else payload
 
-    FastMCP wraps the function in a ``Tool`` object. The original
-    callable lives at ``tool.fn``.
-    """
-    tool = server._tool_manager._tools[tool_name]
-    return tool.fn(**kwargs)
+
+@contextmanager
+def _tool_failure(error_type: type[Exception], match: str | None = None) -> Iterator[None]:
+    """Check the SDK error wrapper and the original library failure."""
+    with pytest.raises(UnexpectedToolError) as captured:
+        yield
+    cause = captured.value.__cause__
+    assert isinstance(cause, error_type)
+    if match is not None:
+        assert re.search(match, str(cause)) is not None
 
 
 class TestListFrameworks:
@@ -198,7 +216,7 @@ class TestGetControl:
 
     def test_unknown_control_raises_valueerror(self) -> None:
         server = build_server()
-        with pytest.raises(ValueError, match="not found"):
+        with _tool_failure(ValueError, match="not found"):
             _invoke_tool(
                 server,
                 "get_control",
@@ -223,7 +241,7 @@ class TestGapAnalyze:
 
     def test_missing_path_raises_filenotfound(self, tmp_path: Path) -> None:
         server = build_server()
-        with pytest.raises(FileNotFoundError):
+        with _tool_failure(FileNotFoundError):
             _invoke_tool(
                 server,
                 "gap_analyze",
@@ -253,7 +271,7 @@ class TestGapDiff:
     ) -> None:
         _base, head_path = tiny_report_paths
         server = build_server()
-        with pytest.raises(FileNotFoundError, match="Base report"):
+        with _tool_failure(FileNotFoundError, match="Base report"):
             _invoke_tool(
                 server,
                 "gap_diff",
@@ -270,7 +288,7 @@ class TestGapDiff:
         broken = tmp_path / "broken.json"
         broken.write_text(json.dumps({"not": "a-report"}), encoding="utf-8")
         server = build_server()
-        with pytest.raises(ValueError, match="cannot be parsed"):
+        with _tool_failure(ValueError, match="cannot be parsed"):
             _invoke_tool(
                 server,
                 "gap_diff",
@@ -289,7 +307,7 @@ class TestVerifySignedArtifact:
         ar_path = tmp_path / "audit.oscal-ar.json"
         ar_path.write_text("{}", encoding="utf-8")
         server = build_server()
-        with pytest.raises(ValueError, match="provided together"):
+        with _tool_failure(ValueError, match="provided together"):
             _invoke_tool(
                 server,
                 "verify_signed_artifact",
@@ -302,7 +320,7 @@ class TestVerifySignedArtifact:
         ar_path = tmp_path / "audit.oscal-ar.json"
         ar_path.write_text("{}", encoding="utf-8")
         server = build_server()
-        with pytest.raises(ValueError, match="provided together"):
+        with _tool_failure(ValueError, match="provided together"):
             _invoke_tool(
                 server,
                 "verify_signed_artifact",
@@ -385,7 +403,7 @@ class TestGapAnalyzePathGating:
         server = build_server(allow_root=safe_root)
         # PathTraversalError is a ValueError subclass; assert the
         # specific subclass to lock in the contract.
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "gap_analyze",
@@ -401,7 +419,7 @@ class TestGapAnalyzePathGating:
         elsewhere.write_text("{}", encoding="utf-8")
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "gap_analyze",
@@ -425,7 +443,7 @@ class TestGapAnalyzePathGating:
         os.symlink(target, link)
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "gap_analyze",
@@ -452,7 +470,7 @@ class TestGapDiffPathGating:
         elsewhere.write_text(json.dumps({}), encoding="utf-8")
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "gap_diff",
@@ -473,7 +491,7 @@ class TestGapDiffPathGating:
         elsewhere.write_text(json.dumps({}), encoding="utf-8")
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "gap_diff",
@@ -545,7 +563,7 @@ class TestVerifySignedArtifactPathGating:
         outside_key.write_text("dummy", encoding="utf-8")
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "verify_signed_artifact",
@@ -564,7 +582,7 @@ class TestVerifySignedArtifactPathGating:
         outside_bundle.write_text("{}", encoding="utf-8")
 
         server = build_server(allow_root=safe_root)
-        with pytest.raises(PathTraversalError):
+        with _tool_failure(PathTraversalError):
             _invoke_tool(
                 server,
                 "verify_signed_artifact",

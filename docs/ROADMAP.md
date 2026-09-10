@@ -145,8 +145,9 @@ groups:
   extended to cover it; the "cryptographic CIMD signatures" misnomer
   retired; crosswalk and catalog-truth defects; the `catalog pin` phantom
   verb (documents corrected, verb not built); `occ-sr-26-02` renamed to the
-  canonical SR 26-2 / OCC 2026-13 with an alias; a time-boxed `mcp` SDK 2.0
-  migration attempt; FedRAMP SCN schema conformance on the shipped SCR
+  canonical SR 26-2 / OCC 2026-13 with an alias; the `mcp` SDK 2.2 migration
+  with effective protocol scope and signing checks; FedRAMP SCN schema conformance
+  on the shipped SCR
   emitter; the react-table v9 migration; an in-repo regeneration path for
   the vendored FedRAMP upstream; Python 3.14 support with `requires-python`
   lifted to `<3.15`; and root-directory cleanup round two behind a fidelity
@@ -517,16 +518,13 @@ Items deferred from Phase B audit v3 + integration plan §"v1.1+":
   pre-v1.0).
 - Architectural Tier 3 items from Phase B audit v3 (control-chart
   script ships skill-side; dynamic-install eBPF scan; etc.).
-- **`mcp` SDK 2.0 migration** (tracked 2026-08-20). mcp 2.0.0 is the
-  stable v2 line supporting the 2026-07-28 protocol revision; 1.x is in
-  maintenance (security + critical fixes only). Known work:
-  `signed_dispatch.py`'s snake_case attribute access and the `McpError`
-  relocation. Until it lands, the root dev-dep is capped
-  `mcp>=1.28.1,<2.0`, the SDK's own recommendation for projects not yet
-  migrated, with a matching `ignore` in `.github/dependabot.yml`,
-  because the uncapped re-lock kept dragging the major into the routine
-  python-dev batch and putting the whole PR red. **Drop the cap and the
-  ignore in the migration's own PR.**
+- **`mcp` SDK migration (V13-16)**: v0.13 uses SDK 2.2.0 through its typed
+  server API, preserving all fourteen tool contracts and the stdio, SSE and
+  Streamable HTTP selectors. Connected-client tests cover scope enforcement
+  before execution and signature verification against the delivered payload.
+  Both dependency declarations are `mcp>=2.2.0,<3.0`. The Dependabot major
+  ignore remains to keep future protocol migrations separate from routine
+  dependency updates.
 - **`@tanstack/react-table` v9 migration (`GapTable.tsx`)** (tracked
   2026-08-20). v9 restructures the table API the gap table is built on,
   a deliberate migration, not a bump. Majors are ignored in

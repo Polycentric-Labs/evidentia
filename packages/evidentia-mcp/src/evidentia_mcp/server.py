@@ -1,4 +1,4 @@
-"""FastMCP server build + stdio run helper (v0.8.0 P0.3).
+"""MCP server build and transport helpers.
 
 The MCP server exposes a focused tool surface mapping
 Evidentia's library functions into a shape MCP clients
@@ -39,6 +39,7 @@ traces).
 from __future__ import annotations
 
 import json
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
@@ -48,7 +49,10 @@ from evidentia_core.gap_analyzer.inventory import load_inventory
 from evidentia_core.gap_diff import compute_gap_diff
 from evidentia_core.models.gap import GapAnalysisReport
 from evidentia_core.security.paths import validate_within
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import Context, MCPServer
+from mcp.server.streamable_http_manager import DEFAULT_MAX_SESSIONS, DEFAULT_SESSION_IDLE_TIMEOUT
+from mcp.server.transport_security import DEFAULT_MAX_REQUEST_BODY_SIZE
+from mcp.types import CallToolResult, InputRequiredResult
 
 from evidentia_mcp.cimd import CIMDRegistry
 
@@ -63,7 +67,7 @@ SERVER_INSTRUCTIONS = (
     "control inventory. All tools operate on file paths the "
     "operator already has on disk; the server never fetches "
     "remote data unless an explicit collector tool is invoked. "
-    "Use list_frameworks first to discover the 89 bundled "
+    "Use list_frameworks first to discover the bundled "
     "catalogs, then gap_analyze + gap_diff to surface findings. "
     "TRUST MODEL: stdio transport runs as the client's UID and "
     "inherits the client's filesystem authority. HTTP/SSE "
@@ -76,21 +80,47 @@ SERVER_INSTRUCTIONS = (
 )
 
 
+ToolDispatch = Callable[
+    [str, dict[str, Any], Context[Any, Any] | None],
+    Awaitable[CallToolResult | InputRequiredResult],
+]
+
+
+class EvidentiaMCPServer(MCPServer[Any]):
+    """Route SDK dispatch through the typed authorization and signing chain."""
+
+    def __init__(self, name: str = SERVER_NAME, *, instructions: str | None = None) -> None:
+        super().__init__(name=name, instructions=instructions)
+        self.evidentia_cimd: CIMDRegistry | None = None
+        self._evidentia_scope_wrapped = False
+        self._evidentia_signed_wrapped = False
+        self._evidentia_dispatch: ToolDispatch = super().call_tool
+
+    async def call_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        context: Context[Any, Any] | None = None,
+    ) -> CallToolResult | InputRequiredResult:
+        """Forward the original context through every installed wrapper."""
+        return await self._evidentia_dispatch(name, arguments, context)
+
+
 def build_server(
     *,
     allow_root: Path | None = None,
     cimd_registry: CIMDRegistry | None = None,
     default_client_id: str | None = None,
-) -> FastMCP:
-    """Construct the FastMCP server with all tools registered.
+) -> EvidentiaMCPServer:
+    """Construct the MCP server with all tools registered.
 
     Args:
         allow_root: Optional bound directory. When set, the
             file-path tools (``gap_analyze``, ``gap_diff``) gate
             their path inputs via
             :func:`evidentia_core.security.paths.validate_within`
-            against this root — out-of-root inputs surface as
-            ``PathTraversalError`` (subclass of ``ValueError``).
+            against this root. Out-of-root inputs return an MCP
+            tool error with generic SDK text.
             When ``None`` (default), tools preserve the v0.8.1
             behavior of accepting any path the server's UID can
             read (appropriate for stdio + loopback HTTP/SSE).
@@ -101,27 +131,22 @@ def build_server(
             through :func:`evidentia_mcp.scope.enforce_cimd_scope`.
             The registry IS visible to tool implementations via
             ``server.evidentia_cimd`` attribute (custom-attached;
-            not a FastMCP standard field).
+            not an upstream MCPServer field).
         default_client_id: v0.8.6 P1. Fallback ``client_id`` when
-            the MCP request meta does not carry one (canonical
-            stdio behavior; sometimes HTTP/SSE too). Combined
+            the MCP request metadata is missing, null or an empty
+            string. Applies to every transport. Combined
             with ``cimd_registry`` to wire the scope-enforcement
             gate. When ``cimd_registry`` is ``None`` this argument
             is informational only.
 
     Returns:
-        A :class:`mcp.server.fastmcp.FastMCP` instance ready to
+        An :class:`EvidentiaMCPServer` instance ready to
         be run over any MCP transport. Use :func:`run_stdio` /
         :func:`run_sse` / :func:`run_http` to launch the
         appropriate transport.
     """
-    server = FastMCP(name=SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
-    # v0.8.5 P4: attach CIMD registry as a server-side attribute
-    # so audit-trail consumers + future scope-gating logic can
-    # consult it. FastMCP doesn't reserve this attribute name; we
-    # use the ``evidentia_*`` prefix convention to avoid future
-    # collisions.
-    server.evidentia_cimd = cimd_registry  # type: ignore[attr-defined]
+    server = EvidentiaMCPServer(name=SERVER_NAME, instructions=SERVER_INSTRUCTIONS)
+    server.evidentia_cimd = cimd_registry
     _register_tools(server, allow_root=allow_root)
     # v0.8.6 P1: wire the CIMD scope-enforcement gate AFTER tools
     # are registered. The gate is idempotent + checks
@@ -164,9 +189,9 @@ def run_stdio(
             client can still set the flag.
         cimd_registry: v0.8.5 P4. See :func:`build_server`.
         default_client_id: v0.8.6 P1. See :func:`build_server`.
-            On stdio, the MCP wire protocol carries no per-request
-            client_id, so this flag IS the client_id. Documented
-            as informational, NOT a security boundary, in
+            Request metadata client_id takes precedence over this
+            fallback, including on stdio. Both are caller claims;
+            neither authenticates the client. See
             :mod:`evidentia_mcp.scope`.
     """
     server = build_server(
@@ -214,13 +239,12 @@ def run_sse(
         cimd_registry=cimd_registry,
         default_client_id=default_client_id,
     )
-    # FastMCP exposes ``settings.host`` + ``settings.port`` as
-    # the canonical knobs for the HTTP transports. Mutate before
-    # ``server.run(transport="sse")`` so the bind address takes
-    # effect.
-    server.settings.host = host
-    server.settings.port = port
-    server.run(transport="sse")
+    server.run(
+        transport="sse",
+        host=host,
+        port=port,
+        max_request_body_size=DEFAULT_MAX_REQUEST_BODY_SIZE,
+    )
 
 
 def run_http(
@@ -236,6 +260,10 @@ def run_http(
     v0.8.1 P3.1: modern MCP HTTP transport supporting bi-
     directional streaming. Used by browser-based agents +
     remote MCP clients that don't speak stdio.
+
+    SDK defaults remain in force: a 4 MiB request body limit,
+    a 30-minute idle timeout, and at most 10,000 legacy stateful
+    sessions. Legacy HTTP sessions remain stateful.
 
     Same security posture as :func:`run_sse` — operators
     binding to non-loopback MUST front with reverse-proxy
@@ -253,19 +281,25 @@ def run_http(
         cimd_registry=cimd_registry,
         default_client_id=default_client_id,
     )
-    server.settings.host = host
-    server.settings.port = port
-    server.run(transport="streamable-http")
+    server.run(
+        transport="streamable-http",
+        host=host,
+        port=port,
+        stateless_http=False,
+        max_request_body_size=DEFAULT_MAX_REQUEST_BODY_SIZE,
+        session_idle_timeout=DEFAULT_SESSION_IDLE_TIMEOUT,
+        max_sessions=DEFAULT_MAX_SESSIONS,
+    )
 
 
 # ── Tool implementations ──────────────────────────────────────────
 
 
-def _register_tools(server: FastMCP, *, allow_root: Path | None = None) -> None:
+def _register_tools(server: EvidentiaMCPServer, *, allow_root: Path | None = None) -> None:
     """Wire the tool surface onto the server.
 
     Each tool is a regular Python function with a structured
-    docstring (FastMCP exposes the docstring as the tool's
+    docstring (the SDK exposes the docstring as the tool's
     description in the MCP tool-picker). The function's type
     annotations drive the JSONSchema for the tool's input
     parameters.
@@ -981,7 +1015,7 @@ def _register_tools(server: FastMCP, *, allow_root: Path | None = None) -> None:
         from evidentia_core.oscal.verify import verify_ar_file
 
         # F-V109-1: the tool schema can't express both-or-neither, so
-        # guard here — FastMCP surfaces the raise as a structured tool
+        # guard here. The SDK surfaces the raise as a structured tool
         # error (same pattern as the FileNotFoundError below), not a
         # stack trace.
         if (expected_sigstore_identity is None) != (expected_sigstore_issuer is None):

@@ -16,8 +16,8 @@ The names exported by `evidentia_mcp.__all__` (re-exported at the package root):
 | `CIMDDocument` | One client's metadata per the CIMD spec. |
 | `CIMDRegistry` | Registry of registered CIMDs. |
 | `CIMD_REGISTRY_VERSION` | — |
-| `build_server` | Construct the FastMCP server with all tools registered. |
-| `enforce_cimd_scope` | Wire the CIMD scope-enforcement gate onto a FastMCP server. |
+| `build_server` | Construct the MCP server with all tools registered. |
+| `enforce_cimd_scope` | Install one scope gate on the server's typed dispatch slot. |
 | `run_http` | Run the MCP server over streamable-http. |
 | `run_sse` | Run the MCP server over SSE (Server-Sent Events). |
 | `run_stdio` | Run the MCP server over stdio (the canonical transport). |
