@@ -1,0 +1,89 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Authored Graph transport data for bounded reader tests; no tenant recording or permission/license attestation.",
+  "capability": "authentication-registration",
+  "clock_utc": "2026-09-10T00:00:00.000000Z",
+  "lookback_days": 1,
+  "exchanges": [
+    {
+      "method": "GET",
+      "route": "/v1.0/reports/authenticationMethods/userRegistrationDetails",
+      "query": "",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": "SYNTHETIC-USER-A",
+            "isMfaRegistered": true,
+            "isMfaCapable": false,
+            "methodsRegistered": [
+              "password",
+              "password",
+              "FUTURE-METHOD",
+              " method "
+            ],
+            "lastUpdatedDateTime": "2026-09-09t23:59:59.999999999999z",
+            "userPrincipalName": "SYNTHETIC-EXCLUDED-USER"
+          },
+          {
+            "id": "SYNTHETIC-USER-B",
+            "isMfaRegistered": false,
+            "isMfaCapable": true,
+            "methodsRegistered": [],
+            "lastUpdatedDateTime": "2026-09-10T00:00:00.000000000001Z"
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/reports/authenticationMethods/userRegistrationDetails?$skiptoken=SYNTHETIC%2f+opaque%26v%3D2"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/v1.0/reports/authenticationMethods/userRegistrationDetails",
+      "query": "$skiptoken=SYNTHETIC%2f+opaque%26v%3D2",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": "SYNTHETIC-USER-C",
+            "isMfaRegistered": null,
+            "methodsRegistered": null,
+            "lastUpdatedDateTime": null
+          },
+          {
+            "id": "SYNTHETIC-USER-D",
+            "isMfaCapable": null
+          },
+          {
+            "id": "SYNTHETIC-USER-E",
+            "isMfaRegistered": true,
+            "isMfaCapable": true,
+            "methodsRegistered": [
+              "password",
+              "FUTURE-METHOD"
+            ],
+            "lastUpdatedDateTime": "2026-09-10T01:59:59+02:00"
+          },
+          {
+            "id": "SYNTHETIC-USER-A",
+            "isMfaRegistered": true,
+            "isMfaCapable": false,
+            "methodsRegistered": [
+              "password",
+              "password",
+              "FUTURE-METHOD",
+              " method "
+            ],
+            "lastUpdatedDateTime": "2026-09-09t23:59:59.999999999999z",
+            "userPrincipalName": "DIFFERENT-SYNTHETIC-EXCLUDED-USER"
+          }
+        ]
+      }
+    }
+  ]
+}

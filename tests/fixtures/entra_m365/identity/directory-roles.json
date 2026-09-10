@@ -1,0 +1,36 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Authored Graph transport data for bounded reader tests; no tenant recording or permission/license attestation.",
+  "capability": "directory-roles",
+  "clock_utc": "2026-09-10T00:00:00.000000Z",
+  "lookback_days": 1,
+  "exchanges": [
+    {
+      "method": "GET",
+      "route": "/v1.0/directoryRoles",
+      "query": "",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": " role-a ",
+            "roleTemplateId": " template-a ",
+            "displayName": "<script>synthetic-role</script>",
+            "members": [
+              {
+                "id": "SYNTHETIC-EXCLUDED-MEMBER"
+              }
+            ]
+          },
+          {
+            "id": "role-b",
+            "displayName": null
+          }
+        ]
+      }
+    }
+  ]
+}

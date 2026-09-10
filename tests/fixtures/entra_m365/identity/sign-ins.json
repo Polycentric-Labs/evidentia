@@ -1,0 +1,79 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Authored Graph transport data for bounded reader tests; no tenant recording or permission/license attestation.",
+  "capability": "sign-ins",
+  "clock_utc": "2026-09-10T00:00:00.000000Z",
+  "lookback_days": 1,
+  "exchanges": [
+    {
+      "method": "GET",
+      "route": "/v1.0/auditLogs/signIns",
+      "query": "$filter=createdDateTime%20ge%202026-09-09T00%3A00%3A00.000000Z%20and%20createdDateTime%20le%202026-09-10T00%3A00%3A00.000000Z",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": "sign-start",
+            "createdDateTime": "2026-09-09T00:00:00.000000Z",
+            "conditionalAccessStatus": "success",
+            "status": {
+              "errorCode": 0,
+              "failureReason": "SYNTHETIC-EXCLUDED-REASON"
+            },
+            "appliedConditionalAccessPolicies": [],
+            "ipAddress": "SYNTHETIC-EXCLUDED-IP"
+          },
+          {
+            "id": "sign-middle",
+            "createdDateTime": "2026-09-10t00:59:59.123456789123+01:00",
+            "conditionalAccessStatus": "failure",
+            "authenticationRequirement": "multiFactorAuthentication",
+            "status": {
+              "errorCode": 50076
+            },
+            "appliedConditionalAccessPolicies": [
+              {
+                "id": "synthetic-policy",
+                "result": "success",
+                "enforcedGrantControls": [
+                  "mfa"
+                ]
+              }
+            ]
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/auditLogs/signIns?$skiptoken=SYNTHETIC%2f+opaque%26v%3D2"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/v1.0/auditLogs/signIns",
+      "query": "$skiptoken=SYNTHETIC%2f+opaque%26v%3D2",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": "sign-end",
+            "createdDateTime": "2026-09-10T00:00:00.000000000000Z",
+            "conditionalAccessStatus": "notApplied",
+            "appliedConditionalAccessPolicies": null
+          },
+          {
+            "id": "sign-old",
+            "createdDateTime": "2026-09-08T23:59:59.999999999999Z"
+          },
+          {
+            "id": "sign-future",
+            "createdDateTime": "2026-09-10T00:00:00.000000000001Z"
+          }
+        ]
+      }
+    }
+  ]
+}

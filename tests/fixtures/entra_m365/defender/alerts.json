@@ -1,0 +1,62 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Two synthetic alert pages with literal source states and exact timestamps.",
+  "requests": [
+    {
+      "pagination_sequence": 1,
+      "method": "GET",
+      "route": "/v1.0/security/alerts_v2",
+      "query": "",
+      "status": 200,
+      "headers": {"content-type": "application/json"},
+      "body": {
+        "value": [
+          {
+            "id": " synthetic-alert-resolved ",
+            "incidentId": " synthetic-related-incident ",
+            "severity": "high",
+            "status": "resolved",
+            "createdDateTime": "2026-09-09t01:00:00.123456700+01:00",
+            "lastUpdateDateTime": "2026-09-09T23:00:00.123456000Z",
+            "resolvedDateTime": "2026-09-09T23:30:00.765432000+00:00",
+            "serviceSource": "microsoftDefenderForEndpoint",
+            "detectionSource": "microsoftDefenderForEndpoint",
+            "title": "SYNTHETIC_EXCLUDED_TITLE",
+            "description": "SYNTHETIC_EXCLUDED_DESCRIPTION",
+            "userPrincipalName": "SYNTHETIC_EXCLUDED_PRINCIPAL",
+            "evidence": [{"deviceName": "SYNTHETIC_EXCLUDED_DEVICE"}]
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/security/alerts_v2?$skiptoken=SYNTHETIC%2F+%20%26value"
+      }
+    },
+    {
+      "pagination_sequence": 2,
+      "method": "GET",
+      "route": "/v1.0/security/alerts_v2",
+      "query": "$skiptoken=SYNTHETIC%2F+%20%26value",
+      "status": 200,
+      "headers": {"content-type": "application/json"},
+      "body": {
+        "value": [
+          {
+            "id": "synthetic-alert-unknown",
+            "incidentId": null,
+            "severity": "futureSeverity",
+            "status": "futureStatus",
+            "createdDateTime": "2026-09-10T00:00:00.123456000000Z",
+            "lastUpdateDateTime": null,
+            "resolvedDateTime": null,
+            "serviceSource": "futureService",
+            "detectionSource": "unknownFutureValue"
+          }
+        ],
+        "@odata.nextLink": null
+      }
+    }
+  ],
+  "limitations": [
+    "Authored synthetic responses; no provider recording or tenant call.",
+    "No credential, permission, role, license or service-availability claim."
+  ]
+}

@@ -319,6 +319,47 @@ from evidentia_mcp.server import build_server  # v0.8.0+ name
 class to a different module internally is allowed as long as the
 original import path continues to work (via re-export).
 
+### Entra/M365 collection contract (v0.13)
+
+The `evidentia_collectors.entra_m365` exports `EntraM365Collector`,
+`EntraM365CollectRequest`, `EntraM365CollectResult`,
+`EntraM365CapabilityResult`, `EntraM365Diagnostic` and `EntraM365InputError`
+are public. Their names and documented request/result fields follow this
+stability policy. `collect_v2(request)` returns the full result;
+`collect(request)` is the findings-only convenience method. New integrations
+should use `collect_v2` so they retain coverage and provenance.
+
+The `entra-m365-collection/v1` result contains exactly nine capability records
+in canonical order, including unrequested capabilities. `status` describes the
+requested subset; `full_surface_complete` separately describes all nine.
+Declared tenant labels and credential modes do not verify authenticated identity.
+Bounds, source field distinctions and exported DLP formats are documented in the
+[collector design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/entra-m365-collector-design.md).
+
+The `collect entra-m365` CLI leaf exposes `--tenant-label`, repeatable
+`--capability`, `--lookback-days`, `--max-items`, `--max-pages`, `--dlp-export`,
+`--dlp-format` and `--output`/`-o`. A valid partial/unavailable result is written
+before exit 1; complete is 0, invalid input 2 and read-role denial 77. Operational
+and output failures are 1. Stdout remains JSON-only when no output file is used.
+
+`POST /api/collectors/entra-m365/collect` accepts the authoritative request model
+with inline DLP text, never a credential or server path. Its cumulative 8 MiB
+body limit is independent of Content-Length. Completed attempts return the
+validated full result with HTTP 200, including partial/unavailable evidence.
+Input errors are sanitized 400, body overflow 413 and unsupported media 415.
+Existing authentication and read RBAC apply; a Graph request without an
+AuthProvider returns 403. A missing optional feature returns 503 and advertises
+no success schema. Internal failure without a safe result returns sanitized 500.
+`GET /api/collectors/status` includes `entra-m365` installation and configuration
+booleans, with live validation and identity verification explicitly false.
+
+The fixed credential references are `ENTRA_M365_ACCESS_TOKEN`,
+`ENTRA_M365_RETENTION_ACCESS_TOKEN` and `ENTRA_M365_AUTH_MODE`. The primary mode
+is `application` or `delegated`, defaulting to `application`; retention is
+separately delegated. There is no token refresh, environment-name override or
+retention fallback. These names and meanings form the documented collector
+configuration contract. DLP-only ingestion resolves neither token.
+
 ### 6. REST API URIs
 
 **Package**: `evidentia_api.routers.*`
@@ -627,3 +668,4 @@ cycle.
 | **NORMATIVE** | **2026-09-09** | **CI verification controls.** Repository workflow policy and local admission tooling strengthen development checks without changing runtime models, CLI leaves, API routes, MCP tools or environment-variable contracts. The existing strict docs build is required before merge. |
 | **NORMATIVE** | **2026-09-09** | **MCP SDK 2.2 migration (V13-16).** The fourteen tool names, descriptions and input/output schemas retain their SDK 1.29.1 baseline. Typed dispatch corrects the demonstrated protocol scope/signing bypass. Request metadata overrides fallback; malformed identities deny before execution. Scope denials use protocol -32602 with no error data, ordinary failures remain tool errors, and explicit MCP exceptions retain their protocol code. Signing binds the delivered JSON payload under the existing payload-only envelope; invalid enabled factories fail. Transport selectors and bind defaults are unchanged. |
 | **NORMATIVE** | **2026-09-10** | **MCP description comparison clarification (V13-16).** [Python 3.13 and later strip common docstring indentation during compilation](https://docs.python.org/3.13/whatsnew/3.13.html#other-language-changes). The SDK 1.29.1 fixture was captured on Python 3.12 and remains unchanged. Tests compare descriptions using `inspect.cleandoc`, preserving wording, internal line breaks and relative indentation while normalizing docstring margins and outer blank lines. Tool names and input/output schemas are compared exactly. This clarifies the preceding migration row; it does not change tool source descriptions or runtime dispatch. |
+| **NORMATIVE** | **2026-09-10** | **Entra/M365 evidence (V13-02).** Add the six public collector exports, bounded request and full result contract, `collect entra-m365`, `POST /api/collectors/entra-m365/collect` and the `entra-m365` status entry. Nine capability records preserve source coverage, declared identity and precise event windows. Partial/unavailable attempts retain the full response; CLI input/output refusal and read RBAC are explicit. The three fixed `ENTRA_M365_*` references are documented configuration contracts. Existing collector endpoints and result models retain their shapes. |

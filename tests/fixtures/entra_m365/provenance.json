@@ -68,6 +68,257 @@
       "recorded_graph_responses": false,
       "tenant_access": false,
       "credentials": "Synthetic test markers only."
+    },
+    {
+      "path": "identity/conditional-access.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "97f51d47ed026494db87e18b2f1dfce3fe5ec3656730a86bfdff512fb4d5e8ec",
+      "capabilities": [
+        "conditional-access"
+      ],
+      "scope": "Literal policy configuration, report-only and unknown states, selected nested data and opaque continuation.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "source_captured_at": null,
+      "permission_or_license_attestation": false,
+      "credentials": "Only labeled synthetic marker values supplied by the test harness; no credential is stored in the fixture.",
+      "clock_basis": "Explicit synthetic test clock, not a capture date.",
+      "synthetic_clock_utc": "2026-09-10T00:00:00Z",
+      "exchanges": 2,
+      "method": "GET",
+      "route": "/v1.0/identity/conditionalAccess/policies",
+      "source_method_documentation": "https://learn.microsoft.com/en-us/graph/api/conditionalaccessroot-list-policies?view=graph-rest-1.0",
+      "construction": "Authored from the signed field and transport contract; not copied from a tenant response or provider example."
+    },
+    {
+      "path": "identity/authentication-registration.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "d624d13dec2f81277d08f61e727da051a21da1e3fcc026e59138c4e18bb8fe83",
+      "capabilities": [
+        "authentication-registration"
+      ],
+      "scope": "Independent registration flags, per-record literal method counts, exact update ages and a projected duplicate.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "source_captured_at": null,
+      "permission_or_license_attestation": false,
+      "credentials": "Only labeled synthetic marker values supplied by the test harness; no credential is stored in the fixture.",
+      "clock_basis": "Explicit synthetic test clock, not a capture date.",
+      "synthetic_clock_utc": "2026-09-10T00:00:00Z",
+      "exchanges": 2,
+      "method": "GET",
+      "route": "/v1.0/reports/authenticationMethods/userRegistrationDetails",
+      "source_method_documentation": "https://learn.microsoft.com/en-us/graph/api/authenticationmethodsroot-list-userregistrationdetails?view=graph-rest-1.0",
+      "construction": "Authored from the signed field and transport contract; not copied from a tenant response or provider example."
+    },
+    {
+      "path": "identity/sign-ins.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "0e793bc0447727e575363fbcdf298b1a7b263cccda0f59c8623b31c4ab6439fc",
+      "capabilities": [
+        "sign-ins"
+      ],
+      "scope": "Exact inclusive source window, discarded older/future events, unavailable policy detail and literal optional authentication requirement.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "source_captured_at": null,
+      "permission_or_license_attestation": false,
+      "credentials": "Only labeled synthetic marker values supplied by the test harness; no credential is stored in the fixture.",
+      "clock_basis": "Explicit synthetic test clock, not a capture date.",
+      "synthetic_clock_utc": "2026-09-10T00:00:00Z",
+      "exchanges": 2,
+      "method": "GET",
+      "route": "/v1.0/auditLogs/signIns",
+      "source_method_documentation": "https://learn.microsoft.com/en-us/graph/api/signin-list?view=graph-rest-1.0",
+      "construction": "Authored from the signed field and transport contract; not copied from a tenant response or provider example."
+    },
+    {
+      "path": "identity/directory-roles.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "9f07cb514623d98b31921eed00b882610856f9762c4f788de0b0183159acef27",
+      "capabilities": [
+        "directory-roles"
+      ],
+      "scope": "One-page activated-role inventory with literal IDs, display text and excluded membership.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "source_captured_at": null,
+      "permission_or_license_attestation": false,
+      "credentials": "Only labeled synthetic marker values supplied by the test harness; no credential is stored in the fixture.",
+      "clock_basis": "Explicit synthetic test clock, not a capture date.",
+      "synthetic_clock_utc": "2026-09-10T00:00:00Z",
+      "exchanges": 1,
+      "method": "GET",
+      "route": "/v1.0/directoryRoles",
+      "source_method_documentation": "https://learn.microsoft.com/en-us/graph/api/directoryrole-list?view=graph-rest-1.0",
+      "construction": "Authored from the signed field and transport contract; not copied from a tenant response or provider example."
+    },
+    {
+      "path": "devices/managed-devices.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "27c9d5f17a4ff9abbefbe6822f3d8fc9b03cb175a95210da7fd5139418bb59a6",
+      "capabilities": [
+        "managed-devices"
+      ],
+      "scope": "Observed device enums, exact sync ages, future/null/absent fields and opaque continuation.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "source_captured_at": null,
+      "permission_or_license_attestation": false,
+      "credentials": "Only labeled synthetic marker values supplied by the test harness; no credential is stored in the fixture.",
+      "clock_basis": "Explicit synthetic test clock, not a capture date.",
+      "synthetic_clock_utc": "2026-09-10T00:00:00Z",
+      "exchanges": 2,
+      "method": "GET",
+      "route": "/v1.0/deviceManagement/managedDevices",
+      "source_method_documentation": "https://learn.microsoft.com/en-us/graph/api/intune-devices-manageddevice-list?view=graph-rest-1.0",
+      "construction": "Authored from the signed field and transport contract; not copied from a tenant response or provider example."
+    },
+    {
+      "path": "purview/retention-synthetic.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "6548a69f1b60b914042525806f0a8186a0e8cd27c0eacaf4c3e470c94b116d76",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "scope": "Two exact synthetic retention-label HTTP pages with opaque continuation, literal data, absent/null fields and unknown enum."
+    },
+    {
+      "path": "purview/dlp-contradictions-synthetic.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "97d7e0c0d59883f054dea74e508578bef66719192c8459fe631a4381462f42b9",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "scope": "Contradictory policy flags and a rule referencing a policy Name instead of its Guid."
+    },
+    {
+      "path": "purview/dlp-invalid-flag-synthetic.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "6e5cf18092ed8fedf512e79a8e1e41bdf6c7ead7798a70a48705a069f44cfb21",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "scope": "Structurally invalid export with a string in the strict Disabled boolean field."
+    },
+    {
+      "location": "tests/unit/test_collectors/test_entra_m365_purview.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Delegated retention transport, selected-field, pagination, conflict, limit and refusal cases.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic marker only."
+    },
+    {
+      "location": "tests/unit/test_collectors/test_entra_m365_dlp_export.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Strict DLP preflight, GUID/name joins, flag classification, provenance, bounded admission, duplicate/conflict and persistence controls.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "None."
+    },
+    {
+      "path": "defender/alerts.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "d7e71c09ff19d87a3d47c53fd90bf1ce0661f7bd300c9358342a1eb6277da89f",
+      "method": "GET",
+      "route": "/v1.0/security/alerts_v2",
+      "transport_envelope": "requests contains sequence, method, route, query, status, permitted headers and body.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only; no fixture credential headers.",
+      "permission_role_license_evidence": "unverified",
+      "capture_date": null
+    },
+    {
+      "path": "defender/incidents.json",
+      "kind": "authored-synthetic",
+      "sha256_lf": "82e423be00038606148707af6ed2d8bd4143392acb4666b1240e29d010c9d5b5",
+      "method": "GET",
+      "route": "/v1.0/security/incidents",
+      "transport_envelope": "requests contains sequence, method, route, query, status, permitted headers and body.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only; no fixture credential headers.",
+      "permission_role_license_evidence": "unverified",
+      "capture_date": null
+    },
+    {
+      "location": "tests/unit/test_collectors/test_entra_m365_defender.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Defender source states, timestamps, admission failures and result invariants.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/unit/test_collectors/test_entra_m365_identity.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Identity source state, observed registration records and exact timestamps.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/unit/test_collectors/test_entra_m365_devices.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Managed-device source state and exact synchronization ages.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/unit/test_collectors/test_entra_m365_collector.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Orchestration, request preflight and resource lifetime.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/integration/test_cli/test_collect_entra_m365_cli.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "CLI input bounds, actor authorization and result preservation.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/integration/test_api/test_collectors_entra_m365.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "API input bounds, actor authorization and complete result responses.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "packages/evidentia-ui/src/lib/demo/fixtures.ts",
+      "kind": "inline-authored-synthetic",
+      "scope": "Fixed partial and all-unavailable Entra/M365 examples with synthetic clocks and identity labels.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/integration/test_api/_entra_m365_asgi.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Fragmented ASGI input, actor authorization, optional import failure and safe result serialization.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/integration/test_api/_entra_m365_stream_cases.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Fragmented ASGI input, actor authorization, optional import failure and safe result serialization.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    },
+    {
+      "location": "tests/integration/test_api/_entra_m365_import_child.py",
+      "kind": "inline-authored-synthetic",
+      "scope": "Fragmented ASGI input, actor authorization, optional import failure and safe result serialization.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
     }
   ],
   "limits": [

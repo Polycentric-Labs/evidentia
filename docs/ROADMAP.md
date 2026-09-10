@@ -159,7 +159,10 @@ Pulled forward on 2026-09-06 from the provisional v0.14 to v0.16 sketches
 (V13-25 to V13-28 in the plan): STIG and SCAP results ingest, the CycloneDX
 VEX 1.7 opt-in flag, an RFC 9116 `security.txt` probe inside the
 registry-selector leaf, and patch cadence from release APIs. The whole plan
-ships in this cycle; Entra ID / M365 builds on recorded fixtures.
+ships in this cycle. Entra ID / M365 now has all nine collector capabilities and
+CLI/API/console parity. Its approved test path combines authored-synthetic Graph
+transports with a selected recorded CISA DLP export; live-tenant acceptance
+remains unverified. See the [collector design](designs/entra-m365-collector-design.md).
 
 Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
 and 100% GUI coverage is a per-cycle exit condition at the tag.

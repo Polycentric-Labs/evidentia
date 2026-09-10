@@ -14,7 +14,7 @@ from importlib.metadata import version
 from typing import Annotated, Literal, Self, cast
 
 from evidentia_core.audit.provenance import CollectionContext, CollectionManifest, CoverageCount, PaginationContext
-from evidentia_core.models.common import ControlMapping, Severity, deterministic_finding_id
+from evidentia_core.models.common import ControlMapping, NonBlankStr, Severity, deterministic_finding_id
 from evidentia_core.models.finding import ComplianceStatus, FindingStatus, SecurityFinding
 from pydantic import (
     AfterValidator,
@@ -69,7 +69,10 @@ class EntraM365CollectRequest(BaseModel):
     )
 
     tenant_label: Annotated[
-        str, Field(min_length=1, max_length=64, json_schema_extra={"pattern": r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"})
+        str,
+        Field(
+            min_length=1, max_length=64, json_schema_extra={"pattern": r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\s\S])"}
+        ),
     ]
     capabilities: Annotated[
         list[CapabilityName], Field(min_length=1, max_length=9, json_schema_extra={"uniqueItems": True})
@@ -1064,7 +1067,13 @@ class _EntraM365Finding(SecurityFinding):
 
 
 class _Provenance(_WireModel):
-    tenant_label: Annotated[str, Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")]
+    tenant_label: Annotated[
+        NonBlankStr,
+        Field(
+            max_length=64,
+            json_schema_extra={"allOf": [{"pattern": r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\s\S])"}]},
+        ),
+    ]
     identity_basis: Literal["operator-declared"]
     authenticated_identity_verified: Literal[False]
     graph_cloud: Literal["commercial"]

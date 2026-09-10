@@ -95,3 +95,26 @@ describe("demo-api", () => {
     expect(events.map((e) => e.phase)).toEqual(["start"]);
   });
 });
+
+describe("Entra/M365 synthetic results", () => {
+  it.each(["partial", "unavailable"] as const)(
+    "returns an isolated %s example with all capability states",
+    async (scenario) => {
+      const first = await demoApi.collectEntraM365(
+        { tenant_label: "synthetic-demo" },
+        scenario,
+      );
+      expect(first.status).toBe(scenario);
+      expect(first.provenance.tenant_label).toBe("synthetic-demo");
+      expect(first.provenance.authenticated_identity_verified).toBe(false);
+      expect(first.capabilities).toHaveLength(9);
+      expect(first.full_surface_complete).toBe(false);
+      first.capabilities[0].scanned = 999;
+      const again = await demoApi.collectEntraM365(
+        { tenant_label: "synthetic-demo" },
+        scenario,
+      );
+      expect(again.capabilities[0].scanned).not.toBe(999);
+    },
+  );
+});

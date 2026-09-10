@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Entra ID and Microsoft 365 evidence (V13-02).** Nine bounded capabilities
+  cover identity, Intune device state, Purview retention labels, supplied DLP
+  configuration, and Defender alerts and incidents. Python `collect_v2`,
+  `collect entra-m365`, the matching API endpoint and console tab return a full
+  result with capability states, exact event windows, provenance and a manifest.
+  Partial and unavailable evidence remains visible; the tenant alias and token
+  mode are operator-declared. CLI output uses atomic replacement. Graph collection
+  through the API requires authentication; local DLP ingestion retains read-role checks.
+  Transport and parser acceptance uses labeled synthetic Graph fixtures and a
+  pinned recorded CISA DLP projection. Live-tenant acceptance is unverified.
+  See [the collector design](docs/designs/entra-m365-collector-design.md).
 - **MCP protocol regression coverage.** Connected default and legacy clients
   exercise all fourteen tool contracts, per-request scope decisions, signed
   payloads, concurrent identities, error recovery and isolated stdio shutdown.

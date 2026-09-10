@@ -27,7 +27,7 @@ import type {
 } from "@/types/api";
 import type { ControlCatalog, CatalogControl } from "@/types/catalog";
 import type { EvidentiaConfig } from "@/types/config";
-import type { components } from "@/types/openapi";
+import type { components, operations } from "@/types/openapi";
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -520,6 +520,13 @@ export interface GreenboneCollectRequest {
 /** Response of `POST /api/collectors/greenbone/collect`: findings + manifest + the saved evidence artifact's lineage. */
 export type GreenboneCollectResponse =
   components["schemas"]["GreenboneCollectResponse"];
+
+/** Authoritative bounded request and full result from the generated API schema. */
+export type EntraM365CollectRequest =
+  operations["entra_m365_collect_api_collectors_entra_m365_collect_post"]["requestBody"]["content"]["application/json"];
+export type EntraM365CollectResult =
+  components["schemas"]["EntraM365CollectResult"];
+export type EntraM365DemoScenario = "partial" | "unavailable";
 
 // ── Catalog types (mirrored from evidentia_core catalog tooling) ─────────
 
@@ -1331,8 +1338,15 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  // `convert` is LOCAL-ONLY (no collection); it round-trips findings through the
-  // OCSF mapping layer and returns a loose object list (no named schema).
+  collectEntraM365: (
+    body: EntraM365CollectRequest,
+    _scenario: EntraM365DemoScenario = "partial",
+  ) =>
+    request<EntraM365CollectResult>("/api/collectors/entra-m365/collect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  // Conversion stays local and returns the OCSF mapping as an object list.
   collectConvert: (body: Record<string, unknown>) =>
     request<Record<string, unknown>[]>("/api/collectors/convert", {
       method: "POST",

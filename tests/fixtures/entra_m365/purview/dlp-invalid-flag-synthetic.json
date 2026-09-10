@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "source": {
+    "kind": "authored-synthetic",
+    "producer": "Evidentia tests",
+    "producer_version": null,
+    "captured_at": null,
+    "parent_sha256": null,
+    "source_uri": null,
+    "sanitization": "synthetic"
+  },
+  "policies": [
+    {
+      "Guid": "synthetic-policy",
+      "Name": "Literal policy",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange",
+      "Enabled": true,
+      "IsValid": true
+    }
+  ],
+  "rules": [
+    {
+      "Guid": "synthetic-rule",
+      "Policy": "Literal policy",
+      "ParentPolicyName": "Literal policy",
+      "Mode": "Enforce",
+      "Workload": "Exchange",
+      "Disabled": "false",
+      "IsValid": true
+    }
+  ]
+}

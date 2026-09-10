@@ -5,7 +5,8 @@ makes an outbound, authenticated call to an external system — AWS, GitHub, Okt
 SQL database, a SaaS GRC platform — and returns a list of `SecurityFinding` records
 mapped to control families. This guide covers the full collector surface: the
 `evidentia collect` command group on the CLI, and the credentialed **Collect**
-screen in the web console.
+screen in the web console. Entra/M365 also accepts a local DLP export and
+reports a full collection result rather than a bare findings array.
 
 This is the *operator* reference for the whole collector matrix. If you have never
 run a collector before, start with the gentler end-to-end walkthrough in
@@ -69,7 +70,7 @@ evidentia collect --help
 ```
 
 You will see the credentialed providers (`aws`, `github`, `okta`,
-`google-workspace`, `sql`, `databricks`, `snowflake`, `vanta`, `drata`, `bitsight`,
+`google-workspace`, `entra-m365`, `sql`, `databricks`, `snowflake`, `vanta`, `drata`, `bitsight`,
 `securityscorecard`) plus the two OCSF verbs (`ocsf` to ingest, `convert` to
 emit). Each subcommand has its
 own `--help` with the exact flags and the env var its secret is read from:
@@ -124,6 +125,105 @@ evidentia collect okta --org-url https://your-org.okta.com --output okta-finding
 ```bash
 evidentia collect google-workspace --customer my_customer --output google-workspace-findings.json
 ```
+
+### Entra ID and Microsoft 365
+
+`evidentia collect entra-m365` returns a result envelope with findings, a manifest
+and all nine capability records. It is not a bare findings array. The capability
+names are `conditional-access`, `authentication-registration`, `sign-ins`,
+`directory-roles`, `managed-devices`, `retention-labels`, `dlp-export`,
+`defender-alerts` and `defender-incidents`. Omit `--capability` to request all nine,
+or repeat it to choose a subset.
+
+The alias supplied through `--tenant-label` must start with an ASCII letter or
+digit and contain at most 64 letters, digits, underscores, periods or hyphens.
+It is an operator label, not a verified tenant ID. Tokens are never decoded to
+infer identity. Provision pre-minted tokens through the operator's secret
+management process, using these fixed environment references:
+
+| Reference | Use |
+| --- | --- |
+| `ENTRA_M365_ACCESS_TOKEN` | Seven Graph capabilities other than retention labels. |
+| `ENTRA_M365_AUTH_MODE` | Declared primary mode: `application` (default) or `delegated`. |
+| `ENTRA_M365_RETENTION_ACCESS_TOKEN` | Separate delegated token for retention labels, with no fallback to the primary token. |
+
+The collector only makes GET requests to eight fixed commercial Graph v1.0
+collections. It does not acquire or refresh tokens, execute PowerShell, accept
+an arbitrary host, or allow private-address access. Source permissions, delegated
+roles and licensing are separate requirements; see the
+[permission and evidence boundary tables](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/entra-m365-collector-design.md).
+A 403 does not identify which of those requirements is missing. A primary-token
+401 stops later reuse of that token while retaining independent retention and
+DLP evidence.
+
+After configuring an authorized token, this command requests two capabilities.
+It is identical in Bash and PowerShell:
+
+```bash
+evidentia collect entra-m365 --tenant-label audit-sample --capability conditional-access --capability sign-ins --lookback-days 7 --max-items 1000 --max-pages 10 --output entra-result.json
+```
+
+`--lookback-days` accepts 1 through 30 (default 30), `--max-items` accepts 1
+through 10,000 (default 10,000), and `--max-pages` accepts 1 through 100 (default
+100). Event timestamps retain source precision and the result distinguishes the
+requested window from the first and last observed events. A limit that stops
+collection leaves partial evidence after an accepted page, or unavailable
+evidence before one. A terminal page exactly at a cap can still complete.
+
+DLP configuration comes from a local UTF-8 JSON file of at most 4 MiB. It needs
+no token when `dlp-export` is the only selected capability. The default format is
+`evidentia-dlp-v1`, which the recorded fixture below uses. Select
+`scubagear-provider-v1` explicitly for original provider JSON containing
+`dlp_compliance_policies` and `dlp_compliance_rules` arrays. Neither format executes scripts or follows URLs. The
+[design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/entra-m365-collector-design.md) defines the exact policy,
+rule and source fields and GUID join rules.
+
+From a repository checkout, this recorded-fixture example runs offline and
+works unchanged in Bash or PowerShell:
+
+```bash
+evidentia collect entra-m365 --tenant-label recorded-sample --capability dlp-export --dlp-export tests/fixtures/entra_m365/purview/cisa-dlp-recorded.json --dlp-format evidentia-dlp-v1 --output dlp-result.json
+```
+
+The fixture preserves 11 policies, 15 rules and publisher-attested provenance.
+All policy distribution states are `Pending`; complete enumeration does not
+establish enforcement. This is a selected recorded DLP export, not a Graph
+recording or a live tenant assessment. Other Graph test fixtures and both console
+demo scenarios are explicitly synthetic.
+
+Check `status`, `full_surface_complete` and each capability's `state` before
+using the findings. A selected subset can be complete while full-surface
+coverage is false. Unrequested capabilities remain `not_requested`; missing,
+denied or incomplete evidence is not a compliance pass. Directory roles are
+activated-role inventory without memberships or PIM assignments; retention
+labels show configuration without item application or immutability proof.
+
+The CLI writes the full valid result before exiting: 0 for complete, 1 for
+partial or unavailable, 2 for invalid input, and 77 for an existing read-role
+denial. Operational or output failure also exits 1. `--output` uses atomic
+replacement after input/output identity and feasibility checks; symlink output
+leaves are refused. Without it, stdout contains only JSON and notices use stderr.
+Keep the envelope as collection evidence. Consumers requiring a findings array
+must explicitly extract `findings` after reviewing completeness.
+
+The API accepts the same request fields at
+`POST /api/collectors/entra-m365/collect`, with inline `dlp_content` rather than a
+file path. Its entire JSON body is bounded to 8 MiB. Well-formed completed
+attempts return HTTP 200 even when evidence is partial or unavailable. Invalid
+JSON or fields return sanitized 400 errors, oversized bodies 413 and unsupported
+media types 415. Graph requests require configured API authentication and read
+RBAC; DLP-only requests retain read RBAC without requiring a Graph credential.
+A missing optional collector returns 503 without parsing the export.
+
+In the console, choose the **Entra/M365** tab, select capabilities and enter a
+nonsecret alias. Graph collection rechecks authentication immediately before
+submission. DLP-only ingestion stays available under the local parsing posture.
+All nine states, counts, windows and source limitations remain visible even with
+zero findings. The page previews at most 100 findings, with source observations
+for the first 10 findings;
+**Download full result JSON** retains the complete result. The **Status** tab
+reports configuration presence separately from live validation, which remains
+false.
 
 ### Google Workspace
 
@@ -201,9 +301,9 @@ for the export side.
 
 Everything above also works from the browser. Start the server with
 `evidentia serve` and open the **Collect** screen from the sidebar (under
-**Connect**, route `/collect`). The screen has four tabs — **Collectors**, **OCSF
-ingest**, **Convert**, and **Status** — each returning a list of findings rendered
-as severity-tagged cards.
+**Connect**, route `/collect`). Its seven tabs are **Collectors**, **Entra/M365**,
+**OCSF ingest**, **Nessus scan**, **Greenbone report**, **Convert** and **Status**.
+The Entra/M365 tab retains the full result alongside the finding cards.
 
 ![The Collect screen](../images/screen-collect.png)
 
@@ -218,9 +318,10 @@ restarting `evidentia serve`. This mirrors the always-visible security-posture
 banner — it is a §4(c) safeguard so that *anyone* who can reach the local API
 cannot silently drive credentialed external calls.
 
-Two surfaces stay enabled even without auth, because they are **local-only** (no
-network, no credentials): the **Convert** tab, and the **OCSF ingest** tab's
-*inline content* mode. The **OCSF ingest** *URL* mode *is* networked, so it is
+Local parsing stays available without a configured AuthProvider: **Convert**,
+**OCSF ingest** with inline content, the Nessus and Greenbone export tabs, and
+**Entra/M365** with only DLP export selected. Configured read-role checks still
+apply. The **OCSF ingest** *URL* mode *is* networked, so it is
 auth-gated like the credentialed collectors.
 
 ### Collectors tab

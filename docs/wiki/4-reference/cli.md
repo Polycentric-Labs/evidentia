@@ -317,6 +317,21 @@ Collect compliance evidence from a Drata workspace (read-only).
 | `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
+### `evidentia collect entra-m365`
+
+Collect Entra/M365 observations with explicit completeness and provenance.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--tenant-label` | Nonsecret operator alias, not a verified tenant ID. |
+| `--capability` | Repeat a named capability; omitted means all nine. |
+| `--lookback-days` | Event window in days, 1 through 30. |
+| `--max-items` | Per-capability source limit, 1 through 10000. |
+| `--max-pages` | Per-capability page limit, 1 through 100. |
+| `--dlp-export` | Local UTF-8 JSON export, at most 4 MiB. |
+| `--dlp-format` | evidentia-dlp-v1 or scubagear-provider-v1. |
+| `--output, -o` | Atomically write full result JSON; omitted means stdout. |
+
 ### `evidentia collect github`
 
 Collect evidence from a GitHub repository.

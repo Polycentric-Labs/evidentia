@@ -14,6 +14,9 @@
  */
 
 import type {
+  EntraM365CollectRequest,
+  EntraM365CollectResult,
+  EntraM365DemoScenario,
   ConmonCadence,
   FrameworkListResponse,
   GapReportListResponse,
@@ -110,6 +113,8 @@ import {
   DEMO_AIRGAP,
   DEMO_CONFIG,
   DEMO_CONMON,
+  DEMO_ENTRA_M365_PARTIAL,
+  DEMO_ENTRA_M365_UNAVAILABLE,
   DEMO_FRAMEWORKS,
   DEMO_GAP_DIFF,
   DEMO_GAP_REPORT,
@@ -584,6 +589,15 @@ const DEMO_CONVERT_OUTPUT: Record<string, unknown>[] = [
 
 // Baked collectors-status map (demo: nothing configured — no live credentials).
 const DEMO_COLLECTORS_STATUS: Record<string, unknown> = {
+  "entra-m365": {
+    installed: true,
+    configured: false,
+    primary_token_configured: false,
+    retention_token_configured: false,
+    live_validated: false,
+    credential_identity_verified: false,
+    synthetic: true,
+  },
   aws: { configured: false },
   github: { configured: false },
   okta: { configured: false },
@@ -1558,6 +1572,17 @@ export const demoApi = {
     _body: GreenboneCollectRequest,
   ): Promise<GreenboneCollectResponse> =>
     Promise.resolve(clone(DEMO_GREENBONE_COLLECT_RESULT)),
+  collectEntraM365: (
+    _body: EntraM365CollectRequest,
+    scenario: EntraM365DemoScenario = "partial",
+  ): Promise<EntraM365CollectResult> =>
+    Promise.resolve(
+      clone(
+        scenario === "unavailable"
+          ? DEMO_ENTRA_M365_UNAVAILABLE
+          : DEMO_ENTRA_M365_PARTIAL,
+      ),
+    ),
   collectConvert: (
     _body: Record<string, unknown>,
   ): Promise<Record<string, unknown>[]> =>
