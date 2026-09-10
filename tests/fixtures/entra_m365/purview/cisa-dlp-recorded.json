@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "source": {
+    "kind": "recorded-provider-projection",
+    "producer": "ScubaGear",
+    "producer_version": "1.8.0",
+    "captured_at": null,
+    "parent_sha256": "70689c74ae91efdcbe3dd264f51a4c23ec193683b8602817e43cb893ff021662",
+    "source_uri": "https://raw.githubusercontent.com/cisagov/ScubaGear/274ce8ec984af2d0d062b5a4e09e8c59461ca24a/PowerShell/ScubaGear/Sample-Reports/ProviderSettingsExport.json",
+    "sanitization": "publisher-attested"
+  },
+  "policies": [
+    {
+      "Guid": "46f77b71-78a1-428f-a433-a7c8cca1c6e7",
+      "Name": "PR Test Policy",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, ThirdPartyApps",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "8cb4f574-1a54-45e1-bf58-73bbe023ebad",
+      "Name": "Default Office 365 DLP policy",
+      "Mode": "Enable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, OnPremisesScanner",
+      "Enabled": true,
+      "IsValid": true
+    },
+    {
+      "Guid": "b800d92f-a479-47a9-bcfa-306db665aaa1",
+      "Name": "tqhjy DLP Policy for PII",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "8038a28b-7b5c-42a8-a852-4bb68707afec",
+      "Name": "Defender Baseline Testing Policy",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "d91d3f1f-9a8f-4074-a754-a21afdcf5a77",
+      "Name": "New DLP sensitive types policy",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "0362dd12-1c3e-484b-983a-3b600a6f9e2a",
+      "Name": "Info_TypeITIN_Missing",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "2a4e7cb6-9da7-468f-a58e-42975ea7cd71",
+      "Name": "DevicePolicy_CCOnly",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, EndpointDevices",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "3e6ae832-d413-498e-9cc1-6b725713992b",
+      "Name": "Escaped characters such as \\.\\O\\S\\T seem to be an issue.",
+      "Mode": "Disable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices",
+      "Enabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "ae0c78a2-fd52-4f96-a2c5-c9abc857da9c",
+      "Name": "Custom policy Test",
+      "Mode": "TestWithNotifications",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices, OnPremisesScanner",
+      "Enabled": true,
+      "IsValid": true
+    },
+    {
+      "Guid": "f113499e-89fa-4cd5-89b1-ea29b33ddfa7",
+      "Name": "test policy excluding a group",
+      "Mode": "TestWithNotifications",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Enabled": true,
+      "IsValid": true
+    },
+    {
+      "Guid": "838ee1e2-1fc1-4c96-a9b8-e36c4d0a5ee1",
+      "Name": "Encrypt emails with SSN",
+      "Mode": "Enable",
+      "DistributionStatus": "Pending",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness",
+      "Enabled": true,
+      "IsValid": true
+    }
+  ],
+  "rules": [
+    {
+      "Guid": "a7739b6b-9831-467a-a355-3ba7aab938bc",
+      "Policy": "0362dd12-1c3e-484b-983a-3b600a6f9e2a",
+      "ParentPolicyName": "Info_TypeITIN_Missing",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "cb32ef11-441c-4536-a40e-a062000a55c5",
+      "Policy": "2a4e7cb6-9da7-468f-a58e-42975ea7cd71",
+      "ParentPolicyName": "DevicePolicy_CCOnly",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, EndpointDevices",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "33285a89-e80c-4522-9954-ef58ab4e383a",
+      "Policy": "3e6ae832-d413-498e-9cc1-6b725713992b",
+      "ParentPolicyName": "Escaped characters such as \\.\\O\\S\\T seem to be an issue.",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "53b168f2-012b-4d2f-a15c-1e05bedae10d",
+      "Policy": "46f77b71-78a1-428f-a433-a7c8cca1c6e7",
+      "ParentPolicyName": "PR Test Policy",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, ThirdPartyApps",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "b01a6475-0529-411d-8d00-53cb06de1804",
+      "Policy": "8038a28b-7b5c-42a8-a852-4bb68707afec",
+      "ParentPolicyName": "Defender Baseline Testing Policy",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "7e7988cc-46df-497a-843a-08c43afc1aed",
+      "Policy": "838ee1e2-1fc1-4c96-a9b8-e36c4d0a5ee1",
+      "ParentPolicyName": "Encrypt emails with SSN",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness",
+      "Disabled": true,
+      "IsValid": true
+    },
+    {
+      "Guid": "1c6f243a-9d83-4a62-b1db-fe797d41069e",
+      "Policy": "838ee1e2-1fc1-4c96-a9b8-e36c4d0a5ee1",
+      "ParentPolicyName": "Encrypt emails with SSN",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness",
+      "Disabled": true,
+      "IsValid": true
+    },
+    {
+      "Guid": "e1145e28-b958-49bc-aac3-17dba1170fd5",
+      "Policy": "838ee1e2-1fc1-4c96-a9b8-e36c4d0a5ee1",
+      "ParentPolicyName": "Encrypt emails with SSN",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "74f600e2-dccc-4d6f-a748-7bff5ed5da69",
+      "Policy": "8cb4f574-1a54-45e1-bf58-73bbe023ebad",
+      "ParentPolicyName": "Default Office 365 DLP policy",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, OnPremisesScanner",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "0dcba45f-0489-4b1f-ae31-e226a52efd64",
+      "Policy": "ae0c78a2-fd52-4f96-a2c5-c9abc857da9c",
+      "ParentPolicyName": "Custom policy Test",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices, OnPremisesScanner",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "37053f6d-1f80-43e6-a528-0041746db1c7",
+      "Policy": "ae0c78a2-fd52-4f96-a2c5-c9abc857da9c",
+      "ParentPolicyName": "Custom policy Test",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices, OnPremisesScanner",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "f2e78982-66b6-488a-a43a-e921800f6304",
+      "Policy": "b800d92f-a479-47a9-bcfa-306db665aaa1",
+      "ParentPolicyName": "tqhjy DLP Policy for PII",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "8c40d462-f7c0-434d-bd37-d35c083c297a",
+      "Policy": "b800d92f-a479-47a9-bcfa-306db665aaa1",
+      "ParentPolicyName": "tqhjy DLP Policy for PII",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "6198a220-b7ac-4308-aeb4-fd520a263121",
+      "Policy": "d91d3f1f-9a8f-4074-a754-a21afdcf5a77",
+      "ParentPolicyName": "New DLP sensitive types policy",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams, EndpointDevices",
+      "Disabled": false,
+      "IsValid": true
+    },
+    {
+      "Guid": "b55d226e-ce8b-412f-806c-4bf537a0b8d9",
+      "Policy": "f113499e-89fa-4cd5-89b1-ea29b33ddfa7",
+      "ParentPolicyName": "test policy excluding a group",
+      "Mode": "Enforce",
+      "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+      "Disabled": false,
+      "IsValid": true
+    }
+  ]
+}

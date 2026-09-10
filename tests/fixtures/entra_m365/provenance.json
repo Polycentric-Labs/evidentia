@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "live_tenant_acceptance": "unverified",
+  "recorded_fixtures": [
+    {
+      "path": "purview/cisa-dlp-recorded.json",
+      "kind": "recorded-provider-projection",
+      "sha256_lf": "1e441c36d15bf8f0237831e42ff0408eb4eb6d4d094b784ff4b38da765bab0cc",
+      "source": {
+        "repository": "https://github.com/cisagov/ScubaGear",
+        "commit": "274ce8ec984af2d0d062b5a4e09e8c59461ca24a",
+        "path": "PowerShell/ScubaGear/Sample-Reports/ProviderSettingsExport.json",
+        "blob_sha1": "320eb2067f84c4c12981404e3b47b467ef35e78e",
+        "raw_sha256": "70689c74ae91efdcbe3dd264f51a4c23ec193683b8602817e43cb893ff021662",
+        "raw_bytes": 1736762,
+        "uri": "https://raw.githubusercontent.com/cisagov/ScubaGear/274ce8ec984af2d0d062b5a4e09e8c59461ca24a/PowerShell/ScubaGear/Sample-Reports/ProviderSettingsExport.json",
+        "producer": "ScubaGear",
+        "producer_version": "1.8.0"
+      },
+      "license": {
+        "spdx_id": "CC0-1.0",
+        "uri": "https://github.com/cisagov/ScubaGear/blob/274ce8ec984af2d0d062b5a4e09e8c59461ca24a/LICENSE"
+      },
+      "capture_and_sanitization": {
+        "basis": "publisher-attested",
+        "attestation_uri": "https://github.com/cisagov/ScubaGear/pull/2136",
+        "statement": "Publisher reports test-tenant generation, automated redaction and manual sanitization before cached report regeneration.",
+        "independently_verified_complete_redaction": false,
+        "source_captured_at": null,
+        "source_captured_at_basis": "Exact acquisition time is not established; report metadata and this retrieval time are recorded separately.",
+        "additional_value_redaction": false,
+        "additional_pseudonymization": false
+      },
+      "projection": {
+        "policy_array": "dlp_compliance_policies",
+        "rule_array": "dlp_compliance_rules",
+        "policy_fields": [
+          "Guid",
+          "Name",
+          "Mode",
+          "DistributionStatus",
+          "Workload",
+          "Enabled",
+          "IsValid"
+        ],
+        "rule_fields": [
+          "Guid",
+          "Policy",
+          "ParentPolicyName",
+          "Mode",
+          "Workload",
+          "Disabled",
+          "IsValid"
+        ],
+        "array_order": "original",
+        "field_values_and_types": "literal",
+        "selected_cells": 182,
+        "all_selected_values_and_types_equal": true,
+        "source_array_order_preserved": true
+      }
+    }
+  ],
+  "synthetic_fixtures": [
+    {
+      "location": "tests/unit/test_collectors/entra_m365/",
+      "kind": "inline-authored-synthetic",
+      "scope": "Shared request, projection, ledger, finding and HTTP transport tests.",
+      "recorded_graph_responses": false,
+      "tenant_access": false,
+      "credentials": "Synthetic test markers only."
+    }
+  ],
+  "limits": [
+    "Synthetic Graph payloads verify bounded parser and transport behavior; they do not establish tenant permission, license, service availability or live source compatibility.",
+    "The recorded projection retains selected literal policy and rule fields. It excludes full provider settings, scripts, XML, recipients and unrelated tenant metadata.",
+    "The publisher attests to redaction. Complete source redaction was not independently verified.",
+    "All recorded policy DistributionStatus values are Pending. This does not establish enforcement or completed distribution."
+  ]
+}
