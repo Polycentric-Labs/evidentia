@@ -10,10 +10,12 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
+from click import unstyle
 from evidentia.cli import collect as cli
 from evidentia.cli._rbac_lifecycle import _reset_rbac_cache
 from evidentia.cli.main import app
 from evidentia_collectors import entra_m365 as feature
+from typer import rich_utils
 from typer.testing import CliRunner
 
 _FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "entra_m365" / "purview" / "cisa-dlp-recorded.json"
@@ -52,9 +54,23 @@ def no_graph(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.mark.usefixtures("no_graph")
 class TestLocalCollection:
-    def test_registered_help_has_every_bounded_option(self) -> None:
-        result = CliRunner().invoke(app, ["collect", "entra-m365", "--help"])
+    @pytest.mark.parametrize("colored", [False, True], ids=["plain", "colored"])
+    @pytest.mark.parametrize("width", [80, 200])
+    def test_registered_help_has_every_bounded_option(
+        self, monkeypatch: pytest.MonkeyPatch, colored: bool, width: int
+    ) -> None:
+        monkeypatch.delenv("NO_COLOR", raising=False)
+        monkeypatch.delenv("LINES", raising=False)
+        monkeypatch.setenv("TERM", "xterm-256color")
+        monkeypatch.setenv("COLUMNS", str(width))
+        monkeypatch.setattr(rich_utils, "FORCE_TERMINAL", colored)
+        monkeypatch.setattr(rich_utils, "COLOR_SYSTEM", "standard" if colored else None)
+        monkeypatch.setattr(rich_utils, "MAX_WIDTH", width)
+        result = CliRunner().invoke(app, ["collect", "entra-m365", "--help"], color=colored)
         assert result.exit_code == 0
+        assert ("\x1b[" in result.stdout) is colored
+        help_text = unstyle(result.stdout)
+        assert max(map(len, help_text.splitlines())) == width
         for name in (
             "tenant-label",
             "capability",
@@ -65,15 +81,15 @@ class TestLocalCollection:
             "dlp-format",
             "output",
         ):
-            assert "--" + name in result.stdout
+            assert "--" + name in help_text
         for reference in (
             "ENTRA_M365_ACCESS_TOKEN",
             "ENTRA_M365_RETENTION_ACCESS_TOKEN",
             "ENTRA_M365_AUTH_MODE",
         ):
-            assert reference in result.stdout
-        assert "--access-token" not in result.stdout
-        assert "--base-url" not in result.stdout
+            assert reference in help_text
+        assert "--access-token" not in help_text
+        assert "--base-url" not in help_text
 
     def test_recorded_dlp_writes_full_json_only_to_stdout(self) -> None:
         result = CliRunner().invoke(app, [*_BASE, "--dlp-export", str(_FIXTURE)])
