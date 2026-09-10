@@ -1,0 +1,76 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Authored Graph transport data for bounded reader tests; no tenant recording or permission/license attestation.",
+  "capability": "conditional-access",
+  "clock_utc": "2026-09-10T00:00:00.000000Z",
+  "lookback_days": 1,
+  "exchanges": [
+    {
+      "method": "GET",
+      "route": "/v1.0/identity/conditionalAccess/policies",
+      "query": "",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": " policy-a ",
+            "state": "enabled",
+            "conditions": {
+              "users": {
+                "includeUsers": [
+                  "synthetic-scope"
+                ]
+              },
+              "flag": false,
+              "count": 0
+            },
+            "grantControls": {
+              "operator": "OR",
+              "builtInControls": [
+                "mfa"
+              ]
+            },
+            "sessionControls": null,
+            "displayName": "SYNTHETIC-EXCLUDED-NAME"
+          },
+          {
+            "id": "policy-b",
+            "state": "disabled"
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies?$skiptoken=SYNTHETIC%2f+opaque%26v%3D2"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/v1.0/identity/conditionalAccess/policies",
+      "query": "$skiptoken=SYNTHETIC%2f+opaque%26v%3D2",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": "policy-c",
+            "state": "enabledForReportingButNotEnforced"
+          },
+          {
+            "id": "policy-d",
+            "state": "FUTURE-POLICY"
+          },
+          {
+            "id": "policy-e",
+            "state": null
+          },
+          {
+            "id": "policy-f"
+          }
+        ]
+      }
+    }
+  ]
+}

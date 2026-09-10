@@ -20,13 +20,20 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import stat
+import tempfile
 from collections.abc import Iterable
 from pathlib import Path
+from types import TracebackType
+from typing import BinaryIO, Self
 
 import typer
 from evidentia_core.models.finding import SecurityFinding
 from rich.console import Console
 from rich.table import Table
+
+from evidentia.cli._rbac import require_role_cli
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -1715,3 +1722,208 @@ def _render_summary(findings: list[SecurityFinding], *, title: str) -> None:
         for src, n in sorted(by_source.items()):
             src_table.add_row(src, str(n))
         console.print(src_table)
+
+
+class _EntraInputFailure(ValueError):
+    """A fixed CLI input error without an operator path or source value."""
+
+
+def _entra_input_output_distinct(source: Path | None, output: Path | None) -> None:
+    if source is None or output is None:
+        return
+    try:
+        if source.resolve() == output.resolve() or (source.exists() and output.exists() and source.samefile(output)):
+            raise _EntraInputFailure("input_output_alias")
+    except OSError:
+        raise _EntraInputFailure("invalid_path") from None
+
+
+def _read_entra_export(source: Path) -> str:
+    limit = 4_194_304
+    content = bytearray()
+    try:
+        if not source.is_file():
+            raise _EntraInputFailure("invalid_input_file")
+        with source.open("rb") as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise _EntraInputFailure("invalid_input_file")
+            while chunk := stream.read(min(65_536, limit + 1 - len(content))):
+                content.extend(chunk)
+                if len(content) > limit:
+                    raise _EntraInputFailure("response_limit")
+        return content.decode("utf-8", errors="strict")
+    except UnicodeError:
+        raise _EntraInputFailure("invalid_utf8") from None
+    except OSError:
+        raise _EntraInputFailure("invalid_input_file") from None
+
+
+class _EntraOutput:
+    """Reserve one exclusive sibling file before collection and publish atomically."""
+
+    def __init__(self, output: Path | None, source: Path | None) -> None:
+        self.output = output
+        self.source = source
+        self.temporary: Path | None = None
+        self.stream: BinaryIO | None = None
+        self.source_identity: tuple[int, int] | None = None
+
+    def __enter__(self) -> Self:
+        _entra_input_output_distinct(self.source, self.output)
+        if self.source is not None:
+            info = self.source.stat()
+            self.source_identity = (info.st_dev, info.st_ino)
+        if self.output is not None:
+            if self.output.is_symlink():
+                raise OSError("output_symlink_refused")
+            if not self.output.parent.is_dir() or (
+                self.output.exists() and (not self.output.is_file() or not os.access(self.output, os.W_OK))
+            ):
+                raise OSError("invalid_output")
+            descriptor, name = tempfile.mkstemp(prefix=".evidentia-entra-", suffix=".tmp", dir=self.output.parent)
+            self.temporary = Path(name)
+            try:
+                self.stream = os.fdopen(descriptor, "wb")
+            except Exception:
+                os.close(descriptor)
+                self.temporary.unlink(missing_ok=True)
+                raise OSError("output_reservation_failed") from None
+        return self
+
+    def publish(self, content: bytes) -> None:
+        if self.output is None:
+            typer.echo(content.decode("utf-8"), nl=False)
+            return
+        if self.stream is None or self.temporary is None:
+            raise OSError("output_not_reserved")
+        _entra_input_output_distinct(self.source, self.output)
+        if self.output.is_symlink():
+            raise OSError("output_symlink_refused")
+        if self.output.exists() and self.source_identity is not None:
+            current = self.output.stat()
+            if (current.st_dev, current.st_ino) == self.source_identity:
+                raise _EntraInputFailure("input_output_alias")
+        if self.stream.write(content) != len(content):
+            raise OSError("output_write_failed")
+        self.stream.flush()
+        os.fsync(self.stream.fileno())
+        self.stream.close()
+        _entra_input_output_distinct(self.source, self.output)
+        if self.output.is_symlink():
+            raise OSError("output_symlink_refused")
+        if self.output.exists() and self.source_identity is not None:
+            current = self.output.stat()
+            if (current.st_dev, current.st_ino) == self.source_identity:
+                raise _EntraInputFailure("input_output_alias")
+        os.replace(self.temporary, self.output)
+        self.temporary = None
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        failed = False
+        if self.stream is not None and not self.stream.closed:
+            try:
+                self.stream.close()
+            except OSError:
+                failed = True
+        if self.temporary is not None:
+            try:
+                self.temporary.unlink(missing_ok=True)
+            except OSError:
+                failed = True
+        if failed and exc is None:
+            raise OSError("output_cleanup_failed")
+
+
+def _entra_integer(value: str) -> int:
+    if len(value) > 5 or re.fullmatch(r"[0-9]+", value) is None:
+        raise _EntraInputFailure("invalid_field")
+    return int(value)
+
+
+@app.command("entra-m365")
+@require_role_cli("read")
+def entra_m365(
+    tenant_label: str = typer.Option(..., "--tenant-label", help="Nonsecret operator alias, not a verified tenant ID."),
+    capability: list[str] | None = typer.Option(
+        None, "--capability", help="Repeat a named capability; omitted means all nine."
+    ),
+    lookback_days: str = typer.Option(
+        "30", "--lookback-days", metavar="INTEGER", help="Event window in days, 1 through 30."
+    ),
+    max_items: str = typer.Option(
+        "10000", "--max-items", metavar="INTEGER", help="Per-capability source limit, 1 through 10000."
+    ),
+    max_pages: str = typer.Option(
+        "100", "--max-pages", metavar="INTEGER", help="Per-capability page limit, 1 through 100."
+    ),
+    dlp_export: Path | None = typer.Option(None, "--dlp-export", help="Local UTF-8 JSON export, at most 4 MiB."),
+    dlp_format: str | None = typer.Option(None, "--dlp-format", help="evidentia-dlp-v1 or scubagear-provider-v1."),
+    output: Path | None = typer.Option(
+        None, "--output", "-o", help="Atomically write full result JSON; omitted means stdout."
+    ),
+) -> None:
+    """Collect Entra/M365 observations with explicit completeness and provenance.
+
+    Graph reads use ENTRA_M365_ACCESS_TOKEN. ENTRA_M365_AUTH_MODE declares
+    application (default) or delegated access. Retention labels instead use
+    ENTRA_M365_RETENTION_ACCESS_TOKEN with delegated access. Tokens are
+    pre-minted; this command never acquires or refreshes them. DLP-only
+    ingestion requires neither token. A tenant label does not verify identity.
+    """
+    try:
+        from evidentia_collectors.entra_m365 import (
+            EntraM365Collector,
+            EntraM365CollectRequest,
+            EntraM365CollectResult,
+            EntraM365InputError,
+        )
+        from pydantic import ValidationError
+    except ModuleNotFoundError as error:
+        message = (
+            "Entra/M365 collection is not installed."
+            if error.name in {"evidentia_collectors", "evidentia_collectors.entra_m365"}
+            else "Entra/M365 collection could not be loaded."
+        )
+        typer.echo(message, err=True)
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Entra/M365 collection could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        _entra_input_output_distinct(dlp_export, output)
+        fields: dict[str, object] = {
+            "tenant_label": tenant_label,
+            "lookback_days": _entra_integer(lookback_days),
+            "max_items": _entra_integer(max_items),
+            "max_pages": _entra_integer(max_pages),
+        }
+        if capability is not None:
+            fields["capabilities"] = capability
+        if dlp_export is not None:
+            fields["dlp_content"] = _read_entra_export(dlp_export)
+        if dlp_format is not None:
+            fields["dlp_format"] = dlp_format
+        try:
+            request = EntraM365CollectRequest.model_validate(fields)
+        except ValidationError:
+            raise _EntraInputFailure("invalid_field") from None
+        with _EntraOutput(output, dlp_export) as destination, EntraM365Collector() as collector:
+            result = EntraM365CollectResult.model_validate_json(
+                collector.collect_v2(request).model_dump_json(warnings="error")
+            )
+            content = (result.model_dump_json(indent=2, warnings="error") + "\n").encode("utf-8")
+            destination.publish(content)
+    except (_EntraInputFailure, EntraM365InputError):
+        typer.echo("Invalid Entra/M365 collection input.", err=True)
+        raise typer.Exit(2) from None
+    except Exception:
+        typer.echo("Entra/M365 collection or result output failed.", err=True)
+        raise typer.Exit(1) from None
+    if result.status != "complete":
+        typer.echo("Collection incomplete; inspect capability diagnostics in the result.", err=True)
+        raise typer.Exit(1)

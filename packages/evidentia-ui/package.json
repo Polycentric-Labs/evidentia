@@ -14,7 +14,7 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "e2e": "playwright test",
-    "gen:types": "openapi-typescript openapi.json -o src/types/openapi.ts"
+    "gen:types": "node scripts/generate-types.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

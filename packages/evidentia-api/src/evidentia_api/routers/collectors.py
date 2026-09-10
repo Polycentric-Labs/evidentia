@@ -23,13 +23,127 @@ from evidentia_core.audit import CollectionManifest
 from evidentia_core.conmon.calendar import get_cadence
 from evidentia_core.evidence_store import get_evidence_store_dir, save_evidence
 from evidentia_core.models.finding import SecurityFinding
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, ValidationError
+from starlette.concurrency import run_in_threadpool
+from starlette.requests import ClientDisconnect
 
-from evidentia_api.errors import api_error, error_responses
+from evidentia_api.errors import ErrorEnvelope, api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+try:
+    from evidentia_collectors.entra_m365 import (
+        EntraM365Collector,
+        EntraM365CollectRequest,
+        EntraM365CollectResult,
+        EntraM365InputError,
+    )
+    from evidentia_collectors.entra_m365._contracts import parse_strict_json
+except ModuleNotFoundError as error:
+    if error.name not in {"evidentia_collectors", "evidentia_collectors.entra_m365"}:
+        raise
+    _ENTRA_M365_AVAILABLE = False
+else:
+    _ENTRA_M365_AVAILABLE = True
+
+_ENTRA_M365_BODY_LIMIT = 8_388_608
+
+if _ENTRA_M365_AVAILABLE:
+
+    def _collect_entra_m365(request: EntraM365CollectRequest) -> EntraM365CollectResult:
+        with EntraM365Collector() as collector:
+            return EntraM365CollectResult.model_validate_json(
+                collector.collect_v2(request).model_dump_json(warnings="error")
+            )
+
+    @router.post(
+        "/collectors/entra-m365/collect",
+        response_model=EntraM365CollectResult,
+        dependencies=[require_role("read")],
+        responses={
+            **error_responses(
+                {
+                    400: "Invalid JSON or bounded request fields.",
+                    403: "Read permission denied or API authentication is not configured for Graph collection.",
+                    413: "The request body exceeds the cumulative byte limit.",
+                    415: "Only application/json is supported.",
+                    500: "Collection could not produce a valid result.",
+                }
+            ),
+            401: {
+                "description": "API authentication required.",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "required": ["detail", "reason", "provider"],
+                            "properties": {
+                                "detail": {"type": "string"},
+                                "reason": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                                "provider": {"type": "string"},
+                            },
+                        }
+                    }
+                },
+            },
+        },
+        openapi_extra={
+            "requestBody": {
+                "required": True,
+                "content": {"application/json": {"schema": EntraM365CollectRequest.model_json_schema()}},
+            }
+        },
+    )
+    async def entra_m365_collect(request: Request) -> EntraM365CollectResult:
+        """Return findings and completeness for the operator-declared scope."""
+        media_type = request.headers.get("content-type", "").partition(";")[0].strip().lower()
+        if media_type != "application/json":
+            raise api_error(415, "unsupported_format", "An application/json body is required.")
+        body = bytearray()
+        try:
+            async for chunk in request.stream():
+                if len(chunk) > _ENTRA_M365_BODY_LIMIT - len(body):
+                    raise api_error(413, "response_limit", "Request body exceeds the size limit.")
+                body.extend(chunk)
+        except ClientDisconnect:
+            raise api_error(400, "invalid_body", "The request body is incomplete.") from None
+        try:
+            payload = parse_strict_json(bytes(body), max_bytes=_ENTRA_M365_BODY_LIMIT)
+        except ValueError:
+            raise api_error(400, "invalid_body", "A valid JSON object is required.") from None
+        if not isinstance(payload, dict):
+            raise api_error(400, "invalid_body", "A JSON object is required.")
+        try:
+            validated = EntraM365CollectRequest.model_validate(payload)
+        except ValidationError:
+            raise api_error(400, "invalid_field", "One or more request fields are invalid.") from None
+        if (
+            any(name != "dlp-export" for name in validated.capabilities)
+            and getattr(request.app.state, "auth_provider", None) is None
+        ):
+            raise api_error(403, "auth_not_configured", "Graph collection requires configured API authentication.")
+        try:
+            return await run_in_threadpool(_collect_entra_m365, validated)
+        except EntraM365InputError as error:
+            raise api_error(400, error.code, "The supplied collection input is invalid.") from None
+        except Exception:
+            raise api_error(500, "collector_failed", "Collection could not produce a valid result.") from None
+else:
+
+    @router.post(
+        "/collectors/entra-m365/collect",
+        status_code=503,
+        response_model=ErrorEnvelope,
+        dependencies=[require_role("read")],
+        responses=error_responses({403: "Read permission denied.", 503: "The Entra/M365 collector is not installed."}),
+    )
+    async def entra_m365_unavailable() -> ErrorEnvelope:
+        """Refuse collection when the optional feature is absent."""
+        raise api_error(503, "feature_unavailable", "The Entra/M365 collector is not installed.")
 
 
 def _block_private_ips(body: dict[str, Any]) -> bool:
@@ -2235,6 +2349,21 @@ async def collectors_status() -> dict[str, Any]:
             "installed": okta_installed,
             "token_configured": bool(os.environ.get("OKTA_API_TOKEN")),
             "token_source": ("env:OKTA_API_TOKEN" if os.environ.get("OKTA_API_TOKEN") else None),
+        },
+        "entra-m365": {
+            "installed": _ENTRA_M365_AVAILABLE,
+            **(
+                EntraM365Collector._configuration_status()
+                if _ENTRA_M365_AVAILABLE
+                else {
+                    "configured": False,
+                    "primary_token_configured": False,
+                    "retention_token_configured": False,
+                    "primary_auth_mode_valid": False,
+                    "live_validated": False,
+                    "credential_identity_verified": False,
+                }
+            ),
         },
         "google-workspace": {
             "installed": google_workspace_installed,

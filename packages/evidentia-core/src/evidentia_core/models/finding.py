@@ -142,8 +142,8 @@ class SecurityFinding(EvidentiaModel):
             "construction sites and not-yet-migrated collectors leave it "
             "UNKNOWN rather than asserting a result. Most collectors "
             "gather non-compliant items, but the vendor-risk collectors "
-            "also emit informational inventory findings, so UNKNOWN — "
-            "not FAIL — is the safe default."
+            "also emit informational inventory findings, so UNKNOWN "
+            "(not FAIL) is the safe default."
         ),
     )
     remediation: str | None = Field(

@@ -178,6 +178,10 @@ commands:
     api: "POST /api/collectors/google-workspace/collect"
     gui: "/collect"
     status: full
+  - cli: "collect entra-m365"
+    api: "POST /api/collectors/entra-m365/collect"
+    gui: "/collect"
+    status: full
   - cli: "collect sql"
     api: "POST /api/collectors/sql/postgres/collect"
     gui: "/collect"

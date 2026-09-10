@@ -621,6 +621,13 @@
         "title": "AnnexIIIDomain",
         "type": "string"
       },
+      "AuthMode": {
+        "enum": [
+          "application",
+          "delegated"
+        ],
+        "type": "string"
+      },
       "CadenceSeries": {
         "additionalProperties": false,
         "description": "The dated series for one cadence over a window, with its verdict.",
@@ -696,6 +703,15 @@
         ],
         "title": "CadenceSeries",
         "type": "object"
+      },
+      "CapabilityState": {
+        "enum": [
+          "complete",
+          "partial",
+          "unavailable",
+          "not_requested"
+        ],
+        "type": "string"
       },
       "CatalogAuditContext": {
         "additionalProperties": false,
@@ -2344,6 +2360,14 @@
         "title": "CoverageCount",
         "type": "object"
       },
+      "CredentialBasis": {
+        "enum": [
+          "unverified:primary-token",
+          "unverified:retention-token",
+          "unverified:dlp-export"
+        ],
+        "type": "string"
+      },
       "CriticalityTier": {
         "description": "FFIEC Vendor Management criticality tier.\n\nDrives the due-diligence-review cadence enforced by\n:meth:`Vendor.compute_next_review_due`:\n\n- ``critical`` → annual (12 months)\n- ``high`` → annual (12 months)\n- ``medium`` → biennial (24 months)\n- ``low`` → triennial (36 months)\n\nOperators may override by setting ``next_review_due`` directly.",
         "enum": [
@@ -2422,6 +2446,43 @@
           "retired"
         ],
         "title": "DeploymentStatus",
+        "type": "string"
+      },
+      "DiagnosticCode": {
+        "enum": [
+          "input_missing",
+          "credentials_missing",
+          "configuration_invalid",
+          "authentication_failed",
+          "permission_denied",
+          "connection_failed",
+          "upstream_error",
+          "retry_exhausted",
+          "retry_after_invalid",
+          "retry_after_budget",
+          "redirect_refused",
+          "unsafe_destination",
+          "invalid_envelope",
+          "invalid_record",
+          "invalid_timestamp",
+          "response_limit",
+          "page_limit",
+          "item_limit",
+          "byte_limit",
+          "capability_budget",
+          "run_budget",
+          "continuation_invalid",
+          "continuation_loop",
+          "conflicting_duplicate",
+          "conditional_access_detail_unavailable",
+          "unresolved_parent",
+          "conflicting_state",
+          "source_validity_unknown",
+          "future_timestamp",
+          "timestamp_precision_unrepresentable",
+          "source_retention_limited",
+          "internal_error"
+        ],
         "type": "string"
       },
       "DimensionAnalysis": {
@@ -2632,6 +2693,273 @@
           "value_score"
         ],
         "title": "EfficiencyOpportunity",
+        "type": "object"
+      },
+      "EntraM365CapabilityResult": {
+        "additionalProperties": false,
+        "properties": {
+          "collected": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "credential_basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CredentialBasis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "declared_auth_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuthMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/EntraM365Diagnostic"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "duplicate_records": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "field_coverage": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/_FieldCoverage"
+            },
+            "title": "Field Coverage",
+            "type": "object"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcClock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "matched_filter": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "name": {
+            "enum": [
+              "conditional-access",
+              "authentication-registration",
+              "sign-ins",
+              "directory-roles",
+              "managed-devices",
+              "retention-labels",
+              "dlp-export",
+              "defender-alerts",
+              "defender-incidents"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "observed_first": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcSourceText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observed_last": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcSourceText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pages_completed": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "requested_window_end": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcClock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requested_window_start": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcClock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requests_attempted": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "scanned": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcClock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "$ref": "#/components/schemas/CapabilityState"
+          }
+        },
+        "required": [
+          "name",
+          "state",
+          "credential_basis",
+          "declared_auth_mode",
+          "scanned",
+          "matched_filter",
+          "collected",
+          "duplicate_records",
+          "pages_completed",
+          "requests_attempted",
+          "started_at",
+          "finished_at",
+          "requested_window_start",
+          "requested_window_end",
+          "observed_first",
+          "observed_last",
+          "field_coverage",
+          "diagnostics"
+        ],
+        "title": "EntraM365CapabilityResult",
+        "type": "object"
+      },
+      "EntraM365CollectResult": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/EntraM365CapabilityResult"
+            },
+            "maxItems": 9,
+            "minItems": 9,
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/_EntraM365Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "full_surface_complete": {
+            "title": "Full Surface Complete",
+            "type": "boolean"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/CollectionManifest"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/_Provenance"
+          },
+          "requested_capabilities": {
+            "items": {
+              "enum": [
+                "conditional-access",
+                "authentication-registration",
+                "sign-ins",
+                "directory-roles",
+                "managed-devices",
+                "retention-labels",
+                "dlp-export",
+                "defender-alerts",
+                "defender-incidents"
+              ],
+              "type": "string"
+            },
+            "maxItems": 9,
+            "minItems": 1,
+            "title": "Requested Capabilities",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "entra-m365-collection/v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "status",
+          "requested_capabilities",
+          "full_surface_complete",
+          "provenance",
+          "capabilities",
+          "findings",
+          "manifest"
+        ],
+        "title": "EntraM365CollectResult",
+        "type": "object"
+      },
+      "EntraM365Diagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/DiagnosticCode"
+          },
+          "count": {
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          }
+        },
+        "required": [
+          "code",
+          "count",
+          "http_status"
+        ],
+        "title": "EntraM365Diagnostic",
         "type": "object"
       },
       "ErrorDetail": {
@@ -4296,6 +4624,43 @@
         "title": "InitWizardResponse",
         "type": "object"
       },
+      "JsonObject": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/JsonValue"
+        },
+        "type": "object"
+      },
+      "JsonValue": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "array"
+          },
+          {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
       "LLMConfig": {
         "additionalProperties": true,
         "description": "LLM defaults honored by ``evidentia risk generate``.",
@@ -5304,6 +5669,10 @@
         ],
         "title": "NextDueResponse",
         "type": "object"
+      },
+      "Nonnegative": {
+        "minimum": 0.0,
+        "type": "integer"
       },
       "OLIRRelationship": {
         "description": "NIST OLIR (Online Informative References) relationship types.\n\nAdded in v0.7.0 to support enterprise-grade mapping claims. Rather\nthan bare ``framework+control_id`` pairs, every :class:`ControlMapping`\nnow declares the strength and direction of the relationship between\nthe mapped evidence and the named control.\n\nValues match the NIST OLIR Derived Relationship Mapping (DRM)\nvocabulary at https://csrc.nist.gov/projects/olir/derived-relationship-mapping.\nAn auditor reading evidence can tell the difference between\n\"this finding fully evidences AC-6\" (``SUBSET_OF``) and\n\"this finding is loosely related to AC-6\" (``RELATED_TO``).",
@@ -6504,7 +6873,7 @@
           "compliance_status": {
             "$ref": "#/components/schemas/ComplianceStatus",
             "default": "unknown",
-            "description": "Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN — not FAIL — is the safe default."
+            "description": "Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN (not FAIL) is the safe default."
           },
           "control_mappings": {
             "description": "NIST 800-53 (or other framework) controls this finding relates to. v0.7.0 adds OLIR relationship typing + justification per mapping. Pre-v0.7.0 callers passing ``control_ids=[...]`` as keyword arg are auto-converted via the schema's ``@model_validator``.",
@@ -7209,6 +7578,14 @@
         },
         "title": "UpdateSystemRequest",
         "type": "object"
+      },
+      "UtcClock": {
+        "type": "string"
+      },
+      "UtcSourceText": {
+        "format": "date-time",
+        "maxLength": 2048,
+        "type": "string"
       },
       "ValidationError": {
         "properties": {
@@ -7995,6 +8372,217 @@
         ],
         "title": "_DecisionRole",
         "type": "string"
+      },
+      "_EntraM365Finding": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_context": {
+            "$ref": "#/components/schemas/CollectionContext",
+            "description": "Per-finding collection provenance (collector id/version, run_id, credential identity, source instance, filters, pagination). v0.7.0+ collectors MUST pass a real CollectionContext; the default synthesizes a 'legacy-pre-v0.7.0' placeholder for older construction sites."
+          },
+          "compliance_status": {
+            "$ref": "#/components/schemas/ComplianceStatus",
+            "default": "unknown",
+            "description": "Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN (not FAIL) is the safe default."
+          },
+          "control_mappings": {
+            "description": "NIST 800-53 (or other framework) controls this finding relates to. v0.7.0 adds OLIR relationship typing + justification per mapping. Pre-v0.7.0 callers passing ``control_ids=[...]`` as keyword arg are auto-converted via the schema's ``@model_validator``.",
+            "items": {
+              "$ref": "#/components/schemas/ControlMapping"
+            },
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "first_observed": {
+            "$ref": "#/components/schemas/UtcClock"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_observed": {
+            "$ref": "#/components/schemas/UtcClock"
+          },
+          "raw_data": {
+            "$ref": "#/components/schemas/JsonObject"
+          },
+          "remediation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional human-readable remediation guidance. Maps to the OCSF Compliance Finding `remediation.desc` field. Populated by collectors where the source system supplies remediation text (e.g. AWS Security Hub Remediation.Recommendation); None when unavailable.",
+            "title": "Remediation"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UtcClock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resource_account": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Account"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Resource identifier in the source system",
+            "title": "Resource Id"
+          },
+          "resource_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Region"
+          },
+          "resource_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "E.g. 'AWS::S3::Bucket', 'GitHub::Repository'",
+            "title": "Resource Type"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "source_finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Original finding ID in the source system",
+            "title": "Source Finding Id"
+          },
+          "source_system": {
+            "description": "E.g. 'aws-security-hub', 'github'",
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FindingStatus",
+            "default": "active"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "severity",
+          "source_system",
+          "raw_data",
+          "first_observed",
+          "last_observed"
+        ],
+        "title": "_EntraM365Finding",
+        "type": "object"
+      },
+      "_FieldCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "absent": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "known": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "null": {
+            "$ref": "#/components/schemas/Nonnegative"
+          },
+          "unknown": {
+            "$ref": "#/components/schemas/Nonnegative"
+          }
+        },
+        "required": [
+          "absent",
+          "null",
+          "known",
+          "unknown"
+        ],
+        "title": "_FieldCoverage",
+        "type": "object"
+      },
+      "_Provenance": {
+        "additionalProperties": false,
+        "properties": {
+          "authenticated_identity_verified": {
+            "const": false,
+            "title": "Authenticated Identity Verified",
+            "type": "boolean"
+          },
+          "graph_cloud": {
+            "const": "commercial",
+            "title": "Graph Cloud",
+            "type": "string"
+          },
+          "identity_basis": {
+            "const": "operator-declared",
+            "title": "Identity Basis",
+            "type": "string"
+          },
+          "tenant_label": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\\s\\S])"
+              }
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Tenant Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_label",
+          "identity_basis",
+          "authenticated_identity_verified",
+          "graph_cloud"
+        ],
+        "title": "_Provenance",
+        "type": "object"
       }
     }
   },
@@ -9785,6 +10373,199 @@
           }
         },
         "summary": "Drata Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/entra-m365/collect": {
+      "post": {
+        "description": "Return findings and completeness for the operator-declared scope.",
+        "operationId": "entra_m365_collect_api_collectors_entra_m365_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "description": "Bounded requested evidence scope with no caller-selected credentials.",
+                "properties": {
+                  "capabilities": {
+                    "items": {
+                      "enum": [
+                        "conditional-access",
+                        "authentication-registration",
+                        "sign-ins",
+                        "directory-roles",
+                        "managed-devices",
+                        "retention-labels",
+                        "dlp-export",
+                        "defender-alerts",
+                        "defender-incidents"
+                      ],
+                      "type": "string"
+                    },
+                    "maxItems": 9,
+                    "minItems": 1,
+                    "title": "Capabilities",
+                    "type": "array",
+                    "uniqueItems": true
+                  },
+                  "dlp_content": {
+                    "anyOf": [
+                      {
+                        "maxLength": 4194304,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Dlp Content"
+                  },
+                  "dlp_format": {
+                    "default": "evidentia-dlp-v1",
+                    "enum": [
+                      "evidentia-dlp-v1",
+                      "scubagear-provider-v1"
+                    ],
+                    "title": "Dlp Format",
+                    "type": "string"
+                  },
+                  "lookback_days": {
+                    "default": 30,
+                    "maximum": 30.0,
+                    "minimum": 1.0,
+                    "title": "Lookback Days",
+                    "type": "integer"
+                  },
+                  "max_items": {
+                    "default": 10000,
+                    "maximum": 10000.0,
+                    "minimum": 1.0,
+                    "title": "Max Items",
+                    "type": "integer"
+                  },
+                  "max_pages": {
+                    "default": 100,
+                    "maximum": 100.0,
+                    "minimum": 1.0,
+                    "title": "Max Pages",
+                    "type": "integer"
+                  },
+                  "tenant_label": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\\s\\S])",
+                    "title": "Tenant Label",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tenant_label"
+                ],
+                "title": "EntraM365CollectRequest",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntraM365CollectResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid JSON or bounded request fields."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "reason",
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "API authentication required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Read permission denied or API authentication is not configured for Graph collection."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The request body exceeds the cumulative byte limit."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Only application/json is supported."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collection could not produce a valid result."
+          }
+        },
+        "summary": "Entra M365 Collect",
         "tags": [
           "collectors"
         ]

@@ -1,0 +1,48 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Synthetic HTTP responses for literal label configuration and opaque paging.",
+  "pages": [
+    {
+      "method": "GET",
+      "path": "/v1.0/security/labels/retentionLabels",
+      "query": "",
+      "status": 200,
+      "headers": {},
+      "body": {
+        "value": [
+          {
+            "id": "synthetic-label",
+            "displayName": "<script>literal label</script>",
+            "retentionTrigger": "dateLabeled",
+            "retentionDuration": {
+              "days": 0,
+              "enabled": false
+            },
+            "behaviorDuringRetentionPeriod": "retainAsRecord",
+            "actionAfterRetentionPeriod": "relabel"
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/security/labels/retentionLabels?$skiptoken=synthetic%2Fnext"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1.0/security/labels/retentionLabels",
+      "query": "$skiptoken=synthetic%2Fnext",
+      "status": 200,
+      "headers": {},
+      "body": {
+        "value": [
+          {
+            "id": "unknown-label",
+            "retentionTrigger": "NEW_TRIGGER",
+            "retentionDuration": null
+          },
+          {
+            "id": "absent-label"
+          }
+        ]
+      }
+    }
+  ]
+}

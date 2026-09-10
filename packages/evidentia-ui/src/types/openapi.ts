@@ -3,6 +3,9 @@
  * Do not make direct changes to the file.
  */
 
+export type JsonValue = boolean | number | string | JsonValue[] | {
+    [key: string]: JsonValue;
+} | null;
 export interface paths {
     "/api/ai-gov/acquisitions": {
         parameters: {
@@ -616,6 +619,26 @@ export interface paths {
          *     will add control-test pulls + ongoing-monitoring posture.
          */
         post: operations["drata_collect_api_collectors_drata_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collectors/entra-m365/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Entra M365 Collect
+         * @description Return findings and completeness for the operator-declared scope.
+         */
+        post: operations["entra_m365_collect_api_collectors_entra_m365_collect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3691,6 +3714,8 @@ export interface components {
          * @enum {string}
          */
         AnnexIIIDomain: "biometrics" | "critical_infrastructure" | "education" | "employment" | "essential_services" | "law_enforcement" | "migration" | "justice" | "none";
+        /** @enum {string} */
+        AuthMode: "application" | "delegated";
         /**
          * CadenceSeries
          * @description The dated series for one cadence over a window, with its verdict.
@@ -3720,6 +3745,8 @@ export interface components {
              */
             window_start: string;
         };
+        /** @enum {string} */
+        CapabilityState: "complete" | "partial" | "unavailable" | "not_requested";
         /**
          * CatalogAuditContext
          * @description A source-verified audit version for one named authority, not a national default.
@@ -4687,6 +4714,8 @@ export interface components {
              */
             scanned: number;
         };
+        /** @enum {string} */
+        CredentialBasis: "unverified:primary-token" | "unverified:retention-token" | "unverified:dlp-export";
         /**
          * CriticalityTier
          * @description FFIEC Vendor Management criticality tier.
@@ -4751,6 +4780,8 @@ export interface components {
          * @enum {string}
          */
         DeploymentStatus: "proposed" | "in_development" | "pilot" | "production" | "retired";
+        /** @enum {string} */
+        DiagnosticCode: "input_missing" | "credentials_missing" | "configuration_invalid" | "authentication_failed" | "permission_denied" | "connection_failed" | "upstream_error" | "retry_exhausted" | "retry_after_invalid" | "retry_after_budget" | "redirect_refused" | "unsafe_destination" | "invalid_envelope" | "invalid_record" | "invalid_timestamp" | "response_limit" | "page_limit" | "item_limit" | "byte_limit" | "capability_budget" | "run_budget" | "continuation_invalid" | "continuation_loop" | "conflicting_duplicate" | "conditional_access_detail_unavailable" | "unresolved_parent" | "conflicting_state" | "source_validity_unknown" | "future_timestamp" | "timestamp_precision_unrepresentable" | "source_retention_limited" | "internal_error";
         /**
          * DimensionAnalysis
          * @description Per-dimension distribution + summary stats.
@@ -4908,6 +4939,66 @@ export interface components {
              * @description Efficiency value score = total_gaps_closed / effort_weight
              */
             value_score: number;
+        };
+        /** EntraM365CapabilityResult */
+        EntraM365CapabilityResult: {
+            collected: components["schemas"]["Nonnegative"];
+            credential_basis: components["schemas"]["CredentialBasis"] | null;
+            declared_auth_mode: components["schemas"]["AuthMode"] | null;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EntraM365Diagnostic"][];
+            duplicate_records: components["schemas"]["Nonnegative"];
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: components["schemas"]["_FieldCoverage"];
+            };
+            finished_at: components["schemas"]["UtcClock"] | null;
+            matched_filter: components["schemas"]["Nonnegative"];
+            /**
+             * Name
+             * @enum {string}
+             */
+            name: "conditional-access" | "authentication-registration" | "sign-ins" | "directory-roles" | "managed-devices" | "retention-labels" | "dlp-export" | "defender-alerts" | "defender-incidents";
+            observed_first: components["schemas"]["UtcSourceText"] | null;
+            observed_last: components["schemas"]["UtcSourceText"] | null;
+            pages_completed: components["schemas"]["Nonnegative"];
+            requested_window_end: components["schemas"]["UtcClock"] | null;
+            requested_window_start: components["schemas"]["UtcClock"] | null;
+            requests_attempted: components["schemas"]["Nonnegative"];
+            scanned: components["schemas"]["Nonnegative"];
+            started_at: components["schemas"]["UtcClock"] | null;
+            state: components["schemas"]["CapabilityState"];
+        };
+        /** EntraM365CollectResult */
+        EntraM365CollectResult: {
+            /** Capabilities */
+            capabilities: components["schemas"]["EntraM365CapabilityResult"][];
+            /** Findings */
+            findings: components["schemas"]["_EntraM365Finding"][];
+            /** Full Surface Complete */
+            full_surface_complete: boolean;
+            manifest: components["schemas"]["CollectionManifest"];
+            provenance: components["schemas"]["_Provenance"];
+            /** Requested Capabilities */
+            requested_capabilities: ("conditional-access" | "authentication-registration" | "sign-ins" | "directory-roles" | "managed-devices" | "retention-labels" | "dlp-export" | "defender-alerts" | "defender-incidents")[];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "entra-m365-collection/v1";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+        };
+        /** EntraM365Diagnostic */
+        EntraM365Diagnostic: {
+            code: components["schemas"]["DiagnosticCode"];
+            /** Count */
+            count: number;
+            /** Http Status */
+            http_status: number | null;
         };
         /**
          * ErrorDetail
@@ -5872,6 +5963,10 @@ export interface components {
             /** System Context Yaml */
             system_context_yaml: string;
         };
+        JsonObject: {
+            [key: string]: components["schemas"]["JsonValue"];
+        };
+        JsonValue: JsonValue;
         /**
          * LLMConfig
          * @description LLM defaults honored by ``evidentia risk generate``.
@@ -6476,6 +6571,7 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        Nonnegative: number;
         /**
          * OLIRRelationship
          * @description NIST OLIR (Online Informative References) relationship types.
@@ -7320,7 +7416,7 @@ export interface components {
             /** @description Per-finding collection provenance (collector id/version, run_id, credential identity, source instance, filters, pagination). v0.7.0+ collectors MUST pass a real CollectionContext; the default synthesizes a 'legacy-pre-v0.7.0' placeholder for older construction sites. */
             collection_context?: components["schemas"]["CollectionContext"];
             /**
-             * @description Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN — not FAIL — is the safe default.
+             * @description Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN (not FAIL) is the safe default.
              * @default unknown
              */
             compliance_status: components["schemas"]["ComplianceStatus"];
@@ -7687,6 +7783,9 @@ export interface components {
         } | {
             ssp_reference: unknown;
         };
+        UtcClock: string;
+        /** Format: date-time */
+        UtcSourceText: string;
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -8163,6 +8262,90 @@ export interface components {
          * @enum {string}
          */
         _DecisionRole: "advisory" | "automated" | "hybrid";
+        /** _EntraM365Finding */
+        _EntraM365Finding: {
+            /** @description Per-finding collection provenance (collector id/version, run_id, credential identity, source instance, filters, pagination). v0.7.0+ collectors MUST pass a real CollectionContext; the default synthesizes a 'legacy-pre-v0.7.0' placeholder for older construction sites. */
+            collection_context?: components["schemas"]["CollectionContext"];
+            /**
+             * @description Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN (not FAIL) is the safe default.
+             * @default unknown
+             */
+            compliance_status: components["schemas"]["ComplianceStatus"];
+            /**
+             * Control Mappings
+             * @description NIST 800-53 (or other framework) controls this finding relates to. v0.7.0 adds OLIR relationship typing + justification per mapping. Pre-v0.7.0 callers passing ``control_ids=[...]`` as keyword arg are auto-converted via the schema's ``@model_validator``.
+             */
+            control_mappings?: components["schemas"]["ControlMapping"][];
+            /** Description */
+            description: string;
+            first_observed: components["schemas"]["UtcClock"];
+            /** Id */
+            id?: string;
+            last_observed: components["schemas"]["UtcClock"];
+            raw_data: components["schemas"]["JsonObject"];
+            /**
+             * Remediation
+             * @description Optional human-readable remediation guidance. Maps to the OCSF Compliance Finding `remediation.desc` field. Populated by collectors where the source system supplies remediation text (e.g. AWS Security Hub Remediation.Recommendation); None when unavailable.
+             */
+            remediation?: string | null;
+            resolved_at?: components["schemas"]["UtcClock"] | null;
+            /** Resource Account */
+            resource_account?: string | null;
+            /**
+             * Resource Id
+             * @description Resource identifier in the source system
+             */
+            resource_id?: string | null;
+            /** Resource Region */
+            resource_region?: string | null;
+            /**
+             * Resource Type
+             * @description E.g. 'AWS::S3::Bucket', 'GitHub::Repository'
+             */
+            resource_type?: string | null;
+            severity: components["schemas"]["Severity"];
+            /**
+             * Source Finding Id
+             * @description Original finding ID in the source system
+             */
+            source_finding_id?: string | null;
+            /**
+             * Source System
+             * @description E.g. 'aws-security-hub', 'github'
+             */
+            source_system: string;
+            /** @default active */
+            status: components["schemas"]["FindingStatus"];
+            /** Title */
+            title: string;
+        };
+        /** _FieldCoverage */
+        _FieldCoverage: {
+            absent: components["schemas"]["Nonnegative"];
+            known: components["schemas"]["Nonnegative"];
+            null: components["schemas"]["Nonnegative"];
+            unknown: components["schemas"]["Nonnegative"];
+        };
+        /** _Provenance */
+        _Provenance: {
+            /**
+             * Authenticated Identity Verified
+             * @constant
+             */
+            authenticated_identity_verified: false;
+            /**
+             * Graph Cloud
+             * @constant
+             */
+            graph_cloud: "commercial";
+            /**
+             * Identity Basis
+             * @constant
+             */
+            identity_basis: "operator-declared";
+            /** Tenant Label */
+            tenant_label: string & unknown;
+        };
     };
     responses: never;
     parameters: never;
@@ -9486,6 +9669,116 @@ export interface operations {
             };
             /** @description Collector not installed, token env var unset, or Drata unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    entra_m365_collect_api_collectors_entra_m365_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Capabilities */
+                    capabilities?: ("conditional-access" | "authentication-registration" | "sign-ins" | "directory-roles" | "managed-devices" | "retention-labels" | "dlp-export" | "defender-alerts" | "defender-incidents")[];
+                    /** Dlp Content */
+                    dlp_content?: string | null;
+                    /**
+                     * Dlp Format
+                     * @default evidentia-dlp-v1
+                     * @enum {string}
+                     */
+                    dlp_format?: "evidentia-dlp-v1" | "scubagear-provider-v1";
+                    /**
+                     * Lookback Days
+                     * @default 30
+                     */
+                    lookback_days?: number;
+                    /**
+                     * Max Items
+                     * @default 10000
+                     */
+                    max_items?: number;
+                    /**
+                     * Max Pages
+                     * @default 100
+                     */
+                    max_pages?: number;
+                    /** Tenant Label */
+                    tenant_label: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntraM365CollectResult"];
+                };
+            };
+            /** @description Invalid JSON or bounded request fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description API authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                        provider: string;
+                        reason: string | null;
+                    };
+                };
+            };
+            /** @description Read permission denied or API authentication is not configured for Graph collection. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The request body exceeds the cumulative byte limit. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Only application/json is supported. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collection could not produce a valid result. */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

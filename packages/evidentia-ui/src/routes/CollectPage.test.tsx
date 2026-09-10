@@ -17,6 +17,10 @@ import type {
   SecurityFinding,
 } from "@/lib/api";
 import { CollectPage } from "@/routes/CollectPage";
+import {
+  DEMO_ENTRA_M365_PARTIAL,
+  DEMO_ENTRA_M365_UNAVAILABLE,
+} from "@/lib/demo/fixtures";
 
 // Mock the typed API client. Keep the real `ApiError` export intact so the
 // page's `error instanceof ApiError` narrowing still behaves. `api.health` MUST
@@ -41,6 +45,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
       collectOcsf: vi.fn(),
       collectNessus: vi.fn(),
       collectGreenbone: vi.fn(),
+      collectEntraM365: vi.fn(),
       collectConvert: vi.fn(),
       collectorsStatus: vi.fn(),
     },
@@ -53,6 +58,7 @@ const collectGoogleWorkspaceMock = vi.mocked(api.collectGoogleWorkspace);
 const collectOcsfMock = vi.mocked(api.collectOcsf);
 const collectNessusMock = vi.mocked(api.collectNessus);
 const collectGreenboneMock = vi.mocked(api.collectGreenbone);
+const collectEntraMock = vi.mocked(api.collectEntraM365);
 const collectConvertMock = vi.mocked(api.collectConvert);
 const collectorsStatusMock = vi.mocked(api.collectorsStatus);
 
@@ -448,5 +454,252 @@ describe("CollectPage", () => {
       content: [{ title: "x", severity: "low" }],
       to_format: "ocsf",
     });
+  });
+});
+
+describe("Entra/M365 collection boundary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    collectorsStatusMock.mockResolvedValue({});
+  });
+
+  it("exposes the nine bounded capabilities without credential inputs", async () => {
+    healthMock.mockResolvedValue(healthValue(true));
+    renderWithClient(<CollectPage />);
+    await userEvent.click(screen.getByRole("tab", { name: "Entra/M365" }));
+    expect(screen.getByLabelText("Tenant label")).toBeInTheDocument();
+    for (const name of [
+      "Conditional Access",
+      "Authentication registration",
+      "Sign-ins",
+      "Directory roles",
+      "Managed devices",
+      "Retention labels",
+      "DLP export",
+      "Defender alerts",
+      "Defender incidents",
+    ]) {
+      expect(screen.getByRole("checkbox", { name })).toBeChecked();
+    }
+    expect(
+      screen.queryByLabelText(
+        /access token|credential file|token environment/i,
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables Graph collection without API authentication", async () => {
+    healthMock.mockResolvedValue(healthValue(false));
+    renderWithClient(<CollectPage />);
+    await userEvent.click(screen.getByRole("tab", { name: "Entra/M365" }));
+    await userEvent.type(screen.getByLabelText("Tenant label"), "fixture");
+    expect(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    ).toBeDisabled();
+  });
+
+  it("does not authorize Graph collection from stale successful health", async () => {
+    healthMock.mockRejectedValue(new Error("Synthetic health failure"));
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    client.setQueryData(["health"], healthValue(true), {
+      updatedAt: Date.now() - 60_000,
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <CollectPage />
+      </QueryClientProvider>,
+    );
+    await userEvent.click(screen.getByRole("tab", { name: "Entra/M365" }));
+    await userEvent.type(screen.getByLabelText("Tenant label"), "fixture");
+    await waitFor(() => expect(healthMock).toHaveBeenCalled());
+    expect(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    ).toBeDisabled();
+  });
+});
+
+describe("Entra/M365 full result flow", () => {
+  beforeEach(() => {
+    healthMock.mockReset();
+    collectEntraMock.mockReset();
+    healthMock.mockResolvedValue(healthValue(true));
+    collectEntraMock.mockResolvedValue(
+      structuredClone(DEMO_ENTRA_M365_PARTIAL),
+    );
+  });
+
+  async function openForm() {
+    renderWithClient(<CollectPage />);
+    await userEvent.click(screen.getByRole("tab", { name: "Entra/M365" }));
+    await userEvent.type(screen.getByLabelText("Tenant label"), "fixture");
+  }
+
+  async function onlyDlp() {
+    for (const checkbox of screen.getAllByRole("checkbox")) {
+      if (checkbox !== screen.getByRole("checkbox", { name: "DLP export" })) {
+        await userEvent.click(checkbox);
+      }
+    }
+  }
+
+  function syntheticFile(
+    bytes: Uint8Array<ArrayBuffer>,
+    name = "synthetic.json",
+  ) {
+    const file = new File([bytes], name, { type: "application/json" });
+    const read = vi.fn().mockResolvedValue(bytes.buffer);
+    Object.defineProperty(file, "arrayBuffer", { value: read });
+    return { file, read };
+  }
+
+  it("keeps all nine states and diagnostics visible when there are no findings", async () => {
+    healthMock.mockResolvedValue(healthValue(false));
+    collectEntraMock.mockResolvedValue(
+      structuredClone(DEMO_ENTRA_M365_UNAVAILABLE),
+    );
+    await openForm();
+    await onlyDlp();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    );
+    expect(
+      await screen.findByText("Collection incomplete: unavailable"),
+    ).toBeInTheDocument();
+    const region = screen.getByLabelText("Entra/M365 result");
+    expect(within(region).getAllByLabelText(/capability result$/)).toHaveLength(
+      9,
+    );
+    expect(
+      within(region).getAllByText(/permission_denied/).length,
+    ).toBeGreaterThan(0);
+    expect(
+      within(region).getByText(/Full surface complete: no/),
+    ).toBeInTheDocument();
+    expect(collectEntraMock).toHaveBeenCalledWith(
+      {
+        tenant_label: "fixture",
+        capabilities: ["dlp-export"],
+        lookback_days: 30,
+        max_items: 10000,
+        max_pages: 100,
+      },
+      "partial",
+    );
+  });
+
+  it("refreshes authentication immediately before Graph collection", async () => {
+    await openForm();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect Entra/M365" }),
+      ).toBeEnabled(),
+    );
+    healthMock.mockResolvedValue(healthValue(false));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    );
+    expect(
+      await screen.findByText(
+        /Graph collection requires current API authentication/,
+      ),
+    ).toBeInTheDocument();
+    expect(collectEntraMock).not.toHaveBeenCalled();
+    expect(healthMock.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it("sends only bounded options and renders source text without HTML execution", async () => {
+    const result = structuredClone(DEMO_ENTRA_M365_PARTIAL);
+    const marker = '<img src="synthetic" onerror="window.sourceExecuted=true">';
+    result.findings[0].description = marker;
+    collectEntraMock.mockResolvedValue(result);
+    await openForm();
+    await userEvent.clear(screen.getByLabelText("Lookback days"));
+    await userEvent.type(screen.getByLabelText("Lookback days"), "7");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    );
+    expect(
+      await screen.findByText("Collection incomplete: partial"),
+    ).toBeInTheDocument();
+    const region = screen.getByLabelText("Entra/M365 result");
+    expect(within(region).getByText(marker)).toBeInTheDocument();
+    expect(region.querySelector("img")).toBeNull();
+    const request = collectEntraMock.mock.calls[0][0];
+    expect(request.lookback_days).toBe(7);
+    expect(request.capabilities).toHaveLength(9);
+    expect(Object.keys(request).sort()).toEqual([
+      "capabilities",
+      "lookback_days",
+      "max_items",
+      "max_pages",
+      "tenant_label",
+    ]);
+  });
+
+  it("accepts a bounded local upload and omits it after the capability is deselected", async () => {
+    await openForm();
+    const { file } = syntheticFile(
+      new TextEncoder().encode('{"schema_version":1}'),
+    );
+    await userEvent.upload(screen.getByLabelText("DLP JSON export"), file);
+    await waitFor(() =>
+      expect(screen.getByLabelText("DLP export format")).toBeEnabled(),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    );
+    await waitFor(() => expect(collectEntraMock).toHaveBeenCalledTimes(1));
+    expect(collectEntraMock.mock.calls[0][0].dlp_content).toBe(
+      '{"schema_version":1}',
+    );
+    expect(collectEntraMock.mock.calls[0][0].dlp_format).toBe(
+      "evidentia-dlp-v1",
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect Entra/M365" }),
+      ).toBeEnabled(),
+    );
+    await userEvent.click(screen.getByRole("checkbox", { name: "DLP export" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    );
+    await waitFor(() => expect(collectEntraMock).toHaveBeenCalledTimes(2));
+    expect(collectEntraMock.mock.calls[1][0]).not.toHaveProperty("dlp_content");
+    expect(collectEntraMock.mock.calls[1][0]).not.toHaveProperty("dlp_format");
+  });
+
+  it("refuses an oversized file before reading or posting it", async () => {
+    await openForm();
+    const { file, read } = syntheticFile(new Uint8Array(4_194_305));
+    await userEvent.upload(screen.getByLabelText("DLP JSON export"), file);
+    expect(
+      await screen.findByText(/DLP export exceeds the 4 MiB/),
+    ).toBeInTheDocument();
+    expect(read).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    ).toBeDisabled();
+    expect(collectEntraMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid UTF-8 and refuses an empty selection", async () => {
+    await openForm();
+    const { file } = syntheticFile(new Uint8Array([255]));
+    await userEvent.upload(screen.getByLabelText("DLP JSON export"), file);
+    expect(
+      await screen.findByText(/export must be valid UTF-8 JSON/),
+    ).toBeInTheDocument();
+    for (const checkbox of screen.getAllByRole("checkbox"))
+      await userEvent.click(checkbox);
+    expect(
+      screen.getByRole("button", { name: "Collect Entra/M365" }),
+    ).toBeDisabled();
+    expect(collectEntraMock).not.toHaveBeenCalled();
   });
 });

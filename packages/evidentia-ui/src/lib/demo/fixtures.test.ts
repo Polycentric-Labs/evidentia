@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { DEMO_GAP_REPORT, DEMO_FRAMEWORKS, DEMO_REPORT_LIST } from "./fixtures";
+import {
+  DEMO_ENTRA_M365_PARTIAL,
+  DEMO_ENTRA_M365_UNAVAILABLE,
+  DEMO_GAP_REPORT,
+  DEMO_FRAMEWORKS,
+  DEMO_REPORT_LIST,
+} from "./fixtures";
 
 describe("demo fixtures", () => {
   it("the hero gap report mirrors the Meridian v2 baseline shape", () => {
@@ -53,4 +59,17 @@ describe("demo fixtures", () => {
     );
     expect(framework?.text_depth).toBe(expectedDepth);
   });
+});
+
+describe("Entra/M365 fixture provenance", () => {
+  it.each([DEMO_ENTRA_M365_PARTIAL, DEMO_ENTRA_M365_UNAVAILABLE])(
+    "does not claim a live or complete tenant assessment",
+    (result) => {
+      expect(result.provenance.tenant_label).toBe("synthetic-demo");
+      expect(result.manifest.run_id).toMatch(/^synthetic-demo-/);
+      expect(result.manifest.is_complete).toBe(false);
+      expect(result.provenance.authenticated_identity_verified).toBe(false);
+      expect(result.capabilities).toHaveLength(9);
+    },
+  );
 });

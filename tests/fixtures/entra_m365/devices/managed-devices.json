@@ -1,0 +1,70 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Authored Graph transport data for bounded reader tests; no tenant recording or permission/license attestation.",
+  "capability": "managed-devices",
+  "clock_utc": "2026-09-10T00:00:00.000000Z",
+  "lookback_days": 1,
+  "exchanges": [
+    {
+      "method": "GET",
+      "route": "/v1.0/deviceManagement/managedDevices",
+      "query": "",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": " device-a ",
+            "complianceState": "compliant",
+            "managementState": "managed",
+            "lastSyncDateTime": "2026-09-09t23:59:59.999999999999z",
+            "deviceName": "SYNTHETIC-EXCLUDED-DEVICE"
+          },
+          {
+            "id": "device-b",
+            "complianceState": "noncompliant",
+            "managementState": "unhealthy",
+            "lastSyncDateTime": "2026-08-01T00:00:00Z"
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices?$skiptoken=SYNTHETIC%2f+opaque%26v%3D2"
+      }
+    },
+    {
+      "method": "GET",
+      "route": "/v1.0/deviceManagement/managedDevices",
+      "query": "$skiptoken=SYNTHETIC%2f+opaque%26v%3D2",
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "value": [
+          {
+            "id": "device-c",
+            "complianceState": "unknownFutureValue",
+            "managementState": "FUTURE-MANAGEMENT",
+            "lastSyncDateTime": "2026-09-10T00:00:00.000000000001Z"
+          },
+          {
+            "id": "device-d",
+            "complianceState": null,
+            "managementState": null,
+            "lastSyncDateTime": null
+          },
+          {
+            "id": "device-e"
+          },
+          {
+            "id": "device-f",
+            "complianceState": "configManager",
+            "managementState": "retireCanceled",
+            "lastSyncDateTime": "2026-09-10T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ]
+}

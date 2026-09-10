@@ -1,0 +1,53 @@
+{
+  "kind": "authored-synthetic",
+  "description": "Two synthetic incident pages without an incident resolution-time field.",
+  "requests": [
+    {
+      "pagination_sequence": 1,
+      "method": "GET",
+      "route": "/v1.0/security/incidents",
+      "query": "",
+      "status": 200,
+      "headers": {"content-type": "application/json"},
+      "body": {
+        "value": [
+          {
+            "id": " synthetic-incident-active ",
+            "severity": "medium",
+            "status": "active",
+            "createdDateTime": "2026-09-08T23:00:00.123456-01:00",
+            "lastUpdateDateTime": "2026-09-09T23:59:59.1234559Z",
+            "displayName": "SYNTHETIC_EXCLUDED_INCIDENT_NAME",
+            "resolvedDateTime": "SYNTHETIC_UNSELECTED_FIELD",
+            "alerts": [{"id": "SYNTHETIC_EXCLUDED_NESTED_ALERT"}]
+          }
+        ],
+        "@odata.nextLink": "https://graph.microsoft.com/v1.0/security/incidents?$skiptoken=SYNTHETIC%2f+%20%26value"
+      }
+    },
+    {
+      "pagination_sequence": 2,
+      "method": "GET",
+      "route": "/v1.0/security/incidents",
+      "query": "$skiptoken=SYNTHETIC%2f+%20%26value",
+      "status": 200,
+      "headers": {"content-type": "application/json"},
+      "body": {
+        "value": [
+          {
+            "id": "synthetic-incident-resolved",
+            "severity": "low",
+            "status": "resolved",
+            "createdDateTime": "2026-09-10T00:00:00.123456000000Z",
+            "lastUpdateDateTime": "2026-09-10T00:00:00.1234561Z"
+          }
+        ],
+        "@odata.nextLink": null
+      }
+    }
+  ],
+  "limitations": [
+    "Authored synthetic responses; no provider recording or tenant call.",
+    "No credential, permission, role, license or service-availability claim."
+  ]
+}
