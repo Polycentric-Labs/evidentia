@@ -10,9 +10,9 @@ passes (Compliance mode: even root cannot bypass; Governance
 mode: holders of the ``s3:BypassGovernanceRetention`` permission
 can override, useful for operator-led GDPR purge).
 
-The bucket MUST be created with Object Lock enabled at creation
-time — it cannot be added retroactively. See
-``docs/worm-backends.md`` for the operator setup runbook.
+The bucket must have Object Lock enabled before this backend applies
+retention. AWS supports enabling it at creation or on an existing
+general-purpose bucket. See ``docs/worm-backends.md`` for setup.
 
 Per-record layout:
 
@@ -79,8 +79,9 @@ class S3ObjectLockWORM(WORMBackend):
 
     Args:
         bucket_name: Name of the pre-configured S3 bucket. The
-            bucket MUST have Object Lock enabled at creation
-            time; this class will not enable it retroactively.
+            bucket must already have Object Lock enabled, either at
+            creation or through a supported existing-bucket setup.
+            This class does not configure the bucket feature.
         region: AWS region. Defaults to the boto3 default chain
             (``AWS_REGION`` env var or ``~/.aws/config``).
         lock_mode: ``"COMPLIANCE"`` (root-cannot-bypass) or

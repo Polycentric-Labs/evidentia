@@ -27,6 +27,7 @@ import {
 } from "@/lib/api";
 import { IS_DEMO } from "@/lib/demo";
 import { cn } from "@/lib/utils";
+import { StorageRetentionTab } from "@/routes/StorageRetentionTab";
 
 /**
  * Collectors console (/collect) — Wave-4 HIGH-risk surface.
@@ -114,9 +115,10 @@ export function CollectPage() {
       <CredentialsNote authed={authed} />
 
       <Tabs defaultValue="collectors">
-        <TabsList>
+        <TabsList className="h-auto max-w-full flex-wrap justify-start">
           <TabsTrigger value="collectors">Collectors</TabsTrigger>
           <TabsTrigger value="entra-m365">Entra/M365</TabsTrigger>
+          <TabsTrigger value="storage-retention">Storage retention</TabsTrigger>
           <TabsTrigger value="ocsf">OCSF ingest</TabsTrigger>
           <TabsTrigger value="nessus">Nessus scan</TabsTrigger>
           <TabsTrigger value="greenbone">Greenbone report</TabsTrigger>
@@ -129,6 +131,9 @@ export function CollectPage() {
         </TabsContent>
         <TabsContent value="entra-m365">
           <EntraM365Tab freshAuth={freshAuth} verifyAuth={verifyEntraAuth} />
+        </TabsContent>
+        <TabsContent value="storage-retention">
+          <StorageRetentionTab freshAuth={freshAuth} verifyAuth={verifyEntraAuth} />
         </TabsContent>
         <TabsContent value="ocsf">
           <OcsfTab authed={authed} />

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from unittest.mock import patch
 
 import pytest
@@ -137,17 +136,22 @@ class TestReset:
             assert limiter.check("client-1") is True
 
 
-class TestRealTimeSmoke:
-    """Single un-mocked test verifying the real time.monotonic path
-    actually works (not just the mocked path). Slow but cheap."""
+class TestRefillAfterBurst:
+    """Verify token refill independently of runner scheduling delays."""
 
-    def test_real_time_path(self) -> None:
+    def test_refill_uses_elapsed_time(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from types import SimpleNamespace
+
+        from evidentia_api import rate_limit
+
+        now = 0.0
+        monkeypatch.setattr(rate_limit, "time", SimpleNamespace(monotonic=lambda: now))
         limiter = TokenBucketRateLimiter(rate_per_minute=600, burst=3)
         # Burst of 3, rate of 10/sec.
         assert limiter.check("real") is True
         assert limiter.check("real") is True
         assert limiter.check("real") is True
         assert limiter.check("real") is False
-        # Wait long enough to accrue at least one token.
-        time.sleep(0.15)
+        now = 0.15
         assert limiter.check("real") is True
+        assert limiter.check("real") is False

@@ -9,6 +9,7 @@ import { generateTypes } from "./generate-types.mjs";
 
 let stock;
 let generated;
+const JSON_NAMES = ["JsonValue", "StorageRetentionJsonValue"];
 
 beforeAll(async () => {
     stock =
@@ -83,9 +84,11 @@ test("the full generated schema passes strict TypeScript checking", () => {
     expect(diagnostics(generated)).toEqual([]);
 });
 
-test("JsonValue accepts recursive JSON and rejects values outside JSON", () => {
-    const controls = `
-type J = components["schemas"]["JsonValue"];
+test.each(JSON_NAMES)(
+    "%s accepts recursive JSON and rejects values outside JSON",
+    (name) => {
+        const controls = `
+type J = components["schemas"]["${name}"];
 type Assert<T extends true> = T;
 type Accept<T> = [T] extends [J] ? true : false;
 type Reject<T> = [T] extends [J] ? false : true;
@@ -98,25 +101,27 @@ export type JsonTypeContract = [
   Assert<Reject<{ value: undefined }>>, Assert<Reject<undefined[]>>
 ];
 `;
-    expect(diagnostics(generated + controls)).toEqual([]);
-});
+        expect(diagnostics(generated + controls)).toEqual([]);
+    },
+);
 
 test("other schema members and existing top-level definitions stay unchanged", () => {
     const before = definitions(stock);
     const after = definitions(generated);
     expect([...after.schemas.keys()]).toEqual([...before.schemas.keys()]);
     for (const [name, value] of before.schemas) {
-        if (name !== "JsonValue") expect(after.schemas.get(name)).toBe(value);
+        if (!JSON_NAMES.includes(name))
+            expect(after.schemas.get(name)).toBe(value);
     }
     for (const [name, value] of before.topLevel) {
         if (name !== "components") expect(after.topLevel.get(name)).toBe(value);
     }
     expect(
         [...after.topLevel.keys()].filter((name) => !before.topLevel.has(name)),
-    ).toEqual(["JsonValue"]);
+    ).toEqual(JSON_NAMES);
 });
 
-test.each([
+const invalidShapes = [
     [
         "unrestricted object",
         () => ({ type: "object", additionalProperties: true }),
@@ -157,13 +162,17 @@ test.each([
             return schema;
         },
     ],
-])("refuses unexpected JsonValue shape: %s", async (_name, alter) => {
+];
+
+test.each(
+    JSON_NAMES.flatMap((name) =>
+        invalidShapes.map(([label, alter]) => [name, label, alter]),
+    ),
+)("refuses unexpected %s shape: %s", async (name, _label, alter) => {
     const changed = structuredClone(openapiSchema);
-    changed.components.schemas.JsonValue = alter(
-        changed.components.schemas.JsonValue,
-    );
+    changed.components.schemas[name] = alter(changed.components.schemas[name]);
     await expect(generateTypes(changed)).rejects.toThrow(
-        /^Unexpected JsonValue schema$/,
+        new RegExp(`^Unexpected ${name} schema$`),
     );
 });
 

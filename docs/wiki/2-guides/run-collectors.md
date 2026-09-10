@@ -70,7 +70,7 @@ evidentia collect --help
 ```
 
 You will see the credentialed providers (`aws`, `github`, `okta`,
-`google-workspace`, `entra-m365`, `sql`, `databricks`, `snowflake`, `vanta`, `drata`, `bitsight`,
+`google-workspace`, `entra-m365`, `retention`, `sql`, `databricks`, `snowflake`, `vanta`, `drata`, `bitsight`,
 `securityscorecard`) plus the two OCSF verbs (`ocsf` to ingest, `convert` to
 emit). Each subcommand has its
 own `--help` with the exact flags and the env var its secret is read from:
@@ -225,6 +225,63 @@ for the first 10 findings;
 reports configuration presence separately from live validation, which remains
 false.
 
+### Storage retention
+
+Use this collector to observe retention configuration on explicitly selected S3 general-purpose
+buckets, Azure Blob containers and their account/service context, or GCS buckets. It does not list
+resources, inspect objects, test deletion, change locks or establish compliance.
+
+Install `evidentia-collectors[retention]` for S3 signing and XML support. Azure and GCS use the base
+collector dependencies. Configure only the selected provider's fixed credential references through
+your normal secret-management process:
+
+| Provider | Fixed environment references |
+| --- | --- |
+| S3 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN` |
+| Azure | `STORAGE_RETENTION_AZURE_ACCESS_TOKEN` |
+| GCS | `STORAGE_RETENTION_GCS_ACCESS_TOKEN` |
+
+Tokens must already exist; collection does not acquire or refresh them. Credentials, endpoint URLs,
+object keys and adjustable limits are never accepted in the request file. For a synthetic GCS target,
+the file shape is:
+
+```json
+{
+  "provider": "gcs",
+  "scope_label": "example-scope",
+  "targets": [{"bucket": "example-retention-bucket"}]
+}
+```
+
+Replace the target with a resource you are authorized to read. Select one provider and 1 through 20
+distinct targets. S3 targets use `bucket`, `region` and optional `expected_owner`; Azure targets use
+`subscription_id`, `resource_group`, `account` and `container`. The scope label is operator-declared
+and does not verify ownership or credential identity.
+
+```bash
+evidentia collect retention --help
+evidentia collect retention --request-file request.json --output result.json
+```
+
+The request must be a named regular JSON file of at most 65536 bytes. Stdin, links and request/output
+aliases are refused. Output is reserved before any collection and replaced atomically after the full
+result validates. Omit `--output` for stdout. Complete results exit 0; partial/unavailable evidence and
+operational failures exit 1; invalid input exits 2; read-role denial exits 77. An exit of 1 may still
+produce valid, useful partial evidence, so inspect resource and component diagnostics.
+
+The API equivalent is `POST /api/collectors/retention/collect` with the same JSON object. Configured
+authentication and read RBAC precede body parsing and provider access. Valid results return HTTP 200
+for every collection status. Invalid JSON/fields return 400, excess streamed bytes 413, unsupported
+media 415, absent optional support 503 and unexpected failures a sanitized 500.
+
+In the console, select **Storage retention**, fill the nonsecret scope and target fields, then run.
+The tab retains every resource/component state, including unavailable evidence, and provides a full
+JSON download. Native source values retain their response spelling, including integers beyond browser
+number precision. Findings remain informational with unknown compliance status and no control mappings.
+The **Status** tab reports configured reference presence; live-provider and identity validation remain
+false. Demo responses and the public HTTP fixtures are explicitly synthetic. See the
+[collector design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/storage-retention-collector-design.md) for exact methods and limits.
+
 ### Google Workspace
 
 The Google Workspace collector is read-only against two Admin SDK surfaces: the
@@ -301,9 +358,9 @@ for the export side.
 
 Everything above also works from the browser. Start the server with
 `evidentia serve` and open the **Collect** screen from the sidebar (under
-**Connect**, route `/collect`). Its seven tabs are **Collectors**, **Entra/M365**,
+**Connect**, route `/collect`). Its eight tabs are **Collectors**, **Entra/M365**, **Storage retention**,
 **OCSF ingest**, **Nessus scan**, **Greenbone report**, **Convert** and **Status**.
-The Entra/M365 tab retains the full result alongside the finding cards.
+The Entra/M365 and Storage retention tabs retain the full result alongside the finding cards.
 
 ![The Collect screen](../images/screen-collect.png)
 
@@ -395,5 +452,6 @@ produce identical findings.
   loopback / link-local / metadata address and the default guard blocked it. Use a
   public URL, or pass `--allow-private-ips` (CLI) / uncheck **Block private IPs**
   (console) *only* for a trusted internal endpoint.
-- **A finding shows `compliance_status: unknown`** — a transient 5xx on one
-  sub-check. The run still completes; re-run to resolve the indeterminate item.
+- **A finding shows `compliance_status: unknown`**: inspect its source limitations and diagnostics.
+  Some collectors use this for an indeterminate sub-check. Storage retention observations always
+  retain unknown compliance status because configuration alone does not assess object enforcement.

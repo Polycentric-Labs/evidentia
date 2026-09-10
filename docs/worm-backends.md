@@ -69,8 +69,10 @@ for the dedicated runbook.
 
 ### Bucket creation
 
-S3 Object Lock **must be enabled at bucket creation time** —
-it cannot be added retroactively. Use the AWS CLI:
+S3 Object Lock can be enabled when creating a general-purpose bucket or on an
+existing general-purpose bucket. AWS requires versioning; review its
+[configuration procedure](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-configure.html)
+before enabling the feature. The example below creates a new bucket with the AWS CLI:
 
 ```bash
 aws s3api create-bucket \
@@ -244,11 +246,21 @@ or Application Default Credentials.
 | Feature | S3 | Azure | GCS |
 |---|---|---|---|
 | Granularity | Per-object | Per-blob | Bucket-wide + per-blob holds |
-| Lock can be set retroactively | No | Limited | No |
+| Enable retention on an existing resource | Existing versioned general-purpose buckets support Object Lock | Container-level WORM supports existing containers; version-level WORM has migration and eligibility constraints | A retention policy can be added to an existing bucket and then locked |
 | Compliance mode (root cannot bypass) | Yes (`COMPLIANCE`) | Yes (`Locked`) | Yes (`retention lock`) |
 | Operator override (GDPR-friendly) | Yes (`GOVERNANCE` + `s3:BypassGovernanceRetention`) | Yes (`Unlocked`) | Limited (must use unlocked policy + held holds) |
 | Legal hold | `ObjectLockLegalHoldStatus` | `set_legal_hold` | `temporary_hold` / `event_based_hold` |
 | Best fit | SEC / FINRA / per-tenant retention | Azure-native shops | GCP-native shops with single retention period |
+
+Feature enablement and existing-object protection are separate questions. S3
+retention and holds apply to individual object versions; enabling Object Lock
+alone does not prove that an existing version is protected. Azure behavior
+depends on container-level versus version-level policy scope. GCS bucket
+retention policies cover existing and future objects, with protection based on
+each object's age. Review the provider's scope before applying a configuration:
+[AWS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-configure.html),
+[Azure](https://learn.microsoft.com/en-us/azure/storage/blobs/immutable-storage-overview),
+and [GCS](https://docs.cloud.google.com/storage/docs/bucket-lock).
 
 ---
 
@@ -311,15 +323,22 @@ See [`docs/gdpr-purge-flow.md`](gdpr-purge-flow.md).
 
 ### S3: "Object Lock configuration cannot be applied"
 
-The bucket was created without `--object-lock-enabled-for-bucket`.
-Object Lock cannot be enabled retroactively — create a new bucket
-with the flag, copy data over, then delete the old bucket.
+Check that the selected general-purpose bucket has versioning and Object Lock
+enabled and that the operator has the required configuration permissions. AWS
+supports enabling Object Lock on an existing versioned bucket; use its
+[configuration procedure](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock-configure.html).
+Enabling the feature is distinct from setting retention or a legal hold on an
+individual object version. This backend requires prior bucket configuration
+and does not perform that setup.
 
 ### Azure: "The blob does not have an immutability policy"
 
-The container was created without version-level immutability.
-Recreate the container with `--enable-vlw` (preview features may
-need to be enabled at the subscription level).
+Check whether the operation expects a container-level policy or a version-level
+policy, then inspect the selected container's configuration and eligibility.
+Existing containers support container-level WORM; version-level support has
+separate migration and eligibility requirements. Follow the
+[Azure scope and policy guidance](https://learn.microsoft.com/en-us/azure/storage/blobs/immutable-storage-overview)
+for the selected model before changing the resource.
 
 ### GCS: "Cannot set retention on locked bucket"
 

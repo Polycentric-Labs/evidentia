@@ -1,0 +1,7 @@
+{
+  "name": "synthetic-retention-bucket",
+  "metageneration": null,
+  "retentionPolicy": null,
+  "versioning": null,
+  "objectRetention": null
+}

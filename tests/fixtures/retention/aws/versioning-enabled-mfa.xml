@@ -1,0 +1,2 @@
+<!-- Authored synthetic GetBucketVersioning response. MfaDelete is the XML wire name. -->
+<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Status>Enabled</Status><MfaDelete>Enabled</MfaDelete></VersioningConfiguration>

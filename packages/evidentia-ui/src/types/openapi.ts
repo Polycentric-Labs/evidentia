@@ -6,6 +6,9 @@
 export type JsonValue = boolean | number | string | JsonValue[] | {
     [key: string]: JsonValue;
 } | null;
+export type StorageRetentionJsonValue = boolean | number | string | StorageRetentionJsonValue[] | {
+    [key: string]: StorageRetentionJsonValue;
+} | null;
 export interface paths {
     "/api/ai-gov/acquisitions": {
         parameters: {
@@ -873,6 +876,26 @@ export interface paths {
          *     accepts a token value.
          */
         post: operations["okta_collect_api_collectors_okta_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collectors/retention/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Storage Retention Collect
+         * @description Return full observations for every operator-selected resource.
+         */
+        post: operations["storage_retention_collect_api_collectors_retention_collect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3716,6 +3739,17 @@ export interface components {
         AnnexIIIDomain: "biometrics" | "critical_infrastructure" | "education" | "employment" | "essential_services" | "law_enforcement" | "migration" | "justice" | "none";
         /** @enum {string} */
         AuthMode: "application" | "delegated";
+        /** AzureTarget */
+        AzureTarget: {
+            /** Account */
+            account: string & unknown;
+            /** Container */
+            container: string & unknown;
+            /** Resource Group */
+            resource_group: string & unknown;
+            /** Subscription Id */
+            subscription_id: string & unknown;
+        };
         /**
          * CadenceSeries
          * @description The dated series for one cadence over a window, with its verdict.
@@ -4214,7 +4248,7 @@ export interface components {
             collector_version: string;
             /**
              * Credential Identity
-             * @description Authenticated principal that produced the finding. Format varies by source: AWS IAM ARN, GitHub app installation id, token subject, service-account email, etc. NOT the secret itself — the identity that the secret authenticates.
+             * @description Authenticated principal that produced the finding. Format varies by source: AWS IAM ARN, GitHub app installation id, token subject, service-account email, etc. NOT the secret itself; the identity that the secret authenticates.
              */
             credential_identity: string;
             /**
@@ -4332,7 +4366,7 @@ export interface components {
             total_findings: number;
             /**
              * Warnings
-             * @description Non-fatal issues encountered during collection — rate-limit backoffs, skipped resources, blind-spot disclosures.
+             * @description Non-fatal issues encountered during collection: rate-limit backoffs, skipped resources, blind-spot disclosures.
              */
             warnings?: string[];
         };
@@ -5716,6 +5750,11 @@ export interface components {
          * @enum {string}
          */
         GapStatus: "open" | "in_progress" | "remediated" | "accepted" | "not_applicable";
+        /** GcsTarget */
+        GcsTarget: {
+            /** Bucket */
+            bucket: string & (unknown & unknown);
+        };
         /**
          * GreenboneCollectResponse
          * @description Response body of ``POST /collectors/greenbone/collect``.
@@ -7398,6 +7437,18 @@ export interface components {
              */
             seed?: number | null;
         };
+        /** S3Target */
+        S3Target: {
+            /** Bucket */
+            bucket: string & unknown;
+            /** Expected Owner */
+            expected_owner?: string | null;
+            /**
+             * Region
+             * @enum {string}
+             */
+            region: "af-south-1" | "ap-east-1" | "ap-east-2" | "ap-northeast-1" | "ap-northeast-2" | "ap-northeast-3" | "ap-south-1" | "ap-south-2" | "ap-southeast-1" | "ap-southeast-2" | "ap-southeast-3" | "ap-southeast-4" | "ap-southeast-5" | "ap-southeast-6" | "ap-southeast-7" | "ca-central-1" | "ca-west-1" | "eu-central-1" | "eu-central-2" | "eu-north-1" | "eu-south-1" | "eu-south-2" | "eu-west-1" | "eu-west-2" | "eu-west-3" | "il-central-1" | "me-central-1" | "me-south-1" | "mx-central-1" | "sa-east-1" | "us-east-1" | "us-east-2" | "us-west-1" | "us-west-2";
+        };
         /**
          * SecurityFinding
          * @description A security finding from an evidence collector.
@@ -7710,6 +7761,142 @@ export interface components {
              * @description Sample standard deviation.
              */
             stddev: number;
+        };
+        /**
+         * StorageRetentionCollectResult
+         * @description Finite selected-read counts do not claim provider enumeration.
+         */
+        StorageRetentionCollectResult: {
+            /** Attempted Components */
+            attempted_components: number;
+            /** Attempted Resources */
+            attempted_resources: number;
+            /**
+             * Authenticated Identity Verified
+             * @default false
+             * @constant
+             */
+            authenticated_identity_verified: false;
+            /** Completed Components */
+            completed_components: number;
+            /**
+             * Coverage Scope
+             * @default selected_resources
+             * @constant
+             */
+            coverage_scope: "selected_resources";
+            /** Diagnostics */
+            diagnostics: components["schemas"]["StorageRetentionDiagnostic"][];
+            /** Findings */
+            findings: components["schemas"]["_StrictFinding"][];
+            /** Finished At */
+            finished_at: string;
+            /**
+             * Identity Basis
+             * @default operator-declared
+             * @constant
+             */
+            identity_basis: "operator-declared";
+            manifest: components["schemas"]["_StrictManifest"];
+            /**
+             * Object Enforcement Assessed
+             * @default false
+             * @constant
+             */
+            object_enforcement_assessed: false;
+            /**
+             * Observation Scope
+             * @default configuration
+             * @constant
+             */
+            observation_scope: "configuration";
+            /** Planned Components */
+            planned_components: number;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "s3" | "azure" | "gcs";
+            /**
+             * Recordset Completeness Assessed
+             * @default false
+             * @constant
+             */
+            recordset_completeness_assessed: false;
+            /** Requested Resources */
+            requested_resources: number;
+            /** Resources */
+            resources: components["schemas"]["StorageRetentionResourceResult"][];
+            /**
+             * Schema Version
+             * @default storage-retention-collection/v1
+             * @constant
+             */
+            schema_version: "storage-retention-collection/v1";
+            /** Scope Label */
+            scope_label: string & unknown;
+            /** Started At */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+        };
+        /** StorageRetentionComponentResult */
+        StorageRetentionComponentResult: {
+            /** Attempts */
+            attempts: number;
+            /** Canonical Resource Id */
+            canonical_resource_id: string;
+            /**
+             * Component Id
+             * @enum {string}
+             */
+            component_id: "s3-object-lock" | "s3-versioning" | "azure-account" | "azure-blob-service" | "azure-container" | "gcs-bucket";
+            /** Decoded Bytes */
+            decoded_bytes: number;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["StorageRetentionDiagnostic"][];
+            /** Finished At */
+            finished_at: string | null;
+            /** Http Status */
+            http_status: number | null;
+            projection: components["schemas"]["_Projection"] | null;
+            /** Raw Bytes */
+            raw_bytes: number;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+        };
+        /** StorageRetentionDiagnostic */
+        StorageRetentionDiagnostic: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "configuration_missing" | "configuration_invalid" | "credential_unavailable" | "credential_rejected" | "forbidden" | "resource_not_found" | "unsafe_destination" | "offline_refused" | "redirect_refused" | "endpoint_mismatch" | "timeout" | "rate_limited" | "upstream_error" | "invalid_response" | "source_identity_mismatch" | "unsupported_source_value" | "missing_source_detail" | "projection_limit" | "response_limit" | "run_budget_exhausted" | "internal_error" | "cleanup_failed" | "signing_unsupported" | "retry_after_invalid";
+            /** Http Status */
+            http_status?: number | null;
+        };
+        StorageRetentionJsonValue: StorageRetentionJsonValue;
+        /** StorageRetentionResourceResult */
+        StorageRetentionResourceResult: {
+            /** Canonical Resource Id */
+            canonical_resource_id: string;
+            /** Components */
+            components: components["schemas"]["StorageRetentionComponentResult"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Target */
+            target: components["schemas"]["S3Target"] | components["schemas"]["AzureTarget"] | components["schemas"]["GcsTarget"];
         };
         /**
          * Tier
@@ -8326,6 +8513,26 @@ export interface components {
             null: components["schemas"]["Nonnegative"];
             unknown: components["schemas"]["Nonnegative"];
         };
+        /** _Projection */
+        _Projection: {
+            /** Api Version */
+            api_version: string;
+            /** Canonical Projection Sha256 */
+            canonical_projection_sha256: string;
+            fields: components["schemas"]["_WireJsonObject"];
+            /** Native Scope */
+            native_scope: string;
+            /**
+             * Projection Version
+             * @default storage-retention-projection/v1
+             * @constant
+             */
+            projection_version: "storage-retention-projection/v1";
+            /** Source Etag */
+            source_etag?: string | null;
+            /** Source Metageneration */
+            source_metageneration?: string | null;
+        };
         /** _Provenance */
         _Provenance: {
             /**
@@ -8345,6 +8552,177 @@ export interface components {
             identity_basis: "operator-declared";
             /** Tenant Label */
             tenant_label: string & unknown;
+        };
+        /** _StrictContext */
+        _StrictContext: {
+            /** Collected At */
+            collected_at: string;
+            /**
+             * Collector Id
+             * @description Stable collector identifier; used for filtering and SIEM alerting. Examples: 'aws-config', 'aws-security-hub', 'aws-access-analyzer', 'github-branch-protection', 'github-dependabot'.
+             */
+            collector_id: string;
+            /**
+             * Collector Version
+             * @description Semver of the evidentia-collectors package that produced this finding. Resolved from importlib.metadata at collection time so it always matches the installed wheel.
+             */
+            collector_version: string;
+            /**
+             * Credential Identity
+             * @description Authenticated principal that produced the finding. Format varies by source: AWS IAM ARN, GitHub app installation id, token subject, service-account email, etc. NOT the secret itself; the identity that the secret authenticates.
+             */
+            credential_identity: string;
+            /**
+             * Evidentia Version
+             * @description Version of evidentia-core orchestrating the collection. Paired with collector_version, lets auditors verify the exact release that produced the evidence.
+             */
+            evidentia_version?: string;
+            filter_applied: components["schemas"]["_WireJsonObject"];
+            /** Pagination Context */
+            pagination_context?: null;
+            /**
+             * Run Id
+             * @description ULID of the collection run. Identical across every finding emitted by the same ``collect`` invocation; also equals the CollectionManifest.run_id so the two can be joined.
+             */
+            run_id: string;
+            /**
+             * Source System Id
+             * @description Source system instance identifier. Examples: 'aws-account:123456789012:us-east-1', 'github:org/repo', 'github:enterprise/acme'.
+             */
+            source_system_id: string;
+        };
+        /** _StrictCoverage */
+        _StrictCoverage: {
+            /** Collected */
+            collected: number;
+            /** Matched Filter */
+            matched_filter: number;
+            /**
+             * Resource Type
+             * @description Source-system resource category. Examples: 'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'.
+             */
+            resource_type: string;
+            /** Scanned */
+            scanned: number;
+        };
+        /** _StrictFinding */
+        _StrictFinding: {
+            collection_context: components["schemas"]["_StrictContext"];
+            /**
+             * @description Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN (not FAIL) is the safe default.
+             * @default unknown
+             */
+            compliance_status: components["schemas"]["ComplianceStatus"];
+            /**
+             * Control Mappings
+             * @description NIST 800-53 (or other framework) controls this finding relates to. v0.7.0 adds OLIR relationship typing + justification per mapping. Pre-v0.7.0 callers passing ``control_ids=[...]`` as keyword arg are auto-converted via the schema's ``@model_validator``.
+             */
+            control_mappings?: components["schemas"]["ControlMapping"][];
+            /** Description */
+            description: string;
+            /** First Observed */
+            first_observed: string;
+            /** Id */
+            id?: string;
+            /** Last Observed */
+            last_observed: string;
+            raw_data: components["schemas"]["_WireJsonObject"];
+            /**
+             * Remediation
+             * @description Optional human-readable remediation guidance. Maps to the OCSF Compliance Finding `remediation.desc` field. Populated by collectors where the source system supplies remediation text (e.g. AWS Security Hub Remediation.Recommendation); None when unavailable.
+             */
+            remediation?: string | null;
+            /** Resolved At */
+            resolved_at?: null;
+            /** Resource Account */
+            resource_account?: string | null;
+            /**
+             * Resource Id
+             * @description Resource identifier in the source system
+             */
+            resource_id?: string | null;
+            /** Resource Region */
+            resource_region?: string | null;
+            /**
+             * Resource Type
+             * @description E.g. 'AWS::S3::Bucket', 'GitHub::Repository'
+             */
+            resource_type?: string | null;
+            severity: components["schemas"]["Severity"];
+            /**
+             * Source Finding Id
+             * @description Original finding ID in the source system
+             */
+            source_finding_id?: string | null;
+            /**
+             * Source System
+             * @description E.g. 'aws-security-hub', 'github'
+             */
+            source_system: string;
+            /** @default active */
+            status: components["schemas"]["FindingStatus"];
+            /** Title */
+            title: string;
+        };
+        /** _StrictManifest */
+        _StrictManifest: {
+            /** Collection Finished At */
+            collection_finished_at: string;
+            /** Collection Started At */
+            collection_started_at: string;
+            /** Collector Id */
+            collector_id: string;
+            /** Collector Version */
+            collector_version: string;
+            /** Coverage Counts */
+            coverage_counts: components["schemas"]["_StrictCoverage"][];
+            /**
+             * Empty Categories
+             * @description Resource types explicitly scanned but yielding zero findings. Per checklist B5: an auditor cannot distinguish 'no findings' (legitimate) from 'collector skipped' (evidence gap) without this explicit attestation.
+             */
+            empty_categories?: string[];
+            /**
+             * Errors
+             * @description Fatal errors that caused specific resources to be skipped but didn't abort the run. Non-empty plus is_complete=True means 'partial success'.
+             */
+            errors?: string[];
+            /**
+             * Evidentia Version
+             * @description Version of evidentia-core that wrote this manifest
+             */
+            evidentia_version?: string;
+            filters_applied: components["schemas"]["_WireJsonObject"];
+            /**
+             * Incomplete Reason
+             * @description Human-readable reason the run didn't complete. MUST be populated when ``is_complete=False``.
+             */
+            incomplete_reason?: string | null;
+            /**
+             * Is Complete
+             * @description False if any collection error, truncation, or pagination abort occurred. Auditors treat incomplete runs as evidence gaps.
+             * @default true
+             */
+            is_complete: boolean;
+            /**
+             * Run Id
+             * @description ULID matching CollectionContext.run_id on every finding produced by this run. Join key for findings↔manifest.
+             */
+            run_id: string;
+            /**
+             * Source System Ids
+             * @description All source_system_ids covered in this run
+             */
+            source_system_ids?: string[];
+            /** Total Findings */
+            total_findings: number;
+            /**
+             * Warnings
+             * @description Non-fatal issues encountered during collection: rate-limit backoffs, skipped resources, blind-spot disclosures.
+             */
+            warnings?: string[];
+        };
+        _WireJsonObject: {
+            [key: string]: components["schemas"]["StorageRetentionJsonValue"];
         };
     };
     responses: never;
@@ -10132,6 +10510,149 @@ export interface operations {
                 };
             };
             /** @description Collector import failed, ``OKTA_API_TOKEN`` unset, or Okta unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    storage_retention_collect_api_collectors_retention_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "s3";
+                    /** Scope Label */
+                    scope_label: string & unknown;
+                    /** Targets */
+                    targets: {
+                        /** Bucket */
+                        bucket: string & unknown;
+                        /** Expected Owner */
+                        expected_owner?: string | null;
+                        /**
+                         * Region
+                         * @enum {string}
+                         */
+                        region: "af-south-1" | "ap-east-1" | "ap-east-2" | "ap-northeast-1" | "ap-northeast-2" | "ap-northeast-3" | "ap-south-1" | "ap-south-2" | "ap-southeast-1" | "ap-southeast-2" | "ap-southeast-3" | "ap-southeast-4" | "ap-southeast-5" | "ap-southeast-6" | "ap-southeast-7" | "ca-central-1" | "ca-west-1" | "eu-central-1" | "eu-central-2" | "eu-north-1" | "eu-south-1" | "eu-south-2" | "eu-west-1" | "eu-west-2" | "eu-west-3" | "il-central-1" | "me-central-1" | "me-south-1" | "mx-central-1" | "sa-east-1" | "us-east-1" | "us-east-2" | "us-west-1" | "us-west-2";
+                    }[];
+                } | {
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "azure";
+                    /** Scope Label */
+                    scope_label: string & unknown;
+                    /** Targets */
+                    targets: {
+                        /** Account */
+                        account: string & unknown;
+                        /** Container */
+                        container: string & unknown;
+                        /** Resource Group */
+                        resource_group: string & unknown;
+                        /** Subscription Id */
+                        subscription_id: string & unknown;
+                    }[];
+                } | {
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "gcs";
+                    /** Scope Label */
+                    scope_label: string & unknown;
+                    /** Targets */
+                    targets: {
+                        /** Bucket */
+                        bucket: string & (unknown & unknown);
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageRetentionCollectResult"];
+                };
+            };
+            /** @description Invalid JSON or bounded request fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description API authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                        provider: string;
+                        reason: string | null;
+                    };
+                };
+            };
+            /** @description Read permission denied or API authentication is not configured. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The request body exceeds 65536 bytes. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Only application/json is supported. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collection could not produce a valid result. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The selected optional collector is not installed. */
             503: {
                 headers: {
                     [name: string]: unknown;

@@ -1,0 +1,2 @@
+<!-- Authored synthetic documented Object Lock absence response, HTTP 404. -->
+<Error><Code>ObjectLockConfigurationNotFoundError</Code><Message>Synthetic absence detail</Message><RequestId>synthetic-request</RequestId></Error>

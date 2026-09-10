@@ -149,7 +149,7 @@ class CollectionContext(EvidentiaModel):
             "Authenticated principal that produced the finding. "
             "Format varies by source: AWS IAM ARN, GitHub app installation "
             "id, token subject, service-account email, etc. NOT the secret "
-            "itself — the identity that the secret authenticates."
+            "itself; the identity that the secret authenticates."
         ),
     )
     source_system_id: str = Field(
@@ -399,7 +399,7 @@ class CollectionManifest(EvidentiaModel):
     warnings: list[str] = Field(
         default_factory=list,
         description=(
-            "Non-fatal issues encountered during collection — rate-limit "
+            "Non-fatal issues encountered during collection: rate-limit "
             "backoffs, skipped resources, blind-spot disclosures."
         ),
     )

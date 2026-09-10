@@ -475,9 +475,15 @@ class TestRateLimit:
         "purpose": "Internal spam",
     }
 
-    def test_burst_then_throttle(self, api_client: TestClient) -> None:
-        """Burst capacity of 10 → 10 succeed, 11th returns 429."""
-        # First 10 should all succeed (burst).
+    def test_burst_then_throttle(self, api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Ten requests exhaust the burst; one elapsed second refills one token."""
+        from types import SimpleNamespace
+
+        from evidentia_api import rate_limit
+
+        now = 100.0
+        # Replace only this module's clock so event-loop scheduling keeps real time.
+        monkeypatch.setattr(rate_limit, "time", SimpleNamespace(monotonic=lambda: now))
         for i in range(10):
             resp = api_client.post(
                 "/api/ai-gov/classify",
@@ -487,13 +493,18 @@ class TestRateLimit:
                 },
             )
             assert resp.status_code == 200, f"burst {i} should be allowed but got {resp.status_code}"
-        # 11th hits empty bucket → 429.
         resp = api_client.post("/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY)
         assert resp.status_code == 429
         detail = resp.json()["detail"]
         assert detail["error"] == "rate_limited"
         assert "Rate limit" in detail["message"]
         assert resp.headers.get("Retry-After") == "5"
+
+        now = 100.5
+        assert api_client.post("/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY).status_code == 429
+        now = 101.0
+        assert api_client.post("/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY).status_code == 200
+        assert api_client.post("/api/ai-gov/classify", json=self._SAMPLE_CLASSIFY_BODY).status_code == 429
 
     def test_get_endpoints_not_rate_limited(self, api_client: TestClient) -> None:
         """GET endpoints (list/show) aren't on the allowlist —

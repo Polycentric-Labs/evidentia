@@ -360,6 +360,48 @@ separately delegated. There is no token refresh, environment-name override or
 retention fallback. These names and meanings form the documented collector
 configuration contract. DLP-only ingestion resolves neither token.
 
+### Storage retention collection contract (v0.13)
+
+The `evidentia_collectors.retention` public exports are
+`StorageRetentionCollector`, `StorageRetentionCollectRequest`,
+`StorageRetentionCollectResult`, `StorageRetentionResourceResult`,
+`StorageRetentionComponentResult`, `StorageRetentionDiagnostic` and
+`StorageRetentionInputError`. `collect_v2(request)` returns full evidence;
+`collect(request)` returns findings only. The strict request selects one
+provider, a scope label and 1 through 20 validated targets in order.
+
+The `storage-retention-collection/v1` result retains all selected resources,
+component states, native JSON projections, diagnostics, findings and a manifest.
+Its observation scope is configuration and its coverage is the selected
+resources. Object enforcement, recordset completeness and authenticated cloud
+identity are explicitly unassessed. A complete read leaves compliance unknown.
+Source timestamp strings and native numeric units are preserved. The canonical
+projection hash binds the selected logical fields, not a full provider recording.
+
+`evidentia collect retention --request-file PATH [--output PATH]` reads a regular
+JSON file of at most 65536 bytes. Read-role checks precede input/output access.
+Output uses a reserved sibling and atomic replacement after full-result
+validation and comparison with the original selection. Complete exits 0;
+partial/unavailable evidence or output failure exits 1, invalid input exits 2,
+and read-role denial exits 77. Without `--output`, stdout contains full JSON only.
+
+`POST /api/collectors/retention/collect` authenticates the actor and applies read
+RBAC before streaming its cumulative 65536-byte body. It accepts JSON only.
+Complete, partial and unavailable results return HTTP 200 with the full schema;
+invalid input returns 400, oversized input 413, unsupported media 415, and actor
+denial 401/403. Exact absence of the selected optional package returns 503;
+broken transitive imports or invalid internal results return sanitized 500.
+Results and optional-error classification remain bound to the original request
+even if a faulty worker mutates its argument.
+
+The fixed credential references are `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+and optional `AWS_SESSION_TOKEN`, `STORAGE_RETENTION_AZURE_ACCESS_TOKEN`, and
+`STORAGE_RETENTION_GCS_ACCESS_TOKEN`. There is no discovery, refresh or request
+override. `GET /api/collectors/status` adds `retention` with installation and
+per-provider reference-presence booleans; live validation and identity
+verification remain false. The [design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/storage-retention-collector-design.md)
+defines field selection, routes, limits and evidence semantics.
+
 ### 6. REST API URIs
 
 **Package**: `evidentia_api.routers.*`
@@ -669,3 +711,4 @@ cycle.
 | **NORMATIVE** | **2026-09-09** | **MCP SDK 2.2 migration (V13-16).** The fourteen tool names, descriptions and input/output schemas retain their SDK 1.29.1 baseline. Typed dispatch corrects the demonstrated protocol scope/signing bypass. Request metadata overrides fallback; malformed identities deny before execution. Scope denials use protocol -32602 with no error data, ordinary failures remain tool errors, and explicit MCP exceptions retain their protocol code. Signing binds the delivered JSON payload under the existing payload-only envelope; invalid enabled factories fail. Transport selectors and bind defaults are unchanged. |
 | **NORMATIVE** | **2026-09-10** | **MCP description comparison clarification (V13-16).** [Python 3.13 and later strip common docstring indentation during compilation](https://docs.python.org/3.13/whatsnew/3.13.html#other-language-changes). The SDK 1.29.1 fixture was captured on Python 3.12 and remains unchanged. Tests compare descriptions using `inspect.cleandoc`, preserving wording, internal line breaks and relative indentation while normalizing docstring margins and outer blank lines. Tool names and input/output schemas are compared exactly. This clarifies the preceding migration row; it does not change tool source descriptions or runtime dispatch. |
 | **NORMATIVE** | **2026-09-10** | **Entra/M365 evidence (V13-02).** Add the six public collector exports, bounded request and full result contract, `collect entra-m365`, `POST /api/collectors/entra-m365/collect` and the `entra-m365` status entry. Nine capability records preserve source coverage, declared identity and precise event windows. Partial/unavailable attempts retain the full response; CLI input/output refusal and read RBAC are explicit. The three fixed `ENTRA_M365_*` references are documented configuration contracts. Existing collector endpoints and result models retain their shapes. |
+| **NORMATIVE** | **2026-09-10** | **Storage retention evidence (V13-04, storage milestone).** Add seven public exports, the provider-discriminated request and full result contract, `collect retention`, `POST /api/collectors/retention/collect`, and the `retention` status entry. Six fixed S3/Azure/GCS reads preserve native configuration fields and every requested resource/component state. CLI read RBAC precedes path metadata access; API authentication and read RBAC precede streamed input. Detached selection checks bind returned provider, scope and ordered targets. Exact browser JSON export preserves native numbers without rounding. Fixed credential references, bounded input/output, safe error classification and unknown compliance are part of the contract. M365/Vault/Splunk/Elastic retention remains subsequent work. |

@@ -182,6 +182,10 @@ commands:
     api: "POST /api/collectors/entra-m365/collect"
     gui: "/collect"
     status: full
+  - cli: "collect retention"
+    api: "POST /api/collectors/retention/collect"
+    gui: "/collect"
+    status: full
   - cli: "collect sql"
     api: "POST /api/collectors/sql/postgres/collect"
     gui: "/collect"

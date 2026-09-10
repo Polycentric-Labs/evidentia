@@ -1,0 +1,26 @@
+{
+  "name": "synthetic-retention-bucket",
+  "metageneration": "0009007199254740993",
+  "retentionPolicy": {
+    "retentionPeriod": "00086400",
+    "effectiveTime": "2026-09-10T01:02:03.123456789+05:30",
+    "isLocked": true,
+    "futureIgnored": [
+      "synthetic"
+    ]
+  },
+  "versioning": {
+    "enabled": true
+  },
+  "objectRetention": {
+    "mode": "Enabled"
+  },
+  "labels": {
+    "fixture": "synthetic"
+  },
+  "acl": [
+    {
+      "entity": "synthetic-excluded"
+    }
+  ]
+}

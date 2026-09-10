@@ -1,0 +1,2 @@
+<!-- Authored synthetic GetObjectLockConfiguration response. -->
+<ObjectLockConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><ObjectLockEnabled>Enabled</ObjectLockEnabled><Rule><DefaultRetention><Mode>COMPLIANCE</Mode><Years>4</Years></DefaultRetention></Rule></ObjectLockConfiguration>
