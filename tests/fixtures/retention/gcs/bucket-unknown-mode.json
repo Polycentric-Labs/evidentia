@@ -1,0 +1,7 @@
+{
+  "name": "synthetic-retention-bucket",
+  "metageneration": "4",
+  "objectRetention": {
+    "mode": "SyntheticFutureMode"
+  }
+}

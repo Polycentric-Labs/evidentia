@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Storage retention configuration (V13-04, storage milestone).** A new
+  `collect retention` command, matching API endpoint, Python collector and
+  console tab observe explicitly selected S3 buckets, Azure Blob containers
+  with account/service context, and GCS buckets. Full results retain native
+  policy units, source timestamps, component states, provenance and a manifest.
+  API authentication and read RBAC precede input/provider work. The CLI bounds
+  JSON input and publishes full results atomically after request/result checks.
+  Synthetic provider fixtures cover accepted, partial and unavailable evidence;
+  live cloud acceptance remains unverified. Configuration does not establish
+  object enforcement, complete recordsets or compliance. Vault, Splunk and
+  Elastic remain later V13-04 work; Entra/M365 already supplies retention-label
+  configuration evidence.
+  See [the storage collector design](docs/designs/storage-retention-collector-design.md).
 - **Entra ID and Microsoft 365 evidence (V13-02).** Nine bounded capabilities
   cover identity, Intune device state, Purview retention labels, supplied DLP
   configuration, and Defender alerts and incidents. Python `collect_v2`,

@@ -36,6 +36,12 @@ from pydantic_core import CoreSchema
 
 from ._parsing import JsonObject, ParsingError, canonical_json, checked_json, parse_strict_json
 
+# A named native union preserves recursive JSON in serialization schemas too.
+type StorageRetentionJsonValue = (
+    bool | int | float | str | list[StorageRetentionJsonValue] | dict[str, StorageRetentionJsonValue] | None
+)
+type _WireJsonObject = dict[str, StorageRetentionJsonValue]
+
 ProviderName = Literal["s3", "azure", "gcs"]
 ComponentId = Literal[
     "s3-object-lock", "s3-versioning", "azure-account", "azure-blob-service", "azure-container", "gcs-bucket"
@@ -498,7 +504,7 @@ class _Projection(_WireModel):
     api_version: Annotated[NonBlankStr, Field(max_length=128)]
     projection_version: Literal["storage-retention-projection/v1"] = PROJECTION_VERSION
     native_scope: Annotated[NonBlankStr, Field(max_length=256)]
-    fields: JsonObject
+    fields: _WireJsonObject
     source_etag: Annotated[str, Field(max_length=1024)] | None = None
     source_metageneration: Annotated[str, Field(max_length=128)] | None = None
     canonical_projection_sha256: Annotated[str, Field(min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$")]
@@ -719,7 +725,7 @@ def _resource_status(components: list[StorageRetentionComponentResult]) -> Resul
 class _StrictContext(CollectionContext):
     model_config = _STRICT
     collected_at: UtcClock
-    filter_applied: JsonObject
+    filter_applied: _WireJsonObject
     pagination_context: None = None
 
     @field_validator("filter_applied", mode="before")
@@ -744,7 +750,7 @@ class _StrictManifest(CollectionManifest):
     collection_finished_at: UtcClock
     coverage_counts: list[CoverageCount]
     total_findings: Counter
-    filters_applied: JsonObject
+    filters_applied: _WireJsonObject
 
     @field_validator("coverage_counts", mode="before", json_schema_input_type=list[_StrictCoverage])
     @classmethod
@@ -767,7 +773,7 @@ class _StrictManifest(CollectionManifest):
 
 class _StrictFinding(SecurityFinding):
     model_config = ConfigDict(**_STRICT, use_enum_values=False)
-    raw_data: JsonObject
+    raw_data: _WireJsonObject
     first_observed: UtcClock
     last_observed: UtcClock
     resolved_at: None = None

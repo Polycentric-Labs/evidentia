@@ -677,7 +677,12 @@ class StorageReadSession:
                         )
                 self.context.remaining()
                 projection_target = type(selected).model_validate(selected)
-                candidate = projector(ComponentResponse(component_id, status, parsed, etag), projection_target)
+                try:
+                    candidate = projector(ComponentResponse(component_id, status, parsed, etag), projection_target)
+                except StorageRetentionInputError as exc:
+                    raise ClientFault(
+                        "projection_limit" if exc.code == "projection_limit" else "invalid_response", status
+                    ) from None
                 if type(candidate) is not ProjectedComponent:
                     raise ClientFault("invalid_response", status)
                 try:

@@ -11,6 +11,12 @@
 
 import { demoApi, demoExportGapReport } from "@/lib/demo/demo-api";
 import { IS_DEMO } from "@/lib/demo";
+import { storageRetentionDemoResult } from "@/lib/demo/storage-retention-fixture";
+import {
+  parseStorageRetentionResponse,
+  readStorageRetentionResponse,
+  snapshotStorageRetentionRequest
+} from "@/lib/storage-retention";
 import { parseContentDispositionFilename } from "@/lib/download";
 import type {
   AirGapCheckResponse,
@@ -452,9 +458,9 @@ export type TraceabilityMatrix = components["schemas"]["TraceabilityMatrix"];
 // ── Collector types (mirrored from evidentia_collectors) ─────────────────
 
 /**
- * A single collector observation. Every `POST …/collect` endpoint returns a
- * bare `SecurityFinding[]`. Collectors take NO secrets in the body — server-
- * side credentials drive the connection; the body carries only non-secret
+ * A single collector observation. Legacy collectors return a bare finding
+ * array; bounded collectors return their dedicated full result envelopes.
+ * Credentials are configured on the server. Requests contain only nonsecret
  * params (region / repo / host / options).
  */
 export type SecurityFinding = components["schemas"]["SecurityFinding"];
@@ -527,6 +533,12 @@ export type EntraM365CollectRequest =
 export type EntraM365CollectResult =
   components["schemas"]["EntraM365CollectResult"];
 export type EntraM365DemoScenario = "partial" | "unavailable";
+
+/** Authoritative selected-storage request and complete result envelope. */
+export type StorageRetentionCollectRequest =
+  operations["storage_retention_collect_api_collectors_retention_collect_post"]["requestBody"]["content"]["application/json"];
+export type StorageRetentionCollectResult =
+  components["schemas"]["StorageRetentionCollectResult"];
 
 // ── Catalog types (mirrored from evidentia_core catalog tooling) ─────────
 
@@ -1346,6 +1358,23 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  collectStorageRetention: async (body: StorageRetentionCollectRequest) => {
+    const expected = snapshotStorageRetentionRequest(body);
+    const response = await fetch("/api/collectors/retention/collect", {
+      method: "POST",
+      body: JSON.stringify(expected),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+    });
+    if (!response.ok) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        /* Keep the fixed status error. */
+      }
+      throw new ApiError("Storage collection failed", response.status, null);
+    }
+    return readStorageRetentionResponse(response, expected);
+  },
   // Conversion stays local and returns the OCSF mapping as an object list.
   collectConvert: (body: Record<string, unknown>) =>
     request<Record<string, unknown>[]>("/api/collectors/convert", {
@@ -1403,4 +1432,19 @@ const realApi = {
  * normal build it is the real fetch-based `realApi`. The swap happens once, at
  * module load, so no call site needs to know which it is talking to.
  */
-export const api = IS_DEMO ? demoApi : realApi;
+export const api = IS_DEMO
+  ? Object.assign(demoApi, {
+      collectStorageRetention: (_body: StorageRetentionCollectRequest) =>
+        Promise.resolve().then(() => {
+          const result = storageRetentionDemoResult();
+          return parseStorageRetentionResponse(
+            JSON.stringify(result, null, 2) + "\n",
+            {
+              provider: result.provider,
+              scope_label: result.scope_label,
+              targets: result.resources.map((resource) => resource.target),
+            }
+          );
+        }),
+    })
+  : realApi;

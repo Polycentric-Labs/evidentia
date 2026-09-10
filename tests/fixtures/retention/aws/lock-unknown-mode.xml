@@ -1,0 +1,2 @@
+<!-- Authored synthetic unknown Object Lock mode, not a documented provider enum. -->
+<ObjectLockConfiguration><ObjectLockEnabled>Enabled</ObjectLockEnabled><Rule><DefaultRetention><Mode>SYNTHETIC_FUTURE_MODE</Mode><Days>19</Days></DefaultRetention></Rule></ObjectLockConfiguration>

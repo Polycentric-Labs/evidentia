@@ -1,13 +1,14 @@
-# Storage retention collector: shared foundation design
+# Storage retention collector design
 
-Status: shared foundation; provider integration is pending. Provider readers, the collector entry point,
-and CLI, API and console integration remain pending. This document does not announce installed or
-released collector support. The shared package exposes request and result models at this stage.
+Status: storage milestone implemented for the v0.13 candidate. The Python collector, CLI, API and
+console share the bounded request and full result contracts. Acceptance uses authored synthetic
+provider responses and local integration tests. Live-provider acceptance remains unverified.
 
 The first milestone observes configuration on explicitly selected S3 general-purpose buckets, Azure
 Blob containers with their account and service context, and GCS live buckets. It does not enumerate
 accounts, buckets, objects or versions, read object metadata or bodies, test deletion, or change retention,
-locks or holds. Later M365, Vault, Splunk and Elastic work remains outside this milestone.
+locks or holds. Later Vault, Splunk and Elastic work remains outside this milestone. The existing
+Entra/M365 collector already supplies M365 retention-label configuration evidence.
 
 ## Scope and request contract
 
@@ -34,7 +35,7 @@ not assertions that a caller can create or owns a resource.
 underscores, periods or hyphens. Whitespace is not stripped. Schema, native validation, JSON validation,
 defaults, serialization and copied models must agree on these constraints.
 
-## Fixed methods and pending field projectors
+## Fixed methods and field projectors
 
 All methods are GET with an empty body. The common layer constructs URLs from validated targets;
 callers cannot replace their host, path, query or cloud partition. Let `A` denote
@@ -54,7 +55,7 @@ Regional S3 path-style addressing is an intentional bounded choice. A region mis
 redirect following or a different endpoint. AWS documents the path-style form and its future deprecation
 intent; a provider change requires review. [S3 addressing](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html)
 
-Pending domain projectors select only the approved fields. S3 retains lock enablement, default mode and
+Domain projectors select only the approved fields. S3 retains lock enablement, default mode and
 native Days or Years, and versioning/MFA-delete state. Azure retains exact source IDs, account HNS and
 immutability defaults, service versioning, and container policy/hold/enablement details; user identifiers,
 tenant identifiers and update history are excluded. GCS retains exact bucket name, metageneration,
@@ -63,19 +64,37 @@ retention policy, versioning and object-retention enablement. Its quoted integer
 
 Missing, explicit null, known absence and unsupported values are distinct. A wrong type, envelope,
 identity or duplicate field invalidates the entire component. Structurally valid unknown values or
-missing required detail may produce a partial projection with a fixed diagnostic. The domain tests must
-freeze each field's behavior before those readers are accepted.
+missing required detail may produce a partial projection with a fixed diagnostic. Domain tests cover
+these distinctions separately from credential, transport, collection and application tests.
 
 Only the exact valid S3 XML error `ObjectLockConfigurationNotFoundError` with HTTP 404 on the lock
 component can represent absent lock configuration. Other 404 and authorization failures cannot.
 An empty successful versioning configuration represents never-enabled versioning; absent MFA-delete
 state remains absent. [S3 errors](https://docs.aws.amazon.com/AmazonS3/latest/developerguide/ErrorResponses.html)
 
+S3 XML accepts the documented namespace or no namespace, rejects duplicate known fields, and maps the
+wire member `MfaDelete` to the projection member `MFADelete`. Days and Years remain native integers;
+they are never converted into each other. Nonpositive durations and unknown mode/state values retain
+their literal value in partial evidence. A default rule with both duration units rejects.
+
+Azure validates each response's full ARM identity against the selected account, default blob service
+or container. Account defaults, service versioning and container policy/hold observations remain
+separate. HNS or disabled service versioning does not erase a container policy. Current legal-hold
+tags and append-write flags are retained; user, tenant and update-history metadata is excluded.
+Conflicting policy/hold detail produces partial evidence without inferring effective object protection.
+
+GCS validates the exact selected bucket name and retains quoted metageneration and retentionPeriod
+values as strings, including leading zeroes. Omitted optional configuration stays omitted. Present
+objects with missing or null required detail are partial. Valid source timestamp strings retain their
+offsets and fractional spelling; unsupported detail is never replaced with an invented default.
+
 ## Shared module responsibilities
 
-The public module directory is `evidentia_collectors.retention`. The foundation consists of
-`_contracts.py`, `_parsing.py`, `_credentials.py`, `_aws_signing.py` and `_client.py`. At this stage there
-is no registered collector or user-facing action.
+The public module directory is `evidentia_collectors.retention`. Shared boundaries live in
+`_contracts.py`, `_parsing.py`, `_credentials.py`, `_aws_signing.py` and `_client.py`; `aws.py`,
+`azure.py` and `gcs.py` implement the field projectors. `StorageRetentionCollector.collect_v2` runs
+the finite plan and returns the full result. Its compatibility `collect` method returns findings only.
+Each run owns a fresh read session; closure and final budget checks precede result admission.
 
 `StorageReadSession` freezes a validated request as bytes and derives the finite target/component plan.
 Its request property returns a new validated model. Reads must follow that plan exactly. A selected target
@@ -204,7 +223,7 @@ Every result uses `storage-retention-collection/v1` and declares `observation_sc
 `coverage_scope=selected_resources`, `identity_basis=operator-declared`, and literal false for
 `object_enforcement_assessed`, `recordset_completeness_assessed` and `authenticated_identity_verified`.
 Numeric zero is not accepted in place of those booleans. `expected_owner` is a signed expectation, not an
-independent identity discovery. Deployment IAM and future authenticated application authorization remain
+independent identity discovery. Deployment IAM and authenticated application authorization remain
 responsible for access; a scope label or resource ID is not an ownership or tenant-isolation claim.
 
 Collection clocks serialize in UTC with exactly six fractional digits. Source timestamp strings remain
@@ -230,21 +249,48 @@ filters, `credential_identity=operator-configured:identity-unverified` and null 
 The manifest derives requested/attempted resources, planned/attempted/completed components and finding
 counts. Serialization treats warnings as errors and returns a detached revalidated result.
 
-## Remaining implementation and acceptance
+## Application boundaries
 
-The domain readers must validate native fields and response identity before returning projections. Their
-fixtures will be authored synthetic scenarios tied to the six method references. The source ledger has
-no recorded responses or fixture hashes until actual reviewed files exist. Neither documentation review
-nor local synthetic tests establish live provider acceptance.
+`evidentia collect retention --request-file request.json --output result.json` reads a named regular
+JSON file after the configured read-role check. Omitting `--output` writes the full result to stdout.
+Stdin, reparse/symlink paths, multiple hard links and request/output aliases are refused. A unique sibling
+file is reserved before collection; serialization, readback and destination checks precede atomic
+replacement. An editor may replace the request file after it was read, but the original parsed selection
+still binds the result and the current request path cannot become the output. These checks do not claim
+protection from a hostile filesystem change between the final check and replacement.
 
-After the signed foundation, remaining work includes `StorageRetentionCollector.collect_v2` and its
-findings-only compatibility method, the `evidentia collect retention` JSON-file command,
-`POST /api/collectors/retention/collect`, and a Storage retention tab on Collect. These are pending interfaces,
-not current usage instructions. API/CLI read-role checks must precede input/provider work. Integration
-acceptance includes streamed input bounds, safe atomic CLI output, optional-extra failure classification,
-plain/colored 80/200-column help, escaped UI data and full JSON export.
+The CLI exits 0 for complete evidence, 1 for partial/unavailable evidence or collection/output failure,
+2 for invalid input and 77 for role denial. Partial and unavailable results retain all requested
+resources and diagnostics in the JSON output. Missing S3 support is distinguished from a broken
+transitive import using the originally selected provider, even if a collector mutates its input.
 
-The controller owns public promotion, dependency declarations, generated schemas/types, fixture hashes,
-combined runtime/security tests and signed acceptance. Existing WORM and retention-metadata execution
-remains unchanged. A locked or enabled configuration is never labeled compliant or treated as evidence
-that any particular object is protected.
+`POST /api/collectors/retention/collect` requires configured API authentication and read RBAC before
+reading the request body. It accepts JSON within the actual streamed 65536-byte ceiling; a Content-Length
+header cannot authorize more bytes. It returns the full result with HTTP 200 for every valid collection
+status, 400 for invalid input, 413 for excess bytes, 415 for unsupported media, 503 for absent optional
+support and sanitized 500 errors for invalid results or unexpected failures. Provider work runs in the
+worker thread pool. Result provider, scope label and ordered targets must match a detached request
+snapshot after the collector closes.
+
+The Collect page's Storage retention tab validates the same input subsets, rechecks authentication,
+and shows resource/component status, safe diagnostics, counts and source limits. Native source fields
+and the full JSON download retain the API response text, avoiding JavaScript number rounding in evidence
+exports. Structured browser summaries are not a replacement for Python result and digest validation.
+Demo mode is explicitly synthetic and never calls a provider. The status endpoint reports configuration
+presence separately from live acceptance and authenticated identity, both of which remain false.
+
+## Fixture provenance and acceptance limits
+
+The [source ledger](../../tests/fixtures/retention/source-index.json) indexes 24 authored synthetic HTTP
+response fixtures, eight per provider, with hashes of their actual bytes and the six primary method
+references. No file is labeled a recorded provider response. Inline test scenarios cover additional
+malformed, conflicting, missing, unauthorized and interrupted responses. Separate console fixtures are
+full synthetic collection results, not provider recordings.
+
+Local acceptance exercises the real parsing, guarding, projection, collection and application paths
+through injected transports without cloud calls. Neither documentation review nor local tests establish
+live-provider fidelity, tenant acceptance, credential identity, legal retention sufficiency or object
+enforcement. Existing WORM and retention-metadata execution remains unchanged. A locked or enabled
+configuration remains an observation with unknown compliance status. Vault, Splunk and Elastic
+remain subsequent V13-04 work. M365 label configuration is supplied by the Entra/M365 collector;
+label application and item enforcement remain unassessed.

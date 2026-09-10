@@ -1,0 +1,45 @@
+{
+  "id": "/subscriptions/11111111-2222-4333-8444-555555555555/resourceGroups/Synthetic_Group/providers/Microsoft.Storage/storageAccounts/syntheticstore/blobServices/default/containers/synthetic-container",
+  "properties": {
+    "hasImmutabilityPolicy": true,
+    "hasLegalHold": false,
+    "immutabilityPolicy": {
+      "etag": "\"synthetic-policy-etag\"",
+      "properties": {
+        "state": "Locked",
+        "immutabilityPeriodSinceCreationInDays": 730,
+        "allowProtectedAppendWrites": false,
+        "allowProtectedAppendWritesAll": true
+      },
+      "updateHistory": [
+        {
+          "objectIdentifier": "EXCLUDED_HISTORY_OBJECT",
+          "tenantId": "EXCLUDED_HISTORY_TENANT",
+          "timestamp": "2024-01-01T00:00:00Z",
+          "update": "lock"
+        }
+      ]
+    },
+    "immutableStorageWithVersioning": {
+      "enabled": true,
+      "migrationState": "Completed",
+      "timeStamp": "2024-01-02T03:04:05.1234567Z"
+    },
+    "legalHold": {
+      "hasLegalHold": true,
+      "tags": [
+        {
+          "tag": "case1",
+          "objectIdentifier": "EXCLUDED_TAG_OBJECT",
+          "tenantId": "EXCLUDED_TAG_TENANT",
+          "upn": "EXCLUDED_TAG_UPN",
+          "timestamp": "2024-01-01T00:00:00Z"
+        }
+      ],
+      "protectedAppendWritesHistory": {
+        "allowProtectedAppendWritesAll": true,
+        "timestamp": "EXCLUDED_APPEND_TIMESTAMP"
+      }
+    }
+  }
+}

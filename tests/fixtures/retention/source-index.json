@@ -1,6 +1,6 @@
 {
   "ledger_format_version": 1,
-  "stage": "shared_foundation",
+  "stage": "storage_milestone_implemented",
   "scope": {
     "observation_scope": "configuration",
     "coverage_scope": "selected_resources",
@@ -41,8 +41,8 @@
         "retrieval": "web_text_view",
         "artifact_archived": false
       },
-      "domain_reader_status": "pending",
-      "field_selection_status": "approved_scope_domain_validation_pending",
+      "domain_reader_status": "implemented",
+      "field_selection_status": "reviewed_with_local_synthetic_tests",
       "selected_field_paths_or_objects": [
         "ObjectLockEnabled",
         "Rule.DefaultRetention.Mode",
@@ -51,7 +51,7 @@
       ],
       "fixture_plan": {
         "kind": "authored_synthetic",
-        "status": "planned_not_recorded",
+        "status": "authored_synthetic_files_reviewed",
         "scenarios": [
           "days_or_years",
           "no_default_rule",
@@ -60,7 +60,13 @@
           "unknown_mode",
           "duplicate_xml_field_reject"
         ],
-        "files": []
+        "files": [
+          "tests/fixtures/retention/aws/lock-absent-error.xml",
+          "tests/fixtures/retention/aws/lock-compliance-years.xml",
+          "tests/fixtures/retention/aws/lock-enabled-no-default.xml",
+          "tests/fixtures/retention/aws/lock-governance-days.xml",
+          "tests/fixtures/retention/aws/lock-unknown-mode.xml"
+        ]
       }
     },
     {
@@ -80,15 +86,15 @@
         "retrieval": "web_text_view",
         "artifact_archived": false
       },
-      "domain_reader_status": "pending",
-      "field_selection_status": "approved_scope_domain_validation_pending",
+      "domain_reader_status": "implemented",
+      "field_selection_status": "reviewed_with_local_synthetic_tests",
       "selected_field_paths_or_objects": [
         "Status",
         "MFADelete"
       ],
       "fixture_plan": {
         "kind": "authored_synthetic",
-        "status": "planned_not_recorded",
+        "status": "authored_synthetic_files_reviewed",
         "scenarios": [
           "enabled",
           "suspended",
@@ -97,7 +103,11 @@
           "unknown_state",
           "invalid_xml_scalar"
         ],
-        "files": []
+        "files": [
+          "tests/fixtures/retention/aws/versioning-enabled-mfa.xml",
+          "tests/fixtures/retention/aws/versioning-never-enabled.xml",
+          "tests/fixtures/retention/aws/versioning-suspended.xml"
+        ]
       }
     },
     {
@@ -117,8 +127,8 @@
         "retrieval": "web_text_view",
         "artifact_archived": false
       },
-      "domain_reader_status": "pending",
-      "field_selection_status": "approved_scope_domain_validation_pending",
+      "domain_reader_status": "implemented",
+      "field_selection_status": "reviewed_with_local_synthetic_tests",
       "selected_field_paths_or_objects": [
         "id",
         "properties.isHnsEnabled",
@@ -126,7 +136,7 @@
       ],
       "fixture_plan": {
         "kind": "authored_synthetic",
-        "status": "planned_not_recorded",
+        "status": "authored_synthetic_files_reviewed",
         "scenarios": [
           "account_default_policy",
           "hns_distinction",
@@ -134,7 +144,10 @@
           "unknown_state",
           "wrong_arm_identity"
         ],
-        "files": []
+        "files": [
+          "tests/fixtures/retention/azure/account-disabled.synthetic.json",
+          "tests/fixtures/retention/azure/account-enabled.synthetic.json"
+        ]
       }
     },
     {
@@ -154,15 +167,15 @@
         "retrieval": "web_text_view",
         "artifact_archived": false
       },
-      "domain_reader_status": "pending",
-      "field_selection_status": "approved_scope_domain_validation_pending",
+      "domain_reader_status": "implemented",
+      "field_selection_status": "reviewed_with_local_synthetic_tests",
       "selected_field_paths_or_objects": [
         "id",
         "properties.isVersioningEnabled"
       ],
       "fixture_plan": {
         "kind": "authored_synthetic",
-        "status": "planned_not_recorded",
+        "status": "authored_synthetic_files_reviewed",
         "scenarios": [
           "versioning_enabled",
           "versioning_disabled",
@@ -170,7 +183,10 @@
           "wrong_scalar",
           "wrong_arm_identity"
         ],
-        "files": []
+        "files": [
+          "tests/fixtures/retention/azure/service-versioning-disabled.synthetic.json",
+          "tests/fixtures/retention/azure/service-wrong-boolean.synthetic.json"
+        ]
       }
     },
     {
@@ -190,8 +206,8 @@
         "retrieval": "web_text_view",
         "artifact_archived": false
       },
-      "domain_reader_status": "pending",
-      "field_selection_status": "approved_scope_domain_validation_pending",
+      "domain_reader_status": "implemented",
+      "field_selection_status": "reviewed_with_local_synthetic_tests",
       "selected_field_paths_or_objects": [
         "id",
         "properties.hasImmutabilityPolicy",
@@ -202,7 +218,7 @@
       ],
       "fixture_plan": {
         "kind": "authored_synthetic",
-        "status": "planned_not_recorded",
+        "status": "authored_synthetic_files_reviewed",
         "scenarios": [
           "locked_unlocked_policy",
           "policy_days_append_exceptions",
@@ -212,7 +228,12 @@
           "account_service_failure_combinations",
           "wrong_arm_identity"
         ],
-        "files": []
+        "files": [
+          "tests/fixtures/retention/azure/container-absent.synthetic.json",
+          "tests/fixtures/retention/azure/container-hold-conflict.synthetic.json",
+          "tests/fixtures/retention/azure/container-locked-held.synthetic.json",
+          "tests/fixtures/retention/azure/container-wrong-id.synthetic.json"
+        ]
       }
     },
     {
@@ -232,8 +253,8 @@
         "retrieval": "web_text_view",
         "artifact_archived": false
       },
-      "domain_reader_status": "pending",
-      "field_selection_status": "approved_scope_domain_validation_pending",
+      "domain_reader_status": "implemented",
+      "field_selection_status": "reviewed_with_local_synthetic_tests",
       "selected_field_paths_or_objects": [
         "name",
         "metageneration",
@@ -245,7 +266,7 @@
       ],
       "fixture_plan": {
         "kind": "authored_synthetic",
-        "status": "planned_not_recorded",
+        "status": "authored_synthetic_files_reviewed",
         "scenarios": [
           "policy_absent_null_unlocked_locked",
           "exact_quoted_integer",
@@ -255,7 +276,16 @@
           "wrong_bucket_identity",
           "numeric_string_type_reject"
         ],
-        "files": []
+        "files": [
+          "tests/fixtures/retention/gcs/bucket-locked.json",
+          "tests/fixtures/retention/gcs/bucket-missing-detail.json",
+          "tests/fixtures/retention/gcs/bucket-no-policy.json",
+          "tests/fixtures/retention/gcs/bucket-null.json",
+          "tests/fixtures/retention/gcs/bucket-unknown-mode.json",
+          "tests/fixtures/retention/gcs/bucket-unlocked.json",
+          "tests/fixtures/retention/gcs/bucket-wrong-identity.json",
+          "tests/fixtures/retention/gcs/bucket-wrong-scalar.json"
+        ]
       }
     }
   ],
@@ -291,11 +321,371 @@
   ],
   "supporting_documentation_checked_at_utc": "2026-09-10",
   "fixture_evidence_rules": {
-    "authoring": "Synthetic values will be authored under repository terms; documentation is cited rather than copied as a response recording.",
-    "completed_public_fixture_files": [],
+    "authoring": "Synthetic values authored under repository terms; primary documentation is cited, not copied as a response recording.",
+    "completed_public_fixture_files": [
+      {
+        "path": "tests/fixtures/retention/aws/lock-absent-error.xml",
+        "provider": "s3",
+        "component_id": "s3-object-lock",
+        "operation": "GetObjectLockConfiguration",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "exact_404_absence_error",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 227,
+        "sha256": "2e086617663939cbb0ffaf993911baa09cdeec1e0ddd2fab84a55200518b4fd0",
+        "expected_component_status": "complete",
+        "response_status": 404
+      },
+      {
+        "path": "tests/fixtures/retention/aws/lock-compliance-years.xml",
+        "provider": "s3",
+        "component_id": "s3-object-lock",
+        "operation": "GetObjectLockConfiguration",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "compliance_with_native_years",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 300,
+        "sha256": "25e2f48b23724f5bffb936681926ead554de2d1b6015a18884de356b6680bb8c",
+        "expected_component_status": "complete",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/aws/lock-enabled-no-default.xml",
+        "provider": "s3",
+        "component_id": "s3-object-lock",
+        "operation": "GetObjectLockConfiguration",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "enabled_without_default_rule",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 163,
+        "sha256": "e368a153e2c30537798d4ebf78c5122ceb5a1070512b282e5f660e40a06f5d0b",
+        "expected_component_status": "complete",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/aws/lock-governance-days.xml",
+        "provider": "s3",
+        "component_id": "s3-object-lock",
+        "operation": "GetObjectLockConfiguration",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "governance_with_native_days",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 338,
+        "sha256": "8cac52be54df0c98a55252871f1b105ef1617eb0f3221d716f639078405f38a8",
+        "expected_component_status": "complete",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/aws/lock-unknown-mode.xml",
+        "provider": "s3",
+        "component_id": "s3-object-lock",
+        "operation": "GetObjectLockConfiguration",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "literal_unknown_mode",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectLockConfiguration.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 283,
+        "sha256": "584d2603287401104b2447ebaabe66c46ab3e707074b99d9c4a6d2ab2bff80a7",
+        "expected_component_status": "partial",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/aws/versioning-enabled-mfa.xml",
+        "provider": "s3",
+        "component_id": "s3-versioning",
+        "operation": "GetBucketVersioning",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "enabled_with_xml_MfaDelete",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 244,
+        "sha256": "9bc2bdd05c5913fd3f64da111ab548c83e6745af9823073829b9d87668eb5935",
+        "expected_component_status": "complete",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/aws/versioning-never-enabled.xml",
+        "provider": "s3",
+        "component_id": "s3-versioning",
+        "operation": "GetBucketVersioning",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "empty_never_enabled_configuration",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 162,
+        "sha256": "3ce5016650fa3682e9a17c6768c1a3d948c4c3e4dac029b57374f2372f3a6fd4",
+        "expected_component_status": "complete",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/aws/versioning-suspended.xml",
+        "provider": "s3",
+        "component_id": "s3-versioning",
+        "operation": "GetBucketVersioning",
+        "api_contract": "Amazon S3 REST, 2006-03-01 XML namespace",
+        "scenario": "suspended_with_MfaDelete_omitted",
+        "source_documentation_url": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketVersioning.html",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 136,
+        "sha256": "d418487aa0f350cca6ceec9db6b53b6c4e95d88f0076decb668d9b182b0d8a3d",
+        "expected_component_status": "complete",
+        "response_status": 200
+      },
+      {
+        "path": "tests/fixtures/retention/azure/account-disabled.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-account",
+        "operation": "Storage Accounts - Get Properties",
+        "api_contract": "2026-04-01",
+        "scenario": "Explicitly disabled account version immutability, HNS true, omitted default policy.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 274,
+        "sha256": "4a315bfa1168d6ad7f8634ff39ce868863c97a707d2542c64b9c2e6f7fcf9e2d"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/account-enabled.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-account",
+        "operation": "Storage Accounts - Get Properties",
+        "api_contract": "2026-04-01",
+        "scenario": "Account default policy, HNS false and excluded principal metadata.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 541,
+        "sha256": "93611bf2235dc891e6c7c13993359de7e122decbd0c3c743fab6c047ef4d2eb1"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/container-absent.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-container",
+        "operation": "Blob Containers - Get",
+        "api_contract": "2026-04-01",
+        "scenario": "Explicit absent policy and cleared hold, empty tags, disabled version immutability.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 435,
+        "sha256": "6348c4904b771f0f791590b9cb1ecce7d2db601d8ff5a16ff99a6aa1b47ff03c"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/container-hold-conflict.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-container",
+        "operation": "Blob Containers - Get",
+        "api_contract": "2026-04-01",
+        "scenario": "Contradictory top-level hold flag versus embedded hold and nonempty tags.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 1413,
+        "sha256": "0ac1c30e2a2002f0522f1c0668532f6199bd2fff9fa99fcde25a91952d6a7aa8"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/container-locked-held.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-container",
+        "operation": "Blob Containers - Get",
+        "api_contract": "2026-04-01",
+        "scenario": "Locked native-days policy, append exception, completed migration, exact enablement text, active hold and excluded identity/history fields.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 1412,
+        "sha256": "a0b34d9aa0be30fbf88fd7b6e5deb87eae2232324a00cff7779c616acd77c0dc"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/container-wrong-id.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-container",
+        "operation": "Blob Containers - Get",
+        "api_contract": "2026-04-01",
+        "scenario": "Adversarial response for a different container identity.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 1418,
+        "sha256": "c54ae48fd1987db541cf1e5e851d1a9b923648bb0b382e91d4942438321e2b9d"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/service-versioning-disabled.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-blob-service",
+        "operation": "Blob Services - Get Service Properties",
+        "api_contract": "2026-04-01",
+        "scenario": "Versioning disabled; soft-delete metadata is present but excluded.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-services/get-service-properties?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 310,
+        "sha256": "deb9e7ae7b22b246bed9d2615a846b78897991881f5fdd41924b797fe7b4f655"
+      },
+      {
+        "path": "tests/fixtures/retention/azure/service-wrong-boolean.synthetic.json",
+        "provider": "azure",
+        "component_id": "azure-blob-service",
+        "operation": "Blob Services - Get Service Properties",
+        "api_contract": "2026-04-01",
+        "scenario": "Adversarial integer replacing a native versioning boolean.",
+        "source_documentation_url": "https://learn.microsoft.com/en-us/rest/api/storagerp/blob-services/get-service-properties?view=rest-storagerp-2026-04-01",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 306,
+        "sha256": "6cf511f8346639054088460d5fa2c5a37ebfbf52f71320a2a879ba00cf46aee8"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-locked.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "locked_policy_with_exact_numeric_strings_and_fractional_offset",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 482,
+        "sha256": "b3bf9db9c4a3e6b9b537d3643325762b51352b5d90f73aa107a001fed2880ed1",
+        "expected_component_status": "complete"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-missing-detail.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "present_empty_configurations_and_missing_metadata",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 113,
+        "sha256": "9321bafddf7305399ecce5cbe4fa84469fecfcc61b043b212772118e89b3dcb8",
+        "expected_component_status": "partial"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-no-policy.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "optional_configurations_omitted",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 68,
+        "sha256": "bf31956c2095376dc7095200112106035ae40624f1056cc37182b91200f52556",
+        "expected_component_status": "complete"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-null.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "explicit_null_metadata_and_configurations",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 145,
+        "sha256": "897b3d890e626efc51d7da637713cffe156c69a04d5a8337a469a1a106145ebe",
+        "expected_component_status": "partial"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-unknown-mode.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "unknown_object_retention_mode",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 130,
+        "sha256": "b28e0fd909949e99e277803aa9a1248982b52a6d10fbfd93f3332ba8aee6cdaf",
+        "expected_component_status": "partial"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-unlocked.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "unlocked_policy_and_disabled_versioning",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 235,
+        "sha256": "3046fdcb9aa2b35bd8f98b17ea8c1bb6a70c40ce0bd3d2839b5bf052ac4f56e9",
+        "expected_component_status": "complete"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-wrong-identity.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "mismatched_bucket_identity",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 64,
+        "sha256": "962ae777d58c8798775dc35a384974fd07f58ac7d07d8ef64ecac1536e88b106",
+        "expected_component_status": "unavailable"
+      },
+      {
+        "path": "tests/fixtures/retention/gcs/bucket-wrong-scalar.json",
+        "provider": "gcs",
+        "component_id": "gcs-bucket",
+        "operation": "Buckets: get",
+        "api_contract": "v1",
+        "scenario": "nonboolean_lock_flag_invalidates_component",
+        "source_documentation_url": "https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get",
+        "kind": "authored_synthetic",
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "bytes": 197,
+        "sha256": "00e9ca494a11f1cd2de739a804bb8aa62794ae95f071f1649de3e48c23891795",
+        "expected_component_status": "unavailable"
+      }
+    ],
     "recorded_responses": [],
     "live_provider_acceptance": "not_performed",
-    "provider_or_tenant_calls_for_this_draft": false,
     "credentials_or_signatures_from_real_requests": false,
     "required_per_file_metadata": [
       "provider",
@@ -308,16 +698,12 @@
     ],
     "hash_rule": "Record SHA256 only after the actual reviewed fixture bytes exist; never substitute a documentation or logical-projection hash.",
     "projection_hash_rule": "canonical_projection_sha256 binds declared logical projection content and is not an original-response hash.",
-    "no_emulator_or_live_fidelity_claim": true
+    "no_emulator_or_live_fidelity_claim": true,
+    "provider_or_tenant_calls_for_this_milestone": false
   },
   "pending": [
-    "provider_domain_readers",
-    "collector_entry_point",
-    "cli",
-    "api",
-    "console",
-    "public_fixture_files",
-    "complete_provider_milestone_acceptance"
+    "separately_authorized_live_provider_acceptance",
+    "subsequent_m365_vault_splunk_elastic_milestones"
   ],
   "control_mappings": []
 }

@@ -1,4 +1,4 @@
-"""Strict models for selected storage retention configuration."""
+"""Collection and strict models for selected storage retention configuration."""
 
 from ._contracts import (
     StorageRetentionCollectRequest,
@@ -8,10 +8,12 @@ from ._contracts import (
     StorageRetentionInputError,
     StorageRetentionResourceResult,
 )
+from .collector import StorageRetentionCollector
 
 __all__ = [
     "StorageRetentionCollectRequest",
     "StorageRetentionCollectResult",
+    "StorageRetentionCollector",
     "StorageRetentionComponentResult",
     "StorageRetentionDiagnostic",
     "StorageRetentionInputError",

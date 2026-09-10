@@ -4,18 +4,19 @@ import { isDeepStrictEqual } from "node:util";
 import openapiTS, { astToString, COMMENT_HEADER } from "openapi-typescript";
 import ts from "typescript";
 
-const JSON_REF = "#/components/schemas/JsonValue";
-const EXPECTED_JSON_SCHEMA = {
+const JSON_NAMES = ["JsonValue", "StorageRetentionJsonValue"];
+const jsonRef = (name) => `#/components/schemas/${name}`;
+const expectedJsonSchema = (name) => ({
     anyOf: [
         { type: "boolean" },
         { type: "integer" },
         { type: "number" },
         { type: "string" },
-        { type: "array", items: { $ref: JSON_REF } },
-        { type: "object", additionalProperties: { $ref: JSON_REF } },
+        { type: "array", items: { $ref: jsonRef(name) } },
+        { type: "object", additionalProperties: { $ref: jsonRef(name) } },
         { type: "null" },
     ],
-};
+});
 
 function isLiteral(node, value) {
     return (
@@ -25,10 +26,10 @@ function isLiteral(node, value) {
     );
 }
 
-function isJsonReference(node) {
+function isJsonReference(node, name) {
     return (
         ts.isIndexedAccessTypeNode(node) &&
-        isLiteral(node.indexType, "JsonValue") &&
+        isLiteral(node.indexType, name) &&
         ts.isIndexedAccessTypeNode(node.objectType) &&
         isLiteral(node.objectType.indexType, "schemas") &&
         ts.isTypeReferenceNode(node.objectType.objectType) &&
@@ -38,33 +39,41 @@ function isJsonReference(node) {
 }
 
 export async function generateTypes(schema) {
-    const jsonSchema = schema?.components?.schemas?.JsonValue;
-    if (jsonSchema === undefined) {
+    const names = JSON_NAMES.filter(
+        (name) => schema?.components?.schemas?.[name] !== undefined,
+    );
+    if (names.length === 0) {
         return (
             COMMENT_HEADER +
             astToString(await openapiTS(schema, { silent: true }))
         );
     }
-    if (!isDeepStrictEqual(jsonSchema, EXPECTED_JSON_SCHEMA)) {
-        throw new Error("Unexpected JsonValue schema");
+    for (const name of names) {
+        if (
+            !isDeepStrictEqual(
+                schema.components.schemas[name],
+                expectedJsonSchema(name),
+            )
+        ) {
+            throw new Error(`Unexpected ${name} schema`);
+        }
     }
 
-    let alias;
+    const aliases = new Map();
     const nodes = await openapiTS(schema, {
         silent: true,
         postTransform(type, { path }) {
-            if (path !== JSON_REF) return undefined;
-            if (alias !== undefined)
-                throw new Error("Repeated JsonValue transformation");
+            const name = names.find((candidate) => path === jsonRef(candidate));
+            if (name === undefined) return undefined;
+            if (aliases.has(name))
+                throw new Error(`Repeated ${name} transformation`);
             let references = 0;
             const transformed = ts.transform(type, [
                 (context) => {
                     const visit = (node) => {
-                        if (isJsonReference(node)) {
+                        if (isJsonReference(node, name)) {
                             references += 1;
-                            return ts.factory.createTypeReferenceNode(
-                                "JsonValue",
-                            );
+                            return ts.factory.createTypeReferenceNode(name);
                         }
                         return ts.visitEachChild(node, visit, context);
                     };
@@ -74,21 +83,27 @@ export async function generateTypes(schema) {
             const rewritten = transformed.transformed[0];
             if (!ts.isTypeNode(rewritten) || references !== 2) {
                 transformed.dispose();
-                throw new Error("Unexpected JsonValue type structure");
+                throw new Error(`Unexpected ${name} type structure`);
             }
-            alias = ts.factory.createTypeAliasDeclaration(
-                [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-                "JsonValue",
-                undefined,
-                rewritten,
+            aliases.set(
+                name,
+                ts.factory.createTypeAliasDeclaration(
+                    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+                    name,
+                    undefined,
+                    rewritten,
+                ),
             );
             transformed.dispose();
-            return ts.factory.createTypeReferenceNode("JsonValue");
+            return ts.factory.createTypeReferenceNode(name);
         },
     });
-    if (alias === undefined)
-        throw new Error("Missing JsonValue transformation");
-    return COMMENT_HEADER + astToString([alias, ...nodes]);
+    if (aliases.size !== names.length)
+        throw new Error("Missing recursive JSON transformation");
+    return (
+        COMMENT_HEADER +
+        astToString([...names.map((name) => aliases.get(name)), ...nodes])
+    );
 }
 
 export async function main() {

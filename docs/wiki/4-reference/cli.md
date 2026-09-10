@@ -410,6 +410,15 @@ Collect evidence from an Okta org (read-only).
 | `--block-private-ips, --allow-private-ips` | Reject hosts that resolve to RFC1918 / link-local / loopback / multicast / reserved ranges before opening the connection. Default True — closes the SSRF surface that could otherwise expose AWS / GCP / Azure instance-metadata endpoints (169.254.169.254) or internal services. Use --allow-private-ips to override for trusted internal endpoints. |
 | `--output, -o` | Where to write the findings JSON. Default: stdout. |
 
+### `evidentia collect retention`
+
+Read retention configuration for explicitly selected storage resources.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--request-file` | Named regular JSON request file, at most 65536 bytes; stdin is not accepted. |
+| `--output` | Atomically write full result JSON; omitted means stdout. |
+
 ### `evidentia collect securityscorecard`
 
 Collect compliance evidence from a SecurityScorecard portfolio (read-only).

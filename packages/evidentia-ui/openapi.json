@@ -628,6 +628,67 @@
         ],
         "type": "string"
       },
+      "AzureTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "allOf": [
+              {
+                "pattern": "^[a-z0-9]{3,24}(?![\\s\\S])"
+              }
+            ],
+            "maxLength": 24,
+            "minLength": 3,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Account",
+            "type": "string"
+          },
+          "container": {
+            "allOf": [
+              {
+                "pattern": "^(?!.*--)[a-z0-9][a-z0-9-]{1,61}[a-z0-9](?![\\s\\S])"
+              }
+            ],
+            "maxLength": 63,
+            "minLength": 3,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Container",
+            "type": "string"
+          },
+          "resource_group": {
+            "allOf": [
+              {
+                "pattern": "^(?!.*\\.(?![\\s\\S]))[A-Za-z0-9_().-]{1,90}(?![\\s\\S])"
+              }
+            ],
+            "maxLength": 90,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Resource Group",
+            "type": "string"
+          },
+          "subscription_id": {
+            "allOf": [
+              {
+                "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}(?![\\s\\S])"
+              }
+            ],
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Subscription Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subscription_id",
+          "resource_group",
+          "account",
+          "container"
+        ],
+        "title": "AzureTarget",
+        "type": "object"
+      },
       "CadenceSeries": {
         "additionalProperties": false,
         "description": "The dated series for one cadence over a window, with its verdict.",
@@ -1559,7 +1620,7 @@
             "type": "string"
           },
           "credential_identity": {
-            "description": "Authenticated principal that produced the finding. Format varies by source: AWS IAM ARN, GitHub app installation id, token subject, service-account email, etc. NOT the secret itself — the identity that the secret authenticates.",
+            "description": "Authenticated principal that produced the finding. Format varies by source: AWS IAM ARN, GitHub app installation id, token subject, service-account email, etc. NOT the secret itself; the identity that the secret authenticates.",
             "title": "Credential Identity",
             "type": "string"
           },
@@ -1711,7 +1772,7 @@
             "type": "integer"
           },
           "warnings": {
-            "description": "Non-fatal issues encountered during collection — rate-limit backoffs, skipped resources, blind-spot disclosures.",
+            "description": "Non-fatal issues encountered during collection: rate-limit backoffs, skipped resources, blind-spot disclosures.",
             "items": {
               "type": "string"
             },
@@ -4190,6 +4251,31 @@
         ],
         "title": "GapStatus",
         "type": "string"
+      },
+      "GcsTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "allOf": [
+              {
+                "pattern": "^(?![0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(?![\\s\\S]))[a-z0-9][a-z0-9._-]{1,220}[a-z0-9](?![\\s\\S])"
+              },
+              {
+                "pattern": "^[^.]{1,63}(?:\\.[^.]{1,63})*(?![\\s\\S])"
+              }
+            ],
+            "maxLength": 222,
+            "minLength": 3,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Bucket",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bucket"
+        ],
+        "title": "GcsTarget",
+        "type": "object"
       },
       "GreenboneCollectResponse": {
         "description": "Response body of ``POST /collectors/greenbone/collect``.",
@@ -6862,6 +6948,85 @@
         "title": "RiskQuantifyRequest",
         "type": "object"
       },
+      "S3Target": {
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "allOf": [
+              {
+                "pattern": "^(?!xn--|sthree-|amzn-s3-demo-)(?!.*\\.\\.)(?!.*(?:-s3alias|--ol-s3|\\.mrap|--x-s3|--table-s3)(?![\\s\\S]))(?![0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(?![\\s\\S]))[a-z0-9][a-z0-9.-]{1,61}[a-z0-9](?![\\s\\S])"
+              }
+            ],
+            "maxLength": 63,
+            "minLength": 3,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Bucket",
+            "type": "string"
+          },
+          "expected_owner": {
+            "anyOf": [
+              {
+                "maxLength": 12,
+                "minLength": 12,
+                "pattern": "^[0-9]{12}(?![\\s\\S])",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Owner"
+          },
+          "region": {
+            "enum": [
+              "af-south-1",
+              "ap-east-1",
+              "ap-east-2",
+              "ap-northeast-1",
+              "ap-northeast-2",
+              "ap-northeast-3",
+              "ap-south-1",
+              "ap-south-2",
+              "ap-southeast-1",
+              "ap-southeast-2",
+              "ap-southeast-3",
+              "ap-southeast-4",
+              "ap-southeast-5",
+              "ap-southeast-6",
+              "ap-southeast-7",
+              "ca-central-1",
+              "ca-west-1",
+              "eu-central-1",
+              "eu-central-2",
+              "eu-north-1",
+              "eu-south-1",
+              "eu-south-2",
+              "eu-west-1",
+              "eu-west-2",
+              "eu-west-3",
+              "il-central-1",
+              "me-central-1",
+              "me-south-1",
+              "mx-central-1",
+              "sa-east-1",
+              "us-east-1",
+              "us-east-2",
+              "us-west-1",
+              "us-west-2"
+            ],
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Region",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bucket",
+          "region"
+        ],
+        "title": "S3Target",
+        "type": "object"
+      },
       "SecurityFinding": {
         "additionalProperties": false,
         "description": "A security finding from an evidence collector.\n\nFindings are the raw output of collectors — they represent a single\nobservation about a system's security posture.\n\nv0.7.0 schema (see module docstring for migration notes):\n\n- ``control_mappings`` replaces ``control_ids`` (backward-compat\n  via :meth:`_migrate_control_ids_kwarg`).\n- ``collection_context`` required but defaults to a synthetic\n  placeholder for pre-v0.7.0 construction sites.",
@@ -7419,6 +7584,418 @@
           "risk_category_p50"
         ],
         "title": "SimulationResult",
+        "type": "object"
+      },
+      "StorageRetentionCollectResult": {
+        "additionalProperties": false,
+        "description": "Finite selected-read counts do not claim provider enumeration.",
+        "properties": {
+          "attempted_components": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Attempted Components",
+            "type": "integer"
+          },
+          "attempted_resources": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Attempted Resources",
+            "type": "integer"
+          },
+          "authenticated_identity_verified": {
+            "const": false,
+            "default": false,
+            "title": "Authenticated Identity Verified",
+            "type": "boolean"
+          },
+          "completed_components": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Completed Components",
+            "type": "integer"
+          },
+          "coverage_scope": {
+            "const": "selected_resources",
+            "default": "selected_resources",
+            "title": "Coverage Scope",
+            "type": "string"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StorageRetentionDiagnostic"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/_StrictFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "finished_at": {
+            "title": "Finished At",
+            "type": "string"
+          },
+          "identity_basis": {
+            "const": "operator-declared",
+            "default": "operator-declared",
+            "title": "Identity Basis",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/_StrictManifest"
+          },
+          "object_enforcement_assessed": {
+            "const": false,
+            "default": false,
+            "title": "Object Enforcement Assessed",
+            "type": "boolean"
+          },
+          "observation_scope": {
+            "const": "configuration",
+            "default": "configuration",
+            "title": "Observation Scope",
+            "type": "string"
+          },
+          "planned_components": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Planned Components",
+            "type": "integer"
+          },
+          "provider": {
+            "enum": [
+              "s3",
+              "azure",
+              "gcs"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "recordset_completeness_assessed": {
+            "const": false,
+            "default": false,
+            "title": "Recordset Completeness Assessed",
+            "type": "boolean"
+          },
+          "requested_resources": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Requested Resources",
+            "type": "integer"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/StorageRetentionResourceResult"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Resources",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "storage-retention-collection/v1",
+            "default": "storage-retention-collection/v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope_label": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\\s\\S])"
+              }
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Scope Label",
+            "type": "string"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "scope_label",
+          "status",
+          "started_at",
+          "finished_at",
+          "requested_resources",
+          "attempted_resources",
+          "planned_components",
+          "attempted_components",
+          "completed_components",
+          "resources",
+          "findings",
+          "diagnostics",
+          "manifest"
+        ],
+        "title": "StorageRetentionCollectResult",
+        "type": "object"
+      },
+      "StorageRetentionComponentResult": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "maximum": 3.0,
+            "minimum": 0.0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "canonical_resource_id": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Canonical Resource Id",
+            "type": "string"
+          },
+          "component_id": {
+            "enum": [
+              "s3-object-lock",
+              "s3-versioning",
+              "azure-account",
+              "azure-blob-service",
+              "azure-container",
+              "gcs-bucket"
+            ],
+            "title": "Component Id",
+            "type": "string"
+          },
+          "decoded_bytes": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Decoded Bytes",
+            "type": "integer"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/StorageRetentionDiagnostic"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "projection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/_Projection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw_bytes": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Raw Bytes",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id",
+          "canonical_resource_id",
+          "status",
+          "attempts",
+          "raw_bytes",
+          "decoded_bytes",
+          "started_at",
+          "finished_at",
+          "http_status",
+          "diagnostics",
+          "projection"
+        ],
+        "title": "StorageRetentionComponentResult",
+        "type": "object"
+      },
+      "StorageRetentionDiagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "configuration_missing",
+              "configuration_invalid",
+              "credential_unavailable",
+              "credential_rejected",
+              "forbidden",
+              "resource_not_found",
+              "unsafe_destination",
+              "offline_refused",
+              "redirect_refused",
+              "endpoint_mismatch",
+              "timeout",
+              "rate_limited",
+              "upstream_error",
+              "invalid_response",
+              "source_identity_mismatch",
+              "unsupported_source_value",
+              "missing_source_detail",
+              "projection_limit",
+              "response_limit",
+              "run_budget_exhausted",
+              "internal_error",
+              "cleanup_failed",
+              "signing_unsupported",
+              "retry_after_invalid"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "StorageRetentionDiagnostic",
+        "type": "object"
+      },
+      "StorageRetentionJsonValue": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "$ref": "#/components/schemas/StorageRetentionJsonValue"
+            },
+            "type": "array"
+          },
+          {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StorageRetentionJsonValue"
+            },
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "StorageRetentionResourceResult": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_resource_id": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Canonical Resource Id",
+            "type": "string"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/StorageRetentionComponentResult"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/S3Target"
+              },
+              {
+                "$ref": "#/components/schemas/AzureTarget"
+              },
+              {
+                "$ref": "#/components/schemas/GcsTarget"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "target",
+          "canonical_resource_id",
+          "status",
+          "components"
+        ],
+        "title": "StorageRetentionResourceResult",
         "type": "object"
       },
       "Tier": {
@@ -8544,6 +9121,73 @@
         "title": "_FieldCoverage",
         "type": "object"
       },
+      "_Projection": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "canonical_projection_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Canonical Projection Sha256",
+            "type": "string"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/_WireJsonObject"
+          },
+          "native_scope": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Native Scope",
+            "type": "string"
+          },
+          "projection_version": {
+            "const": "storage-retention-projection/v1",
+            "default": "storage-retention-projection/v1",
+            "title": "Projection Version",
+            "type": "string"
+          },
+          "source_etag": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Etag"
+          },
+          "source_metageneration": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Metageneration"
+          }
+        },
+        "required": [
+          "api_version",
+          "native_scope",
+          "fields",
+          "canonical_projection_sha256"
+        ],
+        "title": "_Projection",
+        "type": "object"
+      },
       "_Provenance": {
         "additionalProperties": false,
         "properties": {
@@ -8582,6 +9226,356 @@
           "graph_cloud"
         ],
         "title": "_Provenance",
+        "type": "object"
+      },
+      "_StrictContext": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collector_id": {
+            "description": "Stable collector identifier; used for filtering and SIEM alerting. Examples: 'aws-config', 'aws-security-hub', 'aws-access-analyzer', 'github-branch-protection', 'github-dependabot'.",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "description": "Semver of the evidentia-collectors package that produced this finding. Resolved from importlib.metadata at collection time so it always matches the installed wheel.",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "credential_identity": {
+            "description": "Authenticated principal that produced the finding. Format varies by source: AWS IAM ARN, GitHub app installation id, token subject, service-account email, etc. NOT the secret itself; the identity that the secret authenticates.",
+            "title": "Credential Identity",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "description": "Version of evidentia-core orchestrating the collection. Paired with collector_version, lets auditors verify the exact release that produced the evidence.",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filter_applied": {
+            "$ref": "#/components/schemas/_WireJsonObject"
+          },
+          "pagination_context": {
+            "title": "Pagination Context",
+            "type": "null"
+          },
+          "run_id": {
+            "description": "ULID of the collection run. Identical across every finding emitted by the same ``collect`` invocation; also equals the CollectionManifest.run_id so the two can be joined.",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_id": {
+            "description": "Source system instance identifier. Examples: 'aws-account:123456789012:us-east-1', 'github:org/repo', 'github:enterprise/acme'.",
+            "title": "Source System Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collector_id",
+          "collector_version",
+          "run_id",
+          "collected_at",
+          "credential_identity",
+          "source_system_id",
+          "filter_applied"
+        ],
+        "title": "_StrictContext",
+        "type": "object"
+      },
+      "_StrictCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "collected": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Collected",
+            "type": "integer"
+          },
+          "matched_filter": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Matched Filter",
+            "type": "integer"
+          },
+          "resource_type": {
+            "description": "Source-system resource category. Examples: 'aws-iam-role', 'aws-iam-user', 'github-dependabot-alert'.",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "scanned": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Scanned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resource_type",
+          "scanned",
+          "matched_filter",
+          "collected"
+        ],
+        "title": "_StrictCoverage",
+        "type": "object"
+      },
+      "_StrictFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_context": {
+            "$ref": "#/components/schemas/_StrictContext"
+          },
+          "compliance_status": {
+            "$ref": "#/components/schemas/ComplianceStatus",
+            "default": "unknown",
+            "description": "Pass/fail result of the control or check this finding represents. Distinct from `status` (the active/resolved lifecycle state). Mirrors the OCSF Compliance Finding `compliance.status` field. Defaults to UNKNOWN: collectors migrated in v0.10.0+ set this explicitly; pre-v0.10.0 construction sites and not-yet-migrated collectors leave it UNKNOWN rather than asserting a result. Most collectors gather non-compliant items, but the vendor-risk collectors also emit informational inventory findings, so UNKNOWN (not FAIL) is the safe default."
+          },
+          "control_mappings": {
+            "description": "NIST 800-53 (or other framework) controls this finding relates to. v0.7.0 adds OLIR relationship typing + justification per mapping. Pre-v0.7.0 callers passing ``control_ids=[...]`` as keyword arg are auto-converted via the schema's ``@model_validator``.",
+            "items": {
+              "$ref": "#/components/schemas/ControlMapping"
+            },
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "first_observed": {
+            "title": "First Observed",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_observed": {
+            "title": "Last Observed",
+            "type": "string"
+          },
+          "raw_data": {
+            "$ref": "#/components/schemas/_WireJsonObject"
+          },
+          "remediation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional human-readable remediation guidance. Maps to the OCSF Compliance Finding `remediation.desc` field. Populated by collectors where the source system supplies remediation text (e.g. AWS Security Hub Remediation.Recommendation); None when unavailable.",
+            "title": "Remediation"
+          },
+          "resolved_at": {
+            "title": "Resolved At",
+            "type": "null"
+          },
+          "resource_account": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Account"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Resource identifier in the source system",
+            "title": "Resource Id"
+          },
+          "resource_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Region"
+          },
+          "resource_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "E.g. 'AWS::S3::Bucket', 'GitHub::Repository'",
+            "title": "Resource Type"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "source_finding_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Original finding ID in the source system",
+            "title": "Source Finding Id"
+          },
+          "source_system": {
+            "description": "E.g. 'aws-security-hub', 'github'",
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FindingStatus",
+            "default": "active"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "severity",
+          "source_system",
+          "collection_context",
+          "raw_data",
+          "first_observed",
+          "last_observed"
+        ],
+        "title": "_StrictFinding",
+        "type": "object"
+      },
+      "_StrictManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_finished_at": {
+            "title": "Collection Finished At",
+            "type": "string"
+          },
+          "collection_started_at": {
+            "title": "Collection Started At",
+            "type": "string"
+          },
+          "collector_id": {
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "coverage_counts": {
+            "items": {
+              "$ref": "#/components/schemas/_StrictCoverage"
+            },
+            "title": "Coverage Counts",
+            "type": "array"
+          },
+          "empty_categories": {
+            "description": "Resource types explicitly scanned but yielding zero findings. Per checklist B5: an auditor cannot distinguish 'no findings' (legitimate) from 'collector skipped' (evidence gap) without this explicit attestation.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Empty Categories",
+            "type": "array"
+          },
+          "errors": {
+            "description": "Fatal errors that caused specific resources to be skipped but didn't abort the run. Non-empty plus is_complete=True means 'partial success'.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidentia_version": {
+            "description": "Version of evidentia-core that wrote this manifest",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filters_applied": {
+            "$ref": "#/components/schemas/_WireJsonObject"
+          },
+          "incomplete_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Human-readable reason the run didn't complete. MUST be populated when ``is_complete=False``.",
+            "title": "Incomplete Reason"
+          },
+          "is_complete": {
+            "default": true,
+            "description": "False if any collection error, truncation, or pagination abort occurred. Auditors treat incomplete runs as evidence gaps.",
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "run_id": {
+            "description": "ULID matching CollectionContext.run_id on every finding produced by this run. Join key for findings↔manifest.",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_ids": {
+            "description": "All source_system_ids covered in this run",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source System Ids",
+            "type": "array"
+          },
+          "total_findings": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Total Findings",
+            "type": "integer"
+          },
+          "warnings": {
+            "description": "Non-fatal issues encountered during collection: rate-limit backoffs, skipped resources, blind-spot disclosures.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "collector_id",
+          "collector_version",
+          "collection_started_at",
+          "collection_finished_at",
+          "filters_applied",
+          "coverage_counts",
+          "total_findings"
+        ],
+        "title": "_StrictManifest",
+        "type": "object"
+      },
+      "_WireJsonObject": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/StorageRetentionJsonValue"
+        },
         "type": "object"
       }
     }
@@ -11012,6 +12006,403 @@
           }
         },
         "summary": "Okta Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/retention/collect": {
+      "post": {
+        "description": "Return full observations for every operator-selected resource.",
+        "operationId": "storage_retention_collect_api_collectors_retention_collect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "provider": {
+                        "const": "s3",
+                        "title": "Provider",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\\s\\S])"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Scope Label",
+                        "type": "string"
+                      },
+                      "targets": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "bucket": {
+                              "allOf": [
+                                {
+                                  "pattern": "^(?!xn--|sthree-|amzn-s3-demo-)(?!.*\\.\\.)(?!.*(?:-s3alias|--ol-s3|\\.mrap|--x-s3|--table-s3)(?![\\s\\S]))(?![0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(?![\\s\\S]))[a-z0-9][a-z0-9.-]{1,61}[a-z0-9](?![\\s\\S])"
+                                }
+                              ],
+                              "maxLength": 63,
+                              "minLength": 3,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Bucket",
+                              "type": "string"
+                            },
+                            "expected_owner": {
+                              "anyOf": [
+                                {
+                                  "maxLength": 12,
+                                  "minLength": 12,
+                                  "pattern": "^[0-9]{12}(?![\\s\\S])",
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Expected Owner"
+                            },
+                            "region": {
+                              "enum": [
+                                "af-south-1",
+                                "ap-east-1",
+                                "ap-east-2",
+                                "ap-northeast-1",
+                                "ap-northeast-2",
+                                "ap-northeast-3",
+                                "ap-south-1",
+                                "ap-south-2",
+                                "ap-southeast-1",
+                                "ap-southeast-2",
+                                "ap-southeast-3",
+                                "ap-southeast-4",
+                                "ap-southeast-5",
+                                "ap-southeast-6",
+                                "ap-southeast-7",
+                                "ca-central-1",
+                                "ca-west-1",
+                                "eu-central-1",
+                                "eu-central-2",
+                                "eu-north-1",
+                                "eu-south-1",
+                                "eu-south-2",
+                                "eu-west-1",
+                                "eu-west-2",
+                                "eu-west-3",
+                                "il-central-1",
+                                "me-central-1",
+                                "me-south-1",
+                                "mx-central-1",
+                                "sa-east-1",
+                                "us-east-1",
+                                "us-east-2",
+                                "us-west-1",
+                                "us-west-2"
+                              ],
+                              "minLength": 1,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Region",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "bucket",
+                            "region"
+                          ],
+                          "title": "S3Target",
+                          "type": "object"
+                        },
+                        "maxItems": 20,
+                        "minItems": 1,
+                        "title": "Targets",
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "scope_label",
+                      "provider",
+                      "targets"
+                    ],
+                    "title": "S3RetentionRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "provider": {
+                        "const": "azure",
+                        "title": "Provider",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\\s\\S])"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Scope Label",
+                        "type": "string"
+                      },
+                      "targets": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "account": {
+                              "allOf": [
+                                {
+                                  "pattern": "^[a-z0-9]{3,24}(?![\\s\\S])"
+                                }
+                              ],
+                              "maxLength": 24,
+                              "minLength": 3,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Account",
+                              "type": "string"
+                            },
+                            "container": {
+                              "allOf": [
+                                {
+                                  "pattern": "^(?!.*--)[a-z0-9][a-z0-9-]{1,61}[a-z0-9](?![\\s\\S])"
+                                }
+                              ],
+                              "maxLength": 63,
+                              "minLength": 3,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Container",
+                              "type": "string"
+                            },
+                            "resource_group": {
+                              "allOf": [
+                                {
+                                  "pattern": "^(?!.*\\.(?![\\s\\S]))[A-Za-z0-9_().-]{1,90}(?![\\s\\S])"
+                                }
+                              ],
+                              "maxLength": 90,
+                              "minLength": 1,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Resource Group",
+                              "type": "string"
+                            },
+                            "subscription_id": {
+                              "allOf": [
+                                {
+                                  "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}(?![\\s\\S])"
+                                }
+                              ],
+                              "maxLength": 36,
+                              "minLength": 36,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Subscription Id",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "subscription_id",
+                            "resource_group",
+                            "account",
+                            "container"
+                          ],
+                          "title": "AzureTarget",
+                          "type": "object"
+                        },
+                        "maxItems": 20,
+                        "minItems": 1,
+                        "title": "Targets",
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "scope_label",
+                      "provider",
+                      "targets"
+                    ],
+                    "title": "AzureRetentionRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "provider": {
+                        "const": "gcs",
+                        "title": "Provider",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}(?![\\s\\S])"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Scope Label",
+                        "type": "string"
+                      },
+                      "targets": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "bucket": {
+                              "allOf": [
+                                {
+                                  "pattern": "^(?![0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+(?![\\s\\S]))[a-z0-9][a-z0-9._-]{1,220}[a-z0-9](?![\\s\\S])"
+                                },
+                                {
+                                  "pattern": "^[^.]{1,63}(?:\\.[^.]{1,63})*(?![\\s\\S])"
+                                }
+                              ],
+                              "maxLength": 222,
+                              "minLength": 3,
+                              "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                              "title": "Bucket",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "bucket"
+                          ],
+                          "title": "GcsTarget",
+                          "type": "object"
+                        },
+                        "maxItems": 20,
+                        "minItems": 1,
+                        "title": "Targets",
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "scope_label",
+                      "provider",
+                      "targets"
+                    ],
+                    "title": "GcsRetentionRequest",
+                    "type": "object"
+                  }
+                ],
+                "title": "StorageRetentionCollectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageRetentionCollectResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid JSON or bounded request fields."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "reason",
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "API authentication required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Read permission denied or API authentication is not configured."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The request body exceeds 65536 bytes."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Only application/json is supported."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collection could not produce a valid result."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The selected optional collector is not installed."
+          }
+        },
+        "summary": "Storage Retention Collect",
         "tags": [
           "collectors"
         ]

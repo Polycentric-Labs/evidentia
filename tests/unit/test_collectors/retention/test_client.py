@@ -840,3 +840,30 @@ def test_final_clock_callback_precedes_last_validity_check(monkeypatch: pytest.M
     assert result.started_at is None and result.finished_at is None
     assert codes(result) == ["credential_unavailable" if expiry else "run_budget_exhausted"]
     value.close()
+
+
+@pytest.mark.parametrize(
+    "failure,expected",
+    [("size", "projection_limit"), ("shape", "invalid_response"), ("identity", "source_identity_mismatch")],
+)
+def test_projector_constructor_failure_retains_specific_diagnostic(
+    monkeypatch: pytest.MonkeyPatch, failure: str, expected: str
+) -> None:
+    value, scenario, _, _, _ = session(monkeypatch, [{}])
+
+    def rejected(response: Any, target: Any) -> Any:
+        if failure == "size":
+            return contracts.ProjectedComponent(
+                "synthetic-v1", "configuration", {"selected": "x" * contracts.PROJECTION_BYTE_LIMIT}
+            )
+        if failure == "shape":
+            raise contracts.StorageRetentionInputError("invalid_result")
+        raise client.ClientFault("source_identity_mismatch", response.http_status)
+
+    result = first_read(value, rejected)
+    assert result.status == "unavailable" and result.projection is None
+    assert codes(result) == [expected]
+    assert result.attempts == 1 and value.context.projection_bytes == 0
+    assert len(scenario.requests) == 1 and scenario.streams[0].closed
+    value.close()
+    assert scenario.close_calls == 1

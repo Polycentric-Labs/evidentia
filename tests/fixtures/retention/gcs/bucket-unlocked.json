@@ -1,0 +1,12 @@
+{
+  "name": "synthetic-retention-bucket",
+  "metageneration": "2",
+  "retentionPolicy": {
+    "retentionPeriod": "1",
+    "effectiveTime": "2026-09-10T00:00:00Z",
+    "isLocked": false
+  },
+  "versioning": {
+    "enabled": false
+  }
+}

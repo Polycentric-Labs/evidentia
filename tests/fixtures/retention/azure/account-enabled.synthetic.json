@@ -1,0 +1,18 @@
+{
+  "id": "/subscriptions/11111111-2222-4333-8444-555555555555/resourceGroups/Synthetic_Group/providers/Microsoft.Storage/storageAccounts/syntheticstore",
+  "name": "syntheticstore",
+  "properties": {
+    "isHnsEnabled": false,
+    "immutableStorageWithVersioning": {
+      "enabled": true,
+      "immutabilityPolicy": {
+        "state": "Locked",
+        "immutabilityPeriodSinceCreationInDays": 365,
+        "allowProtectedAppendWrites": false
+      }
+    },
+    "identity": {
+      "principalId": "EXCLUDED_ACCOUNT_PRINCIPAL"
+    }
+  }
+}

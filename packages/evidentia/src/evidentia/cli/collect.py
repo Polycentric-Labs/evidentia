@@ -1927,3 +1927,94 @@ def entra_m365(
     if result.status != "complete":
         typer.echo("Collection incomplete; inspect capability diagnostics in the result.", err=True)
         raise typer.Exit(1)
+
+
+@app.command("retention")
+@require_role_cli("read")
+def collect_retention(
+    request_file: str = typer.Option(
+        ...,
+        "--request-file",
+        metavar="PATH",
+        help="Named regular JSON request file, at most 65536 bytes; stdin is not accepted.",
+    ),
+    output: str | None = typer.Option(
+        None, "--output", metavar="PATH", help="Atomically write full result JSON; omitted means stdout."
+    ),
+) -> None:
+    """Read retention configuration for explicitly selected storage resources.
+
+    S3 uses AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and optional AWS_SESSION_TOKEN.
+    Azure uses STORAGE_RETENTION_AZURE_ACCESS_TOKEN.
+    GCS uses STORAGE_RETENTION_GCS_ACCESS_TOKEN.
+    Tokens must already exist; this command never acquires or refreshes them.
+    Observations describe configuration, not object enforcement or compliance.
+    """
+    try:
+        from evidentia_collectors.retention._contracts import (
+            StorageRetentionCollectResult,
+            StorageRetentionInputError,
+            parse_request,
+        )
+        from evidentia_collectors.retention.collector import StorageRetentionCollector
+
+        from ._retention_io import InputFailure, OutputFailure, ReservedOutput, read_request_file
+    except ModuleNotFoundError as error:
+        missing = error.name in {"evidentia_collectors", "evidentia_collectors.retention"}
+        typer.echo(
+            "Storage retention collection is not installed."
+            if missing
+            else "Storage retention collection could not be loaded.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Storage retention collection could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        source = read_request_file(Path(request_file))
+        request = parse_request(source.content)
+        original = request.model_dump(mode="json")
+    except (InputFailure, StorageRetentionInputError):
+        typer.echo("Invalid storage retention request.", err=True)
+        raise typer.Exit(2) from None
+    except Exception:
+        typer.echo("Invalid storage retention request.", err=True)
+        raise typer.Exit(2) from None
+    try:
+        with ReservedOutput(source, Path(output) if output is not None else None) as destination:
+            with StorageRetentionCollector() as collector:
+                observed = collector.collect_v2(request)
+            if type(observed) is not StorageRetentionCollectResult:
+                raise ValueError("invalid_result")
+            result = StorageRetentionCollectResult.model_validate_json(observed.model_dump_json(warnings="error"))
+            echoed = {
+                "provider": result.provider,
+                "scope_label": result.scope_label,
+                "targets": [item.target.model_dump(mode="json") for item in result.resources],
+            }
+            if echoed != original:
+                raise ValueError("result_request_mismatch")
+            content = (result.model_dump_json(warnings="error") + "\n").encode("utf-8")
+            destination.publish(content)
+    except InputFailure:
+        typer.echo("Invalid storage retention request.", err=True)
+        raise typer.Exit(2) from None
+    except OutputFailure:
+        typer.echo("Storage retention output failed.", err=True)
+        raise typer.Exit(1) from None
+    except ModuleNotFoundError as error:
+        missing = original["provider"] == "s3" and error.name in {"botocore", "defusedxml"}
+        typer.echo(
+            "Storage retention S3 support is not installed; install evidentia-collectors[retention]."
+            if missing
+            else "Storage retention collection failed.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Storage retention collection or result output failed.", err=True)
+        raise typer.Exit(1) from None
+    if result.status != "complete":
+        typer.echo("Collection incomplete; inspect resource and component diagnostics in the result.", err=True)
+        raise typer.Exit(1)

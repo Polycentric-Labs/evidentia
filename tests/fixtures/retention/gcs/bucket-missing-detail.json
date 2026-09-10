@@ -1,0 +1,6 @@
+{
+  "name": "synthetic-retention-bucket",
+  "retentionPolicy": {},
+  "versioning": {},
+  "objectRetention": {}
+}

@@ -1,11 +1,9 @@
 """Unit tests for evidentia_core.retention.worm_s3 (v0.7.12 P0).
 
-Uses moto's mock S3 to exercise the S3 Object Lock contract
-without hitting live AWS. moto's S3 mock is reasonably faithful
-to S3 Object Lock semantics — it enforces the RetainUntilDate
-header on DeleteObject calls, refuses to enable Object Lock
-retroactively, and simulates legal-hold via
-PutObjectLegalHold.
+Uses moto's local S3 mock with buckets created with Object Lock enabled.
+These tests exercise retained payloads and legal holds without live AWS.
+They do not validate enabling Object Lock on an existing bucket; AWS
+supports that operation as described in docs/worm-backends.md.
 """
 
 from __future__ import annotations
