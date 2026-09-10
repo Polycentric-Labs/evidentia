@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -56,6 +57,10 @@ async def test_frozen_tool_contracts(tmp_path: Path, protocol_mode: str) -> None
     for tool in listing.tools:
         wire = tool.model_dump(mode="json", by_alias=True)
         contracts.append({key: wire[key] for key in ("name", "description", "inputSchema", "outputSchema")})
+    # CPython 3.13+ dedents docstrings during compilation. Compare their prose
+    # with standard docstring cleaning; names and schemas remain exact.
+    for contract in [*contracts, *oracle["tools"]]:
+        contract["description"] = inspect.cleandoc(contract["description"])
     assert sorted(contracts, key=lambda tool: tool["name"]) == oracle["tools"]
 
 

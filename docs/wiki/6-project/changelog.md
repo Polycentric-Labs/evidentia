@@ -155,8 +155,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **MCP SDK 2.2 (V13-16).** The server uses the SDK's typed `MCPServer` API.
-  Tool names, descriptions, input/output schemas and CLI transport selectors
-  remain unchanged. Both dependency declarations require `mcp>=2.2.0,<3.0`;
+  Tool names, input/output schemas and CLI transport selectors remain unchanged.
+  Description wording and relative indentation are preserved; Python 3.13 and
+  later remove the common docstring margin during compilation. Both dependency
+  declarations require `mcp>=2.2.0,<3.0`;
   future major updates stay isolated in Dependabot. SDK validation and ordinary
   handler failures use tool-error results; explicit MCP protocol exceptions
   retain their protocol error code. Out-of-root failures now use the SDK's
