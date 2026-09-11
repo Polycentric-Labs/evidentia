@@ -43,9 +43,35 @@ from evidentia_api import __version__
 from evidentia_api.errors import body_parse_error_handler
 
 if TYPE_CHECKING:
+    from evidentia_collectors.enterprise_retention._profiles import ProfileRegistry
     from evidentia_core.plugins.auth import AuthProvider
 
 logger = logging.getLogger(__name__)
+
+
+def _initialize_enterprise_retention_profiles(app: FastAPI) -> None:
+    """Load one trusted profile snapshot only when the feature is installed."""
+    from evidentia_api.routers.enterprise_retention import ENTERPRISE_RETENTION_AVAILABLE
+
+    if not ENTERPRISE_RETENTION_AVAILABLE:
+        app.state.enterprise_retention_profiles = None
+        return
+    try:
+        from evidentia_collectors.enterprise_retention._profiles import (
+            ProfileRegistry,
+            load_profile_registry,
+            validated_registry,
+        )
+
+        injected = app.state._enterprise_retention_profiles_input
+        if injected is not None:
+            registry = validated_registry(injected)
+        else:
+            configured = os.environ.get("EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE")
+            registry = load_profile_registry(Path(configured)) if configured else ProfileRegistry()
+        app.state.enterprise_retention_profiles = registry
+    except Exception:
+        raise RuntimeError("Enterprise retention profile configuration could not be loaded.") from None
 
 
 @asynccontextmanager
@@ -89,6 +115,7 @@ async def _auth_lifespan(app: FastAPI) -> AsyncIterator[None]:
                     env_token_file,
                 )
                 raise
+    _initialize_enterprise_retention_profiles(app)
     yield
 
 
@@ -103,6 +130,7 @@ def create_app(
     cors_origins: list[str] | None = None,
     security_headers: bool | None = None,
     auth_provider: AuthProvider | None = None,
+    enterprise_retention_profiles: ProfileRegistry | None = None,
     trust_proxy_headers: bool | None = None,
 ) -> FastAPI:
     """Build and return a FastAPI application.
@@ -136,6 +164,10 @@ def create_app(
         UNAUTHENTICATED_PATHS allowlist. Default ``None`` matches
         v0.8.0 behavior (no auth gating). Closes v0.8.0 review
         F-V08-S3 ``/api/metrics`` MEDIUM finding when populated.
+    enterprise_retention_profiles
+        Optional trusted registry injection, validated and detached at startup.
+        When omitted, startup loads EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE
+        or an empty registry. An absent collector never consumes this value.
     trust_proxy_headers
         v0.9.5 P1.6: when True, auto-wires uvicorn's
         :class:`ProxyHeadersMiddleware` so ``X-Forwarded-For`` is
@@ -233,6 +265,8 @@ def create_app(
     # startup. Set BEFORE middleware add so the dispatch path
     # reads a consistent state during cold-start.
     app.state.auth_provider = auth_provider
+    app.state._enterprise_retention_profiles_input = enterprise_retention_profiles
+    app.state.enterprise_retention_profiles = None
 
     # CORS: dev_mode is permissive for Vite HMR; prod is localhost-only.
     if cors_origins is None:

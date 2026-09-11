@@ -1,0 +1,30 @@
+{
+  "indices": {
+    "synthetic-index": {
+      "index": "synthetic-index",
+      "managed": true,
+      "policy": "synthetic-retention",
+      "phase": "hot",
+      "action": "rollover",
+      "step": "ERROR",
+      "failed_step": "check-rollover-ready",
+      "index_creation_date_millis": 0,
+      "lifecycle_date_millis": 9007199254740993,
+      "phase_time_millis": 1700000000000,
+      "action_time_millis": 1700000000001,
+      "step_time_millis": 1700000000002,
+      "phase_execution": {
+        "policy": "synthetic-cached-policy",
+        "version": 3,
+        "modified_date_in_millis": 1690000000000,
+        "phase_definition": {
+          "min_age": "30d",
+          "actions": {"delete": {"delete_searchable_snapshot": false}}
+        },
+        "_meta": {"excluded": "synthetic-cached-metadata"}
+      },
+      "step_info": {"reason": "synthetic-excluded-error-reason"},
+      "_meta": {"excluded": "synthetic-index-metadata"}
+    }
+  }
+}

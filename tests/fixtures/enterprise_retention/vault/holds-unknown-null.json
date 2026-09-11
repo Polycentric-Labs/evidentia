@@ -1,0 +1,29 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Literal future detail, nulls and retained query extensions",
+  "body": {
+    "holds": [
+      {
+        "holdId": "synthetic-future-hold",
+        "name": null,
+        "corpus": "FUTURE_CORPUS",
+        "updateTime": "not-a-time",
+        "accounts": null,
+        "orgUnit": null,
+        "query": {
+          "futureQuery": {
+            "_meta": {
+              "email": "user-authored-synthetic-value"
+            },
+            "counter": 9007199254740991,
+            "value": 0.1,
+            "flag": false,
+            "empty": null
+          },
+          "driveQuery": null
+        }
+      }
+    ]
+  }
+}

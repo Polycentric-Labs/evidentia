@@ -24,6 +24,7 @@ from typing import Any
 
 import pytest
 from evidentia_api.app import create_app
+from evidentia_core.network_guard import offline_mode
 
 #: (path, method, the component schema name the 200 response must resolve to)
 FEDERAL_OPERATIONS = [
@@ -49,7 +50,8 @@ FEDERAL_OPERATIONS = [
 
 @pytest.fixture(scope="module")
 def openapi_schema() -> dict[str, Any]:
-    return create_app(offline=True).openapi()
+    with offline_mode():
+        return create_app(offline=True).openapi()
 
 
 def _success_schema(schema: dict[str, Any], path: str, method: str) -> dict[str, Any]:

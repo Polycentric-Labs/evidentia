@@ -1,0 +1,10 @@
+{
+  "indices": {
+    "synthetic-index": {
+      "index": "synthetic-index", "managed": true, "policy": null,
+      "phase": "FUTURE_PHASE", "action": null, "step": "ERROR",
+      "index_creation_date_millis": null, "lifecycle_date_millis": 0,
+      "phase_execution": {"policy":"synthetic-cached-only","version":null}
+    }
+  }
+}

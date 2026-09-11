@@ -1,0 +1,8 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Complete empty selected holds page",
+  "body": {
+    "holds": []
+  }
+}

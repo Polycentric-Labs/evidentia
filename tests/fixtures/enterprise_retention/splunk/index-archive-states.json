@@ -1,0 +1,18 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Four separate reads demonstrate absent, null, empty and nonempty archive settings.",
+  "target": "archive-index",
+  "responses": [
+    {"status": 200, "body": {"entry": [{"name": "archive-index", "content": {}}]}},
+    {"status": 200, "body": {"entry": [{"name": "archive-index", "content": {
+      "coldToFrozenDir": null, "coldToFrozenScript": null
+    }}]}},
+    {"status": 200, "body": {"entry": [{"name": "archive-index", "content": {
+      "coldToFrozenDir": "", "coldToFrozenScript": ""
+    }}]}},
+    {"status": 200, "body": {"entry": [{"name": "archive-index", "content": {
+      "coldToFrozenDir": " ", "coldToFrozenScript": "/synthetic/archive-script"
+    }}]}}
+  ]
+}

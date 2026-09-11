@@ -1,0 +1,20 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Future scalar values, negative zero, null and absent details remain distinct.",
+  "target": "future-index",
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "entry": [{"name": "future-index", "content": {
+          "datatype": "future-data",
+          "disabled": -0.0,
+          "frozenTimePeriodInSecs": null,
+          "maxTotalDataSizeMB": "+001",
+          "coldToFrozenScript": null
+        }}]
+      }
+    }
+  ]
+}

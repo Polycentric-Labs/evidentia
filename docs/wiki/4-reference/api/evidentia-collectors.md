@@ -19,6 +19,7 @@ Public submodules + subpackages of `evidentia_collectors` (import directly, e.g.
 - `evidentia_collectors.bitsight`
 - `evidentia_collectors.databricks`
 - `evidentia_collectors.drata`
+- `evidentia_collectors.enterprise_retention`
 - `evidentia_collectors.entra_m365`
 - `evidentia_collectors.github`
 - `evidentia_collectors.google_workspace`

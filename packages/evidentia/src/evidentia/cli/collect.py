@@ -2018,3 +2018,101 @@ def collect_retention(
     if result.status != "complete":
         typer.echo("Collection incomplete; inspect resource and component diagnostics in the result.", err=True)
         raise typer.Exit(1)
+
+
+@app.command("enterprise-retention")
+@require_role_cli("read")
+def collect_enterprise_retention(
+    request_file: str = typer.Option(
+        ...,
+        "--request-file",
+        metavar="PATH",
+        help="Named regular JSON request file, at most 65536 bytes; stdin is not accepted.",
+    ),
+    output: str | None = typer.Option(
+        None, "--output", metavar="PATH", help="Atomically write full result JSON; omitted means stdout."
+    ),
+) -> None:
+    """Read configuration for explicitly selected enterprise resources.
+
+    EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE selects the trusted profile
+    registry. The requested profile must permit local CLI collection.
+    Credentials must already exist; this command never acquires or refreshes
+    them. Observations describe configuration, not record coverage or deletion.
+    """
+    try:
+        from evidentia_collectors.enterprise_retention._contracts import (
+            EnterpriseRetentionCollectResult,
+            EnterpriseRetentionInputError,
+            parse_request,
+        )
+        from evidentia_collectors.enterprise_retention._profiles import (
+            ProfileRegistry,
+            ProfileUnavailable,
+            authorize_cli_profile,
+            load_profile_registry,
+        )
+        from evidentia_collectors.enterprise_retention.collector import EnterpriseRetentionCollector
+
+        from ._retention_io import InputFailure, OutputFailure, ReservedOutput, read_request_file
+    except ModuleNotFoundError as error:
+        missing = error.name in {"evidentia_collectors", "evidentia_collectors.enterprise_retention"}
+        typer.echo(
+            "Enterprise retention collection is not installed."
+            if missing
+            else "Enterprise retention collection could not be loaded.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Enterprise retention collection could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        source = read_request_file(Path(request_file))
+        request = parse_request(source.content)
+        original = request.model_dump(mode="python", warnings="error")
+    except (InputFailure, EnterpriseRetentionInputError):
+        typer.echo("Invalid enterprise retention request.", err=True)
+        raise typer.Exit(2) from None
+    except Exception:
+        typer.echo("Invalid enterprise retention request.", err=True)
+        raise typer.Exit(2) from None
+    try:
+        profile_file = os.environ.get("EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE")
+        registry = load_profile_registry(Path(profile_file)) if profile_file else ProfileRegistry()
+        profile = authorize_cli_profile(registry, provider=request.root.provider, alias=request.root.profile_alias)
+    except ProfileUnavailable:
+        typer.echo("The selected collection profile is unavailable.", err=True)
+        raise typer.Exit(77) from None
+    except Exception:
+        typer.echo("Enterprise retention profile configuration could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        with ReservedOutput(source, Path(output) if output is not None else None) as destination:
+            with EnterpriseRetentionCollector(profile=profile) as collector:
+                observed = collector.collect_v2(request)
+            if type(observed) is not EnterpriseRetentionCollectResult:
+                raise ValueError("invalid_result")
+            content = observed.publication_bytes()
+            result = EnterpriseRetentionCollectResult.model_validate_json(content)
+            echoed = {
+                "provider": result.root.provider,
+                "profile_alias": result.root.profile_alias,
+                "scope_label": result.root.scope_label,
+                "targets": [item.target.model_dump(mode="python") for item in result.root.resources],
+            }
+            if echoed != original:
+                raise ValueError("result_request_mismatch")
+            destination.publish(content)
+    except InputFailure:
+        typer.echo("Invalid enterprise retention request.", err=True)
+        raise typer.Exit(2) from None
+    except OutputFailure:
+        typer.echo("Enterprise retention output failed.", err=True)
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Enterprise retention collection or result output failed.", err=True)
+        raise typer.Exit(1) from None
+    if result.root.status != "complete":
+        typer.echo("Collection incomplete; inspect resource and source-read diagnostics in the result.", err=True)
+        raise typer.Exit(1)

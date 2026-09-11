@@ -1,0 +1,30 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Selected event index with exact digit strings and excluded source details.",
+  "target": "audit-events",
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "entry": [
+          {
+            "name": "audit-events",
+            "content": {
+              "datatype": "event",
+              "disabled": false,
+              "frozenTimePeriodInSecs": "0003600",
+              "maxTotalDataSizeMB": 0,
+              "coldToFrozenDir": "",
+              "coldToFrozenScript": "/synthetic/archive-script",
+              "unselectedExtension": {"description": "synthetic excluded detail"}
+            },
+            "acl": {"owner": "synthetic excluded owner"},
+            "links": {"alternate": "https://example.invalid/excluded"}
+          }
+        ],
+        "messages": [{"type": "INFO", "text": "synthetic excluded message"}]
+      }
+    }
+  ]
+}

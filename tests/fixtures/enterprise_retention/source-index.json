@@ -1,0 +1,953 @@
+{
+  "ledger_format_version": 1,
+  "stage": "integrated_collector_api_cli_console",
+  "scope": {
+    "observation_scope": "configuration",
+    "coverage_scope": "selected_resources",
+    "identity_basis": "operator-declared",
+    "authenticated_identity_verified": false,
+    "object_enforcement_assessed": false,
+    "recordset_completeness_assessed": false
+  },
+  "execution_plan": {
+    "google-vault": [
+      "vault-matter",
+      "vault-holds"
+    ],
+    "splunk-enterprise": [
+      "splunk-index"
+    ],
+    "elastic-ilm": [
+      "elastic-status",
+      "elastic-explain",
+      "elastic-policy-if-admitted"
+    ]
+  },
+  "methods": [
+    {
+      "read_kind": "vault-matter",
+      "provider": "google-vault",
+      "method_id": "vault.matters.get",
+      "method": "GET",
+      "api_contract": "v1",
+      "fixed_path_and_query_template": "/v1/matters/{matter_id}?view=BASIC",
+      "source_documentation_url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+      "domain_reader_status": "implemented_and_synthetically_tested",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "matterId",
+        "state"
+      ],
+      "source_coverage_keys": [
+        "matterId",
+        "state"
+      ],
+      "discovery_revision": "20260827"
+    },
+    {
+      "read_kind": "vault-holds",
+      "provider": "google-vault",
+      "method_id": "vault.matters.holds.list",
+      "method": "GET",
+      "api_contract": "v1",
+      "fixed_path_and_query_template": "/v1/matters/{matter_id}/holds?view=FULL_HOLD&pageSize=100",
+      "source_documentation_url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+      "domain_reader_status": "implemented_and_synthetically_tested",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "holdId",
+        "name",
+        "corpus",
+        "updateTime",
+        "accounts",
+        "orgUnit",
+        "query"
+      ],
+      "source_coverage_keys": [
+        "holdId",
+        "name",
+        "corpus",
+        "updateTime",
+        "accounts",
+        "orgUnit",
+        "query"
+      ],
+      "continuation": "Append exactly one encoded pageToken query value from admitted raw source continuation.",
+      "discovery_revision": "20260827"
+    },
+    {
+      "read_kind": "splunk-index",
+      "provider": "splunk-enterprise",
+      "method_id": "splunk.data.indexes.get",
+      "method": "GET",
+      "api_contract": "splunk-enterprise-10.4",
+      "fixed_path_and_query_template": "/services/data/indexes/{index}?output_mode=json&summarize=false",
+      "source_documentation_url": "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+      "domain_reader_status": "implemented_and_synthetically_tested",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "name",
+        "datatype",
+        "disabled",
+        "frozenTimePeriodInSecs",
+        "maxTotalDataSizeMB",
+        "coldToFrozenDirState",
+        "coldToFrozenScriptState"
+      ],
+      "source_coverage_keys": [
+        "name",
+        "datatype",
+        "disabled",
+        "frozenTimePeriodInSecs",
+        "maxTotalDataSizeMB",
+        "coldToFrozenDir",
+        "coldToFrozenScript"
+      ]
+    },
+    {
+      "read_kind": "elastic-explain",
+      "provider": "elastic-ilm",
+      "method_id": "elastic.ilm.explain_lifecycle",
+      "method": "GET",
+      "api_contract": "elastic-stack-ilm",
+      "fixed_path_and_query_template": "/{index}/_ilm/explain?only_managed=false&only_errors=false",
+      "source_documentation_url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+      "domain_reader_status": "implemented_and_synthetically_tested",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "index",
+        "managed",
+        "policy",
+        "phase",
+        "action",
+        "step",
+        "failed_step",
+        "index_creation_date_millis",
+        "lifecycle_date_millis",
+        "phase_time_millis",
+        "action_time_millis",
+        "step_time_millis",
+        "phase_execution"
+      ],
+      "source_coverage_keys": [
+        "index",
+        "managed",
+        "policy",
+        "phase",
+        "action",
+        "step",
+        "failed_step",
+        "index_creation_date_millis",
+        "lifecycle_date_millis",
+        "phase_time_millis",
+        "action_time_millis",
+        "step_time_millis",
+        "phase_execution"
+      ]
+    },
+    {
+      "read_kind": "elastic-policy",
+      "provider": "elastic-ilm",
+      "method_id": "elastic.ilm.get_lifecycle",
+      "method": "GET",
+      "api_contract": "elastic-stack-ilm",
+      "fixed_path_and_query_template": "/_ilm/policy/{policy}",
+      "source_documentation_url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+      "domain_reader_status": "implemented_and_synthetically_tested",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "version",
+        "modified_date",
+        "policy"
+      ],
+      "source_coverage_keys": [
+        "version",
+        "modified_date",
+        "policy"
+      ],
+      "followup_authority": "Only a committed raw managed=True relationship with a supported literal policy name."
+    },
+    {
+      "read_kind": "elastic-status",
+      "provider": "elastic-ilm",
+      "method_id": "elastic.ilm.get_status",
+      "method": "GET",
+      "api_contract": "elastic-stack-ilm",
+      "fixed_path_and_query_template": "/_ilm/status",
+      "source_documentation_url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status",
+      "domain_reader_status": "implemented_and_synthetically_tested",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "operation_mode"
+      ],
+      "source_coverage_keys": [
+        "operation_mode"
+      ]
+    }
+  ],
+  "supporting_documentation": [
+    {
+      "id": "vault-discovery",
+      "url": "https://vault.googleapis.com/$discovery/rest?version=v1",
+      "revision": "20260827",
+      "supports": "Full current v1 method inventory, no retention-rule resource."
+    },
+    {
+      "id": "vault-guide",
+      "url": "https://developers.google.com/workspace/vault/guides",
+      "document_updated": "2026-07-22",
+      "supports": "Rules versus API resources; matter access and applicable privileges."
+    },
+    {
+      "id": "vault-matter-get",
+      "url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+      "supports": "Selected matter GET and BASIC view."
+    },
+    {
+      "id": "vault-holds-list",
+      "url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+      "supports": "Selected matter holds, FULL_HOLD, pageSize/pageToken/nextPageToken and read-only OAuth scope."
+    },
+    {
+      "id": "vault-hold-schema",
+      "url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds",
+      "document_updated": "2026-06-17",
+      "supports": "Hold identity, corpus, updateTime, query, account and OU configuration."
+    },
+    {
+      "id": "vault-scopes",
+      "url": "https://developers.google.com/workspace/vault/auth",
+      "supports": "ediscovery.readonly is the read-only OAuth scope; it does not independently establish privileges."
+    },
+    {
+      "id": "vault-privileges",
+      "url": "https://knowledge.workspace.google.com/admin/vault/set-up-vault-privileges",
+      "document_updated": "2026-08-26",
+      "supports": "Vault licensing and named privileges; Manage Holds includes held-account listing; Manage Audits includes holds in accessible matters. No full per-method field-to-role matrix."
+    },
+    {
+      "id": "splunk-index-methods",
+      "url": "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+      "document_updated": "2026-05-16",
+      "supports": "Named-index GET, selected configuration fields, summarize and conditional indexes_list_all restrictions.",
+      "compatibility": "Documented Enterprise 10.4 surface; no claim of live or Cloud parity."
+    },
+    {
+      "id": "splunk-token-auth",
+      "url": "https://help.splunk.com/en/splunk-enterprise/administer/manage-users-and-security/10.4/authenticate-into-the-splunk-platform-with-tokens/use-authentication-tokens",
+      "document_updated": "2026-05-16",
+      "supports": "Preminted Bearer authentication follows the account's instance access and privileges."
+    },
+    {
+      "id": "splunk-rest-conventions",
+      "url": "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introduction/using-the-rest-api-reference",
+      "document_updated": "2026-05-16",
+      "supports": "Collection count/offset conventions and scope differences; no pagination needed for proposed single-index reads."
+    },
+    {
+      "id": "elastic-policy",
+      "url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+      "supports": "Named policy GET; cluster read_ilm; native version/modified_date/phases."
+    },
+    {
+      "id": "elastic-explain",
+      "url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+      "supports": "Index explain GET; index view_index_metadata; filters and alias/data-stream expansion that the initial contract excludes."
+    },
+    {
+      "id": "elastic-status",
+      "url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status",
+      "supports": "GET _ilm/status and cluster read_ilm; RUNNING/STOPPING/STOPPED."
+    },
+    {
+      "id": "elastic-running-phase",
+      "url": "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/explain-lifecycle",
+      "supports": "phase_execution and native running-phase metadata."
+    },
+    {
+      "id": "elastic-phase-updates",
+      "url": "https://www.elastic.co/docs/troubleshoot/elasticsearch/index-lifecycle-management-errors",
+      "supports": "Safe phase updates may apply; other current policy changes can remain deferred."
+    },
+    {
+      "id": "elastic-availability",
+      "url": "https://www.elastic.co/docs/manage-data/lifecycle/index-lifecycle-management",
+      "supports": "ILM availability for versioned Elastic Stack and lack of Serverless ILM."
+    }
+  ],
+  "documentation_review_basis": "Previously reviewed primary documentation. Document update dates and discovery revisions are source metadata, not new retrieval or provider-execution dates.",
+  "fixture_evidence_rules": {
+    "authoring": "Authored synthetic values and expected data derived from cited primary API contracts; no provider responses or credentials were recorded.",
+    "completed_public_fixture_files": [
+      {
+        "path": "tests/fixtures/enterprise_retention/source-field-cases.json",
+        "providers": [
+          "google-vault",
+          "splunk-enterprise",
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "vault.matters.get",
+          "vault.matters.holds.list",
+          "splunk.data.indexes.get",
+          "elastic.ilm.explain_lifecycle",
+          "elastic.ilm.get_lifecycle",
+          "elastic.ilm.get_status"
+        ],
+        "api_contracts": {
+          "google-vault": "v1, discovery revision 20260827",
+          "splunk-enterprise": "Splunk Enterprise REST 10.4",
+          "elastic-ilm": "Elastic Stack ILM; no observed server-version assertion"
+        },
+        "scenario": "positive finite field selection, presence, exact scalar, nested configuration and expected-output cases",
+        "case_count": 37,
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status"
+        ],
+        "bytes": 46905,
+        "sha256": "e66e64d340f61c54c328ac30113470f569a3d2313d84e6e6ac7aa12e6818f7ff",
+        "hash_representation": "raw file bytes",
+        "execution_evidence": "Expected data or mutation recipes alone do not establish executed acceptance."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/source-field-negative-cases.json",
+        "providers": [
+          "google-vault",
+          "splunk-enterprise",
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "vault.matters.get",
+          "vault.matters.holds.list",
+          "splunk.data.indexes.get",
+          "elastic.ilm.explain_lifecycle",
+          "elastic.ilm.get_lifecycle",
+          "elastic.ilm.get_status"
+        ],
+        "api_contracts": {
+          "google-vault": "v1, discovery revision 20260827",
+          "splunk-enterprise": "Splunk Enterprise REST 10.4",
+          "elastic-ilm": "Elastic Stack ILM; no observed server-version assertion"
+        },
+        "scenario": "negative source and callback mutation recipes, including raw authority cases",
+        "case_count": 39,
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status"
+        ],
+        "bytes": 24582,
+        "sha256": "bdd425c8f049ed579adc3dc357f37eb71ff79170a1c1a3f1179ab0376f8921a1",
+        "hash_representation": "raw file bytes",
+        "execution_evidence": "Expected data or mutation recipes alone do not establish executed acceptance."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/matter-open.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.get"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "Selected BASIC matter",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters"
+        ],
+        "bytes": 414,
+        "sha256": "11b8d9863c12387c405a2e69f9cd753cf28ed6c814f91ea325e67e7b98e2174b",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/holds-empty.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.holds.list"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "Complete empty selected holds page",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds"
+        ],
+        "bytes": 148,
+        "sha256": "bc989476152650b6000e16b8feff3a9c135eca1355665d89ffb6f939973db501",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/holds-accounts-page-1.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.holds.list"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "First holds page with duplicate account entries and exact timestamps",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds"
+        ],
+        "bytes": 1072,
+        "sha256": "63bbc903a79d15e8e277b5bf4a546c34d20282f9716dc89524936d8ae5b09e77",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/holds-org-unit-page-2.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.holds.list"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "Terminal holds page with OU scope and an empty account list",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds"
+        ],
+        "bytes": 637,
+        "sha256": "2c88dfd28d0de815fe0c24cf320c24b67ba7d84dc74a85433e1b177d5a865730",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/holds-unknown-null.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.holds.list"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "Literal future detail, nulls and retained query extensions",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds"
+        ],
+        "bytes": 691,
+        "sha256": "2d124a423a3fe9313e76d11c9476948df78fb82dc688c4e8ca40e22d18f1b086",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/holds-conflict-page-2.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.holds.list"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "Changed selected hold value and a distinct surviving hold",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds"
+        ],
+        "bytes": 427,
+        "sha256": "bee01f9178806ef00604e600b3dc258471de8a2049fe5ef53ab41edb406eab2f",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/vault/holds-invalid-member.json",
+        "providers": [
+          "google-vault"
+        ],
+        "method_ids": [
+          "vault.matters.holds.list"
+        ],
+        "api_contracts": {
+          "google-vault": "v1"
+        },
+        "scenario": "Valid prefix followed by a declared boolean with the wrong native type",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_body_wrapper",
+        "source_body_location": "$.body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds"
+        ],
+        "bytes": 521,
+        "sha256": "73dac99aa9158bc46bc154f3f4102d6057ca4b60ba581e1d1ed69eea82eae7d1",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_vault.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "reviewed_discovery_revision": "20260827"
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/splunk/index-event.json",
+        "providers": [
+          "splunk-enterprise"
+        ],
+        "method_ids": [
+          "splunk.data.indexes.get"
+        ],
+        "api_contracts": {
+          "splunk-enterprise": "splunk-enterprise-10.4"
+        },
+        "scenario": "Selected event index with exact digit strings and excluded source details.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_scenarios_wrapper",
+        "source_body_location": "$.responses[*].body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions"
+        ],
+        "bytes": 940,
+        "sha256": "56aee7484f6de460fcf259f84f633d305c560e0aa707b35ed60907de6eb46341",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_splunk.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/splunk/index-metric.json",
+        "providers": [
+          "splunk-enterprise"
+        ],
+        "method_ids": [
+          "splunk.data.indexes.get"
+        ],
+        "api_contracts": {
+          "splunk-enterprise": "splunk-enterprise-10.4"
+        },
+        "scenario": "Selected metric index with native zero and exact string flags.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_scenarios_wrapper",
+        "source_body_location": "$.responses[*].body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions"
+        ],
+        "bytes": 554,
+        "sha256": "dfc146220e9afed3f519d58bb0b441f154925b0a7292a773bde13823050b20f8",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_splunk.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/splunk/index-unknown-null.json",
+        "providers": [
+          "splunk-enterprise"
+        ],
+        "method_ids": [
+          "splunk.data.indexes.get"
+        ],
+        "api_contracts": {
+          "splunk-enterprise": "splunk-enterprise-10.4"
+        },
+        "scenario": "Future scalar values, negative zero, null and absent details remain distinct.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_scenarios_wrapper",
+        "source_body_location": "$.responses[*].body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions"
+        ],
+        "bytes": 517,
+        "sha256": "618178bc9afb8c50ca7e3bca866b32ec944564ee4c40dc6238dd66d807f3b1a1",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_splunk.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/splunk/index-archive-states.json",
+        "providers": [
+          "splunk-enterprise"
+        ],
+        "method_ids": [
+          "splunk.data.indexes.get"
+        ],
+        "api_contracts": {
+          "splunk-enterprise": "splunk-enterprise-10.4"
+        },
+        "scenario": "Four separate reads demonstrate absent, null, empty and nonempty archive settings.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_scenarios_wrapper",
+        "source_body_location": "$.responses[*].body",
+        "response_scenario_count": 4,
+        "source_documentation_urls": [
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions"
+        ],
+        "bytes": 756,
+        "sha256": "7507c603ecc861e9b0e9937c642801cfbb2e0bee3debc30c916799c673deea9b",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_splunk.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity.",
+        "scenario_order": "Independent response scenarios; this selected-leaf endpoint is not paginated."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/splunk/index-body-error.json",
+        "providers": [
+          "splunk-enterprise"
+        ],
+        "method_ids": [
+          "splunk.data.indexes.get"
+        ],
+        "api_contracts": {
+          "splunk-enterprise": "splunk-enterprise-10.4"
+        },
+        "scenario": "An HTTP 200 body ERROR refuses source admission even after WARN.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_scenarios_wrapper",
+        "source_body_location": "$.responses[*].body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions"
+        ],
+        "bytes": 493,
+        "sha256": "cd9b533eb6125b7681c327246802ddcff90eb091e37cab1eea5e488a0c960583",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_splunk.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/splunk/index-invalid-identity.json",
+        "providers": [
+          "splunk-enterprise"
+        ],
+        "method_ids": [
+          "splunk.data.indexes.get"
+        ],
+        "api_contracts": {
+          "splunk-enterprise": "splunk-enterprise-10.4"
+        },
+        "scenario": "A source entry for an unselected index refuses identity admission.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_scenarios_wrapper",
+        "source_body_location": "$.responses[*].body",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions"
+        ],
+        "bytes": 320,
+        "sha256": "04ff4e4744c46835d6b5beb924584f9d41306642731b3040443018edfe3b12b9",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_splunk.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/explain-managed.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.explain_lifecycle"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Managed selected index with cached phase metadata and excluded free-form metadata.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle"
+        ],
+        "bytes": 956,
+        "sha256": "5acb6ec110301c10c2b8e1124db03e20a2cf32e93c7313cb1070bcf819b03e69",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/explain-unmanaged.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.explain_lifecycle"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Unmanaged selected index, with no authorized policy follow-up.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle"
+        ],
+        "bytes": 114,
+        "sha256": "5ece7ffc19c4b964f17b7acaab645f5439f678e0b9d3be6714b4b11c80d4120a",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/explain-unknown-null.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.explain_lifecycle"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Literal future labels, unknown policy reference and explicit null source fields.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle"
+        ],
+        "bytes": 330,
+        "sha256": "b9d91bfc4d2b576df757600fcce04f2ea33b7139c7ede2e9ffd6a858cc310e43",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/policy-current.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.get_lifecycle"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Current phases differing from cached phases, with bounded extensions and outer excluded metadata.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle"
+        ],
+        "bytes": 654,
+        "sha256": "e56a6c47fac1ca8dadb3f4844309867bf8d76ac490f3440fe4ccdf68ad949ebb",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/status-running.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.get_status"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Running shared ILM service status with unrelated outer metadata excluded.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status"
+        ],
+        "bytes": 78,
+        "sha256": "a682e152edd8dd3e95ad066172c951708590d505c74a642563d11e7cc1baa199",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/status-stopped.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.get_status"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Stopped shared ILM service status retained as valid source state.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status"
+        ],
+        "bytes": 29,
+        "sha256": "63224210767d14ea3e794e925dc2346b782736b59aaa39e87137d3abdd35dcf9",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/elastic/explain-invalid-identity.json",
+        "providers": [
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "elastic.ilm.explain_lifecycle"
+        ],
+        "api_contracts": {
+          "elastic-ilm": "elastic-stack-ilm"
+        },
+        "scenario": "Deliberately mismatched embedded index identity refused before follow-up.",
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "fixture_format": "authored_response_body",
+        "source_body_location": "$",
+        "response_scenario_count": 1,
+        "source_documentation_urls": [
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle"
+        ],
+        "bytes": 116,
+        "sha256": "eb5362a1755c44a2c013fdae92d02f31cc3fa41610a26d667053325610587d9d",
+        "hash_representation": "raw file bytes",
+        "test_module": "tests/unit/test_collectors/enterprise_retention/test_elastic.py",
+        "execution_evidence": "Synthetic fixture data supports local tests and does not establish provider fidelity."
+      }
+    ],
+    "recorded_responses": [],
+    "live_provider_acceptance": "not_performed",
+    "credentials_or_signatures_from_real_requests": false,
+    "hash_rule": "The SHA256 and byte count bind the actual authored fixture file bytes, not a logical projection or documentation page.",
+    "projection_hash_rule": "canonical_projection_sha256 binds the selected logical projection and does not attest an unretained source response.",
+    "no_emulator_or_live_fidelity_claim": true
+  },
+  "pending": {
+    "live_provider_acceptance": "not_performed"
+  },
+  "existing_m365_reuse": {
+    "design": "docs/designs/entra-m365-collector-design.md",
+    "guide": "docs/wiki/2-guides/run-collectors.md",
+    "fixture_copy_or_new_enterprise_branch": false,
+    "contract": "Reuse the existing delegated retention-label reader and full nine-capability result unchanged.",
+    "fixture_provenance": "tests/fixtures/entra_m365/provenance.json"
+  }
+}

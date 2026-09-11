@@ -541,7 +541,7 @@ def render_configuration(
     out.append(
         f"Evidentia reads the following **{len(env_vars)}** `EVIDENTIA_*` "
         f"environment variables. Variables whose name ends in `_PASSWORD`, "
-        f"`_SECRET`, or `_TOKEN_FILE` carry credential material — set them in "
+        f"`_SECRET`, or `_TOKEN_FILE` carry credential material. Set them in "
         f"your shell/secret store, never commit their values.\n\n"
     )
     out.append("| Environment variable |\n| --- |\n")

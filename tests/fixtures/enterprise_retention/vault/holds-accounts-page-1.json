@@ -1,0 +1,37 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "First holds page with duplicate account entries and exact timestamps",
+  "body": {
+    "holds": [
+      {
+        "holdId": "synthetic-mail-hold",
+        "name": "Synthetic mail hold",
+        "corpus": "MAIL",
+        "updateTime": "2026-01-02T03:04:05.123456789+05:30",
+        "accounts": [
+          {
+            "accountId": "synthetic-account-1",
+            "holdTime": "2025-01-01T00:00:00.000000001Z",
+            "email": "excluded@example.invalid",
+            "firstName": "Excluded",
+            "lastName": "Synthetic"
+          },
+          {
+            "accountId": "synthetic-account-1",
+            "holdTime": "2025-01-01T00:00:00.000000001Z",
+            "email": "another-excluded@example.invalid"
+          }
+        ],
+        "query": {
+          "mailQuery": {
+            "startTime": "2020-01-01T00:00:00Z",
+            "endTime": null,
+            "terms": "subject:synthetic"
+          }
+        }
+      }
+    ],
+    "nextPageToken": "synthetic next/+?&=%"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Selected metric index with native zero and exact string flags.",
+  "target": "audit-metrics",
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "entry": [{"name": "audit-metrics", "content": {
+          "datatype": "metric",
+          "disabled": "1",
+          "frozenTimePeriodInSecs": 0,
+          "maxTotalDataSizeMB": "0000",
+          "coldToFrozenDir": "/synthetic/archive-directory",
+          "coldToFrozenScript": ""
+        }}]
+      }
+    }
+  ]
+}

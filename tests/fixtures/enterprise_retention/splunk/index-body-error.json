@@ -1,0 +1,18 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "An HTTP 200 body ERROR refuses source admission even after WARN.",
+  "target": "audit-events",
+  "responses": [
+    {
+      "status": 200,
+      "body": {
+        "entry": [{"name": "audit-events", "content": {"datatype": "event"}}],
+        "messages": [
+          {"type": "WARN", "text": "synthetic excluded warning"},
+          {"type": "ERROR", "text": "synthetic excluded error"}
+        ]
+      }
+    }
+  ]
+}
