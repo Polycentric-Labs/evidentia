@@ -34,8 +34,10 @@ def openapi_schema(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str,
     """
     monkeypatch.setenv("EVIDENTIA_AI_REGISTRY_DIR", str(tmp_path / "ai_registry"))
     from evidentia_api.app import create_app
+    from evidentia_core.network_guard import offline_mode
 
-    return create_app(offline=True).openapi()
+    with offline_mode():
+        return create_app(offline=True).openapi()
 
 
 class TestAiGovRegisterLinks:
