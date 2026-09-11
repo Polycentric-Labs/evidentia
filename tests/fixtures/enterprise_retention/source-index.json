@@ -1,0 +1,422 @@
+{
+  "ledger_format_version": 1,
+  "stage": "shared_foundation_only",
+  "scope": {
+    "observation_scope": "configuration",
+    "coverage_scope": "selected_resources",
+    "identity_basis": "operator-declared",
+    "authenticated_identity_verified": false,
+    "object_enforcement_assessed": false,
+    "recordset_completeness_assessed": false
+  },
+  "execution_plan": {
+    "google-vault": [
+      "vault-matter",
+      "vault-holds"
+    ],
+    "splunk-enterprise": [
+      "splunk-index"
+    ],
+    "elastic-ilm": [
+      "elastic-status",
+      "elastic-explain",
+      "elastic-policy-if-admitted"
+    ]
+  },
+  "methods": [
+    {
+      "read_kind": "vault-matter",
+      "provider": "google-vault",
+      "method_id": "vault.matters.get",
+      "method": "GET",
+      "api_contract": "v1",
+      "fixed_path_and_query_template": "/v1/matters/{matter_id}?view=BASIC",
+      "source_documentation_url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+      "domain_reader_status": "planned",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "matterId",
+        "state"
+      ],
+      "source_coverage_keys": [
+        "matterId",
+        "state"
+      ],
+      "discovery_revision": "20260827"
+    },
+    {
+      "read_kind": "vault-holds",
+      "provider": "google-vault",
+      "method_id": "vault.matters.holds.list",
+      "method": "GET",
+      "api_contract": "v1",
+      "fixed_path_and_query_template": "/v1/matters/{matter_id}/holds?view=FULL_HOLD&pageSize=100",
+      "source_documentation_url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+      "domain_reader_status": "planned",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "holdId",
+        "name",
+        "corpus",
+        "updateTime",
+        "accounts",
+        "orgUnit",
+        "query"
+      ],
+      "source_coverage_keys": [
+        "holdId",
+        "name",
+        "corpus",
+        "updateTime",
+        "accounts",
+        "orgUnit",
+        "query"
+      ],
+      "continuation": "Append exactly one encoded pageToken query value from admitted raw source continuation.",
+      "discovery_revision": "20260827"
+    },
+    {
+      "read_kind": "splunk-index",
+      "provider": "splunk-enterprise",
+      "method_id": "splunk.data.indexes.get",
+      "method": "GET",
+      "api_contract": "splunk-enterprise-10.4",
+      "fixed_path_and_query_template": "/services/data/indexes/{index}?output_mode=json&summarize=false",
+      "source_documentation_url": "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+      "domain_reader_status": "planned",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "name",
+        "datatype",
+        "disabled",
+        "frozenTimePeriodInSecs",
+        "maxTotalDataSizeMB",
+        "coldToFrozenDirState",
+        "coldToFrozenScriptState"
+      ],
+      "source_coverage_keys": [
+        "name",
+        "datatype",
+        "disabled",
+        "frozenTimePeriodInSecs",
+        "maxTotalDataSizeMB",
+        "coldToFrozenDir",
+        "coldToFrozenScript"
+      ]
+    },
+    {
+      "read_kind": "elastic-explain",
+      "provider": "elastic-ilm",
+      "method_id": "elastic.ilm.explain_lifecycle",
+      "method": "GET",
+      "api_contract": "elastic-stack-ilm",
+      "fixed_path_and_query_template": "/{index}/_ilm/explain?only_managed=false&only_errors=false",
+      "source_documentation_url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+      "domain_reader_status": "planned",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "index",
+        "managed",
+        "policy",
+        "phase",
+        "action",
+        "step",
+        "failed_step",
+        "index_creation_date_millis",
+        "lifecycle_date_millis",
+        "phase_time_millis",
+        "action_time_millis",
+        "step_time_millis",
+        "phase_execution"
+      ],
+      "source_coverage_keys": [
+        "index",
+        "managed",
+        "policy",
+        "phase",
+        "action",
+        "step",
+        "failed_step",
+        "index_creation_date_millis",
+        "lifecycle_date_millis",
+        "phase_time_millis",
+        "action_time_millis",
+        "step_time_millis",
+        "phase_execution"
+      ]
+    },
+    {
+      "read_kind": "elastic-policy",
+      "provider": "elastic-ilm",
+      "method_id": "elastic.ilm.get_lifecycle",
+      "method": "GET",
+      "api_contract": "elastic-stack-ilm",
+      "fixed_path_and_query_template": "/_ilm/policy/{policy}",
+      "source_documentation_url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+      "domain_reader_status": "planned",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "version",
+        "modified_date",
+        "policy"
+      ],
+      "source_coverage_keys": [
+        "version",
+        "modified_date",
+        "policy"
+      ],
+      "followup_authority": "Only a committed raw managed=True relationship with a supported literal policy name."
+    },
+    {
+      "read_kind": "elastic-status",
+      "provider": "elastic-ilm",
+      "method_id": "elastic.ilm.get_status",
+      "method": "GET",
+      "api_contract": "elastic-stack-ilm",
+      "fixed_path_and_query_template": "/_ilm/status",
+      "source_documentation_url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status",
+      "domain_reader_status": "planned",
+      "field_selection_status": "finite_shared_correspondence_contract",
+      "selected_field_paths_or_objects": [
+        "operation_mode"
+      ],
+      "source_coverage_keys": [
+        "operation_mode"
+      ]
+    }
+  ],
+  "supporting_documentation": [
+    {
+      "id": "vault-discovery",
+      "url": "https://vault.googleapis.com/$discovery/rest?version=v1",
+      "revision": "20260827",
+      "supports": "Full current v1 method inventory, no retention-rule resource."
+    },
+    {
+      "id": "vault-guide",
+      "url": "https://developers.google.com/workspace/vault/guides",
+      "document_updated": "2026-07-22",
+      "supports": "Rules versus API resources; matter access and applicable privileges."
+    },
+    {
+      "id": "vault-matter-get",
+      "url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+      "supports": "Selected matter GET and BASIC view."
+    },
+    {
+      "id": "vault-holds-list",
+      "url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+      "supports": "Selected matter holds, FULL_HOLD, pageSize/pageToken/nextPageToken and read-only OAuth scope."
+    },
+    {
+      "id": "vault-hold-schema",
+      "url": "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds",
+      "document_updated": "2026-06-17",
+      "supports": "Hold identity, corpus, updateTime, query, account and OU configuration."
+    },
+    {
+      "id": "vault-scopes",
+      "url": "https://developers.google.com/workspace/vault/auth",
+      "supports": "ediscovery.readonly is the read-only OAuth scope; it does not independently establish privileges."
+    },
+    {
+      "id": "vault-privileges",
+      "url": "https://knowledge.workspace.google.com/admin/vault/set-up-vault-privileges",
+      "document_updated": "2026-08-26",
+      "supports": "Vault licensing and named privileges; Manage Holds includes held-account listing; Manage Audits includes holds in accessible matters. No full per-method field-to-role matrix."
+    },
+    {
+      "id": "splunk-index-methods",
+      "url": "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+      "document_updated": "2026-05-16",
+      "supports": "Named-index GET, selected configuration fields, summarize and conditional indexes_list_all restrictions.",
+      "compatibility": "Documented Enterprise 10.4 surface; no claim of live or Cloud parity."
+    },
+    {
+      "id": "splunk-token-auth",
+      "url": "https://help.splunk.com/en/splunk-enterprise/administer/manage-users-and-security/10.4/authenticate-into-the-splunk-platform-with-tokens/use-authentication-tokens",
+      "document_updated": "2026-05-16",
+      "supports": "Preminted Bearer authentication follows the account's instance access and privileges."
+    },
+    {
+      "id": "splunk-rest-conventions",
+      "url": "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introduction/using-the-rest-api-reference",
+      "document_updated": "2026-05-16",
+      "supports": "Collection count/offset conventions and scope differences; no pagination needed for proposed single-index reads."
+    },
+    {
+      "id": "elastic-policy",
+      "url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+      "supports": "Named policy GET; cluster read_ilm; native version/modified_date/phases."
+    },
+    {
+      "id": "elastic-explain",
+      "url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+      "supports": "Index explain GET; index view_index_metadata; filters and alias/data-stream expansion that the initial contract excludes."
+    },
+    {
+      "id": "elastic-status",
+      "url": "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status",
+      "supports": "GET _ilm/status and cluster read_ilm; RUNNING/STOPPING/STOPPED."
+    },
+    {
+      "id": "elastic-running-phase",
+      "url": "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/explain-lifecycle",
+      "supports": "phase_execution and native running-phase metadata."
+    },
+    {
+      "id": "elastic-phase-updates",
+      "url": "https://www.elastic.co/docs/troubleshoot/elasticsearch/index-lifecycle-management-errors",
+      "supports": "Safe phase updates may apply; other current policy changes can remain deferred."
+    },
+    {
+      "id": "elastic-availability",
+      "url": "https://www.elastic.co/docs/manage-data/lifecycle/index-lifecycle-management",
+      "supports": "ILM availability for versioned Elastic Stack and lack of Serverless ILM."
+    }
+  ],
+  "documentation_review_basis": "Previously reviewed primary documentation. Document update dates and discovery revisions are source metadata, not new retrieval or provider-execution dates.",
+  "fixture_evidence_rules": {
+    "authoring": "Authored synthetic values and expected data derived from cited primary API contracts; no provider responses or credentials were recorded.",
+    "completed_public_fixture_files": [
+      {
+        "path": "tests/fixtures/enterprise_retention/source-field-cases.json",
+        "providers": [
+          "google-vault",
+          "splunk-enterprise",
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "vault.matters.get",
+          "vault.matters.holds.list",
+          "splunk.data.indexes.get",
+          "elastic.ilm.explain_lifecycle",
+          "elastic.ilm.get_lifecycle",
+          "elastic.ilm.get_status"
+        ],
+        "api_contracts": {
+          "google-vault": "v1, discovery revision 20260827",
+          "splunk-enterprise": "Splunk Enterprise REST 10.4",
+          "elastic-ilm": "Elastic Stack ILM; no observed server-version assertion"
+        },
+        "scenario": "positive finite field selection, presence, exact scalar, nested configuration and expected-output cases",
+        "case_count": 37,
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status"
+        ],
+        "bytes": 46905,
+        "sha256": "e66e64d340f61c54c328ac30113470f569a3d2313d84e6e6ac7aa12e6818f7ff",
+        "hash_representation": "raw file bytes",
+        "execution_evidence": "Expected data or mutation recipes alone do not establish executed acceptance."
+      },
+      {
+        "path": "tests/fixtures/enterprise_retention/source-field-negative-cases.json",
+        "providers": [
+          "google-vault",
+          "splunk-enterprise",
+          "elastic-ilm"
+        ],
+        "method_ids": [
+          "vault.matters.get",
+          "vault.matters.holds.list",
+          "splunk.data.indexes.get",
+          "elastic.ilm.explain_lifecycle",
+          "elastic.ilm.get_lifecycle",
+          "elastic.ilm.get_status"
+        ],
+        "api_contracts": {
+          "google-vault": "v1, discovery revision 20260827",
+          "splunk-enterprise": "Splunk Enterprise REST 10.4",
+          "elastic-ilm": "Elastic Stack ILM; no observed server-version assertion"
+        },
+        "scenario": "negative source and callback mutation recipes, including raw authority cases",
+        "case_count": 39,
+        "kind": "authored_synthetic",
+        "authored_synthetic": true,
+        "recorded_response": false,
+        "live_provider_acceptance": "not_performed",
+        "source_documentation_urls": [
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters/get",
+          "https://developers.google.com/workspace/vault/reference/rest/v1/matters.holds/list",
+          "https://help.splunk.com/en/splunk-enterprise/rest-api-reference/10.4/introspection-endpoints/introspection-endpoint-descriptions",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-explain-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-lifecycle",
+          "https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-ilm-get-status"
+        ],
+        "bytes": 24582,
+        "sha256": "bdd425c8f049ed579adc3dc357f37eb71ff79170a1c1a3f1179ab0376f8921a1",
+        "hash_representation": "raw file bytes",
+        "execution_evidence": "Expected data or mutation recipes alone do not establish executed acceptance."
+      }
+    ],
+    "recorded_responses": [],
+    "live_provider_acceptance": "not_performed",
+    "credentials_or_signatures_from_real_requests": false,
+    "hash_rule": "The SHA256 and byte count bind the actual authored fixture file bytes, not a logical projection or documentation page.",
+    "projection_hash_rule": "canonical_projection_sha256 binds the selected logical projection and does not attest an unretained source response.",
+    "no_emulator_or_live_fidelity_claim": true
+  },
+  "pending": {
+    "domain_fixture_files": [
+      {
+        "provider": "google-vault",
+        "status": "planned_not_authored",
+        "kind": "authored_synthetic",
+        "paths": [
+          "tests/fixtures/enterprise_retention/vault/matter-open.json",
+          "tests/fixtures/enterprise_retention/vault/holds-empty.json",
+          "tests/fixtures/enterprise_retention/vault/holds-accounts-page-1.json",
+          "tests/fixtures/enterprise_retention/vault/holds-org-unit-page-2.json",
+          "tests/fixtures/enterprise_retention/vault/holds-unknown-null.json",
+          "tests/fixtures/enterprise_retention/vault/holds-conflict-page-2.json",
+          "tests/fixtures/enterprise_retention/vault/holds-invalid-member.json"
+        ]
+      },
+      {
+        "provider": "splunk-enterprise",
+        "status": "planned_not_authored",
+        "kind": "authored_synthetic",
+        "paths": [
+          "tests/fixtures/enterprise_retention/splunk/index-event.json",
+          "tests/fixtures/enterprise_retention/splunk/index-metric.json",
+          "tests/fixtures/enterprise_retention/splunk/index-unknown-null.json",
+          "tests/fixtures/enterprise_retention/splunk/index-archive-states.json",
+          "tests/fixtures/enterprise_retention/splunk/index-body-error.json",
+          "tests/fixtures/enterprise_retention/splunk/index-invalid-identity.json"
+        ]
+      },
+      {
+        "provider": "elastic-ilm",
+        "status": "planned_not_authored",
+        "kind": "authored_synthetic",
+        "paths": [
+          "tests/fixtures/enterprise_retention/elastic/explain-managed.json",
+          "tests/fixtures/enterprise_retention/elastic/explain-unmanaged.json",
+          "tests/fixtures/enterprise_retention/elastic/explain-unknown-null.json",
+          "tests/fixtures/enterprise_retention/elastic/policy-current.json",
+          "tests/fixtures/enterprise_retention/elastic/status-running.json",
+          "tests/fixtures/enterprise_retention/elastic/status-stopped.json",
+          "tests/fixtures/enterprise_retention/elastic/explain-invalid-identity.json"
+        ]
+      }
+    ],
+    "domain_readers": "planned",
+    "collector_api_cli_console": "planned"
+  },
+  "existing_m365_reuse": {
+    "design": "docs/designs/entra-m365-collector-design.md",
+    "guide": "docs/wiki/2-guides/run-collectors.md",
+    "fixture_copy_or_new_enterprise_branch": false,
+    "contract": "Reuse the existing delegated retention-label reader and full nine-capability result unchanged.",
+    "fixture_provenance": "tests/fixtures/entra_m365/provenance.json"
+  }
+}

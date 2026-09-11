@@ -1,0 +1,1716 @@
+{
+  "status": "authored_synthetic_expected_data_not_executed_acceptance",
+  "cases": [
+    {
+      "id": "matter_selected_fields",
+      "read_kind": "vault-matter",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "matterId": "synthetic-matter",
+        "state": "OPEN",
+        "name": "Synthetic excluded matter name",
+        "description": "Synthetic excluded description",
+        "matterPermissions": [
+          {
+            "email": "synthetic@example.invalid"
+          }
+        ],
+        "matterRegion": "synthetic"
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-matter",
+          "fields": {
+            "matterId": "synthetic-matter",
+            "state": "OPEN"
+          },
+          "field_coverage": {
+            "matterId": "known",
+            "state": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "matter_state_absent",
+      "read_kind": "vault-matter",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "matterId": "synthetic-matter"
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-matter",
+          "fields": {
+            "matterId": "synthetic-matter"
+          },
+          "field_coverage": {
+            "matterId": "known",
+            "state": "absent"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "matter_state_null",
+      "read_kind": "vault-matter",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "matterId": "synthetic-matter",
+        "state": null
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-matter",
+          "fields": {
+            "matterId": "synthetic-matter",
+            "state": null
+          },
+          "field_coverage": {
+            "matterId": "known",
+            "state": "null"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "matter_state_future",
+      "read_kind": "vault-matter",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "matterId": "synthetic-matter",
+        "state": "FUTURE"
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-matter",
+          "fields": {
+            "matterId": "synthetic-matter",
+            "state": "FUTURE"
+          },
+          "field_coverage": {
+            "matterId": "known",
+            "state": "unknown"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "unsupported_source_value"
+      ],
+      "note": ""
+    },
+    {
+      "id": "hold_selected_list_and_scope_contradiction",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": " synthetic-hold ",
+            "name": "Synthetic hold",
+            "corpus": "DRIVE",
+            "updateTime": "2026-01-02T03:04:05.123456789+05:30",
+            "accounts": [
+              {
+                "accountId": "synthetic-account",
+                "holdTime": "2025-12-31T20:00:00.000000001-04:00",
+                "email": "synthetic@example.invalid",
+                "name": "Synthetic excluded account name"
+              },
+              {
+                "accountId": "synthetic-account",
+                "holdTime": null,
+                "firstName": "Synthetic excluded first",
+                "lastName": "Synthetic excluded last"
+              },
+              {
+                "accountId": "synthetic-account",
+                "email": {
+                  "ignored": "wrong unused type"
+                }
+              }
+            ],
+            "orgUnit": {
+              "orgUnitId": "synthetic-ou",
+              "holdTime": null,
+              "name": "Synthetic excluded OU name"
+            },
+            "query": {
+              "driveQuery": {
+                "includeSharedDriveFiles": false,
+                "includeTeamDriveFiles": true
+              }
+            },
+            "email": "synthetic-unselected@example.invalid"
+          }
+        ],
+        "nextPageToken": "synthetic+opaque/%3F"
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": " synthetic-hold ",
+          "fields": {
+            "holdId": " synthetic-hold ",
+            "name": "Synthetic hold",
+            "corpus": "DRIVE",
+            "updateTime": "2026-01-02T03:04:05.123456789+05:30",
+            "accounts": [
+              {
+                "accountId": "synthetic-account",
+                "holdTime": "2025-12-31T20:00:00.000000001-04:00"
+              },
+              {
+                "accountId": "synthetic-account",
+                "holdTime": null
+              },
+              {
+                "accountId": "synthetic-account"
+              }
+            ],
+            "orgUnit": {
+              "orgUnitId": "synthetic-ou",
+              "holdTime": null
+            },
+            "query": {
+              "driveQuery": {
+                "includeSharedDriveFiles": false,
+                "includeTeamDriveFiles": true
+              }
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "known",
+            "corpus": "known",
+            "updateTime": "known",
+            "accounts": "known",
+            "orgUnit": "known",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {
+        "continuation": {
+          "presence": "value",
+          "value": "synthetic+opaque/%3F"
+        }
+      },
+      "required_interpretation_codes": [
+        "unsupported_source_value",
+        "missing_source_detail"
+      ],
+      "note": "Keep all three duplicate account occurrences. Both scope forms remain visible; no union is inferred."
+    },
+    {
+      "id": "hold_all_optional_absent",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-hold"
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-hold",
+          "fields": {
+            "holdId": "synthetic-hold"
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "absent",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "absent"
+          }
+        }
+      ],
+      "expected_authority": {
+        "continuation": {
+          "presence": "absent"
+        }
+      },
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "hold_all_optional_null",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-hold",
+            "name": null,
+            "corpus": null,
+            "updateTime": null,
+            "accounts": null,
+            "orgUnit": null,
+            "query": null
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-hold",
+          "fields": {
+            "holdId": "synthetic-hold",
+            "name": null,
+            "corpus": null,
+            "updateTime": null,
+            "accounts": null,
+            "orgUnit": null,
+            "query": null
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "null",
+            "corpus": "null",
+            "updateTime": "null",
+            "accounts": "null",
+            "orgUnit": "null",
+            "query": "null"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "hold_empty_and_unknown_config",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-hold",
+            "name": "",
+            "corpus": "FUTURE_CORPUS",
+            "updateTime": "not-a-clock",
+            "accounts": [],
+            "query": {
+              "futureQuery": {
+                "error": "Synthetic user-authored query value",
+                "values": [
+                  0,
+                  0.0,
+                  -0.0,
+                  0.1,
+                  false,
+                  null
+                ],
+                "_meta": {
+                  "label": "Synthetic explicit configuration"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-hold",
+          "fields": {
+            "holdId": "synthetic-hold",
+            "name": "",
+            "corpus": "FUTURE_CORPUS",
+            "updateTime": "not-a-clock",
+            "accounts": [],
+            "query": {
+              "futureQuery": {
+                "error": "Synthetic user-authored query value",
+                "values": [
+                  0,
+                  0.0,
+                  -0.0,
+                  0.1,
+                  false,
+                  null
+                ],
+                "_meta": {
+                  "label": "Synthetic explicit configuration"
+                }
+              }
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "known",
+            "corpus": "unknown",
+            "updateTime": "unknown",
+            "accounts": "known",
+            "orgUnit": "absent",
+            "query": "unknown"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "unsupported_source_value"
+      ],
+      "note": "Opaque configuration strings/keys are not recursively scrubbed."
+    },
+    {
+      "id": "holds_omitted_is_empty",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {},
+      "expected_records": [],
+      "expected_authority": {
+        "continuation": {
+          "presence": "absent"
+        },
+        "occurrence_count": 0
+      },
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "holds_empty_terminal",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [],
+        "nextPageToken": ""
+      },
+      "expected_records": [],
+      "expected_authority": {
+        "continuation": {
+          "presence": "empty",
+          "value": ""
+        },
+        "occurrence_count": 0
+      },
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "holds_empty_intermediate",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [],
+        "nextPageToken": "synthetic-next"
+      },
+      "expected_records": [],
+      "expected_authority": {
+        "continuation": {
+          "presence": "value",
+          "value": "synthetic-next"
+        },
+        "occurrence_count": 0
+      },
+      "required_interpretation_codes": [],
+      "note": "The field callback returns no continuation. The session still follows the source token."
+    },
+    {
+      "id": "known_query_mail",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-query-hold",
+            "corpus": "MAIL",
+            "query": {
+              "mailQuery": {
+                "startTime": "2026-01-01T00:00:00.000000001Z",
+                "endTime": null,
+                "terms": "error OR from:synthetic@example.invalid"
+              }
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-query-hold",
+          "fields": {
+            "holdId": "synthetic-query-hold",
+            "corpus": "MAIL",
+            "query": {
+              "mailQuery": {
+                "startTime": "2026-01-01T00:00:00.000000001Z",
+                "endTime": null,
+                "terms": "error OR from:synthetic@example.invalid"
+              }
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "known",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "Absent/null optional nested values remain exact without per-index coverage keys."
+    },
+    {
+      "id": "known_query_groups",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-query-hold",
+            "corpus": "GROUPS",
+            "query": {
+              "groupsQuery": {
+                "startTime": null,
+                "terms": ""
+              }
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-query-hold",
+          "fields": {
+            "holdId": "synthetic-query-hold",
+            "corpus": "GROUPS",
+            "query": {
+              "groupsQuery": {
+                "startTime": null,
+                "terms": ""
+              }
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "known",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "Absent/null optional nested values remain exact without per-index coverage keys."
+    },
+    {
+      "id": "known_query_hangouts_chat",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-query-hold",
+            "corpus": "HANGOUTS_CHAT",
+            "query": {
+              "hangoutsChatQuery": {
+                "includeRooms": false
+              }
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-query-hold",
+          "fields": {
+            "holdId": "synthetic-query-hold",
+            "corpus": "HANGOUTS_CHAT",
+            "query": {
+              "hangoutsChatQuery": {
+                "includeRooms": false
+              }
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "known",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "Absent/null optional nested values remain exact without per-index coverage keys."
+    },
+    {
+      "id": "known_query_voice",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-query-hold",
+            "corpus": "VOICE",
+            "query": {
+              "voiceQuery": {
+                "coveredData": [
+                  "TEXT_MESSAGES",
+                  "VOICEMAILS",
+                  "TEXT_MESSAGES"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-query-hold",
+          "fields": {
+            "holdId": "synthetic-query-hold",
+            "corpus": "VOICE",
+            "query": {
+              "voiceQuery": {
+                "coveredData": [
+                  "TEXT_MESSAGES",
+                  "VOICEMAILS",
+                  "TEXT_MESSAGES"
+                ]
+              }
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "known",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "Absent/null optional nested values remain exact without per-index coverage keys."
+    },
+    {
+      "id": "known_query_calendar",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-query-hold",
+            "corpus": "CALENDAR",
+            "query": {
+              "calendarQuery": {}
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-query-hold",
+          "fields": {
+            "holdId": "synthetic-query-hold",
+            "corpus": "CALENDAR",
+            "query": {
+              "calendarQuery": {}
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "known",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "Absent/null optional nested values remain exact without per-index coverage keys."
+    },
+    {
+      "id": "known_query_gemini",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-query-hold",
+            "corpus": "GEMINI",
+            "query": {
+              "geminiQuery": {}
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-query-hold",
+          "fields": {
+            "holdId": "synthetic-query-hold",
+            "corpus": "GEMINI",
+            "query": {
+              "geminiQuery": {}
+            }
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "known",
+            "updateTime": "absent",
+            "accounts": "absent",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "Absent/null optional nested values remain exact without per-index coverage keys."
+    },
+    {
+      "id": "splunk_selected_values_and_archive",
+      "read_kind": "splunk-index",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "entry": [
+          {
+            "name": "synthetic-index",
+            "content": {
+              "datatype": "event",
+              "disabled": false,
+              "frozenTimePeriodInSecs": "0000",
+              "maxTotalDataSizeMB": 18446744073709551615,
+              "coldToFrozenDir": "synthetic-private-archive-location",
+              "coldToFrozenScript": "",
+              "homePath": "synthetic-excluded-home"
+            },
+            "acl": {
+              "owner": "synthetic-excluded-owner"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "type": "INFO",
+            "text": "Synthetic excluded message"
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "name": "synthetic-index",
+            "datatype": "event",
+            "disabled": false,
+            "frozenTimePeriodInSecs": "0000",
+            "maxTotalDataSizeMB": 18446744073709551615,
+            "coldToFrozenDirState": "nonempty",
+            "coldToFrozenScriptState": "empty"
+          },
+          "field_coverage": {
+            "name": "known",
+            "datatype": "known",
+            "disabled": "known",
+            "frozenTimePeriodInSecs": "known",
+            "maxTotalDataSizeMB": "known",
+            "coldToFrozenDir": "known",
+            "coldToFrozenScript": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "splunk_all_optional_absent",
+      "read_kind": "splunk-index",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "entry": [
+          {
+            "name": "synthetic-index",
+            "content": {}
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "name": "synthetic-index",
+            "coldToFrozenDirState": "absent",
+            "coldToFrozenScriptState": "absent"
+          },
+          "field_coverage": {
+            "name": "known",
+            "datatype": "absent",
+            "disabled": "absent",
+            "frozenTimePeriodInSecs": "absent",
+            "maxTotalDataSizeMB": "absent",
+            "coldToFrozenDir": "absent",
+            "coldToFrozenScript": "absent"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "splunk_all_optional_null",
+      "read_kind": "splunk-index",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "entry": [
+          {
+            "name": "synthetic-index",
+            "content": {
+              "datatype": null,
+              "disabled": null,
+              "frozenTimePeriodInSecs": null,
+              "maxTotalDataSizeMB": null,
+              "coldToFrozenDir": null,
+              "coldToFrozenScript": null
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "name": "synthetic-index",
+            "datatype": null,
+            "disabled": null,
+            "frozenTimePeriodInSecs": null,
+            "maxTotalDataSizeMB": null,
+            "coldToFrozenDirState": "null",
+            "coldToFrozenScriptState": "null"
+          },
+          "field_coverage": {
+            "name": "known",
+            "datatype": "null",
+            "disabled": "null",
+            "frozenTimePeriodInSecs": "null",
+            "maxTotalDataSizeMB": "null",
+            "coldToFrozenDir": "null",
+            "coldToFrozenScript": "null"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "splunk_unknown_native_scalars",
+      "read_kind": "splunk-index",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "entry": [
+          {
+            "name": "synthetic-index",
+            "content": {
+              "datatype": "future",
+              "disabled": 0.0,
+              "frozenTimePeriodInSecs": -1,
+              "maxTotalDataSizeMB": 0.1,
+              "coldToFrozenDir": " \t",
+              "coldToFrozenScript": null
+            }
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "name": "synthetic-index",
+            "datatype": "future",
+            "disabled": 0.0,
+            "frozenTimePeriodInSecs": -1,
+            "maxTotalDataSizeMB": 0.1,
+            "coldToFrozenDirState": "nonempty",
+            "coldToFrozenScriptState": "null"
+          },
+          "field_coverage": {
+            "name": "known",
+            "datatype": "unknown",
+            "disabled": "unknown",
+            "frozenTimePeriodInSecs": "unknown",
+            "maxTotalDataSizeMB": "unknown",
+            "coldToFrozenDir": "known",
+            "coldToFrozenScript": "null"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "unsupported_source_value"
+      ],
+      "note": ""
+    },
+    {
+      "id": "explain_selected_current_and_cached",
+      "read_kind": "elastic-explain",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "indices": {
+          "synthetic-index": {
+            "index": "synthetic-index",
+            "managed": true,
+            "policy": "synthetic-policy",
+            "phase": "hot",
+            "action": "rollover",
+            "step": "ERROR",
+            "failed_step": "synthetic-step",
+            "index_creation_date_millis": 0,
+            "lifecycle_date_millis": 9007199254740993,
+            "phase_time_millis": 1,
+            "action_time_millis": 2,
+            "step_time_millis": 3,
+            "phase_execution": {
+              "policy": "synthetic-cached-policy",
+              "version": 2,
+              "modified_date_in_millis": 9007199254740995,
+              "phase_definition": {
+                "min_age": "0ms",
+                "actions": {
+                  "synthetic_action": {
+                    "error": "Synthetic user-authored configuration",
+                    "_meta": {
+                      "tag": "Synthetic retained action data"
+                    },
+                    "native_values": [
+                      18446744073709551615,
+                      1.0,
+                      false,
+                      null
+                    ]
+                  }
+                }
+              },
+              "_meta": {
+                "excluded": "Synthetic phase execution metadata"
+              },
+              "error": "Synthetic excluded cached error"
+            },
+            "step_info": {
+              "reason": "Synthetic excluded provider exception"
+            },
+            "_meta": {
+              "excluded": "Synthetic index metadata"
+            },
+            "in_use_by": [
+              "synthetic"
+            ]
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "index": "synthetic-index",
+            "managed": true,
+            "policy": "synthetic-policy",
+            "phase": "hot",
+            "action": "rollover",
+            "step": "ERROR",
+            "failed_step": "synthetic-step",
+            "index_creation_date_millis": 0,
+            "lifecycle_date_millis": 9007199254740993,
+            "phase_time_millis": 1,
+            "action_time_millis": 2,
+            "step_time_millis": 3,
+            "phase_execution": {
+              "policy": "synthetic-cached-policy",
+              "version": 2,
+              "modified_date_in_millis": 9007199254740995,
+              "phase_definition": {
+                "min_age": "0ms",
+                "actions": {
+                  "synthetic_action": {
+                    "error": "Synthetic user-authored configuration",
+                    "_meta": {
+                      "tag": "Synthetic retained action data"
+                    },
+                    "native_values": [
+                      18446744073709551615,
+                      1.0,
+                      false,
+                      null
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "field_coverage": {
+            "index": "known",
+            "managed": "known",
+            "policy": "known",
+            "phase": "known",
+            "action": "known",
+            "step": "known",
+            "failed_step": "known",
+            "index_creation_date_millis": "known",
+            "lifecycle_date_millis": "known",
+            "phase_time_millis": "known",
+            "action_time_millis": "known",
+            "step_time_millis": "known",
+            "phase_execution": "known"
+          }
+        }
+      ],
+      "expected_authority": {
+        "index": "synthetic-index",
+        "managed": true,
+        "policy": {
+          "presence": "value",
+          "value": "synthetic-policy"
+        }
+      },
+      "required_interpretation_codes": [],
+      "note": "Outer metadata/error fields are excluded; explicit action configuration is exact."
+    },
+    {
+      "id": "explain_optional_absent",
+      "read_kind": "elastic-explain",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "indices": {
+          "synthetic-index": {
+            "index": "synthetic-index",
+            "managed": false
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "index": "synthetic-index",
+            "managed": false
+          },
+          "field_coverage": {
+            "index": "known",
+            "managed": "known",
+            "policy": "absent",
+            "phase": "absent",
+            "action": "absent",
+            "step": "absent",
+            "failed_step": "absent",
+            "index_creation_date_millis": "absent",
+            "lifecycle_date_millis": "absent",
+            "phase_time_millis": "absent",
+            "action_time_millis": "absent",
+            "step_time_millis": "absent",
+            "phase_execution": "absent"
+          }
+        }
+      ],
+      "expected_authority": {
+        "managed": false,
+        "policy": {
+          "presence": "absent"
+        },
+        "policy_followup": false
+      },
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "explain_optional_null",
+      "read_kind": "elastic-explain",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "indices": {
+          "synthetic-index": {
+            "index": "synthetic-index",
+            "managed": true,
+            "policy": null,
+            "phase": null,
+            "action": null,
+            "step": null,
+            "failed_step": null,
+            "index_creation_date_millis": null,
+            "lifecycle_date_millis": null,
+            "phase_time_millis": null,
+            "action_time_millis": null,
+            "step_time_millis": null,
+            "phase_execution": null
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "index": "synthetic-index",
+            "managed": true,
+            "policy": null,
+            "phase": null,
+            "action": null,
+            "step": null,
+            "failed_step": null,
+            "index_creation_date_millis": null,
+            "lifecycle_date_millis": null,
+            "phase_time_millis": null,
+            "action_time_millis": null,
+            "step_time_millis": null,
+            "phase_execution": null
+          },
+          "field_coverage": {
+            "index": "known",
+            "managed": "known",
+            "policy": "null",
+            "phase": "null",
+            "action": "null",
+            "step": "null",
+            "failed_step": "null",
+            "index_creation_date_millis": "null",
+            "lifecycle_date_millis": "null",
+            "phase_time_millis": "null",
+            "action_time_millis": "null",
+            "step_time_millis": "null",
+            "phase_execution": "null"
+          }
+        }
+      ],
+      "expected_authority": {
+        "managed": true,
+        "policy": {
+          "presence": "null"
+        },
+        "policy_followup": false
+      },
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "explain_false_preserves_unused_policy",
+      "read_kind": "elastic-explain",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "indices": {
+          "synthetic-index": {
+            "index": "synthetic-index",
+            "managed": false,
+            "policy": ""
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "index": "synthetic-index",
+            "managed": false,
+            "policy": ""
+          },
+          "field_coverage": {
+            "index": "known",
+            "managed": "known",
+            "policy": "unknown",
+            "phase": "absent",
+            "action": "absent",
+            "step": "absent",
+            "failed_step": "absent",
+            "index_creation_date_millis": "absent",
+            "lifecycle_date_millis": "absent",
+            "phase_time_millis": "absent",
+            "action_time_millis": "absent",
+            "step_time_millis": "absent",
+            "phase_execution": "absent"
+          }
+        }
+      ],
+      "expected_authority": {
+        "managed": false,
+        "policy": {
+          "presence": "empty",
+          "value": ""
+        },
+        "policy_followup": false
+      },
+      "required_interpretation_codes": [],
+      "note": "Unsupported policy detail cannot create a relationship when raw managed is false."
+    },
+    {
+      "id": "policy_selected_configuration",
+      "read_kind": "elastic-policy",
+      "subject": {
+        "source_id": "synthetic-policy"
+      },
+      "raw_response": {
+        "synthetic-policy": {
+          "version": 18446744073709551615,
+          "modified_date": "2026-01-02T03:04:05.123456789Z",
+          "policy": {
+            "phases": {
+              "hot": {
+                "min_age": "0ms",
+                "actions": {
+                  "rollover": {
+                    "max_primary_shard_size": "50gb"
+                  }
+                }
+              },
+              "delete": {
+                "min_age": null,
+                "actions": {}
+              },
+              "future_phase": {
+                "future_flag": [
+                  0,
+                  0.0,
+                  false,
+                  null
+                ],
+                "actions": null
+              }
+            },
+            "_meta": {
+              "excluded": "Synthetic policy metadata"
+            },
+            "in_use_by": [
+              "synthetic-excluded-link"
+            ]
+          },
+          "_meta": {
+            "excluded": "Synthetic outer metadata"
+          },
+          "in_use_by": {
+            "indices": [
+              "synthetic-excluded-index"
+            ]
+          },
+          "error": "Synthetic excluded provider error"
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-policy",
+          "fields": {
+            "version": 18446744073709551615,
+            "modified_date": "2026-01-02T03:04:05.123456789Z",
+            "policy": {
+              "phases": {
+                "hot": {
+                  "min_age": "0ms",
+                  "actions": {
+                    "rollover": {
+                      "max_primary_shard_size": "50gb"
+                    }
+                  }
+                },
+                "delete": {
+                  "min_age": null,
+                  "actions": {}
+                },
+                "future_phase": {
+                  "future_flag": [
+                    0,
+                    0.0,
+                    false,
+                    null
+                  ],
+                  "actions": null
+                }
+              }
+            }
+          },
+          "field_coverage": {
+            "version": "known",
+            "modified_date": "known",
+            "policy": "unknown"
+          }
+        }
+      ],
+      "expected_authority": {
+        "policy_key": "synthetic-policy"
+      },
+      "required_interpretation_codes": [
+        "unsupported_source_value"
+      ],
+      "note": "Unknown phase extension remains exact and limits interpretation, not source enumeration."
+    },
+    {
+      "id": "policy_optional_absent",
+      "read_kind": "elastic-policy",
+      "subject": {
+        "source_id": "synthetic-policy"
+      },
+      "raw_response": {
+        "synthetic-policy": {}
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-policy",
+          "fields": {},
+          "field_coverage": {
+            "version": "absent",
+            "modified_date": "absent",
+            "policy": "absent"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "policy_optional_null",
+      "read_kind": "elastic-policy",
+      "subject": {
+        "source_id": "synthetic-policy"
+      },
+      "raw_response": {
+        "synthetic-policy": {
+          "version": null,
+          "modified_date": null,
+          "policy": null
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-policy",
+          "fields": {
+            "version": null,
+            "modified_date": null,
+            "policy": null
+          },
+          "field_coverage": {
+            "version": "null",
+            "modified_date": "null",
+            "policy": "null"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "policy_empty_and_negative_native_date",
+      "read_kind": "elastic-policy",
+      "subject": {
+        "source_id": "synthetic-policy"
+      },
+      "raw_response": {
+        "synthetic-policy": {
+          "version": 0,
+          "modified_date": -1,
+          "policy": {
+            "phases": {}
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-policy",
+          "fields": {
+            "version": 0,
+            "modified_date": -1,
+            "policy": {
+              "phases": {}
+            }
+          },
+          "field_coverage": {
+            "version": "known",
+            "modified_date": "known",
+            "policy": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": "modified_date int is not given the nonnegative guard of explain millisecond fields."
+    },
+    {
+      "id": "status_running",
+      "read_kind": "elastic-status",
+      "subject": {
+        "source_id": "service"
+      },
+      "raw_response": {
+        "operation_mode": "RUNNING",
+        "error": "Synthetic excluded provider text",
+        "_meta": {
+          "excluded": "synthetic"
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "service",
+          "fields": {
+            "operation_mode": "RUNNING"
+          },
+          "field_coverage": {
+            "operation_mode": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "status_stopped",
+      "read_kind": "elastic-status",
+      "subject": {
+        "source_id": "service"
+      },
+      "raw_response": {
+        "operation_mode": "STOPPED",
+        "error": "Synthetic excluded provider text",
+        "_meta": {
+          "excluded": "synthetic"
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "service",
+          "fields": {
+            "operation_mode": "STOPPED"
+          },
+          "field_coverage": {
+            "operation_mode": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "status_absent",
+      "read_kind": "elastic-status",
+      "subject": {
+        "source_id": "service"
+      },
+      "raw_response": {
+        "error": "Synthetic excluded provider text",
+        "_meta": {
+          "excluded": "synthetic"
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "service",
+          "fields": {},
+          "field_coverage": {
+            "operation_mode": "absent"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "status_null",
+      "read_kind": "elastic-status",
+      "subject": {
+        "source_id": "service"
+      },
+      "raw_response": {
+        "operation_mode": null,
+        "error": "Synthetic excluded provider text",
+        "_meta": {
+          "excluded": "synthetic"
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "service",
+          "fields": {
+            "operation_mode": null
+          },
+          "field_coverage": {
+            "operation_mode": "null"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [],
+      "note": ""
+    },
+    {
+      "id": "status_future",
+      "read_kind": "elastic-status",
+      "subject": {
+        "source_id": "service"
+      },
+      "raw_response": {
+        "operation_mode": "FUTURE_MODE",
+        "error": "Synthetic excluded provider text",
+        "_meta": {
+          "excluded": "synthetic"
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "service",
+          "fields": {
+            "operation_mode": "FUTURE_MODE"
+          },
+          "field_coverage": {
+            "operation_mode": "unknown"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "unsupported_source_value"
+      ],
+      "note": ""
+    },
+    {
+      "id": "hold_empty_query_and_unknown_nested_time",
+      "read_kind": "vault-holds",
+      "subject": {
+        "source_id": "synthetic-matter"
+      },
+      "raw_response": {
+        "holds": [
+          {
+            "holdId": "synthetic-hold",
+            "accounts": [
+              {
+                "accountId": "synthetic-account",
+                "holdTime": "synthetic-invalid-clock"
+              }
+            ],
+            "query": {}
+          }
+        ]
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-hold",
+          "fields": {
+            "holdId": "synthetic-hold",
+            "accounts": [
+              {
+                "accountId": "synthetic-account",
+                "holdTime": "synthetic-invalid-clock"
+              }
+            ],
+            "query": {}
+          },
+          "field_coverage": {
+            "holdId": "known",
+            "name": "absent",
+            "corpus": "absent",
+            "updateTime": "absent",
+            "accounts": "unknown",
+            "orgUnit": "absent",
+            "query": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "unsupported_source_value"
+      ],
+      "note": ""
+    },
+    {
+      "id": "policy_null_phase_entry",
+      "read_kind": "elastic-policy",
+      "subject": {
+        "source_id": "synthetic-policy"
+      },
+      "raw_response": {
+        "synthetic-policy": {
+          "policy": {
+            "phases": {
+              "hot": null
+            }
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-policy",
+          "fields": {
+            "policy": {
+              "phases": {
+                "hot": null
+              }
+            }
+          },
+          "field_coverage": {
+            "version": "absent",
+            "modified_date": "absent",
+            "policy": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "missing_source_detail"
+      ],
+      "note": "Explicit proposed nullable phase-entry shape, subject to controller freeze."
+    },
+    {
+      "id": "explain_empty_phase_execution",
+      "read_kind": "elastic-explain",
+      "subject": {
+        "source_id": "synthetic-index"
+      },
+      "raw_response": {
+        "indices": {
+          "synthetic-index": {
+            "index": "synthetic-index",
+            "managed": false,
+            "phase_execution": {}
+          }
+        }
+      },
+      "expected_records": [
+        {
+          "source_ordinal": 0,
+          "source_identity": "synthetic-index",
+          "fields": {
+            "index": "synthetic-index",
+            "managed": false,
+            "phase_execution": {}
+          },
+          "field_coverage": {
+            "index": "known",
+            "managed": "known",
+            "policy": "absent",
+            "phase": "absent",
+            "action": "absent",
+            "step": "absent",
+            "failed_step": "absent",
+            "index_creation_date_millis": "absent",
+            "lifecycle_date_millis": "absent",
+            "phase_time_millis": "absent",
+            "action_time_millis": "absent",
+            "step_time_millis": "absent",
+            "phase_execution": "known"
+          }
+        }
+      ],
+      "expected_authority": {},
+      "required_interpretation_codes": [
+        "missing_source_detail"
+      ],
+      "note": ""
+    }
+  ],
+  "no_provider_calls": true,
+  "no_credentials": true,
+  "coverage_roots_only": true,
+  "projection_implementation_executed": false
+}
