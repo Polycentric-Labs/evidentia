@@ -1,0 +1,19 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Changed selected hold value and a distinct surviving hold",
+  "body": {
+    "holds": [
+      {
+        "holdId": "synthetic-mail-hold",
+        "name": "Changed synthetic hold",
+        "corpus": "MAIL"
+      },
+      {
+        "holdId": "synthetic-survivor",
+        "name": "Surviving synthetic hold",
+        "corpus": "DRIVE"
+      }
+    ]
+  }
+}

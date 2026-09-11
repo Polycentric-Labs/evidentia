@@ -1,0 +1,12 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "A source entry for an unselected index refuses identity admission.",
+  "target": "audit-events",
+  "responses": [
+    {
+      "status": 200,
+      "body": {"entry": [{"name": "unselected-index", "content": {"datatype": "event"}}]}
+    }
+  ]
+}

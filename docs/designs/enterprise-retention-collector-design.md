@@ -1,6 +1,6 @@
 # Enterprise retention collector design
 
-The shared foundation implements strict requests and full results, trusted profile authorization, bounded JSON, source correspondence, and an owned read session for selected Google Vault, Splunk Enterprise, and Elasticsearch ILM configuration. The namespace currently exports models only. Provider projectors, the full collector, and enterprise API, CLI, and console actions are planned integration work.
+The shared foundation implements strict requests and full results, trusted profile authorization, bounded JSON, source correspondence, and an owned read session for selected Google Vault, Splunk Enterprise, and Elasticsearch ILM configuration. The collector composes all three provider readers and exposes full results through Python, API, CLI and console actions.
 
 This scope observes configuration for explicitly selected resources. It does not discover all resources, read held records, events or documents, test deletion, change policies, establish record-set completeness, or assess legal compliance. Provider account and resource ownership remain unverified. The existing [Entra/M365 collector](entra-m365-collector-design.md) supplies retention-label configuration through its separate delegated credential contract; it is not a fourth enterprise branch.
 
@@ -23,7 +23,7 @@ The strict registry file uses `schema_version=enterprise-retention-profiles/v1` 
 
 `load_profile_registry` reads a named regular JSON file through bounded descriptors, with link/reparse, device/alternate-stream and file-identity checks. An optional CA file is a bounded PEM-only snapshot; relative CA references resolve against the registry parent. Owned clients receive a newly constructed verified SSL context, never a caller-owned mutable context. This boundary trusts the operator's process and configuration; it does not isolate a hostile operating-system user.
 
-`authorize_api_profile` requires an exact allowed principal. `authorize_cli_profile` requires the explicit local grant. Unknown, wrong-provider and unauthorized aliases share the fixed `profile_unavailable` result. These helpers do not replace the future entry points' authentication and read-role checks. API principal authorization does not enable CLI access, and CLI identity or tenant labels are operator assertions. The bundled local-token provider's shared `local-operator` principal cannot distinguish individual token holders.
+`authorize_api_profile` requires an exact allowed principal. `authorize_cli_profile` requires the explicit local grant. Unknown, wrong-provider and unauthorized aliases share the fixed `profile_unavailable` result. These helpers follow the entry points' authentication and read-role checks. API principal authorization does not enable CLI access, and CLI identity or tenant labels are operator assertions. The bundled local-token provider's shared `local-operator` principal cannot distinguish individual token holders.
 
 ## Provider permissions and credentials
 
@@ -134,12 +134,54 @@ A request-specific `CapacityPlan` reserves all future metadata, including the ma
 | Splunk | 225,763 | 2,322,935 |
 | Elastic | 575,466 | 2,672,659 |
 
-The 2 MiB observation ceiling plus these finite reservations is below the 4 MiB result cap. Synthetic acceptance separately checks an exact 2,097,152-byte observation total, one-byte refusal and internal result test ceilings. It does not invent a reachable production 4 MiB case. Capacity refusal stops new work and preserves a valid full partial/unavailable result with prior facts. The oracle and `publication_bytes()` use compact sorted UTF-8 JSON with `ensure_ascii=False` and `allow_nan=False`; API/CLI byte parity awaits their integration tests.
+The 2 MiB observation ceiling plus these finite reservations is below the 4 MiB result cap. Synthetic acceptance separately checks an exact 2,097,152-byte observation total, one-byte refusal and internal result test ceilings. It does not invent a reachable production 4 MiB case. Capacity refusal stops new work and preserves a valid full partial/unavailable result with prior facts. The oracle and `publication_bytes()` use compact sorted UTF-8 JSON with `ensure_ascii=False` and `allow_nan=False`; API and CLI integration tests compare the complete canonical publication bytes.
 
-## Packaging, fixture provenance and remaining integration
+## Packaging, fixture provenance and entry points
 
-The foundation uses existing core, HTTPX, Pydantic and standard-library facilities. Base enterprise imports do not require S3 signing or XML extras. It reuses unchanged bounded storage JSON/body helpers through enterprise limits; it does not reuse the storage run session or alter its retry policy. There is no new dependency, SDK transport or optional enterprise credential chain.
+The collector uses existing core, HTTPX, Pydantic and standard-library facilities. Base
+enterprise imports do not require S3 signing or XML extras. The collector export loads
+execution support lazily. It reuses unchanged bounded storage JSON/body helpers through
+enterprise limits and the existing atomic CLI output helper; no new dependency, SDK
+transport or optional credential discovery chain is added.
 
-The [fixture source ledger](../../tests/fixtures/enterprise_retention/source-index.json) describes the two authored synthetic source-field corpora and their raw byte hashes. Positive cases and negative mutation recipes are expected data, not provider recordings. Future Vault, Splunk and Elastic leaf fixtures are listed as planned until actually authored and reviewed. Local synthetic tests can establish contract behavior and intercepted transport boundaries; they do not establish live licensing, permissions, tenant identity, TLS interoperability, deployment compatibility or an atomic provider snapshot.
+The [fixture source ledger](../../tests/fixtures/enterprise_retention/source-index.json)
+binds two authored source-field corpora and twenty domain fixture files by their exact bytes.
+These fixtures are authored synthetic responses and expected cases, not provider recordings.
+Local tests establish contract behavior and intercepted transport boundaries. They do not
+establish live licensing, permissions, tenant identity, TLS interoperability, deployment
+compatibility or an atomic provider snapshot. The Windows owned-transport tests intercept
+connect and TLS wrapping; they do not perform a real cryptographic handshake or establish
+POSIX behavior. HTTPX/HTTPcore transport changes require boundary replay.
 
-The planned full collector will compose the three provider projectors through this session. Planned API, CLI and console integration must enforce authentication/read role before input work, separate profile authorization, exact request/result binding, sanitized errors and full-result publication. Only exact absence of the collectors package or enterprise feature may count as optional absence; broken internal/transitive imports remain installation failures. These enterprise entry points are not exposed by the model-only foundation. Existing M365 label collection remains documented in the [collector guide](../wiki/2-guides/run-collectors.md) and [Entra/M365 design](entra-m365-collector-design.md), with its nine-capability envelope and label-only `full_surface_complete=False` unchanged.
+`EnterpriseRetentionCollector(profile=authorized_profile)` composes the three projectors
+through the owned session. Construction performs no credential, DNS or socket work. Each
+collection owns its credential/read state and closes its resources. `collect_v2` publishes
+the complete result; `collect` is a findings-only compatibility view.
+
+The API loads `EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE` once at startup, after checking
+installation availability. A detached injected registry takes precedence. Malformed installed
+configuration fails startup with a fixed error; an absent feature does not inspect the file or
+injection. The collection route applies configured authentication and read RBAC before the
+bounded request body, then authorizes the exact opaque principal for the selected profile.
+Status reports installation only and does not enumerate profiles or inspect credentials.
+
+The CLI checks read permission before input access, requires the profile's separate local
+grant, and reserves output before collection. Both entry points validate the complete output
+against the original selection and publish canonical bytes. Complete exits 0, partial or
+unavailable evidence exits 1, invalid input exits 2, and role/profile denial exits 77. API
+complete/partial/unavailable results use HTTP 200. Input, media, limit, authentication,
+authorization and optional-feature denials retain their documented fixed error responses.
+Only exact absence of the package or feature counts as optional absence; broken internal
+or transitive imports remain installation failures.
+
+The console checks current API authentication, validates nonsecret selections and bounded file
+imports, and retains every selected resource and unique source read. It previews ten observations
+per read and offers the full result for download. The browser validates structural and request
+consistency, canonical observation limits, diagnostics and ledger summaries. Python remains
+authoritative for source-field interpretation, projection-digest recomputation and finding UUID
+derivation. Raw native spans and the original result text stay separate from parsed browser
+numbers, preserving exact integers, float spelling and source timestamps in previews and exports.
+
+Existing M365 label collection remains documented in the [collector guide](../wiki/2-guides/run-collectors.md)
+and [Entra/M365 design](entra-m365-collector-design.md), with its nine-capability envelope and
+label-only `full_surface_complete=False` unchanged.

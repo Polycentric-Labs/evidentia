@@ -11,6 +11,7 @@
 
 import { demoApi, demoExportGapReport } from "@/lib/demo/demo-api";
 import { IS_DEMO } from "@/lib/demo";
+import { readEnterpriseRetentionResponse, snapshotEnterpriseRetentionRequest } from "@/lib/enterprise-retention";
 import { storageRetentionDemoResult } from "@/lib/demo/storage-retention-fixture";
 import {
   parseStorageRetentionResponse,
@@ -535,6 +536,10 @@ export type EntraM365CollectResult =
 export type EntraM365DemoScenario = "partial" | "unavailable";
 
 /** Authoritative selected-storage request and complete result envelope. */
+export type EnterpriseRetentionCollectRequest = operations["enterprise_retention_collect_api_collectors_enterprise_retention_collect_post"]["requestBody"]["content"]["application/json"];
+export type EnterpriseRetentionCollectResult = components["schemas"]["EnterpriseRetentionCollectResult"];
+export type EnterpriseRetentionDemoScenario = "complete" | "partial" | "unavailable";
+
 export type StorageRetentionCollectRequest =
   operations["storage_retention_collect_api_collectors_retention_collect_post"]["requestBody"]["content"]["application/json"];
 export type StorageRetentionCollectResult =
@@ -1358,6 +1363,17 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  collectEnterpriseRetention: async (body: EnterpriseRetentionCollectRequest, _scenario: EnterpriseRetentionDemoScenario = "partial") => {
+    const expected = snapshotEnterpriseRetentionRequest(body);
+    const response = await fetch("/api/collectors/enterprise-retention/collect", {
+      method: "POST", body: JSON.stringify(expected), headers: { "Content-Type": "application/json", Accept: "application/json" },
+    });
+    if (!response.ok) {
+      try { await response.body?.cancel(); } catch { /* Keep the fixed status error. */ }
+      throw new ApiError("Enterprise collection failed", response.status, null);
+    }
+    return readEnterpriseRetentionResponse(response, expected);
+  },
   collectStorageRetention: async (body: StorageRetentionCollectRequest) => {
     const expected = snapshotStorageRetentionRequest(body);
     const response = await fetch("/api/collectors/retention/collect", {

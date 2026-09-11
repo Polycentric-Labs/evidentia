@@ -399,6 +399,49 @@ per-provider reference-presence booleans; live validation and identity
 verification remain false. The [design](designs/storage-retention-collector-design.md)
 defines field selection, routes, limits and evidence semantics.
 
+### Enterprise retention collection contract (v0.13)
+
+The `evidentia_collectors.enterprise_retention` public exports are
+`EnterpriseRetentionCollector`, `EnterpriseRetentionCollectRequest`,
+`EnterpriseRetentionCollectResult`, `EnterpriseRetentionResourceResult`,
+`EnterpriseRetentionReadResult`, `EnterpriseRetentionObservation`,
+`EnterpriseRetentionDiagnostic`, `EnterpriseRetentionManifest` and
+`EnterpriseRetentionInputError`. Collector construction requires an authorized trusted
+profile. `collect_v2(request)` returns full evidence; `collect(request)` returns findings.
+Internal profile, transport and correspondence helpers remain non-frozen internals.
+
+The strict request selects `google-vault`, `splunk-enterprise` or `elastic-ilm`, a
+`profile_alias`, a `scope_label`, and 1 through 20 ordered unique targets. It contains no
+credential, origin, header, trust policy or raised-limit field. The
+`enterprise-retention-collection/v1` result retains all selected resources and unique reads,
+native observations, coverage, diagnostics, findings and a cross-checked manifest. Compliance,
+record completeness, effective enforcement and authenticated provider identity remain unassessed.
+Vault retention rules are explicitly unassessed. Native types and source timestamp text remain
+literal; logical projection digests do not attest to an unretained full response recording.
+
+`collect enterprise-retention --request-file PATH [--output PATH]` reads at most 65536 bytes
+after the CLI read-role guard. Profile authorization requires `allow_local_cli=true`.
+Output is reserved before collection and replaced atomically only after full-result and original
+selection validation. Complete exits 0; partial/unavailable or operational failure exits 1;
+invalid input exits 2; read-role or profile denial exits 77. Stdout output contains full JSON.
+
+`POST /api/collectors/enterprise-retention/collect` requires configured authentication and read
+RBAC before input streaming, then exact profile-principal authorization. Every valid full result
+uses HTTP 200, including partial and unavailable evidence. Invalid input returns 400, authentication
+or access denial 401/403, excess cumulative bytes 413, unsupported media 415, and optional-feature
+absence 503. Unexpected execution or invalid results return fixed 500 errors. Only exact absence
+of the collectors package or enterprise feature counts as optional absence; internal/transitive
+import failures remain installation failures.
+
+`EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE` identifies the trusted startup registry.
+API-injected registries take precedence and are detached; malformed configuration fails startup.
+The absent-feature route does not consume a registry or body. Unknown, wrong-provider and
+unauthorized profiles share `profile_unavailable`. API grants and local CLI grants are separate.
+`GET /api/collectors/status` adds `enterprise_retention` with installation availability and
+false live-validation/identity-verification flags, without credential or profile enumeration.
+The [design](designs/enterprise-retention-collector-design.md) defines the exact field selection,
+limits and source semantics; the console preserves the full result and exact native text.
+
 ### 6. REST API URIs
 
 **Package**: `evidentia_api.routers.*`
@@ -709,3 +752,4 @@ cycle.
 | **NORMATIVE** | **2026-09-10** | **MCP description comparison clarification (V13-16).** [Python 3.13 and later strip common docstring indentation during compilation](https://docs.python.org/3.13/whatsnew/3.13.html#other-language-changes). The SDK 1.29.1 fixture was captured on Python 3.12 and remains unchanged. Tests compare descriptions using `inspect.cleandoc`, preserving wording, internal line breaks and relative indentation while normalizing docstring margins and outer blank lines. Tool names and input/output schemas are compared exactly. This clarifies the preceding migration row; it does not change tool source descriptions or runtime dispatch. |
 | **NORMATIVE** | **2026-09-10** | **Entra/M365 evidence (V13-02).** Add the six public collector exports, bounded request and full result contract, `collect entra-m365`, `POST /api/collectors/entra-m365/collect` and the `entra-m365` status entry. Nine capability records preserve source coverage, declared identity and precise event windows. Partial/unavailable attempts retain the full response; CLI input/output refusal and read RBAC are explicit. The three fixed `ENTRA_M365_*` references are documented configuration contracts. Existing collector endpoints and result models retain their shapes. |
 | **NORMATIVE** | **2026-09-10** | **Storage retention evidence (V13-04, storage milestone).** Add seven public exports, the provider-discriminated request and full result contract, `collect retention`, `POST /api/collectors/retention/collect`, and the `retention` status entry. Six fixed S3/Azure/GCS reads preserve native configuration fields and every requested resource/component state. CLI read RBAC precedes path metadata access; API authentication and read RBAC precede streamed input. Detached selection checks bind returned provider, scope and ordered targets. Exact browser JSON export preserves native numbers without rounding. Fixed credential references, bounded input/output, safe error classification and unknown compliance are part of the contract. M365/Vault/Splunk/Elastic retention remains subsequent work. |
+| **NORMATIVE** | **2026-09-11** | **Enterprise retention evidence (V13-04, enterprise milestone).** Add nine public exports, the bounded profile-selected request and full result contract, `collect enterprise-retention`, `POST /api/collectors/enterprise-retention/collect`, and the `enterprise_retention` status entry. Google Vault, Splunk Enterprise and Elastic ILM reads preserve native selected fields and per-resource coverage. Authentication and read RBAC precede API streaming; exact API-principal grants and local CLI grants remain separate. The trusted startup registry is named by `EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE`. Partial and unavailable results retain full evidence. Selection validation, atomic CLI output and exact browser JSON export are enforced. Live tenant acceptance, provider identity, effective enforcement, record completeness and Vault retention rules remain unassessed. |

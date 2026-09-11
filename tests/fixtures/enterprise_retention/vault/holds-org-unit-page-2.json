@@ -1,0 +1,25 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Terminal holds page with OU scope and an empty account list",
+  "body": {
+    "holds": [
+      {
+        "holdId": "synthetic-calendar-hold",
+        "name": "Synthetic calendar hold",
+        "corpus": "CALENDAR",
+        "updateTime": "2026-01-01t00:00:00.100000000z",
+        "accounts": [],
+        "orgUnit": {
+          "orgUnitId": "synthetic-ou",
+          "holdTime": "2025-01-01T00:00:00-07:00",
+          "name": "Unselected OU name"
+        },
+        "query": {
+          "calendarQuery": {}
+        }
+      }
+    ],
+    "nextPageToken": ""
+  }
+}

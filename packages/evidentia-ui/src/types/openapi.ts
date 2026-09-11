@@ -9,6 +9,9 @@ export type JsonValue = boolean | number | string | JsonValue[] | {
 export type StorageRetentionJsonValue = boolean | number | string | StorageRetentionJsonValue[] | {
     [key: string]: StorageRetentionJsonValue;
 } | null;
+export type EnterpriseRetentionJsonValue = boolean | number | string | EnterpriseRetentionJsonValue[] | {
+    [key: string]: EnterpriseRetentionJsonValue;
+} | null;
 export interface paths {
     "/api/ai-gov/acquisitions": {
         parameters: {
@@ -622,6 +625,26 @@ export interface paths {
          *     will add control-test pulls + ongoing-monitoring posture.
          */
         post: operations["drata_collect_api_collectors_drata_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collectors/enterprise-retention/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enterprise Retention Collect
+         * @description Return bounded evidence for a profile-authorized resource selection.
+         */
+        post: operations["enterprise_retention_collect_api_collectors_enterprise_retention_collect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4748,6 +4771,17 @@ export interface components {
              */
             scanned: number;
         };
+        /** CoverageCounts */
+        CoverageCounts: {
+            /** Absent */
+            absent: number;
+            /** Known */
+            known: number;
+            /** Null */
+            null: number;
+            /** Unknown */
+            unknown: number;
+        };
         /** @enum {string} */
         CredentialBasis: "unverified:primary-token" | "unverified:retention-token" | "unverified:dlp-export";
         /**
@@ -4973,6 +5007,306 @@ export interface components {
              * @description Efficiency value score = total_gaps_closed / effort_weight
              */
             value_score: number;
+        };
+        /** ElasticCollectResult */
+        ElasticCollectResult: {
+            /**
+             * Authenticated Identity Verified
+             * @constant
+             */
+            authenticated_identity_verified: false;
+            /**
+             * Coverage Scope
+             * @constant
+             */
+            coverage_scope: "selected_resources";
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: components["schemas"]["CoverageCounts"];
+            };
+            /** Findings */
+            findings: components["schemas"]["_EnterpriseFinding"][];
+            /** Finished At */
+            finished_at: string & unknown;
+            /**
+             * Identity Basis
+             * @constant
+             */
+            identity_basis: "operator-declared";
+            manifest: components["schemas"]["EnterpriseRetentionManifest"];
+            /**
+             * Object Enforcement Assessed
+             * @constant
+             */
+            object_enforcement_assessed: false;
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "configuration";
+            /** Profile Alias */
+            profile_alias: string & unknown;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "elastic-ilm";
+            /**
+             * Recordset Completeness Assessed
+             * @constant
+             */
+            recordset_completeness_assessed: false;
+            /** Resources */
+            resources: components["schemas"]["EnterpriseRetentionResourceResult_ElasticIndexTarget_"][];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "enterprise-retention-collection/v1";
+            /** Scope Label */
+            scope_label: string & unknown;
+            /** Source Reads */
+            source_reads: components["schemas"]["EnterpriseRetentionReadResult"][];
+            /** Started At */
+            started_at: string & unknown;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Unassessed Surfaces */
+            unassessed_surfaces: [
+                "document_coverage",
+                "lifecycle_execution_guarantees",
+                "templates_and_unselected_indices",
+                "atomic_provider_snapshot"
+            ];
+        };
+        /** ElasticIndexTarget */
+        ElasticIndexTarget: {
+            /** Index */
+            index: string & unknown;
+        };
+        /** EnterpriseRetentionCollectResult */
+        EnterpriseRetentionCollectResult: components["schemas"]["VaultCollectResult"] | components["schemas"]["SplunkCollectResult"] | components["schemas"]["ElasticCollectResult"];
+        /** EnterpriseRetentionDiagnostic */
+        EnterpriseRetentionDiagnostic: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "credential_missing" | "credential_invalid" | "credential_expired" | "credential_resolution_failed" | "credential_rejected" | "offline_refused" | "destination_refused" | "dns_failed" | "transport_failed" | "timeout" | "deadline_exceeded" | "attempt_limit" | "response_limit" | "run_byte_limit" | "invalid_encoding" | "invalid_json" | "invalid_response" | "identity_mismatch" | "redirect_refused" | "http_denied" | "http_not_found" | "http_error" | "retry_after_invalid" | "page_limit" | "record_limit" | "token_invalid" | "token_repeated" | "projection_limit" | "result_limit" | "duplicate_conflict" | "policy_reference_missing" | "policy_reference_unsupported" | "policy_unavailable" | "upstream_error" | "upstream_warning" | "unsupported_source_value" | "missing_source_detail" | "cleanup_failed" | "internal_error" | "dependency_unavailable";
+            /** Read Id */
+            read_id: string | null;
+            /** Safe Http Status */
+            safe_http_status: number | null;
+        };
+        EnterpriseRetentionJsonValue: EnterpriseRetentionJsonValue;
+        /** EnterpriseRetentionManifest */
+        EnterpriseRetentionManifest: {
+            /** Attempts */
+            attempts: number;
+            /** Canonical Observation Bytes */
+            canonical_observation_bytes: number;
+            /** Collector Version */
+            collector_version: string & unknown;
+            /** Conflicts Quarantined */
+            conflicts_quarantined: number;
+            /** Decoded Bytes */
+            decoded_bytes: number;
+            /** Duplicates Coalesced */
+            duplicates_coalesced: number;
+            /** Evidentia Version */
+            evidentia_version: string & unknown;
+            /** Findings */
+            findings: number;
+            /** Pages Admitted */
+            pages_admitted: number;
+            /** Pages Received */
+            pages_received: number;
+            /** Raw Bytes */
+            raw_bytes: number;
+            /** Reads Attempted */
+            reads_attempted: number;
+            /** Reads Completed */
+            reads_completed: number;
+            /** Reads Planned */
+            reads_planned: number;
+            /** Records Admitted */
+            records_admitted: number;
+            /** Records Received */
+            records_received: number;
+            /** Resources Attempted */
+            resources_attempted: number;
+            /** Resources Requested */
+            resources_requested: number;
+            /** Responses Received */
+            responses_received: number;
+            /** Run Id */
+            run_id: string & unknown;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "enterprise-retention-manifest/v1";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+        };
+        /** EnterpriseRetentionObservation */
+        EnterpriseRetentionObservation: {
+            /**
+             * Api Version
+             * @enum {string}
+             */
+            api_version: "v1" | "splunk-enterprise-10.4" | "elastic-stack-ilm";
+            /** Canonical Projection Sha256 */
+            canonical_projection_sha256: string & unknown;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: "absent" | "null" | "known" | "unknown";
+            };
+            /** Fields */
+            fields: {
+                [key: string]: components["schemas"]["EnterpriseRetentionJsonValue"];
+            };
+            /**
+             * Interpretation Status
+             * @enum {string}
+             */
+            interpretation_status: "known" | "limited";
+            /**
+             * Native Scope
+             * @enum {string}
+             */
+            native_scope: "matter" | "hold" | "index" | "policy" | "service";
+            /**
+             * Projection Version
+             * @constant
+             */
+            projection_version: "enterprise-retention-projection/v1";
+            /** Source Identity */
+            source_identity: string;
+        };
+        /** EnterpriseRetentionReadResult */
+        EnterpriseRetentionReadResult: {
+            /** Attempts */
+            attempts: number;
+            /** Conflicts Quarantined */
+            conflicts_quarantined: number;
+            /** Decoded Bytes */
+            decoded_bytes: number;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /** Duplicates Coalesced */
+            duplicates_coalesced: number;
+            /** Finished At */
+            finished_at: (string & unknown) | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "vault-matter" | "vault-holds" | "splunk-index" | "elastic-explain" | "elastic-policy" | "elastic-status";
+            /**
+             * Method Id
+             * @enum {string}
+             */
+            method_id: "vault.matters.get" | "vault.matters.holds.list" | "splunk.data.indexes.get" | "elastic.ilm.explain_lifecycle" | "elastic.ilm.get_lifecycle" | "elastic.ilm.get_status";
+            /** Observations */
+            observations: components["schemas"]["EnterpriseRetentionObservation"][];
+            /** Pages Admitted */
+            pages_admitted: number;
+            /** Pages Received */
+            pages_received: number;
+            /** Raw Bytes */
+            raw_bytes: number;
+            /** Read Id */
+            read_id: string;
+            /** Records Admitted */
+            records_admitted: number;
+            /** Records Received */
+            records_received: number;
+            /** Responses Received */
+            responses_received: number;
+            /** Safe Http Status */
+            safe_http_status: number | null;
+            /** Source Id */
+            source_id: string;
+            /** Started At */
+            started_at: (string & unknown) | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Terminal Reason */
+            terminal_reason: ("credential_missing" | "credential_invalid" | "credential_expired" | "credential_resolution_failed" | "credential_rejected" | "offline_refused" | "destination_refused" | "dns_failed" | "transport_failed" | "timeout" | "deadline_exceeded" | "attempt_limit" | "response_limit" | "run_byte_limit" | "invalid_encoding" | "invalid_json" | "invalid_response" | "identity_mismatch" | "redirect_refused" | "http_denied" | "http_not_found" | "http_error" | "retry_after_invalid" | "page_limit" | "record_limit" | "token_invalid" | "token_repeated" | "projection_limit" | "result_limit" | "duplicate_conflict" | "policy_reference_missing" | "policy_reference_unsupported" | "policy_unavailable" | "upstream_error" | "upstream_warning" | "unsupported_source_value" | "missing_source_detail" | "cleanup_failed" | "internal_error" | "dependency_unavailable") | null;
+        };
+        /** EnterpriseRetentionResourceResult[ElasticIndexTarget] */
+        EnterpriseRetentionResourceResult_ElasticIndexTarget_: {
+            /** Canonical Resource Id */
+            canonical_resource_id: string;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /**
+             * Policy Resolution
+             * @enum {string}
+             */
+            policy_resolution: "not_applicable" | "resolved" | "unresolved";
+            /** Read Ids */
+            read_ids: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            target: components["schemas"]["ElasticIndexTarget"];
+        };
+        /** EnterpriseRetentionResourceResult[SplunkIndexTarget] */
+        EnterpriseRetentionResourceResult_SplunkIndexTarget_: {
+            /** Canonical Resource Id */
+            canonical_resource_id: string;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /**
+             * Policy Resolution
+             * @enum {string}
+             */
+            policy_resolution: "not_applicable" | "resolved" | "unresolved";
+            /** Read Ids */
+            read_ids: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            target: components["schemas"]["SplunkIndexTarget"];
+        };
+        /** EnterpriseRetentionResourceResult[VaultMatterTarget] */
+        EnterpriseRetentionResourceResult_VaultMatterTarget_: {
+            /** Canonical Resource Id */
+            canonical_resource_id: string;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /**
+             * Policy Resolution
+             * @enum {string}
+             */
+            policy_resolution: "not_applicable" | "resolved" | "unresolved";
+            /** Read Ids */
+            read_ids: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            target: components["schemas"]["VaultMatterTarget"];
         };
         /** EntraM365CapabilityResult */
         EntraM365CapabilityResult: {
@@ -7762,6 +8096,87 @@ export interface components {
              */
             stddev: number;
         };
+        /** SplunkCollectResult */
+        SplunkCollectResult: {
+            /**
+             * Authenticated Identity Verified
+             * @constant
+             */
+            authenticated_identity_verified: false;
+            /**
+             * Coverage Scope
+             * @constant
+             */
+            coverage_scope: "selected_resources";
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: components["schemas"]["CoverageCounts"];
+            };
+            /** Findings */
+            findings: components["schemas"]["_EnterpriseFinding"][];
+            /** Finished At */
+            finished_at: string & unknown;
+            /**
+             * Identity Basis
+             * @constant
+             */
+            identity_basis: "operator-declared";
+            manifest: components["schemas"]["EnterpriseRetentionManifest"];
+            /**
+             * Object Enforcement Assessed
+             * @constant
+             */
+            object_enforcement_assessed: false;
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "configuration";
+            /** Profile Alias */
+            profile_alias: string & unknown;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "splunk-enterprise";
+            /**
+             * Recordset Completeness Assessed
+             * @constant
+             */
+            recordset_completeness_assessed: false;
+            /** Resources */
+            resources: components["schemas"]["EnterpriseRetentionResourceResult_SplunkIndexTarget_"][];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "enterprise-retention-collection/v1";
+            /** Scope Label */
+            scope_label: string & unknown;
+            /** Source Reads */
+            source_reads: components["schemas"]["EnterpriseRetentionReadResult"][];
+            /** Started At */
+            started_at: string & unknown;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Unassessed Surfaces */
+            unassessed_surfaces: [
+                "event_coverage",
+                "archive_execution_and_durability",
+                "smartstore_and_volume_configuration",
+                "cluster_wide_configuration"
+            ];
+        };
+        /** SplunkIndexTarget */
+        SplunkIndexTarget: {
+            /** Index */
+            index: string & unknown;
+        };
         /**
          * StorageRetentionCollectResult
          * @description Finite selected-read counts do not claim provider enumeration.
@@ -8078,6 +8493,91 @@ export interface components {
              * @description The dimension value (e.g., 'aws', 'us-east-1').
              */
             value: string;
+        };
+        /** VaultCollectResult */
+        VaultCollectResult: {
+            /**
+             * Authenticated Identity Verified
+             * @constant
+             */
+            authenticated_identity_verified: false;
+            /**
+             * Coverage Scope
+             * @constant
+             */
+            coverage_scope: "selected_resources";
+            /** Diagnostics */
+            diagnostics: components["schemas"]["EnterpriseRetentionDiagnostic"][];
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: components["schemas"]["CoverageCounts"];
+            };
+            /** Findings */
+            findings: components["schemas"]["_EnterpriseFinding"][];
+            /** Finished At */
+            finished_at: string & unknown;
+            /**
+             * Identity Basis
+             * @constant
+             */
+            identity_basis: "operator-declared";
+            manifest: components["schemas"]["EnterpriseRetentionManifest"];
+            /**
+             * Object Enforcement Assessed
+             * @constant
+             */
+            object_enforcement_assessed: false;
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "configuration";
+            /** Profile Alias */
+            profile_alias: string & unknown;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "google-vault";
+            /**
+             * Recordset Completeness Assessed
+             * @constant
+             */
+            recordset_completeness_assessed: false;
+            /** Resources */
+            resources: components["schemas"]["EnterpriseRetentionResourceResult_VaultMatterTarget_"][];
+            /**
+             * Retention Rules Assessed
+             * @constant
+             */
+            retention_rules_assessed: false;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "enterprise-retention-collection/v1";
+            /** Scope Label */
+            scope_label: string & unknown;
+            /** Source Reads */
+            source_reads: components["schemas"]["EnterpriseRetentionReadResult"][];
+            /** Started At */
+            started_at: string & unknown;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Unassessed Surfaces */
+            unassessed_surfaces: [
+                "default_retention_rules",
+                "custom_retention_rules",
+                "held_record_coverage"
+            ];
+        };
+        /** VaultMatterTarget */
+        VaultMatterTarget: {
+            /** Matter Id */
+            matter_id: string & unknown;
         };
         /**
          * Vendor
@@ -8449,6 +8949,66 @@ export interface components {
          * @enum {string}
          */
         _DecisionRole: "advisory" | "automated" | "hybrid";
+        /** _EnterpriseFinding */
+        _EnterpriseFinding: {
+            collection_context: components["schemas"]["_FindingContext"];
+            /**
+             * Compliance Status
+             * @constant
+             */
+            compliance_status: "unknown";
+            /** Control Mappings */
+            control_mappings: components["schemas"]["ControlMapping"][];
+            /**
+             * Description
+             * @enum {string}
+             */
+            description: "Selected matter and hold configuration; retention rules and held-record coverage are unassessed." | "Selected index configuration; event coverage and archival execution are unassessed." | "Selected index, service and current policy configuration; document coverage and lifecycle execution are unassessed.";
+            /** First Observed */
+            first_observed: string & unknown;
+            /** Id */
+            id: string & unknown;
+            /** Last Observed */
+            last_observed: string & unknown;
+            raw_data: components["schemas"]["_FindingData"];
+            /** Remediation */
+            remediation: null;
+            /** Resolved At */
+            resolved_at: null;
+            /** Resource Account */
+            resource_account: null;
+            /** Resource Id */
+            resource_id: string;
+            /** Resource Region */
+            resource_region: null;
+            /**
+             * Resource Type
+             * @enum {string}
+             */
+            resource_type: "GoogleVault::Matter" | "SplunkEnterprise::Index" | "ElasticsearchILM::Index";
+            /**
+             * Severity
+             * @constant
+             */
+            severity: "informational";
+            /** Source Finding Id */
+            source_finding_id: string;
+            /**
+             * Source System
+             * @constant
+             */
+            source_system: "enterprise-retention";
+            /**
+             * Status
+             * @constant
+             */
+            status: "active";
+            /**
+             * Title
+             * @enum {string}
+             */
+            title: "Google Vault matter and hold configuration" | "Splunk Enterprise index retention configuration" | "Elasticsearch ILM configuration";
+        };
         /** _EntraM365Finding */
         _EntraM365Finding: {
             /** @description Per-finding collection provenance (collector id/version, run_id, credential identity, source instance, filters, pagination). v0.7.0+ collectors MUST pass a real CollectionContext; the default synthesizes a 'legacy-pre-v0.7.0' placeholder for older construction sites. */
@@ -8512,6 +9072,82 @@ export interface components {
             known: components["schemas"]["Nonnegative"];
             null: components["schemas"]["Nonnegative"];
             unknown: components["schemas"]["Nonnegative"];
+        };
+        /** _FindingContext */
+        _FindingContext: {
+            /** Collected At */
+            collected_at: string & unknown;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "enterprise-retention";
+            /** Collector Version */
+            collector_version: string & unknown;
+            /**
+             * Credential Identity
+             * @constant
+             */
+            credential_identity: "operator-configured:identity-unverified";
+            /** Evidentia Version */
+            evidentia_version: string & unknown;
+            /** Filter Applied */
+            filter_applied: {
+                [key: string]: unknown;
+            };
+            pagination_context: components["schemas"]["_FindingPagination"];
+            /** Run Id */
+            run_id: string & unknown;
+            /** Source System Id */
+            source_system_id: string;
+        };
+        /** _FindingData */
+        _FindingData: {
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: components["schemas"]["CoverageCounts"];
+            };
+            /**
+             * Policy Resolution
+             * @enum {string}
+             */
+            policy_resolution: "not_applicable" | "resolved" | "unresolved";
+            /** Reads */
+            reads: components["schemas"]["_FindingRead"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Target */
+            target: components["schemas"]["VaultMatterTarget"] | components["schemas"]["SplunkIndexTarget"] | components["schemas"]["ElasticIndexTarget"];
+        };
+        /** _FindingPagination */
+        _FindingPagination: {
+            /** Continuation Token */
+            continuation_token: null;
+            /** Is Complete */
+            is_complete: boolean;
+            /** Page Number */
+            page_number: null;
+            /** Page Size */
+            page_size: 100 | null;
+            /** Total Pages */
+            total_pages: number;
+        };
+        /** _FindingRead */
+        _FindingRead: {
+            /** Observation Digests Sha256 */
+            observation_digests_sha256: string & unknown;
+            /** Observations */
+            observations: number;
+            /** Read Id */
+            read_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
         };
         /** _Projection */
         _Projection: {
@@ -10046,6 +10682,142 @@ export interface operations {
                 };
             };
             /** @description Collector not installed, token env var unset, or Drata unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    enterprise_retention_collect_api_collectors_enterprise_retention_collect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Profile Alias */
+                    profile_alias: string & unknown;
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "google-vault";
+                    /** Scope Label */
+                    scope_label: string & unknown;
+                    /** Targets */
+                    targets: {
+                        /** Matter Id */
+                        matter_id: string & unknown;
+                    }[];
+                } | {
+                    /** Profile Alias */
+                    profile_alias: string & unknown;
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "splunk-enterprise";
+                    /** Scope Label */
+                    scope_label: string & unknown;
+                    /** Targets */
+                    targets: {
+                        /** Index */
+                        index: string & unknown;
+                    }[];
+                } | {
+                    /** Profile Alias */
+                    profile_alias: string & unknown;
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "elastic-ilm";
+                    /** Scope Label */
+                    scope_label: string & unknown;
+                    /** Targets */
+                    targets: {
+                        /** Index */
+                        index: string & unknown;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnterpriseRetentionCollectResult"];
+                };
+            };
+            /** @description Invalid JSON or bounded request fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description API authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                        provider: string;
+                        reason: string | null;
+                    };
+                };
+            };
+            /** @description Read permission, configured authentication or profile authorization is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The request body exceeds 65536 bytes. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Only application/json is supported. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collection could not produce a valid result. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The optional enterprise collector is not installed. */
             503: {
                 headers: {
                     [name: string]: unknown;

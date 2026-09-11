@@ -9,7 +9,7 @@ import { generateTypes } from "./generate-types.mjs";
 
 let stock;
 let generated;
-const JSON_NAMES = ["JsonValue", "StorageRetentionJsonValue"];
+const JSON_NAMES = ["JsonValue", "StorageRetentionJsonValue", "EnterpriseRetentionJsonValue"];
 
 beforeAll(async () => {
     stock =

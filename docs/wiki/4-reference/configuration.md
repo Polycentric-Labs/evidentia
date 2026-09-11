@@ -19,7 +19,7 @@ An optional project config file discovered by walking the current directory up t
 
 ## Environment variables
 
-Evidentia reads the following **51** `EVIDENTIA_*` environment variables. Variables whose name ends in `_PASSWORD`, `_SECRET`, or `_TOKEN_FILE` carry credential material — set them in your shell/secret store, never commit their values.
+Evidentia reads the following **52** `EVIDENTIA_*` environment variables. Variables whose name ends in `_PASSWORD`, `_SECRET`, or `_TOKEN_FILE` carry credential material. Set them in your shell/secret store, never commit their values.
 
 | Environment variable |
 | --- |
@@ -38,6 +38,7 @@ Evidentia reads the following **51** `EVIDENTIA_*` environment variables. Variab
 | `EVIDENTIA_CONMON_DAEMON_STATUS_FILE` |
 | `EVIDENTIA_CONMON_STATE_FILE` |
 | `EVIDENTIA_EDITOR_ALLOW_ANY` |
+| `EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE` |
 | `EVIDENTIA_EVIDENCE_AUTO_MIRROR_WORM` |
 | `EVIDENTIA_EVIDENCE_STORE_DIR` |
 | `EVIDENTIA_EVIDENCE_WORM_BACKEND_FACTORY` |

@@ -1,0 +1,19 @@
+{
+  "synthetic-retention": {
+    "version": 8,
+    "modified_date": "2026-01-02T03:04:05.123456789+02:30",
+    "policy": {
+      "phases": {
+        "hot": {"min_age":"0ms","actions":{"rollover":{"max_primary_shard_size":"50gb"}}},
+        "warm": null,
+        "synthetic_future_phase": {
+          "min_age": "90d", "actions": {},
+          "synthetic_extension": {"_meta":{"retained":"literal-phase-configuration"},"sequence":[null,false,1,1.0]}
+        }
+      },
+      "_meta": {"excluded":"synthetic-policy-metadata"}
+    },
+    "in_use_by": {"indices":["synthetic-unselected-index"]},
+    "_meta": {"excluded":"synthetic-response-metadata"}
+  }
+}

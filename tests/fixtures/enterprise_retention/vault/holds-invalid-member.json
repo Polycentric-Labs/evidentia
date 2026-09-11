@@ -1,0 +1,22 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Valid prefix followed by a declared boolean with the wrong native type",
+  "body": {
+    "holds": [
+      {
+        "holdId": "synthetic-mail-hold",
+        "name": "Invalid page must not commit this conflict"
+      },
+      {
+        "holdId": "synthetic-invalid-hold",
+        "query": {
+          "driveQuery": {
+            "includeSharedDriveFiles": 1
+          }
+        }
+      }
+    ],
+    "nextPageToken": "must-not-be-followed"
+  }
+}

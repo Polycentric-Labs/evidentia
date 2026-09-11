@@ -282,6 +282,104 @@ The **Status** tab reports configured reference presence; live-provider and iden
 false. Demo responses and the public HTTP fixtures are explicitly synthetic. See the
 [collector design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/storage-retention-collector-design.md) for exact methods and limits.
 
+### Enterprise retention
+
+Use **Enterprise retention** for configuration on selected Google Vault matters and holds,
+Splunk Enterprise indexes, or Elasticsearch ILM indexes and referenced policies. It reads
+configuration only. It does not enumerate a tenant, inspect records, change a policy or prove
+effective retention, record coverage or compliance. M365 retention labels remain part of
+the separate Entra/M365 collector.
+
+An administrator configures a trusted profile registry on the API server or local CLI host.
+Set `EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE` to a named regular JSON file. This
+synthetic example describes the shape and grants no collection access:
+
+```json
+{
+  "schema_version": "enterprise-retention-profiles/v1",
+  "profiles": [{
+    "alias": "selected",
+    "provider": "splunk-enterprise",
+    "origin": "https://splunk.example.invalid:8089",
+    "credential_ref": "ENTERPRISE_RETENTION_SPLUNK_TOKEN",
+    "address_policy": {"mode": "public", "cidrs": []},
+    "api_principals": [],
+    "allow_local_cli": false
+  }]
+}
+```
+
+Replace the synthetic origin with the authorized server's exact HTTPS origin and explicit
+port. Vault uses the fixed origin `https://vault.googleapis.com:443`. Private deployments
+require a private address policy with explicit RFC1918 or ULA CIDRs; public mode rejects
+private addresses. Optional trusted CA configuration is read and detached from its file
+before collection. Requests cannot override destination, trust, address policy or limits.
+
+Grant API access by adding each complete authenticated principal to `api_principals`, with
+exact case and suffixes. The API also requires configured authentication and read RBAC.
+Unknown, wrong-provider and unauthorized aliases receive the same denial. An API grant
+does not grant CLI access: set `allow_local_cli` to `true` only for a profile intended for
+local use. CLI identity and tenant labels are operator assertions, not authenticated people.
+The shared `local-operator` token identity cannot distinguish individual token holders.
+
+Provision the selected preminted token through your normal secret-management process at
+the profile's environment reference. No token belongs in this JSON, command arguments or
+browser form. Vault and Splunk use Bearer tokens; Elastic uses an API key. The collector
+does not acquire, refresh or discover credentials. See the
+[design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/enterprise-retention-collector-design.md)
+for provider permission and licensing limits.
+
+The separate request file contains only a provider, profile alias, scope label and 1 through
+20 distinct literal targets:
+
+```json
+{
+  "provider": "splunk-enterprise",
+  "profile_alias": "selected",
+  "scope_label": "example-scope",
+  "targets": [{"index": "selected-index"}]
+}
+```
+
+Vault targets use `matter_id`; Splunk and Elastic targets use `index`. Wildcards and all-resource
+selectors are unsupported. The scope label describes the selection and does not verify ownership.
+
+```bash
+evidentia collect enterprise-retention --help
+evidentia collect enterprise-retention --request-file request.json --output result.json
+```
+
+Input is a named regular JSON file of at most 65536 bytes. The CLI checks read permission
+before opening it, checks the profile's local grant, and reserves output before collection.
+It validates the complete result and original selection before atomic replacement. Omit
+`--output` for full JSON on stdout. Complete exits 0; partial/unavailable results and operational
+failures exit 1; invalid input exits 2; read-role or profile denial exits 77. A partial result can
+retain useful evidence, so inspect the resource and source-read diagnostics.
+
+The API uses `POST /api/collectors/enterprise-retention/collect` with the same request object.
+Authentication and read RBAC precede body reads; exact profile authorization precedes provider
+access. The request cap applies to actual cumulative bytes. Valid full results use HTTP 200
+for all three collection states; invalid input uses 400, denial 401/403, excess bytes 413,
+unsupported media 415, unavailable optional support 503, and unexpected failures a fixed 500.
+Profiles load once at application startup. Invalid configuration fails startup; an absent
+enterprise installation does not read the configured profile file. Status reports installation
+only, without enumerating profiles or inspecting credential references.
+
+In **Collect**, select **Enterprise retention**, choose the provider and enter the nonsecret
+profile alias, scope and targets, or import the bounded request JSON. The console retains every
+resource and unique read, including unattempted or unavailable reads. It previews the first ten
+observations per read; **Download full enterprise result JSON** includes every retained observation.
+Native field text and the download preserve large integers, float spelling and source timestamps.
+Browser validation checks bounded structure and selection consistency; the Python result validator
+is authoritative for field interpretation, projection digests and finding identity.
+
+Vault default/custom retention rules and held-record coverage remain unassessed. Splunk archive
+settings expose only absent/null/empty/nonempty states; a configured path does not prove archival
+execution. Elastic keeps running phase data separate from current policy configuration and does
+not claim an atomic server snapshot. Synthetic demo scenarios cover all three result states for
+each provider. Public fixtures are authored synthetic responses; live-provider acceptance remains
+unverified.
+
 ### Google Workspace
 
 The Google Workspace collector is read-only against two Admin SDK surfaces: the
@@ -358,7 +456,7 @@ for the export side.
 
 Everything above also works from the browser. Start the server with
 `evidentia serve` and open the **Collect** screen from the sidebar (under
-**Connect**, route `/collect`). Its eight tabs are **Collectors**, **Entra/M365**, **Storage retention**,
+**Connect**, route `/collect`). Its nine tabs are **Collectors**, **Entra/M365**, **Storage retention**, **Enterprise retention**,
 **OCSF ingest**, **Nessus scan**, **Greenbone report**, **Convert** and **Status**.
 The Entra/M365 and Storage retention tabs retain the full result alongside the finding cards.
 

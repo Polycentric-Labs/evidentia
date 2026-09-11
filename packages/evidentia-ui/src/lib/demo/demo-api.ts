@@ -14,6 +14,8 @@
  */
 
 import type {
+  EnterpriseRetentionCollectRequest,
+  EnterpriseRetentionDemoScenario,
   EntraM365CollectRequest,
   EntraM365CollectResult,
   EntraM365DemoScenario,
@@ -127,6 +129,8 @@ import {
   DEMO_VENDORS,
   DEMO_VERSION,
 } from "./fixtures";
+import { ENTERPRISE_RETENTION_DEMO } from "./fixtures";
+import { parseEnterpriseRetentionResponse, snapshotEnterpriseRetentionRequest } from "@/lib/enterprise-retention";
 
 /** Clone helper so callers can never mutate the shared fixture objects. */
 function clone<T>(value: T): T {
@@ -1583,6 +1587,11 @@ export const demoApi = {
           : DEMO_ENTRA_M365_PARTIAL,
       ),
     ),
+  collectEnterpriseRetention: async (body: EnterpriseRetentionCollectRequest, scenario: EnterpriseRetentionDemoScenario = "partial") => {
+    const expected = snapshotEnterpriseRetentionRequest(body);
+    const example = ENTERPRISE_RETENTION_DEMO[expected.provider][scenario];
+    return parseEnterpriseRetentionResponse(example.rawJson, expected);
+  },
   collectConvert: (
     _body: Record<string, unknown>,
   ): Promise<Record<string, unknown>[]> =>

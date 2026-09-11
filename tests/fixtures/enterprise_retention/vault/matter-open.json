@@ -1,0 +1,18 @@
+{
+  "authored_synthetic": true,
+  "recorded_response": false,
+  "scenario": "Selected BASIC matter",
+  "body": {
+    "matterId": "synthetic-matter",
+    "state": "OPEN",
+    "name": "Unselected synthetic matter title",
+    "description": "Unselected description",
+    "matterPermissions": [
+      {
+        "role": "OWNER",
+        "accountId": "unselected-account"
+      }
+    ],
+    "region": "UNSELECTED"
+  }
+}
