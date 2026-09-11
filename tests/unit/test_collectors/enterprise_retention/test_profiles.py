@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from evidentia_collectors.enterprise_retention import _profiles as p
 from evidentia_collectors.enterprise_retention._contracts import ProviderName
 
@@ -437,10 +439,25 @@ def test_malformed_pem_suffix_is_bounded_and_refused_before_openssl(
         profile(ca_bytes=data)
 
 
-@pytest.mark.parametrize("suffix", ["-----BEGIN PRIVATE KEY-----", "-----BEGIN UNKNOWN-----", "\x00", "unrelated"])
-def test_ca_parser_refuses_unrelated_pem_or_trailing_content(suffix: str) -> None:
+@pytest.mark.parametrize(
+    "suffix",
+    [None, "-----BEGIN UNKNOWN-----", "\x00", "unrelated"],
+    ids=("suffix-1", "suffix-2", "suffix-3", "suffix-4"),
+)
+def test_ca_parser_refuses_unrelated_pem_or_trailing_content(suffix: str | None) -> None:
     with pytest.raises(p.ProfileError):
-        profile(ca_bytes=(CA_PEM + suffix).encode())
+        profile(
+            ca_bytes=CA_PEM.encode()
+            + (
+                suffix.encode()
+                if suffix is not None
+                else Ed25519PrivateKey.generate().private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.PKCS8,
+                    encryption_algorithm=serialization.NoEncryption(),
+                )
+            )
+        )
 
 
 def test_ca_bundle_keeps_exact_bytes_and_accepts_crlf_framing() -> None:
