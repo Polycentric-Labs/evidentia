@@ -1,0 +1,825 @@
+{
+  "schema_version": "1",
+  "status": "candidate_pending_domain_fixture_creation",
+  "fixtures": [
+    {
+      "path": "tests/fixtures/registries/fedramp/full-source-tuples.json",
+      "status": "created",
+      "raw_sha256": "11a62feef97245ead1ef1f40e90ae48a0074007e4b1508d7ab4345643b0685f7",
+      "bytes": 1535178,
+      "kind": "reviewed_full_selected_source_projection",
+      "scenario": "full-source-tuples",
+      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Complete reviewed selected tuples with original source bindings in the file"
+    },
+    {
+      "path": "tests/fixtures/registries/cmvp/full-source-tuples.json.gz",
+      "status": "created",
+      "raw_sha256": "631c33ee014b1e3f915cc3bad7c58942ab7de68d86fe2a417433e2c371b9ee52",
+      "bytes": 1155661,
+      "kind": "reviewed_full_selected_source_projection",
+      "scenario": "full-source-tuples",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Complete reviewed selected tuples with original source bindings in the decoded file; stored and decoded hashes are recorded separately",
+      "encoding": "gzip",
+      "decoded_bytes": 2112592,
+      "decoded_sha256": "ad9551fb60751454d0206dc4776dba474e56f1735569829cb9001f61f633d91a"
+    },
+    {
+      "path": "tests/fixtures/registries/fcc/full-source-tuples.json",
+      "status": "created",
+      "raw_sha256": "2b14cc83b94e624bb296e96a8601dd76b328f755dba85d138e71b8650fe95453",
+      "bytes": 127854,
+      "kind": "reviewed_full_selected_source_projection",
+      "scenario": "full-source-tuples",
+      "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Complete reviewed selected tuples with original source bindings in the file"
+    },
+    {
+      "path": "tests/fixtures/registries/tls/verified.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "verified",
+      "contract_url": "https://docs.python.org/3.12/library/ssl.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/tls/certificate-failure.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "certificate-failure",
+      "contract_url": "https://docs.python.org/3.12/library/ssl.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/tls/unknown-cipher.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "unknown-cipher",
+      "contract_url": "https://docs.python.org/3.12/library/ssl.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/rdap/domain-found.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "domain-found",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/rdap/domain-redacted.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "domain-redacted",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/rdap/identity-mismatch.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "identity-mismatch",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/rdap/bootstrap-http-only.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "bootstrap-http-only",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/gleif/lei-active.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "lei-active",
+      "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/gleif/lei-lapsed-successors.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "lei-lapsed-successors",
+      "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/gleif/identity-mismatch.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "identity-mismatch",
+      "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/gleif/unknown-null.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "unknown-null",
+      "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/security_txt/valid.txt",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "valid",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/security_txt/expired.txt",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "expired",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/security_txt/duplicate-singleton.txt",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "duplicate-singleton",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/security_txt/signed-unverified.txt",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "signed-unverified",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/security_txt/unknown-fields.txt",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "unknown-fields",
+      "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fedramp/source-products.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-products",
+      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fedramp/source-statuses.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-statuses",
+      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fedramp/source-packages.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-packages",
+      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fedramp/source-status-conflict.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-status-conflict",
+      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fedramp/source-shape-drift.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-shape-drift",
+      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/cmvp/source-active.html",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-active",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/cmvp/source-historical-revoked.html",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-historical-revoked",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/cmvp/source-certificate.html",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-certificate",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/cmvp/source-layout-drift.html",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-layout-drift",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fcc/source-covered-entries.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-covered-entries",
+      "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fcc/source-conditional-approvals.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-conditional-approvals",
+      "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fcc/source-proposal.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-proposal",
+      "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fcc/source-fact-schema-drift.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-fact-schema-drift",
+      "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/fcc/source-category-only.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "source-category-only",
+      "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_entity/entity-public.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "entity-public",
+      "contract_url": "https://open.gsa.gov/api/entity-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_entity/entity-unregistered.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "entity-unregistered",
+      "contract_url": "https://open.gsa.gov/api/entity-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_entity/identity-mismatch.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "identity-mismatch",
+      "contract_url": "https://open.gsa.gov/api/entity-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_entity/unknown-null.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "unknown-null",
+      "contract_url": "https://open.gsa.gov/api/entity-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_exclusions/exclusions-first-page.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "exclusions-first-page",
+      "contract_url": "https://open.gsa.gov/api/exclusions-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_exclusions/exclusions-last-page.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "exclusions-last-page",
+      "contract_url": "https://open.gsa.gov/api/exclusions-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_exclusions/exclusions-name-collision.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "exclusions-name-collision",
+      "contract_url": "https://open.gsa.gov/api/exclusions-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_exclusions/exclusions-no-uei.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "exclusions-no-uei",
+      "contract_url": "https://open.gsa.gov/api/exclusions-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/sam_exclusions/exclusions-page-loop.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "exclusions-page-loop",
+      "contract_url": "https://open.gsa.gov/api/exclusions-api/",
+      "contract_version": "v4",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/incommon/entity.xml",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_unsigned_template",
+      "scenario": "entity",
+      "contract_url": "https://mdq.incommon.org/",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/incommon/partner-entity.xml",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_unsigned_template",
+      "scenario": "partner-entity",
+      "contract_url": "https://mdq.incommon.org/",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/incommon/expired-entity.xml",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_unsigned_template",
+      "scenario": "expired-entity",
+      "contract_url": "https://mdq.incommon.org/",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/incommon/duplicate-target.xml",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_unsigned_template",
+      "scenario": "duplicate-target",
+      "contract_url": "https://mdq.incommon.org/",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/incommon/unsigned-entity.xml",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_unsigned_template",
+      "scenario": "unsigned-entity",
+      "contract_url": "https://mdq.incommon.org/",
+      "contract_version": "reviewed source index",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/ssl_labs/endpoint-ready.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "endpoint-ready",
+      "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+      "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/ssl_labs/endpoint-error.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "endpoint-error",
+      "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+      "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/ssl_labs/endpoint-cache-miss.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "endpoint-cache-miss",
+      "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+      "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    },
+    {
+      "path": "tests/fixtures/registries/ssl_labs/endpoint-identity-mismatch.json",
+      "status": "prospective",
+      "raw_sha256": null,
+      "bytes": null,
+      "kind": "synthetic_source_fixture",
+      "scenario": "endpoint-identity-mismatch",
+      "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+      "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
+      "exclusions": [
+        "No private keys or credentials",
+        "No live target assessment claim",
+        "No synthetic retrieval digest"
+      ],
+      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+    }
+  ]
+}

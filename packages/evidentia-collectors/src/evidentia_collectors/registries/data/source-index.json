@@ -1,0 +1,6603 @@
+{
+  "schema_version": "1",
+  "field_table_source_sha256": "753bbee21f4e230a15540d9c89cb4f19256ec5e6e06dc456921a7d37ae310695",
+  "field_table_sha256": "ba26d1edf0d2172ea4701012b0051adc9645138325a2bddb9a7e1a98314bcd7b",
+  "field_shapes": [
+    {
+      "rules": [
+        {
+          "children": [
+            "protocol",
+            "cipher",
+            "peer_address",
+            "der_sha256",
+            "certificate"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/protocol",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "name",
+            "protocol",
+            "secret_bits"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/cipher",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cipher/name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cipher/protocol",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cipher/secret_bits",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/peer_address",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/der_sha256",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "subject",
+            "issuer",
+            "subjectAltName",
+            "notBefore",
+            "notAfter"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/certificate",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subject",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subject/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subject/*/*",
+          "positions": [
+            0,
+            1
+          ],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subject/*/*/0",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subject/*/*/1",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/issuer",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/issuer/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/issuer/*/*",
+          "positions": [
+            0,
+            1
+          ],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/issuer/*/*/0",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/issuer/*/*/1",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subjectAltName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subjectAltName/*",
+          "positions": [
+            0,
+            1
+          ],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subjectAltName/*/0",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/subjectAltName/*/1",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/notBefore",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate/notAfter",
+          "positions": [],
+          "time": "source_text"
+        }
+      ],
+      "selector": "tls",
+      "shape_id": "verified_tls_adapter"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "objectClassName",
+            "ldhName",
+            "unicodeName",
+            "status",
+            "events",
+            "notices",
+            "rdapConformance",
+            "redacted"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/objectClassName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/ldhName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/unicodeName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/status/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/events",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "eventAction",
+            "eventDate"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/events/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/events/*/eventAction",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/events/*/eventDate",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "title",
+            "description",
+            "links",
+            "type"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/title",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/description",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/description/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "rel",
+            "title",
+            "media",
+            "type",
+            "hreflang"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*/rel",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*/title",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*/media",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*/type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*/hreflang",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/links/*/hreflang/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/notices/*/type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/rdapConformance",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/rdapConformance/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "name",
+            "reason",
+            "prePath",
+            "postPath",
+            "replacementPath",
+            "pathLang",
+            "method"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "type",
+            "description"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/name/type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/name/description",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "type",
+            "description"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/reason",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/reason/type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/reason/description",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/prePath",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/postPath",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/replacementPath",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/pathLang",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/redacted/*/method",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "rdap",
+      "shape_id": "domain_record"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "samRegistered",
+            "ueiSAM",
+            "entityEFTIndicator",
+            "legalBusinessName",
+            "registrationStatus",
+            "registrationDate",
+            "lastUpdateDate",
+            "registrationExpirationDate",
+            "activationDate"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/samRegistered",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/ueiSAM",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/entityEFTIndicator",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/legalBusinessName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/registrationStatus",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/registrationDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/lastUpdateDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/registrationExpirationDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/activationDate",
+          "positions": [],
+          "time": "source_text"
+        }
+      ],
+      "selector": "sam-entity",
+      "shape_id": "registered_entity_occurrence"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "exclusionDetails",
+            "exclusionIdentification",
+            "exclusionActions",
+            "exclusionOtherInformation"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "classificationType",
+            "exclusionType",
+            "exclusionProgram",
+            "excludingAgencyCode",
+            "excludingAgencyName"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionDetails",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionDetails/classificationType",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionDetails/exclusionType",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionDetails/exclusionProgram",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionDetails/excludingAgencyCode",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionDetails/excludingAgencyName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "ueiSAM",
+            "entityName"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionIdentification",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionIdentification/ueiSAM",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionIdentification/entityName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "listOfActions"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "createDate",
+            "updateDate",
+            "activateDate",
+            "terminationDate",
+            "terminationType",
+            "recordStatus"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*/createDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*/updateDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*/activateDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*/terminationDate",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*/terminationType",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionActions/listOfActions/*/recordStatus",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "isFASCSAOrder"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionOtherInformation",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/exclusionOtherInformation/isFASCSAOrder",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "sam-exclusions",
+      "shape_id": "firm_exclusion_occurrence"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "id",
+            "type",
+            "attributes"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "lei",
+            "entity",
+            "registration"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/lei",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "legalName",
+            "status",
+            "successorEntities"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "name",
+            "language"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/legalName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/legalName/name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/legalName/language",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "initialRegistrationDate",
+            "lastUpdateDate",
+            "status",
+            "nextRenewalDate"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/registration",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/registration/initialRegistrationDate",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/registration/lastUpdateDate",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/registration/status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/registration/nextRenewalDate",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/successorEntities",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "lei",
+            "name"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/successorEntities/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/successorEntities/*/lei",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/attributes/entity/successorEntities/*/name",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "gleif",
+      "shape_id": "lei_record"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "source_index",
+            "fields",
+            "history",
+            "package_rows"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "id",
+            "name",
+            "csp",
+            "cso",
+            "status",
+            "auth_date",
+            "auth_type",
+            "impact_level",
+            "deployment_model",
+            "uei",
+            "service_model"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/csp",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/cso",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/auth_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/auth_type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/impact_level",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/deployment_model",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/uei",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/service_model",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/service_model/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_index",
+            "fields"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/history/*/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "unique_id",
+            "product_id",
+            "cert_type",
+            "cert_path",
+            "cert_class",
+            "from_status",
+            "to_status",
+            "transition_date",
+            "recorded_date",
+            "source"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/unique_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/product_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/cert_type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/cert_path",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/cert_class",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/from_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/to_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/transition_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/recorded_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/history/*/fields/source",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_index",
+            "fields"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/package_rows/*/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "serviceIdentification",
+            "ZD_frid_retro",
+            "last_fetched_timestamp",
+            "id_matches_expected"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "fedRampPackageId",
+            "providerName",
+            "ueiNumber",
+            "serviceName",
+            "certificationType"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/serviceIdentification",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/serviceIdentification/fedRampPackageId",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/serviceIdentification/providerName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/serviceIdentification/ueiNumber",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/serviceIdentification/serviceName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/serviceIdentification/certificationType",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/ZD_frid_retro",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/last_fetched_timestamp",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "boolean",
+          "minimum": null,
+          "nullable": false,
+          "path": "/package_rows/*/fields/id_matches_expected",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fedramp",
+      "shape_id": "fedramp_product_record"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "source_index",
+            "fields"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "unique_id",
+            "product_id",
+            "cert_type",
+            "cert_path",
+            "cert_class",
+            "from_status",
+            "to_status",
+            "transition_date",
+            "recorded_date",
+            "source"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/unique_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/product_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/cert_type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/cert_path",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/cert_class",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/from_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/to_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/transition_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/recorded_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/source",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fedramp",
+      "shape_id": "fedramp_unmatched_history"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "source_index",
+            "fields",
+            "join_not_established"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "serviceIdentification",
+            "ZD_frid_retro",
+            "last_fetched_timestamp",
+            "id_matches_expected"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "fedRampPackageId",
+            "providerName",
+            "ueiNumber",
+            "serviceName",
+            "certificationType"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/serviceIdentification",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/serviceIdentification/fedRampPackageId",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/serviceIdentification/providerName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/serviceIdentification/ueiNumber",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/serviceIdentification/serviceName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/serviceIdentification/certificationType",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/ZD_frid_retro",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/last_fetched_timestamp",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "boolean",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/id_matches_expected",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/join_not_established",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/join_not_established/*",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fedramp",
+      "shape_id": "fedramp_unjoined_package"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "id",
+            "name",
+            "csp",
+            "cso",
+            "status",
+            "auth_date",
+            "auth_type",
+            "impact_level",
+            "deployment_model",
+            "uei",
+            "service_model"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/csp",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cso",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/auth_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/auth_type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/impact_level",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/deployment_model",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/uei",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/service_model",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/service_model/*",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fedramp",
+      "shape_id": "fedramp_products_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "unique_id",
+            "product_id",
+            "cert_type",
+            "cert_path",
+            "cert_class",
+            "from_status",
+            "to_status",
+            "transition_date",
+            "recorded_date",
+            "source"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/unique_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/product_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cert_type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cert_path",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cert_class",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/from_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/to_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/transition_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/recorded_date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fedramp",
+      "shape_id": "fedramp_history_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "serviceIdentification",
+            "ZD_frid_retro",
+            "last_fetched_timestamp",
+            "id_matches_expected"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "fedRampPackageId",
+            "providerName",
+            "ueiNumber",
+            "serviceName",
+            "certificationType"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/serviceIdentification",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/serviceIdentification/fedRampPackageId",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/serviceIdentification/providerName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/serviceIdentification/ueiNumber",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/serviceIdentification/serviceName",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/serviceIdentification/certificationType",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/ZD_frid_retro",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/last_fetched_timestamp",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "boolean",
+          "minimum": null,
+          "nullable": false,
+          "path": "/id_matches_expected",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fedramp",
+      "shape_id": "fedramp_packages_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "certificate_number",
+            "fields",
+            "status",
+            "occurrences",
+            "detail"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/certificate_number",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "Certificate Number",
+            "Vendor Name",
+            "Module Name",
+            "Module Type",
+            "Validation Date",
+            "Status"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/Certificate Number",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/Vendor Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/Module Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/Module Type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/Validation Date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "value",
+            "basis"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/status/value",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/status/basis",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_id",
+            "table_id",
+            "source_index",
+            "query_status"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/occurrences/*/source_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/occurrences/*/table_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/occurrences/*/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/occurrences/*/query_status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_id",
+            "source_index",
+            "fields"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/source_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/detail/source_index",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "Module Name",
+            "Standard",
+            "Status",
+            "Sunset Date",
+            "Caveat",
+            "Module Type"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields/Module Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields/Standard",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields/Status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields/Sunset Date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields/Caveat",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/detail/fields/Module Type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/Status",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "cmvp",
+      "shape_id": "cmvp_certificate_record"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "Certificate Number",
+            "Vendor Name",
+            "Module Name",
+            "Module Type",
+            "Validation Date"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Certificate Number",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Vendor Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Validation Date",
+          "positions": [],
+          "time": "source_text"
+        }
+      ],
+      "selector": "cmvp",
+      "shape_id": "cmvp_active_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "Certificate Number",
+            "Vendor Name",
+            "Module Name",
+            "Module Type",
+            "Validation Date",
+            "Status"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Certificate Number",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Vendor Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Validation Date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Status",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "cmvp",
+      "shape_id": "cmvp_historical_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "Certificate Number",
+            "Vendor Name",
+            "Module Name",
+            "Module Type",
+            "Validation Date",
+            "Status"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Certificate Number",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Vendor Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Validation Date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Status",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "cmvp",
+      "shape_id": "cmvp_revoked_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "Module Name",
+            "Standard",
+            "Status",
+            "Sunset Date",
+            "Caveat",
+            "Module Type"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Standard",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Status",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Sunset Date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Caveat",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/Module Type",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "cmvp",
+      "shape_id": "cmvp_certificate_5517_detail_native_fields"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "derived_appendix_a_row_ordinal",
+            "publisher_row_identifier_presence",
+            "names_source_literal",
+            "equipment_service_scope_source_literal",
+            "inclusion_date_source_literal",
+            "applicable_appendix_a_footnote_markers",
+            "source_occurrences"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/derived_appendix_a_row_ordinal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/publisher_row_identifier_presence",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/names_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/names_source_literal/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/equipment_service_scope_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/inclusion_date_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_appendix_a_footnote_markers",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_appendix_a_footnote_markers/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "snapshot_update_source_literal",
+            "equipment_service_cell",
+            "inclusion_date_cell"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/snapshot_update_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cell/source_literal_lines",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/inclusion_date_cell/source_literal_lines",
+          "positions": [],
+          "time": "source_text"
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_named_entries"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "derived_appendix_a_row_ordinal",
+            "category",
+            "publisher_row_identifier_presence",
+            "equipment_service_scope_source_literal",
+            "date_cell_source_literals",
+            "source_occurrences",
+            "date_entries",
+            "applicable_appendix_a_footnote_markers",
+            "disclosures"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/derived_appendix_a_row_ordinal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/category",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/publisher_row_identifier_presence",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/equipment_service_scope_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/date_cell_source_literals",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/date_cell_source_literals/*",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "snapshot_update_source_literal",
+            "equipment_service_cells",
+            "date_cells"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/snapshot_update_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/equipment_service_cells/*/source_literal_lines",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/source_literal_lines",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/date_entries",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "role",
+            "source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/date_entries/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/date_entries/*/role",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/date_entries/*/source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_appendix_a_footnote_markers",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_appendix_a_footnote_markers/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/disclosures",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "kind",
+            "source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/disclosures/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/disclosures/*/kind",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/disclosures/*/source_literal",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_category_rows"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "appendix",
+            "marker_source_literal",
+            "text_source_literal",
+            "source_occurrences",
+            "applies_to"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/marker_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/text_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "footnote_marker_source_literal",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/footnote_marker_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/source_literal_lines",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applies_to",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_footnotes"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "category",
+            "derived_category_row_ordinal",
+            "publisher_row_identifier_presence",
+            "device_scope_source_literal",
+            "approval_groups",
+            "applicable_footnote",
+            "source_occurrences"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/category",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/derived_category_row_ordinal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/publisher_row_identifier_presence",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/device_scope_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "derived_group_ordinal",
+            "device_scope_source_literal",
+            "date_range_source_literal",
+            "starts_source_literal",
+            "termination_component"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/approval_groups/*/derived_group_ordinal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*/device_scope_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*/date_range_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*/starts_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "presence",
+            "source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*/termination_component",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*/termination_component/presence",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/approval_groups/*/termination_component/source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "appendix",
+            "marker_source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_footnote",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_footnote/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/applicable_footnote/marker_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "device_scope_cells",
+            "date_cells"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/device_scope_cells/*/source_literal_lines",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_occurrences/*/date_cells/*/source_literal_lines",
+          "positions": [],
+          "time": "source_text"
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_conditional_approvals"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "definition",
+            "role",
+            "document",
+            "appendix",
+            "printed_appendix_pages",
+            "determination_date_source_literal",
+            "heading_source_literal",
+            "clauses",
+            "foreign_produced_heading_source_literal",
+            "foreign_produced_clauses",
+            "source_method",
+            "determination_received_date_source_literal",
+            "notice_release_date_source_literal",
+            "parallel_source_occurrence"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/definition",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/role",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/printed_appendix_pages",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/printed_appendix_pages/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/determination_date_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/heading_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/clauses",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_clause_label",
+            "text_source_literal",
+            "pdf_pages"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/clauses/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/clauses/*/source_clause_label",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/clauses/*/text_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/clauses/*/pdf_pages",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/clauses/*/pdf_pages/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/foreign_produced_heading_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/foreign_produced_clauses",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_clause_label",
+            "text_source_literal",
+            "pdf_pages"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/foreign_produced_clauses/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/foreign_produced_clauses/*/source_clause_label",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/foreign_produced_clauses/*/text_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/foreign_produced_clauses/*/pdf_pages",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/foreign_produced_clauses/*/pdf_pages/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/source_method",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/determination_received_date_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/notice_release_date_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "section",
+            "location",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/parallel_source_occurrence",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/parallel_source_occurrence/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/parallel_source_occurrence/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/parallel_source_occurrence/section",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/parallel_source_occurrence/location",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/parallel_source_occurrence/source_literal_lines",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_definition_context"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "kind",
+            "document",
+            "pdf_pages",
+            "location",
+            "text_source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/kind",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/pdf_pages",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/pdf_pages/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/location",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/text_source_literal",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_source_context"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "entityID",
+            "validUntil",
+            "cacheDuration",
+            "organization_names",
+            "organization_display_names",
+            "registration_info",
+            "role_descriptors"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/entityID",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/validUntil",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/cacheDuration",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_names",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "value",
+            "language"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_names/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_names/*/value",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_names/*/language",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_display_names",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "value",
+            "language"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_display_names/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_display_names/*/value",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/organization_display_names/*/language",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/registration_info",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "registrationAuthority",
+            "registrationInstant"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/registration_info/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/registration_info/*/registrationAuthority",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/registration_info/*/registrationInstant",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/role_descriptors",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/role_descriptors/*",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "incommon",
+      "shape_id": "verified_entity_descriptor_adapter"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "ipAddress",
+            "statusMessage",
+            "statusDetails",
+            "grade",
+            "gradeTrustIgnored",
+            "futureGrade",
+            "hasWarnings",
+            "isExceptional",
+            "details"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/ipAddress",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/statusMessage",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/statusDetails",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/grade",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/gradeTrustIgnored",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": true,
+          "path": "/futureGrade",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "boolean",
+          "minimum": null,
+          "nullable": true,
+          "path": "/hasWarnings",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "boolean",
+          "minimum": null,
+          "nullable": true,
+          "path": "/isExceptional",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "hostStartTime"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": true,
+          "path": "/details",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": null,
+          "nullable": true,
+          "path": "/details/hostStartTime",
+          "positions": [],
+          "time": "unix_milliseconds"
+        }
+      ],
+      "selector": "ssl-labs",
+      "shape_id": "endpoint"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "fields",
+            "signed",
+            "signature_state"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "name",
+            "value",
+            "source_line",
+            "body_line"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/*/name",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/fields/*/value",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/fields/*/source_line",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/fields/*/body_line",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "boolean",
+          "minimum": null,
+          "nullable": false,
+          "path": "/signed",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/signature_state",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "security-txt",
+      "shape_id": "security_text_adapter"
+    },
+    {
+      "rules": [
+        {
+          "children": [
+            "named_entry",
+            "linked_footnotes",
+            "named_scope_context",
+            "scope_limits",
+            "snapshot_context"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "derived_appendix_a_row_ordinal",
+            "publisher_row_identifier_presence",
+            "names_source_literal",
+            "equipment_service_scope_source_literal",
+            "inclusion_date_source_literal",
+            "applicable_appendix_a_footnote_markers",
+            "source_occurrences"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/derived_appendix_a_row_ordinal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/publisher_row_identifier_presence",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/names_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/names_source_literal/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/equipment_service_scope_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/inclusion_date_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/applicable_appendix_a_footnote_markers",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/applicable_appendix_a_footnote_markers/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "snapshot_update_source_literal",
+            "equipment_service_cell",
+            "inclusion_date_cell"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/snapshot_update_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/equipment_service_cell/source_literal_lines",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "table_index_one_based",
+            "physical_table_row_index_one_based",
+            "physical_column_index_one_based",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/table_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/physical_table_row_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/physical_column_index_one_based",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_entry/source_occurrences/*/inclusion_date_cell/source_literal_lines",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "appendix",
+            "marker_source_literal",
+            "text_source_literal",
+            "source_occurrences",
+            "applies_to"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/marker_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/text_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "document",
+            "pdf_page",
+            "appendix",
+            "printed_appendix_page",
+            "footnote_marker_source_literal",
+            "source_literal_lines"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*/pdf_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*/appendix",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*/printed_appendix_page",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*/footnote_marker_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/source_occurrences/*/source_literal_lines",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/linked_footnotes/*/applies_to",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "kind",
+            "document",
+            "pdf_pages",
+            "location",
+            "text_source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context/*/kind",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context/*/document",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context/*/pdf_pages",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/named_scope_context/*/pdf_pages/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context/*/location",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/named_scope_context/*/text_source_literal",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "category_applicability",
+            "conditional_approval_applicability",
+            "deployment_applicability",
+            "indirect_affiliate_applicability",
+            "legal_applicability",
+            "later_currency",
+            "query_scope"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/category_applicability",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/conditional_approval_applicability",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/deployment_applicability",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/indirect_affiliate_applicability",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/legal_applicability",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/later_currency",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/scope_limits/query_scope",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "snapshot_sha256",
+            "full_tuple_sha256",
+            "retention",
+            "as_of",
+            "sources",
+            "fact_counts"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/snapshot_sha256",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/full_tuple_sha256",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/retention",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "basis",
+            "literal",
+            "date",
+            "representation",
+            "source_ids"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of/basis",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of/literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of/date",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of/representation",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of/source_ids",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/as_of/source_ids/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "array",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_id",
+            "url",
+            "media_type",
+            "raw_sha256",
+            "raw_bytes",
+            "captured_started_at",
+            "captured_finished_at",
+            "publisher_version",
+            "publisher_cutoff",
+            "role",
+            "pdf_page_count",
+            "release_date_source_literal"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/source_id",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/url",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/media_type",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/raw_sha256",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/raw_bytes",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/captured_started_at",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/captured_finished_at",
+          "positions": [],
+          "time": "rfc3339"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/publisher_version",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [
+            "source_path",
+            "literal",
+            "representation"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/publisher_cutoff",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/publisher_cutoff/source_path",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/publisher_cutoff/literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/publisher_cutoff/representation",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/role",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 1,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/pdf_page_count",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "string",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/sources/*/release_date_source_literal",
+          "positions": [],
+          "time": "source_text"
+        },
+        {
+          "children": [
+            "named_entries",
+            "category_rows",
+            "footnotes",
+            "conditional_approvals",
+            "definition_context",
+            "source_context"
+          ],
+          "kind": "object",
+          "minimum": null,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts/named_entries",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts/category_rows",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts/footnotes",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts/conditional_approvals",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts/definition_context",
+          "positions": [],
+          "time": null
+        },
+        {
+          "children": [],
+          "kind": "integer",
+          "minimum": 0,
+          "nullable": false,
+          "path": "/snapshot_context/fact_counts/source_context",
+          "positions": [],
+          "time": null
+        }
+      ],
+      "selector": "fcc-covered-list",
+      "shape_id": "fcc_named_entry_observation"
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "sam-entity-doc.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://open.gsa.gov/api/entity-api/",
+      "source_url": "https://open.gsa.gov/api/entity-api/",
+      "raw_bytes": 336185,
+      "raw_sha256": "c5e50389cf413d32c24ed0e736b6da93caa54d4e8173f89d079adaa4721c8a4d",
+      "retrieved_at": "2026-09-11T07:49:19.389331+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:17 GMT",
+        "last-modified": "Wed, 20 May 2026 18:53:59 GMT",
+        "etag": "W/\"b9e04ec51a55a244d7c10ef941c56a76\"",
+        "cache-control": "max-age=60",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "sam-exclusions-doc.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://open.gsa.gov/api/exclusions-api/",
+      "source_url": "https://open.gsa.gov/api/exclusions-api/",
+      "raw_bytes": 73144,
+      "raw_sha256": "4473870b3735ac2f8b881c6a7762a08de680308a962d5e9e282d8812f85ef228",
+      "retrieved_at": "2026-09-11T07:49:19.285730+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:17 GMT",
+        "last-modified": "Wed, 20 May 2026 18:53:59 GMT",
+        "etag": "W/\"c91bca5a871f571124da497c1c05bfec\"",
+        "cache-control": "max-age=60",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "iana-rdap-dns.json",
+      "source_kind": "publisher_data",
+      "requested_url": "https://data.iana.org/rdap/dns.json",
+      "source_url": "https://data.iana.org/rdap/dns.json",
+      "raw_bytes": 71106,
+      "raw_sha256": "203262f750f2db107c74b167382b5bcf30fafb95dabc1ec2f55a4c2b85b53a75",
+      "retrieved_at": "2026-09-11T07:49:18.712076+00:00",
+      "response_metadata": {
+        "content-type": "application/json",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:16 GMT",
+        "last-modified": "Wed, 09 Sep 2026 23:00:03 GMT",
+        "etag": "W/\"115c2-65b14cfc15687-br\"",
+        "cache-control": "max-age=86400",
+        "expires": "Fri, 11 Sep 2026 11:00:04 GMT"
+      },
+      "distributed_raw": true,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "gleif-publisher-example.json",
+      "source_kind": "publisher_example_data",
+      "requested_url": "https://www.gleif.org/lei-data/access-and-use-lei-data/supporting-documents/GLEIF-API-example.json",
+      "source_url": "https://www.gleif.org/media/pages/lei-data/access-and-use-lei-data/supporting-documents/907316c171-1746444974/GLEIF-API-example.json",
+      "raw_bytes": 18530,
+      "raw_sha256": "8f363418ba93cd919d907ab90edf827b5b9ec8499e05f53b05addeb345da85b9",
+      "retrieved_at": "2026-09-11T07:49:20.461109+00:00",
+      "response_metadata": {
+        "content-type": "application/json",
+        "content-length": "18530",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:18 GMT",
+        "last-modified": "Thu, 10 Sep 2026 13:22:41 GMT",
+        "etag": "\"4862-65b20dcc92157\"",
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "cmvp-active-all.html",
+      "source_kind": "publisher_data",
+      "requested_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search/all",
+      "source_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search/all",
+      "raw_bytes": 832098,
+      "raw_sha256": "878aae4439d0ef522b539b75a570d4df66913670a4d6810485359baa0abb5e9f",
+      "retrieved_at": "2026-09-11T07:49:20.269908+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:17 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": "no-cache",
+        "expires": "-1"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "fcc-da-26-957.pdf",
+      "source_kind": "publisher_pdf",
+      "requested_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "source_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
+      "raw_bytes": 365195,
+      "raw_sha256": "1729669d3130af02c5202146af856b1ba53348c72f74263976770c8f5be92b3d",
+      "retrieved_at": "2026-09-11T07:49:20.683142+00:00",
+      "response_metadata": {
+        "content-type": "application/pdf; charset=UTF-8",
+        "content-length": "365195",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:18 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "incommon-production-certificate.pem",
+      "source_kind": "public_trust_certificate",
+      "requested_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+      "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+      "raw_bytes": 1704,
+      "raw_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+      "retrieved_at": "2026-09-11T07:49:20.684142+00:00",
+      "response_metadata": {
+        "content-type": "application/octet-stream",
+        "content-length": "1704",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:19 GMT",
+        "last-modified": "Thu, 13 Nov 2025 22:00:01 GMT",
+        "etag": "\"e416b2048bf80296091ab61c6301f676\"",
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "sam-entity-openapi.yaml",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://open.gsa.gov/api/entity-api/v1/openapi.yaml",
+      "source_url": "https://open.gsa.gov/api/entity-api/v1/openapi.yaml",
+      "raw_bytes": 108049,
+      "raw_sha256": "a9a5378adac419db00ee59e3a43e1a1144a3198c3edc4f5840fdd7f3987976a4",
+      "retrieved_at": "2026-09-11T07:58:17.083160+00:00",
+      "response_metadata": {
+        "content-type": "binary/octet-stream",
+        "content-length": "108049",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": "Thu, 12 Dec 2024 15:58:11 GMT",
+        "etag": "\"5b9b40697059174f0af6638b48bee83b\"",
+        "cache-control": "max-age=60",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "sam-exclusions-openapi.yaml",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://open.gsa.gov/api/exclusions-api/v1/openapi.yaml",
+      "source_url": "https://open.gsa.gov/api/exclusions-api/v1/openapi.yaml",
+      "raw_bytes": 8844,
+      "raw_sha256": "ad5a9db9e7b45f271fe2aa264ff8ed67d79e04fa5258cb2522146e17bbc697dd",
+      "retrieved_at": "2026-09-11T07:58:16.886695+00:00",
+      "response_metadata": {
+        "content-type": "binary/octet-stream",
+        "content-length": "8844",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": "Thu, 29 Aug 2024 15:50:52 GMT",
+        "etag": "\"9d0f9e48016ab7fe4fe65e2d6afaf8c9\"",
+        "cache-control": "max-age=60",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "fedramp-products.json",
+      "source_kind": "publisher_data",
+      "requested_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/data.json",
+      "source_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/data.json",
+      "raw_bytes": 4391642,
+      "raw_sha256": "a13d33bc61c40efa71a6aadd45a54256cfe59c1a95d55e1174560accf332e2bf",
+      "retrieved_at": "2026-09-11T07:58:17.352573+00:00",
+      "response_metadata": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-length": "4391642",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": null,
+        "etag": "\"5efa667f2d718ccfca2d9247683cde698126b9a800ce89f87e0938d89ad4c6d6\"",
+        "cache-control": "max-age=300",
+        "expires": "Fri, 11 Sep 2026 08:03:15 GMT"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "fedramp-statuses.json",
+      "source_kind": "publisher_data",
+      "requested_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-status-changelog.json",
+      "source_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-status-changelog.json",
+      "raw_bytes": 1106470,
+      "raw_sha256": "bfa81ffc351e4085f17157b52844abf570e3208542c2c4a931b613732e08eae6",
+      "retrieved_at": "2026-09-11T07:58:17.042131+00:00",
+      "response_metadata": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-length": "1106470",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": null,
+        "etag": "\"6c9b96c9e0e961229e44729ec5f8fe9bb5b435389b6acdf48261b2724bbdfb29\"",
+        "cache-control": "max-age=300",
+        "expires": "Fri, 11 Sep 2026 08:03:15 GMT"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "fedramp-packages.json",
+      "source_kind": "publisher_data",
+      "requested_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-frc-cso-pkg.json",
+      "source_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-frc-cso-pkg.json",
+      "raw_bytes": 593813,
+      "raw_sha256": "8801e16c40202bcbb826af0f78471951a3a31a5f1f8742308a46df75fce68fd9",
+      "retrieved_at": "2026-09-11T07:58:17.397692+00:00",
+      "response_metadata": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-length": "593813",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": null,
+        "etag": "\"e5cf5de97e32005137f047f06d09cb9d0dbeabc31ecd5b6634b4c9c5d9c3e3e2\"",
+        "cache-control": "max-age=300",
+        "expires": "Fri, 11 Sep 2026 08:03:15 GMT"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "cmvp-historical.html",
+      "source_kind": "publisher_data",
+      "requested_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Advanced&CertificateStatus=Historical&ValidationYear=0",
+      "source_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Advanced&CertificateStatus=Historical&ValidationYear=0",
+      "raw_bytes": 3381535,
+      "raw_sha256": "375491abc8f53da6ebd25ecfdf44c8a9d9582fab6b0005e6ead9d5d06fd11cfe",
+      "retrieved_at": "2026-09-11T07:58:17.865985+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": "no-cache",
+        "expires": "-1"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "cmvp-revoked.html",
+      "source_kind": "publisher_data",
+      "requested_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Advanced&CertificateStatus=Revoked&ValidationYear=0",
+      "source_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Advanced&CertificateStatus=Revoked&ValidationYear=0",
+      "raw_bytes": 71342,
+      "raw_sha256": "4a19aaa6cba8cf34d801714dc45ab55a0d9c3fb28170a9c420d4f1970e65a7ee",
+      "retrieved_at": "2026-09-11T07:58:17.438732+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": "no-cache",
+        "expires": "-1"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "cmvp-certificate-5517.html",
+      "source_kind": "publisher_data",
+      "requested_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5517",
+      "source_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5517",
+      "raw_bytes": 46673,
+      "raw_sha256": "303bc6d6e60f5fd599c1918fa870108f712c5950c8ef11d1e3645038fdd53de6",
+      "retrieved_at": "2026-09-11T07:58:17.725776+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:15 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": "no-cache",
+        "expires": "-1"
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "fcc-da-26-870.pdf",
+      "source_kind": "publisher_pdf",
+      "requested_url": "https://docs.fcc.gov/public/attachments/DA-26-870A1.pdf",
+      "source_url": "https://docs.fcc.gov/public/attachments/DA-26-870A1.pdf",
+      "raw_bytes": 1224845,
+      "raw_sha256": "402867cc1336fa4a2afc8be0c8814d135be7ebbe04d85d48a70e6e3a3ee2539a",
+      "retrieved_at": "2026-09-11T07:58:18.663703+00:00",
+      "response_metadata": {
+        "content-type": "application/pdf; charset=UTF-8",
+        "content-length": "1224845",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:16 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "fcc-da-26-786.pdf",
+      "source_kind": "publisher_pdf",
+      "requested_url": "https://docs.fcc.gov/public/attachments/DA-26-786A1.pdf",
+      "source_url": "https://docs.fcc.gov/public/attachments/DA-26-786A1.pdf",
+      "raw_bytes": 1936619,
+      "raw_sha256": "ce1f83baffa267cf82dcb27c6433e0afbf8a1d10795ef8ee04573a927195d5a6",
+      "retrieved_at": "2026-09-11T07:58:18.787037+00:00",
+      "response_metadata": {
+        "content-type": "application/pdf; charset=UTF-8",
+        "content-length": "1936619",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:16 GMT",
+        "last-modified": null,
+        "etag": null,
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "saml-metadata.xsd",
+      "source_kind": "publisher_schema",
+      "requested_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+      "source_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+      "raw_bytes": 16440,
+      "raw_sha256": "204bc7991055dbb889307abbd2ff58022753897dd7064a4d1ca13eb737d2617a",
+      "retrieved_at": "2026-09-11T07:58:18.257709+00:00",
+      "response_metadata": {
+        "content-type": "application/xml",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:16 GMT",
+        "last-modified": "Sun, 05 Apr 2026 14:01:40 GMT",
+        "etag": "W/\"3898070578bb213ee2b65f1a677f275d\"",
+        "cache-control": "public, max-age=31536000, immutable",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "saml-metadata-rpi.xsd",
+      "source_kind": "publisher_schema",
+      "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+      "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+      "raw_bytes": 3471,
+      "raw_sha256": "ec1e84db1eb93af943480e7b551048d7ea7da1ced0a8c4ff498cf6593f6c558a",
+      "retrieved_at": "2026-09-11T07:58:18.522057+00:00",
+      "response_metadata": {
+        "content-type": "application/xml",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:16 GMT",
+        "last-modified": "Sun, 05 Apr 2026 14:01:32 GMT",
+        "etag": "W/\"2a0b32d6184dd804fc72b7d622403890\"",
+        "cache-control": "public, max-age=31536000, immutable",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "saml-metadata-rpi.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/saml-metadata-rpi-v1.0-cs01.html",
+      "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/saml-metadata-rpi-v1.0-cs01.html",
+      "raw_bytes": 90634,
+      "raw_sha256": "a958a930bdf345659a356ceebdbc518e0010c403a5b2df80e7f2b751c1510b9a",
+      "retrieved_at": "2026-09-11T07:58:18.828314+00:00",
+      "response_metadata": {
+        "content-type": "text/html",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:58:17 GMT",
+        "last-modified": "Tue, 21 Apr 2026 11:01:10 GMT",
+        "etag": null,
+        "cache-control": "public, max-age=31536000, immutable",
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "gleif-api-docs.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://api.gleif.org/docs",
+      "source_url": "https://documenter.getpostman.com/view/7679680/SVYrrxuU?version=latest",
+      "raw_bytes": 61400,
+      "raw_sha256": "1a075cb225f2d4edec77dd4d4a5e0c2140933d806f2a7584938c93d9d270ebe4",
+      "retrieved_at": "2026-09-11T08:08:26.264853+00:00",
+      "response_metadata": {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 08:08:24 GMT",
+        "last-modified": null,
+        "etag": "W/\"efd8-0GHgkxMG0m33QM7f8+xmGx47kAU\"",
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "gleif-public-doc-collection.json",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://documenter.gw.postman.com/api/collections/7679680/SVYrrxuU?segregateAuth=true&versionTag=latest",
+      "source_url": "https://documenter.gw.postman.com/api/collections/7679680/SVYrrxuU?segregateAuth=true&versionTag=latest",
+      "raw_bytes": 820781,
+      "raw_sha256": "ce01671ff004d4e993930f6cc8adf3bea8013326d45c4ed5755b7ffe40d12474",
+      "retrieved_at": "2026-09-11T08:26:52.562843+00:00",
+      "response_metadata": {
+        "content-type": "application/json; charset=utf-8",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 08:26:50 GMT",
+        "last-modified": null,
+        "etag": "W/\"c862d-itvPBtlQFgkQRuErj01ipNJmK7Y\"",
+        "cache-control": null,
+        "expires": null
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "python-3.12-ssl.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://docs.python.org/3.12/library/ssl.html",
+      "source_url": "https://docs.python.org/3.12/library/ssl.html",
+      "raw_bytes": 323409,
+      "raw_sha256": "c1d4cb26fd241543e91c132e9f01cf54beb547c2a0d9331b26d726f59c2966e0",
+      "retrieved_at": "2026-09-11T20:57:12.084Z",
+      "response_metadata": {
+        "content-type": "text/html",
+        "content-length": "323409",
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 20:57:11 GMT",
+        "last-modified": "Mon, 07 Sep 2026 19:39:58 GMT",
+        "etag": "\"6a9f130e-4ef51\""
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured contract bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "rfc9083.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "raw_bytes": 281665,
+      "raw_sha256": "11d1d9ea08527c557fd7fa2d101fa4dd1336193b816459c1ed371d7a9c91dc8d",
+      "retrieved_at": "2026-09-11T20:57:12.281Z",
+      "response_metadata": {
+        "content-type": "text/html",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 20:57:12 GMT",
+        "last-modified": null,
+        "etag": "W/\"b5397d542a8dc7e02b47572d512af262\""
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured contract bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "rfc9116.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "raw_bytes": 126914,
+      "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+      "retrieved_at": "2026-09-11T20:57:12.239Z",
+      "response_metadata": {
+        "content-type": "text/html",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 20:57:12 GMT",
+        "last-modified": null,
+        "etag": "W/\"14124653b727beb602988c7fc9329f80\""
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured contract bytes; no live target assessment or continuing currency claim"
+    },
+    {
+      "source_id": "rfc9537.html",
+      "source_kind": "publisher_documentation",
+      "requested_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+      "raw_bytes": 113340,
+      "raw_sha256": "19ae89358f3bd2c2217a5e35d78edab23bd58ee96295c74dd56f1c6001283ffa",
+      "retrieved_at": "2026-09-11T20:57:12.250Z",
+      "response_metadata": {
+        "content-type": "text/html",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 20:57:12 GMT",
+        "last-modified": null,
+        "etag": "W/\"14d124d57e5b9f04df3dbcbfc0d34f63\""
+      },
+      "distributed_raw": false,
+      "scope": "Reviewed captured contract bytes; no live target assessment or continuing currency claim"
+    }
+  ],
+  "snapshot_index": {
+    "fedramp": {
+      "path": "data/fedramp/snapshot.json",
+      "sha256": "d37fdce16b3d497ea12a71757878a36397260fb6940a504d4ba34d4f88c2d99b",
+      "bytes": 976293,
+      "tuple_path": "tests/fixtures/registries/fedramp/full-source-tuples.json",
+      "tuple_input": {
+        "bytes": 1535178,
+        "sha256": "11a62feef97245ead1ef1f40e90ae48a0074007e4b1508d7ab4345643b0685f7",
+        "source_kind": "reviewed-native-tuples"
+      },
+      "schema_version": "1",
+      "snapshot_format": "selected_registry_facts_v1",
+      "source_manifest_sha256": "98fa0f91ac2381529aa6b376f136ea347ca480982ed339f031c33af71e3fbf1d",
+      "fact_counts": {
+        "products": 666,
+        "unjoined_packages": 62,
+        "unmatched_history": 334
+      },
+      "family_shapes": {
+        "products": "fedramp_product_record",
+        "unmatched_history": "fedramp_unmatched_history",
+        "unjoined_packages": "fedramp_unjoined_package"
+      }
+    },
+    "cmvp": {
+      "path": "data/cmvp/snapshot.json",
+      "sha256": "ad6ecd36279333bc6d2474b7dec8b29482d244610fceac702c83559248fe7a8d",
+      "bytes": 2375089,
+      "tuple_path": "tests/fixtures/registries/cmvp/full-source-tuples.json.gz",
+      "tuple_input": {
+        "bytes": 2112592,
+        "sha256": "ad9551fb60751454d0206dc4776dba474e56f1735569829cb9001f61f633d91a",
+        "source_kind": "reviewed-native-tuples"
+      },
+      "schema_version": "1",
+      "snapshot_format": "selected_registry_facts_v1",
+      "source_manifest_sha256": "a66d3e3f4e5eeb6f8677f1b8db930f55d2324285aa95c4d1dcc647bbc07df79d",
+      "fact_counts": {
+        "certificates": 5510
+      },
+      "family_shapes": {
+        "certificates": "cmvp_certificate_record"
+      },
+      "storage": {
+        "path": "data/cmvp/snapshot.json.gz",
+        "encoding": "gzip",
+        "bytes": 1518746,
+        "sha256": "423c12b697fc0083a1e61267b42655eba7fd25b3e4f22539856b695bb1562542",
+        "decoded_bytes": 2375089,
+        "decoded_sha256": "ad6ecd36279333bc6d2474b7dec8b29482d244610fceac702c83559248fe7a8d"
+      },
+      "tuple_storage": {
+        "path": "tests/fixtures/registries/cmvp/full-source-tuples.json.gz",
+        "encoding": "gzip",
+        "bytes": 1155661,
+        "sha256": "631c33ee014b1e3f915cc3bad7c58942ab7de68d86fe2a417433e2c371b9ee52",
+        "decoded_bytes": 2112592,
+        "decoded_sha256": "ad9551fb60751454d0206dc4776dba474e56f1735569829cb9001f61f633d91a"
+      }
+    },
+    "fcc-covered-list": {
+      "path": "data/fcc/snapshot.json",
+      "sha256": "bd1f624947281bf54ae144a2ae0e0b41fb3daed5caa1e34c35920e85f539ad9c",
+      "bytes": 127921,
+      "tuple_path": "tests/fixtures/registries/fcc/full-source-tuples.json",
+      "tuple_input": {
+        "bytes": 127854,
+        "sha256": "2b14cc83b94e624bb296e96a8601dd76b328f755dba85d138e71b8650fe95453",
+        "source_kind": "reviewed_pdf_facts_v1"
+      },
+      "schema_version": "1",
+      "snapshot_format": "selected_registry_facts_v1",
+      "source_manifest_sha256": "d10a70429ca88b890460b4a82fc272dcdd37ee25de6aa69e7736696e91f6a2f7",
+      "fact_counts": {
+        "category_rows": 4,
+        "conditional_approvals": 40,
+        "definition_context": 3,
+        "footnotes": 9,
+        "named_entries": 12,
+        "source_context": 11
+      },
+      "family_shapes": {
+        "named_entries": "fcc_named_entries",
+        "category_rows": "fcc_category_rows",
+        "footnotes": "fcc_footnotes",
+        "conditional_approvals": "fcc_conditional_approvals",
+        "definition_context": "fcc_definition_context",
+        "source_context": "fcc_source_context"
+      }
+    }
+  },
+  "snapshot_index_sha256": "b9969a4e6154b22c14bd08705f03b7f7d006375f39b82a720456ca885e265256",
+  "bootstrap": {
+    "path": "data/rdap/bootstrap.json",
+    "bytes": 71106,
+    "sha256": "203262f750f2db107c74b167382b5bcf30fafb95dabc1ec2f55a4c2b85b53a75",
+    "publication": "2026-09-09T23:00:03Z",
+    "version": "1.0",
+    "service_count": 590,
+    "suffix_count": 1200,
+    "url_count": 590,
+    "source": {
+      "url": "https://data.iana.org/rdap/dns.json",
+      "captured_started_at": "2026-09-11T07:49:18.393781+00:00",
+      "captured_finished_at": "2026-09-11T07:49:18.712076+00:00",
+      "headers": {
+        "content-type": "application/json",
+        "content-length": null,
+        "content-encoding": null,
+        "date": "Fri, 11 Sep 2026 07:49:16 GMT",
+        "last-modified": "Wed, 09 Sep 2026 23:00:03 GMT",
+        "etag": "W/\"115c2-65b14cfc15687-br\"",
+        "cache-control": "max-age=86400",
+        "expires": "Fri, 11 Sep 2026 11:00:04 GMT"
+      }
+    }
+  },
+  "bootstrap_index_sha256": "08141d69c237aeaa989a961c5c9a67227eb025c5f02eeec69a50368f3b3f0f52",
+  "field_table_amendments": [
+    {
+      "shape_id": "fcc_named_entry_observation",
+      "descriptor_sha256": "488daeec2d18f50511632a8ca51e7e6e345e1c737ede8359debeeb3c8eeb7b0f",
+      "preserved_prior_rule_count": 470,
+      "added_rule_count": 96
+    }
+  ],
+  "contract_references": [
+    {
+      "selector": "tls",
+      "source_url": "https://docs.python.org/3.12/library/ssl.html",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": "c1d4cb26fd241543e91c132e9f01cf54beb547c2a0d9331b26d726f59c2966e0",
+      "raw_bytes": 323409
+    },
+    {
+      "selector": "rdap-bootstrap",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9224.html",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": null
+    },
+    {
+      "selector": "rdap-query",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9082.html",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": null
+    },
+    {
+      "selector": "rdap-json",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": "11d1d9ea08527c557fd7fa2d101fa4dd1336193b816459c1ed371d7a9c91dc8d",
+      "raw_bytes": 281665
+    },
+    {
+      "selector": "rdap-http",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7480.html",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": null
+    },
+    {
+      "selector": "ssl-labs-v4",
+      "source_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": "92ca8697293ae0525aeb231a80b64877178a62fda293cf74fdd3e7609c7ecb86",
+      "raw_bytes": 120081
+    },
+    {
+      "selector": "security-txt",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+      "scope": "Versioned contract used for the bounded implementation; no provider response is implied",
+      "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+      "raw_bytes": 126914
+    },
+    {
+      "selector": "rdap-redaction",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+      "scope": "Versioned redaction contract for selected source fields; no provider response is implied",
+      "raw_sha256": "19ae89358f3bd2c2217a5e35d78edab23bd58ee96295c74dd56f1c6001283ffa",
+      "raw_bytes": 113340
+    }
+  ],
+  "live_access_policy": {
+    "ssl_labs": "disabled",
+    "sam_entity_completeness": "unproven",
+    "incommon": "pinned signature subset; no captured production tuple compatibility claim"
+  },
+  "trust_data": [
+    {
+      "path": "data/incommon/production-signing-certificate.json",
+      "bytes": 2344,
+      "sha256": "a8aac7edce3fb1bff0e0b3153d25eaae15555a99adbb97c5a5051332e5606fe8",
+      "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+      "pem_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+      "der_sha256": "604974d61fe0d7f4d63d6c8db98a857e642ab9b470e3e85dd54d663d0496f900",
+      "purpose": "Pinned production XML signature verification; public certificate only"
+    }
+  ],
+  "reviewed_guidance": [
+    {
+      "url": "https://spaces.at.internet2.edu/spaces/MDQ/pages/315130561/production-mdq-signing-key",
+      "publisher_updated": "2025-07-25",
+      "observed": "2026-09-11",
+      "raw_capture": false
+    },
+    {
+      "url": "https://spaces.at.internet2.edu/spaces/MDQ/pages/166658436/how-to-configure-shib-idp-to-use-mdq",
+      "publisher_updated": "2025-04-18",
+      "observed": "2026-09-11",
+      "raw_capture": false
+    },
+    {
+      "url": "https://spaces.at.internet2.edu/spaces/MDQ/pages/166658437/how-to-configure-shib-sp-to-use-mdq",
+      "publisher_updated": "2025-04-18",
+      "observed": "2026-09-11",
+      "raw_capture": false
+    },
+    {
+      "url": "https://spaces.at.internet2.edu/spaces/MDQ/pages/315130549/how-to-retrieve-per-entity-metadata",
+      "publisher_created": "2024-09-26",
+      "observed": "2026-09-11",
+      "raw_capture": false
+    }
+  ]
+}

@@ -27,13 +27,10 @@ import instructor
 import litellm
 from evidentia_core.network_guard import check_llm_model
 
+from evidentia_ai.config import get_default_model as get_default_model
+
 # Suppress LiteLLM's verbose logging by default
 litellm.suppress_debug_info = True
-
-
-def get_default_model() -> str:
-    """Get the default model from environment or config."""
-    return os.environ.get("EVIDENTIA_LLM_MODEL", "gpt-4o")
 
 
 def get_temperature() -> float:
@@ -88,17 +85,14 @@ def get_instructor_client() -> instructor.Instructor:
     Uses `instructor.from_litellm` with a guarded completion wrapper so
     air-gapped mode stops cloud LLM calls before they leave the process.
     """
-    # `instructor.from_litellm` is typed as returning `Any` in recent
-    # Instructor releases; cast so `--strict` mypy accepts the declared
-    # return type. Runtime behaviour is unchanged.
-    return cast(instructor.Instructor, instructor.from_litellm(_guarded_completion))
+    return instructor.from_litellm(_guarded_completion)
 
 
 @lru_cache(maxsize=1)
 def get_async_instructor_client() -> instructor.AsyncInstructor:
     """Get an async Instructor client for concurrent operations.
 
-    Same guarded-completion wrapper as the sync client — concurrent
+    Same guarded-completion wrapper as the sync client ; concurrent
     calls (e.g. "generate risk statements for top 10 gaps in parallel")
     get the same offline enforcement.
     """

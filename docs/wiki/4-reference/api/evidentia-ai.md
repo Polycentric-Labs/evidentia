@@ -16,6 +16,7 @@ Install: `pip install evidentia-ai`. Import root: `evidentia_ai`.
 Public submodules + subpackages of `evidentia_ai` (import directly, e.g. `from evidentia_ai.client import ...`):
 
 - `evidentia_ai.client`
+- `evidentia_ai.config`
 - `evidentia_ai.exceptions`
 - `evidentia_ai.explain`
 - `evidentia_ai.risk_statements`

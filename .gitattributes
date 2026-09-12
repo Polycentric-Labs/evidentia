@@ -14,3 +14,13 @@ tests/fuzz/corpus/**/crash-* binary
 # on every platform so `sha256sum <file>` matches the pin, not only the
 # EOL-independent `git hash-object` blob id.
 packages/evidentia-core/src/evidentia_core/fedramp/schemas/*.json text eol=lf
+
+# Registry source hashes bind exact LF bytes on every checkout.
+packages/evidentia-collectors/src/evidentia_collectors/registries/data/fcc/snapshot.json text eol=lf
+packages/evidentia-collectors/src/evidentia_collectors/registries/data/fedramp/snapshot.json text eol=lf
+packages/evidentia-collectors/src/evidentia_collectors/registries/data/incommon/production-signing-certificate.json text eol=lf
+packages/evidentia-collectors/src/evidentia_collectors/registries/data/rdap/bootstrap.json text eol=lf
+packages/evidentia-collectors/src/evidentia_collectors/registries/data/source-index.json text eol=lf
+tests/fixtures/registries/fedramp/full-source-tuples.json text eol=lf
+tests/fixtures/registries/fcc/full-source-tuples.json text eol=lf
+tests/fixtures/registries/source-index.json text eol=lf

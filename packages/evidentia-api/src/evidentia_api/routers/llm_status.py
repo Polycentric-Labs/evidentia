@@ -1,4 +1,4 @@
-"""LLM-status router — provider configuration state **without** key values.
+"""LLM-status router: provider configuration state **without** key values.
 
 Honors the global CLAUDE.md secrets-through-context rule strictly: this
 endpoint never returns key values, only presence booleans and source
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 
-from evidentia_ai.client import get_default_model
+from evidentia_ai.config import get_default_model
 from fastapi import APIRouter
 
 from evidentia_api.schemas import LlmProviderState, LlmStatusResponse

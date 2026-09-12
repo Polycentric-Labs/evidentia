@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Literal, NotRequired, TypedDict, cast
 
 POLICY_PATH = Path(__file__).resolve().parents[1] / ".github" / "verification-policy.json"
-POLICY_SHA256 = "b11bc4f606e91460efff5bd2910429f03d9c9e858d07c65d07a453223caad66d"
+POLICY_SHA256 = "e2ef83eb3e65a197ab50cb8f885061e16048ccecdf049d44dcf3a6efcf36794a"
 
 
 class CheckIdentity(TypedDict):

@@ -27,6 +27,7 @@ Public submodules + subpackages of `evidentia_collectors` (import directly, e.g.
 - `evidentia_collectors.nessus`
 - `evidentia_collectors.ocsf`
 - `evidentia_collectors.okta`
+- `evidentia_collectors.registries`
 - `evidentia_collectors.retention`
 - `evidentia_collectors.securityscorecard`
 - `evidentia_collectors.snowflake`
