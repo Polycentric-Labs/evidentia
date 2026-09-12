@@ -689,6 +689,39 @@
         "title": "AzureTarget",
         "type": "object"
       },
+      "CMVPRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "cmvp",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/CertificateTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "CMVPRequest",
+        "type": "object"
+      },
       "CadenceSeries": {
         "additionalProperties": false,
         "description": "The dated series for one cadence over a window, with its verdict.",
@@ -1410,6 +1443,29 @@
           "values"
         ],
         "title": "CatalogSourceRow",
+        "type": "object"
+      },
+      "CertificateTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "certificate_number": {
+            "allOf": [
+              {
+                "pattern": "^[0-9]+$",
+                "type": "string"
+              }
+            ],
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Certificate Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "certificate_number"
+        ],
+        "title": "CertificateTarget",
         "type": "object"
       },
       "ChallengeOutcome": {
@@ -2621,6 +2677,23 @@
         "title": "DimensionAnalysis",
         "type": "object"
       },
+      "DomainTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "maxLength": 254,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Domain",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "title": "DomainTarget",
+        "type": "object"
+      },
       "EUAIActTier": {
         "description": "EU AI Act risk tier per Articles 5, 6, 50.",
         "enum": [
@@ -3006,6 +3079,31 @@
           "index"
         ],
         "title": "ElasticIndexTarget",
+        "type": "object"
+      },
+      "EndpointTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "endpoint_ip": {
+            "maxLength": 45,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Endpoint Ip",
+            "type": "string"
+          },
+          "hostname": {
+            "maxLength": 254,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Hostname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hostname",
+          "endpoint_ip"
+        ],
+        "title": "EndpointTarget",
         "type": "object"
       },
       "EnterpriseRetentionCollectResult": {
@@ -3875,6 +3973,23 @@
         "title": "EnterpriseRetentionResourceResult[VaultMatterTarget]",
         "type": "object"
       },
+      "EntityTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "entity_id": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Entity Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_id"
+        ],
+        "title": "EntityTarget",
+        "type": "object"
+      },
       "EntraM365CapabilityResult": {
         "additionalProperties": false,
         "properties": {
@@ -4671,6 +4786,62 @@
         "title": "EvidentiaConfig",
         "type": "object"
       },
+      "FCCOrganizationTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "organization_name": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Organization Name",
+            "type": "string"
+          },
+          "query_scope": {
+            "const": "named_organization_entries",
+            "title": "Query Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "organization_name",
+          "query_scope"
+        ],
+        "title": "FCCOrganizationTarget",
+        "type": "object"
+      },
+      "FCCRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "fcc-covered-list",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/FCCOrganizationTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "FCCRequest",
+        "type": "object"
+      },
       "FIPS199Categorization": {
         "additionalProperties": false,
         "description": "FIPS 199 impact categorization for an AI system or component.\n\nCarries the three per-objective ratings + the high-water-mark\noverall. The :meth:`compute_overall` validator enforces the\ninvariant: if ``overall`` is supplied explicitly, it MUST equal\nthe high-water-mark of the per-objective ratings. If omitted,\nit is computed automatically. This prevents operators from\naccidentally publishing an entry where ``overall=LOW`` while\none of the objectives is HIGH (an obvious paperwork error that\nwould otherwise pass schema validation).\n\nExample::\n\n    cat = FIPS199Categorization(\n        confidentiality_impact=FIPS199Impact.MODERATE,\n        integrity_impact=FIPS199Impact.HIGH,\n        availability_impact=FIPS199Impact.LOW,\n    )\n    # overall computed automatically:\n    assert cat.overall == FIPS199Impact.HIGH",
@@ -4806,6 +4977,39 @@
         "title": "FairMcQuantifyResponse",
         "type": "object"
       },
+      "FedRAMPRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "fedramp",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ProductTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "FedRAMPRequest",
+        "type": "object"
+      },
       "FindingStatus": {
         "description": "Status of a security finding.",
         "enum": [
@@ -4855,6 +5059,39 @@
           "relationship"
         ],
         "title": "FourthParty",
+        "type": "object"
+      },
+      "GLEIFRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "gleif",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/LEITarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "GLEIFRequest",
         "type": "object"
       },
       "GapAnalysisReport": {
@@ -5601,6 +5838,23 @@
         "title": "HighImpactRequest",
         "type": "object"
       },
+      "HostnameTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "hostname": {
+            "maxLength": 254,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Hostname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hostname"
+        ],
+        "title": "HostnameTarget",
+        "type": "object"
+      },
       "ImplementationEffort": {
         "description": "Estimated effort to remediate a gap.",
         "enum": [
@@ -5611,6 +5865,39 @@
         ],
         "title": "ImplementationEffort",
         "type": "string"
+      },
+      "InCommonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "incommon",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/EntityTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "InCommonRequest",
+        "type": "object"
       },
       "InitWizardCommitRequest": {
         "additionalProperties": false,
@@ -5831,40 +6118,26 @@
       },
       "JsonObject": {
         "additionalProperties": {
-          "$ref": "#/components/schemas/JsonValue"
+          "$ref": "#/components/schemas/evidentia_collectors__entra_m365___contracts__JsonValue"
         },
         "type": "object"
       },
-      "JsonValue": {
-        "anyOf": [
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "type": "number"
-          },
-          {
+      "LEITarget": {
+        "additionalProperties": false,
+        "properties": {
+          "lei": {
+            "maxLength": 20,
+            "minLength": 20,
+            "pattern": "^[A-Z0-9]{20}$",
+            "title": "Lei",
             "type": "string"
-          },
-          {
-            "items": {
-              "$ref": "#/components/schemas/JsonValue"
-            },
-            "type": "array"
-          },
-          {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/JsonValue"
-            },
-            "type": "object"
-          },
-          {
-            "type": "null"
           }
-        ]
+        },
+        "required": [
+          "lei"
+        ],
+        "title": "LEITarget",
+        "type": "object"
       },
       "LLMConfig": {
         "additionalProperties": true,
@@ -6964,6 +7237,37 @@
         "title": "OMBImpactRequest",
         "type": "object"
       },
+      "ObservationTrust": {
+        "additionalProperties": false,
+        "properties": {
+          "source_signature": {
+            "enum": [
+              "verified",
+              "unverified",
+              "not_applicable"
+            ],
+            "title": "Source Signature",
+            "type": "string"
+          },
+          "transport_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Verified"
+          }
+        },
+        "required": [
+          "transport_verified",
+          "source_signature"
+        ],
+        "title": "ObservationTrust",
+        "type": "object"
+      },
       "OpenFAIRScenario": {
         "additionalProperties": false,
         "description": "A risk scenario expressed in Open FAIR terms.\n\nOperators supply each FAIR factor as either a scalar (single-\npoint estimate) or a :class:`PERTRange` (range estimate).\nThe :func:`compute_ale` helper resolves both to a deterministic\nexpected value.",
@@ -7446,6 +7750,23 @@
         "title": "PracticeWaiver",
         "type": "object"
       },
+      "ProductTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "product_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Product Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "title": "ProductTarget",
+        "type": "object"
+      },
       "Provenance": {
         "description": "Model provenance — who built it.\n\nInternal models follow SR 11-7 §III; vendor models additionally\nfollow §V (vendor-risk overlay). Vendor-provenance models MUST\nset `vendor_id` to cross-link to the v0.7.9 TPRM Vendor record.",
         "enum": [
@@ -7571,6 +7892,39 @@
         ],
         "title": "QuestionnaireFormat",
         "type": "string"
+      },
+      "RDAPRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "rdap",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/DomainTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "RDAPRequest",
+        "type": "object"
       },
       "RegisterAcquisitionRequest": {
         "description": "Body for ``POST /ai-gov/acquisitions``.\n\nRegisters an AI procurement for OMB M-25-22 lifecycle tracking.\n``likely_high_impact`` is the §4(a) initial determination in\nM-25-21 vocabulary (defaults to ``not_assessed``).",
@@ -7704,6 +8058,760 @@
           "owner"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "RegistryContext": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collector_id": {
+            "const": "public-registry",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9A-Za-z.+-]{1,32}$",
+                "type": "string"
+              }
+            ],
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "credential_identity": {
+            "const": "not-established",
+            "title": "Credential Identity",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9A-Za-z.+-]{1,32}$",
+                "type": "string"
+              }
+            ],
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filter_applied": {
+            "additionalProperties": true,
+            "title": "Filter Applied",
+            "type": "object"
+          },
+          "pagination_context": {
+            "title": "Pagination Context",
+            "type": "null"
+          },
+          "run_id": {
+            "maxLength": 26,
+            "minLength": 26,
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Source System Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collector_id",
+          "collector_version",
+          "run_id",
+          "collected_at",
+          "credential_identity",
+          "source_system_id",
+          "filter_applied",
+          "pagination_context",
+          "evidentia_version"
+        ],
+        "title": "RegistryContext",
+        "type": "object"
+      },
+      "RegistryDiagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "offline_refused",
+              "live_disabled",
+              "missing_credential",
+              "invalid_credential",
+              "missing_extra",
+              "dependency_failure",
+              "destination_refused",
+              "dns_failure",
+              "tls_failure",
+              "tls_certificate_verification_failed",
+              "connection_failure",
+              "timeout",
+              "http_error",
+              "redirect_refused",
+              "retry_exhausted",
+              "body_limit",
+              "run_byte_limit",
+              "invalid_response",
+              "identity_mismatch",
+              "source_terminal_unproven",
+              "source_match_scope_limited",
+              "traversal_incomplete",
+              "page_limit",
+              "record_limit",
+              "attempt_limit",
+              "read_limit",
+              "diagnostic_limit",
+              "observation_limit",
+              "result_limit",
+              "deadline_exceeded",
+              "duplicate_conflict",
+              "repeated_page",
+              "total_changed",
+              "projection_mismatch",
+              "snapshot_missing",
+              "snapshot_invalid",
+              "signature_missing",
+              "signature_invalid",
+              "signature_unsupported",
+              "signature_expired",
+              "source_time_unsupported",
+              "source_value_unknown",
+              "source_name_conflict",
+              "source_name_comparison_unsupported",
+              "expired_source",
+              "expiry_beyond_one_year",
+              "syntax_invalid",
+              "signature_unverified",
+              "cache_miss",
+              "category_applicability_not_assessed",
+              "indirect_affiliate_applicability_not_assessed",
+              "conditional_approval_applicability_not_assessed",
+              "cleanup_failure"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "effect": {
+            "enum": [
+              "advisory",
+              "gap"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "source_read_id": {
+            "anyOf": [
+              {
+                "maxLength": 69,
+                "minLength": 69,
+                "pattern": "^read-[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Read Id"
+          }
+        },
+        "required": [
+          "code",
+          "effect"
+        ],
+        "title": "RegistryDiagnostic",
+        "type": "object"
+      },
+      "RegistryFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_context": {
+            "$ref": "#/components/schemas/RegistryContext"
+          },
+          "compliance_status": {
+            "const": "unknown",
+            "title": "Compliance Status",
+            "type": "string"
+          },
+          "control_mappings": {
+            "items": {
+              "$ref": "#/components/schemas/ControlMapping"
+            },
+            "maxItems": 0,
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Description",
+            "type": "string"
+          },
+          "first_observed": {
+            "title": "First Observed",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "last_observed": {
+            "title": "Last Observed",
+            "type": "string"
+          },
+          "raw_data": {
+            "$ref": "#/components/schemas/evidentia_collectors__registries___contracts___FindingData"
+          },
+          "remediation": {
+            "title": "Remediation",
+            "type": "null"
+          },
+          "resolved_at": {
+            "title": "Resolved At",
+            "type": "null"
+          },
+          "resource_account": {
+            "title": "Resource Account",
+            "type": "null"
+          },
+          "resource_id": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_region": {
+            "title": "Resource Region",
+            "type": "null"
+          },
+          "resource_type": {
+            "const": "selected_registry_query",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "severity": {
+            "const": "informational",
+            "title": "Severity",
+            "type": "string"
+          },
+          "source_finding_id": {
+            "maxLength": 76,
+            "minLength": 76,
+            "title": "Source Finding Id",
+            "type": "string"
+          },
+          "source_system": {
+            "const": "public-registry",
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "const": "active",
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "severity",
+          "status",
+          "compliance_status",
+          "remediation",
+          "source_system",
+          "source_finding_id",
+          "resource_type",
+          "resource_id",
+          "resource_region",
+          "resource_account",
+          "control_mappings",
+          "collection_context",
+          "raw_data",
+          "first_observed",
+          "last_observed",
+          "resolved_at"
+        ],
+        "title": "RegistryFinding",
+        "type": "object"
+      },
+      "RegistryJsonValue": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "$ref": "#/components/schemas/RegistryJsonValue"
+            },
+            "type": "array"
+          },
+          {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RegistryJsonValue"
+            },
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "RegistryLookupRequest": {
+        "discriminator": {
+          "mapping": {
+            "cmvp": "#/components/schemas/CMVPRequest",
+            "fcc-covered-list": "#/components/schemas/FCCRequest",
+            "fedramp": "#/components/schemas/FedRAMPRequest",
+            "gleif": "#/components/schemas/GLEIFRequest",
+            "incommon": "#/components/schemas/InCommonRequest",
+            "rdap": "#/components/schemas/RDAPRequest",
+            "sam-entity": "#/components/schemas/SAMEntityRequest",
+            "sam-exclusions": "#/components/schemas/SAMExclusionsRequest",
+            "security-txt": "#/components/schemas/SecurityTxtRequest",
+            "ssl-labs": "#/components/schemas/SSLLabsRequest",
+            "tls": "#/components/schemas/TLSRequest"
+          },
+          "propertyName": "registry"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TLSRequest"
+          },
+          {
+            "$ref": "#/components/schemas/RDAPRequest"
+          },
+          {
+            "$ref": "#/components/schemas/SAMEntityRequest"
+          },
+          {
+            "$ref": "#/components/schemas/SAMExclusionsRequest"
+          },
+          {
+            "$ref": "#/components/schemas/GLEIFRequest"
+          },
+          {
+            "$ref": "#/components/schemas/FedRAMPRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CMVPRequest"
+          },
+          {
+            "$ref": "#/components/schemas/FCCRequest"
+          },
+          {
+            "$ref": "#/components/schemas/InCommonRequest"
+          },
+          {
+            "$ref": "#/components/schemas/SSLLabsRequest"
+          },
+          {
+            "$ref": "#/components/schemas/SecurityTxtRequest"
+          }
+        ],
+        "title": "RegistryLookupRequest"
+      },
+      "RegistryLookupResult": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Collection Status",
+            "type": "string"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryDiagnostic"
+            },
+            "maxItems": 64,
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryFinding"
+            },
+            "maxItems": 100,
+            "title": "Findings",
+            "type": "array"
+          },
+          "freshness": {
+            "enum": [
+              "current_observation",
+              "dated_snapshot",
+              "stale",
+              "unknown"
+            ],
+            "title": "Freshness",
+            "type": "string"
+          },
+          "lookup_outcome": {
+            "enum": [
+              "found",
+              "not_found",
+              "ambiguous",
+              "unavailable"
+            ],
+            "title": "Lookup Outcome",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/RegistryManifest"
+          },
+          "observation_scope": {
+            "const": "selected_registry_query",
+            "title": "Observation Scope",
+            "type": "string"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/RegistryObservation"
+            },
+            "maxItems": 100,
+            "title": "Observations",
+            "type": "array"
+          },
+          "registry": {
+            "enum": [
+              "tls",
+              "rdap",
+              "sam-entity",
+              "sam-exclusions",
+              "gleif",
+              "fedramp",
+              "cmvp",
+              "fcc-covered-list",
+              "incommon",
+              "ssl-labs",
+              "security-txt"
+            ],
+            "title": "Registry",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/RegistryLookupRequest"
+          },
+          "run_id": {
+            "maxLength": 26,
+            "minLength": 26,
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_reads": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRead"
+            },
+            "maxItems": 24,
+            "title": "Source Reads",
+            "type": "array"
+          }
+        },
+        "required": [
+          "schema_version",
+          "registry",
+          "request",
+          "run_id",
+          "observation_scope",
+          "lookup_outcome",
+          "collection_status",
+          "freshness",
+          "observations",
+          "source_reads",
+          "findings",
+          "diagnostics",
+          "manifest"
+        ],
+        "title": "RegistryLookupResult",
+        "type": "object"
+      },
+      "RegistryManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_finished_at": {
+            "title": "Collection Finished At",
+            "type": "string"
+          },
+          "collection_started_at": {
+            "title": "Collection Started At",
+            "type": "string"
+          },
+          "collector_id": {
+            "const": "public-registry",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9A-Za-z.+-]{1,32}$",
+                "type": "string"
+              }
+            ],
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "coverage_counts": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageCount"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Coverage Counts",
+            "type": "array"
+          },
+          "empty_categories": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1,
+            "title": "Empty Categories",
+            "type": "array"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidentia_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9A-Za-z.+-]{1,32}$",
+                "type": "string"
+              }
+            ],
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filters_applied": {
+            "additionalProperties": true,
+            "title": "Filters Applied",
+            "type": "object"
+          },
+          "incomplete_reason": {
+            "anyOf": [
+              {
+                "const": "selected_query_incomplete",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incomplete Reason"
+          },
+          "is_complete": {
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "run_id": {
+            "maxLength": 26,
+            "minLength": 26,
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1,
+            "title": "Source System Ids",
+            "type": "array"
+          },
+          "total_findings": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Total Findings",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "collector_id",
+          "collector_version",
+          "collection_started_at",
+          "collection_finished_at",
+          "source_system_ids",
+          "filters_applied",
+          "coverage_counts",
+          "total_findings",
+          "is_complete",
+          "incomplete_reason",
+          "empty_categories",
+          "warnings",
+          "errors",
+          "evidentia_version"
+        ],
+        "title": "RegistryManifest",
+        "type": "object"
+      },
+      "RegistryObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "field_coverage": {
+            "additionalProperties": {
+              "enum": [
+                "present",
+                "absent",
+                "null",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "maxProperties": 128,
+            "title": "Field Coverage",
+            "type": "object"
+          },
+          "fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RegistryJsonValue"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "interpretation": {
+            "maxLength": 256,
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "match_basis": {
+            "enum": [
+              "exact_identifier",
+              "exact_normalized_name",
+              "provider_candidate"
+            ],
+            "title": "Match Basis",
+            "type": "string"
+          },
+          "matched_identity": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Matched Identity",
+            "type": "string"
+          },
+          "observation_id": {
+            "maxLength": 76,
+            "minLength": 76,
+            "pattern": "^observation-[0-9a-f]{64}$",
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "registry": {
+            "enum": [
+              "tls",
+              "rdap",
+              "sam-entity",
+              "sam-exclusions",
+              "gleif",
+              "fedramp",
+              "cmvp",
+              "fcc-covered-list",
+              "incommon",
+              "ssl-labs",
+              "security-txt"
+            ],
+            "title": "Registry",
+            "type": "string"
+          },
+          "source_identity": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RegistryJsonValue"
+            },
+            "title": "Source Identity",
+            "type": "object"
+          },
+          "source_read_id": {
+            "maxLength": 69,
+            "minLength": 69,
+            "pattern": "^read-[0-9a-f]{64}$",
+            "title": "Source Read Id",
+            "type": "string"
+          },
+          "source_times": {
+            "items": {
+              "$ref": "#/components/schemas/SourceTime"
+            },
+            "maxItems": 64,
+            "title": "Source Times",
+            "type": "array"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/ObservationTrust"
+          }
+        },
+        "required": [
+          "registry",
+          "observation_id",
+          "source_read_id",
+          "source_identity",
+          "matched_identity",
+          "match_basis",
+          "fields",
+          "field_coverage",
+          "source_times",
+          "trust",
+          "interpretation"
+        ],
+        "title": "RegistryObservation",
         "type": "object"
       },
       "RegulatoryClassification": {
@@ -8146,6 +9254,130 @@
         "title": "S3Target",
         "type": "object"
       },
+      "SAMEntityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "sam-entity",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/UEITarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "SAMEntityRequest",
+        "type": "object"
+      },
+      "SAMExclusionsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "sam-exclusions",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UEITarget"
+              },
+              {
+                "$ref": "#/components/schemas/SAMOrganizationTarget"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "SAMExclusionsRequest",
+        "type": "object"
+      },
+      "SAMOrganizationTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "organization_name": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Organization Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "organization_name"
+        ],
+        "title": "SAMOrganizationTarget",
+        "type": "object"
+      },
+      "SSLLabsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "ssl-labs",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/EndpointTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "SSLLabsRequest",
+        "type": "object"
+      },
       "SecurityFinding": {
         "additionalProperties": false,
         "description": "A security finding from an evidence collector.\n\nFindings are the raw output of collectors — they represent a single\nobservation about a system's security posture.\n\nv0.7.0 schema (see module docstring for migration notes):\n\n- ``control_mappings`` replaces ``control_ids`` (backward-compat\n  via :meth:`_migrate_control_ids_kwarg`).\n- ``collection_context`` required but defaults to a synthetic\n  placeholder for pre-v0.7.0 construction sites.",
@@ -8301,6 +9533,39 @@
           "source_system"
         ],
         "title": "SecurityFinding",
+        "type": "object"
+      },
+      "SecurityTxtRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "security-txt",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/HostnameTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "SecurityTxtRequest",
         "type": "object"
       },
       "SeriesGap": {
@@ -8703,6 +9968,333 @@
           "risk_category_p50"
         ],
         "title": "SimulationResult",
+        "type": "object"
+      },
+      "SourceRead": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted_pages": {
+            "maximum": 20.0,
+            "minimum": 0.0,
+            "title": "Accepted Pages",
+            "type": "integer"
+          },
+          "admitted_records": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Admitted Records",
+            "type": "integer"
+          },
+          "attempted_pages": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Attempted Pages",
+            "type": "integer"
+          },
+          "body_complete": {
+            "title": "Body Complete",
+            "type": "boolean"
+          },
+          "cache_state": {
+            "enum": [
+              "not_applicable",
+              "cache_only",
+              "unknown"
+            ],
+            "title": "Cache State",
+            "type": "string"
+          },
+          "decoded_bytes": {
+            "anyOf": [
+              {
+                "maximum": 16777216.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decoded Bytes"
+          },
+          "freshness": {
+            "enum": [
+              "current_observation",
+              "dated_snapshot",
+              "stale",
+              "unknown"
+            ],
+            "title": "Freshness",
+            "type": "string"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "method": {
+            "enum": [
+              "GET",
+              "TLS",
+              "LOCAL",
+              "DISABLED"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "network_attempts": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Network Attempts",
+            "type": "integer"
+          },
+          "ordinal": {
+            "exclusiveMaximum": 24.0,
+            "minimum": 0.0,
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "publisher_date": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher Date"
+          },
+          "publisher_version": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher Version"
+          },
+          "query_scope": {
+            "$ref": "#/components/schemas/RegistryLookupRequest"
+          },
+          "raw_bytes": {
+            "anyOf": [
+              {
+                "maximum": 16777216.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Bytes"
+          },
+          "read_id": {
+            "maxLength": 69,
+            "minLength": 69,
+            "pattern": "^read-[0-9a-f]{64}$",
+            "title": "Read Id",
+            "type": "string"
+          },
+          "registry": {
+            "enum": [
+              "tls",
+              "rdap",
+              "sam-entity",
+              "sam-exclusions",
+              "gleif",
+              "fedramp",
+              "cmvp",
+              "fcc-covered-list",
+              "incommon",
+              "ssl-labs",
+              "security-txt"
+            ],
+            "title": "Registry",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "snapshot_source": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Source"
+          },
+          "source_digest": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Digest"
+          },
+          "source_records": {
+            "maximum": 50000.0,
+            "minimum": 0.0,
+            "title": "Source Records",
+            "type": "integer"
+          },
+          "source_signature": {
+            "enum": [
+              "verified",
+              "unverified",
+              "not_applicable"
+            ],
+            "title": "Source Signature",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "template": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Template",
+            "type": "string"
+          },
+          "transport_kind": {
+            "enum": [
+              "https",
+              "tls",
+              "snapshot",
+              "none"
+            ],
+            "title": "Transport Kind",
+            "type": "string"
+          },
+          "transport_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Verified"
+          }
+        },
+        "required": [
+          "read_id",
+          "registry",
+          "ordinal",
+          "method",
+          "template",
+          "query_scope",
+          "transport_kind",
+          "status",
+          "freshness",
+          "http_status",
+          "network_attempts",
+          "attempted_pages",
+          "accepted_pages",
+          "source_records",
+          "admitted_records",
+          "raw_bytes",
+          "decoded_bytes",
+          "body_complete",
+          "source_digest",
+          "retrieved_at",
+          "publisher_date",
+          "publisher_version",
+          "snapshot_source",
+          "cache_state",
+          "transport_verified",
+          "source_signature"
+        ],
+        "title": "SourceRead",
+        "type": "object"
+      },
+      "SourceTime": {
+        "additionalProperties": false,
+        "properties": {
+          "literal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Literal"
+          },
+          "normalized_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Utc"
+          },
+          "path": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Path",
+            "type": "string"
+          },
+          "representation": {
+            "enum": [
+              "rfc3339",
+              "unix_milliseconds",
+              "source_text"
+            ],
+            "title": "Representation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "literal",
+          "representation",
+          "normalized_utc"
+        ],
+        "title": "SourceTime",
         "type": "object"
       },
       "SplunkCollectResult": {
@@ -9332,6 +10924,39 @@
         "title": "StorageRetentionResourceResult",
         "type": "object"
       },
+      "TLSRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "registry": {
+            "const": "tls",
+            "title": "Registry",
+            "type": "string"
+          },
+          "scope_label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Label"
+          },
+          "target": {
+            "$ref": "#/components/schemas/HostnameTarget"
+          }
+        },
+        "required": [
+          "registry",
+          "target"
+        ],
+        "title": "TLSRequest",
+        "type": "object"
+      },
       "Tier": {
         "description": "SR 11-7 model criticality tier.\n\nDrives validation-cadence: Tier 1 = annual; Tier 2 = biennial;\nTier 3 = triennial. Tier 1 models are high-impact + complex\n(e.g., capital-allocation, credit-decision, fair-lending);\nTier 2 are moderate-impact (operational risk, marketing\noptimization); Tier 3 are low-impact (internal reporting,\nforecasting tools).\n\nThe tier value also drives the documentation-detail level\nexpected in the SR 11-7 §III.A \"Conceptual Soundness\"\nwrite-up — Tier 1 needs full theoretical justification +\ncomparison to alternatives; Tier 3 may be a short paragraph.",
         "enum": [
@@ -9381,6 +11006,23 @@
           "framework_id"
         ],
         "title": "TraceabilityMatrix",
+        "type": "object"
+      },
+      "UEITarget": {
+        "additionalProperties": false,
+        "properties": {
+          "uei": {
+            "maxLength": 12,
+            "minLength": 12,
+            "pattern": "^[A-Z0-9]{12}$",
+            "title": "Uei",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uei"
+        ],
+        "title": "UEITarget",
         "type": "object"
       },
       "UpdateSystemRequest": {
@@ -10564,7 +12206,7 @@
             "type": "string"
           },
           "raw_data": {
-            "$ref": "#/components/schemas/_FindingData"
+            "$ref": "#/components/schemas/evidentia_collectors__enterprise_retention___contracts___FindingData"
           },
           "remediation": {
             "title": "Remediation",
@@ -10915,69 +12557,6 @@
           "evidentia_version"
         ],
         "title": "_FindingContext",
-        "type": "object"
-      },
-      "_FindingData": {
-        "additionalProperties": false,
-        "properties": {
-          "field_coverage": {
-            "additionalProperties": {
-              "$ref": "#/components/schemas/CoverageCounts"
-            },
-            "maxProperties": 33,
-            "title": "Field Coverage",
-            "type": "object"
-          },
-          "policy_resolution": {
-            "enum": [
-              "not_applicable",
-              "resolved",
-              "unresolved"
-            ],
-            "title": "Policy Resolution",
-            "type": "string"
-          },
-          "reads": {
-            "items": {
-              "$ref": "#/components/schemas/_FindingRead"
-            },
-            "maxItems": 3,
-            "minItems": 1,
-            "title": "Reads",
-            "type": "array"
-          },
-          "status": {
-            "enum": [
-              "complete",
-              "partial",
-              "unavailable"
-            ],
-            "title": "Status",
-            "type": "string"
-          },
-          "target": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/VaultMatterTarget"
-              },
-              {
-                "$ref": "#/components/schemas/SplunkIndexTarget"
-              },
-              {
-                "$ref": "#/components/schemas/ElasticIndexTarget"
-              }
-            ],
-            "title": "Target"
-          }
-        },
-        "required": [
-          "target",
-          "status",
-          "policy_resolution",
-          "reads",
-          "field_coverage"
-        ],
-        "title": "_FindingData",
         "type": "object"
       },
       "_FindingPagination": {
@@ -11527,7 +13106,115 @@
           "$ref": "#/components/schemas/StorageRetentionJsonValue"
         },
         "type": "object"
-      }
+      },
+      "evidentia_collectors__enterprise_retention___contracts___FindingData": {
+        "additionalProperties": false,
+        "properties": {
+          "field_coverage": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CoverageCounts"
+            },
+            "maxProperties": 33,
+            "title": "Field Coverage",
+            "type": "object"
+          },
+          "policy_resolution": {
+            "enum": [
+              "not_applicable",
+              "resolved",
+              "unresolved"
+            ],
+            "title": "Policy Resolution",
+            "type": "string"
+          },
+          "reads": {
+            "items": {
+              "$ref": "#/components/schemas/_FindingRead"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Reads",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VaultMatterTarget"
+              },
+              {
+                "$ref": "#/components/schemas/SplunkIndexTarget"
+              },
+              {
+                "$ref": "#/components/schemas/ElasticIndexTarget"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "target",
+          "status",
+          "policy_resolution",
+          "reads",
+          "field_coverage"
+        ],
+        "title": "_FindingData",
+        "type": "object"
+      },
+      "evidentia_collectors__entra_m365___contracts__JsonValue": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "$ref": "#/components/schemas/evidentia_collectors__entra_m365___contracts__JsonValue"
+            },
+            "type": "array"
+          },
+          {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/evidentia_collectors__entra_m365___contracts__JsonValue"
+            },
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "evidentia_collectors__registries___contracts___FindingData": {
+        "additionalProperties": false,
+        "properties": {
+          "observation": {
+            "$ref": "#/components/schemas/RegistryObservation"
+          }
+        },
+        "required": [
+          "observation"
+        ],
+        "title": "_FindingData",
+        "type": "object"
+      },
+      "pydantic__types__JsonValue": {}
     }
   },
   "info": {
@@ -14296,6 +15983,679 @@
           }
         },
         "summary": "Okta Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/registry": {
+      "post": {
+        "description": "Return the complete selected-query result, including source limitations.",
+        "operationId": "collect_registry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "tls",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "hostname": {
+                            "maxLength": 254,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Hostname",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "hostname"
+                        ],
+                        "title": "HostnameTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "TLSRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "rdap",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "domain": {
+                            "maxLength": 254,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Domain",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "domain"
+                        ],
+                        "title": "DomainTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "RDAPRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "sam-entity",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "uei": {
+                            "maxLength": 12,
+                            "minLength": 12,
+                            "pattern": "^[A-Z0-9]{12}$",
+                            "title": "Uei",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "uei"
+                        ],
+                        "title": "UEITarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "SAMEntityRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "sam-exclusions",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "uei": {
+                                "maxLength": 12,
+                                "minLength": 12,
+                                "pattern": "^[A-Z0-9]{12}$",
+                                "title": "Uei",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "uei"
+                            ],
+                            "title": "UEITarget",
+                            "type": "object"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "organization_name": {
+                                "maxLength": 512,
+                                "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                                "title": "Organization Name",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "organization_name"
+                            ],
+                            "title": "SAMOrganizationTarget",
+                            "type": "object"
+                          }
+                        ],
+                        "title": "Target"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "SAMExclusionsRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "gleif",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "lei": {
+                            "maxLength": 20,
+                            "minLength": 20,
+                            "pattern": "^[A-Z0-9]{20}$",
+                            "title": "Lei",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "lei"
+                        ],
+                        "title": "LEITarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "GLEIFRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "fedramp",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "product_id": {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Product Id",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "product_id"
+                        ],
+                        "title": "ProductTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "FedRAMPRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "cmvp",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "certificate_number": {
+                            "allOf": [
+                              {
+                                "pattern": "^[0-9]+$",
+                                "type": "string"
+                              }
+                            ],
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Certificate Number",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "certificate_number"
+                        ],
+                        "title": "CertificateTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "CMVPRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "fcc-covered-list",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "organization_name": {
+                            "maxLength": 512,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Organization Name",
+                            "type": "string"
+                          },
+                          "query_scope": {
+                            "const": "named_organization_entries",
+                            "title": "Query Scope",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "organization_name",
+                          "query_scope"
+                        ],
+                        "title": "FCCOrganizationTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "FCCRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "incommon",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "entity_id": {
+                            "maxLength": 2048,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Entity Id",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "entity_id"
+                        ],
+                        "title": "EntityTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "InCommonRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "ssl-labs",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "endpoint_ip": {
+                            "maxLength": 45,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Endpoint Ip",
+                            "type": "string"
+                          },
+                          "hostname": {
+                            "maxLength": 254,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Hostname",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "hostname",
+                          "endpoint_ip"
+                        ],
+                        "title": "EndpointTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "SSLLabsRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "registry": {
+                        "const": "security-txt",
+                        "title": "Registry",
+                        "type": "string"
+                      },
+                      "scope_label": {
+                        "anyOf": [
+                          {
+                            "maxLength": 128,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "title": "Scope Label"
+                      },
+                      "target": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "hostname": {
+                            "maxLength": 254,
+                            "minLength": 1,
+                            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                            "title": "Hostname",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "hostname"
+                        ],
+                        "title": "HostnameTarget",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "registry",
+                      "target"
+                    ],
+                    "title": "SecurityTxtRequest",
+                    "type": "object"
+                  }
+                ],
+                "title": "RegistryLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistryLookupResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "reason",
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "API authentication required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Configured authentication and read permission are required."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "The bounded registry request is invalid."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collection could not produce a valid result."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The optional registry collector is not installed."
+          }
+        },
+        "summary": "Collect Registry",
         "tags": [
           "collectors"
         ]

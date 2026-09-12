@@ -1,0 +1,7 @@
+Contact: mailto:security@example.org
+Expires: 2026-10-01T00:00:00Z
+X-Custom: future optional text
+X-Custom: 
+Preferred-Languages: en
+Policy: https://example.org/policy
+Policy: https://example.org/another-policy

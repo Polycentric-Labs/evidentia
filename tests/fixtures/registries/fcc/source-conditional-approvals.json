@@ -1,0 +1,54 @@
+{
+  "conditional_approvals": [
+    {
+      "category": "synthetic_category",
+      "derived_category_row_ordinal": 1,
+      "publisher_row_identifier_presence": "absent",
+      "device_scope_source_literal": "Synthetic device only",
+      "approval_groups": [
+        {
+          "derived_group_ordinal": 1,
+          "device_scope_source_literal": "Synthetic device only",
+          "date_range_source_literal": "January 1, 2026 onward",
+          "starts_source_literal": "January 1, 2026",
+          "termination_component": {
+            "presence": "empty",
+            "source_literal": ""
+          }
+        }
+      ],
+      "applicable_footnote": {
+        "appendix": "B",
+        "marker_source_literal": "*"
+      },
+      "source_occurrences": [
+        {
+          "device_scope_cells": [
+            {
+              "document": "SYNTHETIC-1",
+              "pdf_page": 1,
+              "appendix": "B",
+              "printed_appendix_page": "1",
+              "table_index_one_based": 1,
+              "physical_table_row_index_one_based": 2,
+              "physical_column_index_one_based": 1,
+              "source_literal_lines": "Synthetic organization"
+            }
+          ],
+          "date_cells": [
+            {
+              "document": "SYNTHETIC-1",
+              "pdf_page": 1,
+              "appendix": "B",
+              "printed_appendix_page": "1",
+              "table_index_one_based": 1,
+              "physical_table_row_index_one_based": 2,
+              "physical_column_index_one_based": 2,
+              "source_literal_lines": "Synthetic organization"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "ipAddress": "93.184.216.34",
+  "statusMessage": "Ready",
+  "statusDetails": "Synthetic cached endpoint",
+  "grade": "A+",
+  "gradeTrustIgnored": "A",
+  "futureGrade": "B",
+  "hasWarnings": false,
+  "isExceptional": true,
+  "details": {
+    "hostStartTime": 9007199254740993,
+    "protocols": [
+      {
+        "name": "Synthetic excluded protocol"
+      }
+    ]
+  },
+  "engineVersion": "excluded-host-version",
+  "criteriaVersion": "excluded-host-criteria",
+  "startTime": 1,
+  "testTime": 2,
+  "cacheExpiryTime": 3
+}

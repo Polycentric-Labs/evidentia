@@ -1,0 +1,9 @@
+Contact: mailto:security@example.org
+Contact: https://example.org/security
+Expires: 2026-10-01t00:00:00z
+Preferred-Languages: en, fr
+Canonical: https://example.org/.well-known/security.txt
+Encryption: https://example.org/public-key.txt
+Acknowledgments: https://example.org/thanks
+Policy: https://example.org/policy
+Hiring: https://example.org/jobs

@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "last_change": "2026-09-10T00:00:00Z",
+    "produced_by": "Synthetic fixture"
+  },
+  "data": {
+    "Products": [
+      {
+        "id": "F-SYNTHETIC",
+        "name": "Synthetic service",
+        "csp": "Synthetic provider",
+        "cso": "Synthetic offering",
+        "status": "Historical",
+        "auth_date": "2026-01-01",
+        "auth_type": "Agency",
+        "impact_level": "Moderate",
+        "deployment_model": "Public Cloud",
+        "uei": "SYNTHETIC123",
+        "service_model": [
+          "SaaS",
+          "SaaS"
+        ],
+        "contact": {
+          "unselected": "omit"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "objectClassName": "domain",
+  "ldhName": "EXAMPLE.COM",
+  "unicodeName": "example.com",
+  "status": [
+    "active",
+    "future-status"
+  ],
+  "events": [
+    {
+      "eventAction": "registration",
+      "eventDate": "2020-01-02T03:04:05Z",
+      "eventActor": "Discarded actor"
+    }
+  ],
+  "notices": [
+    {
+      "title": "Synthetic terms",
+      "description": [
+        "Synthetic notice."
+      ],
+      "type": "remark",
+      "links": [
+        {
+          "rel": "terms-of-service",
+          "title": "Terms",
+          "media": "screen",
+          "type": "text/plain",
+          "hreflang": [
+            "en"
+          ],
+          "href": "https://example.org/policy",
+          "value": "https://example.org/private-display"
+        }
+      ]
+    }
+  ],
+  "rdapConformance": [
+    "rdap_level_0"
+  ],
+  "entities": [
+    {
+      "handle": "DO-NOT-RETAIN",
+      "vcardArray": [
+        "vcard",
+        [
+          [
+            "email",
+            {},
+            "text",
+            "contact@example.org"
+          ]
+        ]
+      ]
+    }
+  ],
+  "handle": "DO-NOT-RETAIN"
+}

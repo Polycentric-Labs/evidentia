@@ -1,0 +1,10 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Contact: mailto:security@example.org
+Expires: 2026-10-01T00:00:00Z
+- -X-Note: retained
+-----BEGIN PGP SIGNATURE-----
+
+AQIDBA==
+-----END PGP SIGNATURE-----

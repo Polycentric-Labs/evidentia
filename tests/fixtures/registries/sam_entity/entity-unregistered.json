@@ -1,0 +1,18 @@
+{
+  "entityData": [
+    {
+      "entityRegistration": {
+        "ueiSAM": "ABCDEFGHIJKL",
+        "samRegistered": "No",
+        "entityEFTIndicator": "0001",
+        "legalBusinessName": "Example Research LLC",
+        "registrationStatus": "Active",
+        "registrationDate": "2026-08-01",
+        "lastUpdateDate": "2026-09-01T00:00:00.123456789Z",
+        "registrationExpirationDate": "08/01/2027",
+        "activationDate": "2026-08-02",
+        "unselectedContact": "Synthetic excluded contact"
+      }
+    }
+  ]
+}

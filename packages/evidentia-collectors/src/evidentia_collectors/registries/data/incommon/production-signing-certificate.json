@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "purpose": "InCommon production metadata signature verification",
+  "certificate_pem": "-----BEGIN CERTIFICATE-----\nMIIEvjCCAyagAwIBAgIJANpi9/mkU/zoMA0GCSqGSIb3DQEBCwUAMHQxCzAJBgNV\nBAYTAlVTMQswCQYDVQQIDAJNSTESMBAGA1UEBwwJQW5uIEFyYm9yMRYwFAYDVQQK\nDA1JbnRlcm5ldDIuZWR1MREwDwYDVQQLDAhJbkNvbW1vbjEZMBcGA1UEAwwQbWRx\nLmluY29tbW9uLm9yZzAeFw0xODExMTMxNDI5NDNaFw0zODExMTAxNDI5NDNaMHQx\nCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJNSTESMBAGA1UEBwwJQW5uIEFyYm9yMRYw\nFAYDVQQKDA1JbnRlcm5ldDIuZWR1MREwDwYDVQQLDAhJbkNvbW1vbjEZMBcGA1UE\nAwwQbWRxLmluY29tbW9uLm9yZzCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoC\nggGBAJ0+fUTzYVSP6ZOutOEhNdp3WPCPOYqnB4sQFz7IeGbFL1o0lZjx5Izm4Yho\n4wNDd0h486iSkHxNf5dDhCqgz7ZRSmbusOl98SYn70PrUQj/Nzs3w47dPg9Tpb/x\ny44PvNLS/rE56hPgCz/fbHoTTiJt5eosysa1ZebQ3LEyW3jGm+LGtLbdIfkynKVQ\nvpp1FVeCamzdeB3ZRICAvqTYQKE1JQDGlWrEsSW0VVEGNjfbzMzr/g4l8JRdMabQ\nJig8tj3UIXnu7A2CKSMJSy3WZ3HX+85oHEbL+EV4PtpQz765c69tUIdNTJax9jQ2\n1c3wL0K27HE8jSRlrXImD50R3dXQBKH+iiynBWxRPdyMBa1YfK+zZEWPbLHshSTc\n9hkylQv3awmPR/+Plz5AtTpe5yss/Ifyp01wz1jt42R+6jDE+WbUjp5XDBCAjGEE\n0FPaYtxjZLkmNl367bdTN12OIn/ixPNH+Z/S/4skdBB9Gc4lb2fEBywJQY0OYNOd\nWOxmPwIDAQABo1MwUTAdBgNVHQ4EFgQUMHZuwMaYSJM5mlu3Wc4Ts5xq4/swHwYD\nVR0jBBgwFoAUMHZuwMaYSJM5mlu3Wc4Ts5xq4/swDwYDVR0TAQH/BAUwAwEB/zAN\nBgkqhkiG9w0BAQsFAAOCAYEAMr4wfLrSoPTzfpXtvL+2vrKBJNnRfuJpOYTbPKUc\nDOP2QfzRlczi7suYJvd5rLiRonq8rjyPUyM8gvTfbTps+JhJ6S9mS6dTBxOV1qPZ\n3Ab+XKmq8LUtguGRabKgJgmJH0+inR/wVoal7EVHcWXfij9AT8DZOXW88shc6grh\njUaFZBu/2+q8c8ee0e4ip8B+CVEnCwDKI0d+nTcSmPvAE34CNa33F+QGpXawv5yv\nVvIpSaLAeFQhc/jKcnNHfy+Zi7JmSnKZiMvQCbWANQmDjHg7pGmBW9nyQcm6P2/B\n0AVcEj1YTpAR8Mbh1pUdIhoB+chaNnFEIZsXeRsdbbAFpxodInlJ7WekfuvSQ6sU\nEXpoyBGOeuuTmR1va8k3QeL8Wc4yNu/g5LwjmtvPrh2jBF8xujc4J6VzP8K2BjA4\nxk4LnXgjHOT93dBAJhVYJkykDHwyvHUvsBHoP6lfjrt5P8zunK2mdP/AZKik+Rdt\n1GGlErV2AyWShTOaDLW6NxdP\n-----END CERTIFICATE-----\n",
+  "pem_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+  "der_sha256": "604974d61fe0d7f4d63d6c8db98a857e642ab9b470e3e85dd54d663d0496f900",
+  "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+  "retrieved_at": "2026-09-11T07:49:20Z",
+  "distribution_basis": "Public signing certificate distributed by InCommon for metadata verification.",
+  "reviewed_policy": "Pinned production certificate only. No automatic response-key or rollover adoption."
+}

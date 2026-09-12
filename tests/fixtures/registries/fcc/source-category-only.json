@@ -1,0 +1,53 @@
+{
+  "named_entries": [],
+  "category_rows": [
+    {
+      "derived_appendix_a_row_ordinal": 2,
+      "category": "synthetic_category",
+      "publisher_row_identifier_presence": "absent",
+      "equipment_service_scope_source_literal": "Synthetic category with no organization-name assertion",
+      "date_cell_source_literals": [
+        "January 2, 2026"
+      ],
+      "source_occurrences": [
+        {
+          "snapshot_update_source_literal": "September 9, 2026",
+          "equipment_service_cells": [
+            {
+              "document": "SYNTHETIC-1",
+              "pdf_page": 1,
+              "appendix": "A",
+              "printed_appendix_page": "1",
+              "table_index_one_based": 1,
+              "physical_table_row_index_one_based": 2,
+              "physical_column_index_one_based": 1,
+              "source_literal_lines": "Synthetic organization"
+            }
+          ],
+          "date_cells": [
+            {
+              "document": "SYNTHETIC-1",
+              "pdf_page": 1,
+              "appendix": "A",
+              "printed_appendix_page": "1",
+              "table_index_one_based": 1,
+              "physical_table_row_index_one_based": 2,
+              "physical_column_index_one_based": 2,
+              "source_literal_lines": "January 2, 2026"
+            }
+          ]
+        }
+      ],
+      "date_entries": [
+        {
+          "role": "inclusion",
+          "source_literal": "January 2, 2026"
+        }
+      ],
+      "applicable_appendix_a_footnote_markers": [
+        "*"
+      ],
+      "disclosures": []
+    }
+  ]
+}

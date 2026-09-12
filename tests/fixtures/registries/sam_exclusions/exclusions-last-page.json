@@ -1,0 +1,47 @@
+{
+  "totalRecords": 11,
+  "excludedEntity": [
+    {
+      "exclusionDetails": {
+        "classificationType": "Firm",
+        "exclusionType": "PublisherFutureType",
+        "exclusionProgram": "Reciprocal",
+        "excludingAgencyCode": "011",
+        "excludingAgencyName": "Synthetic Agency 11",
+        "excludedComment": "Synthetic omitted comment"
+      },
+      "exclusionIdentification": {
+        "ueiSAM": "ABCDEFGHIJKL",
+        "entityName": "Example Research LLC",
+        "excludedAddress": "Synthetic omitted address"
+      },
+      "exclusionActions": {
+        "listOfActions": [
+          {
+            "createDate": "2026-01-01",
+            "updateDate": "2026-02-02T03:04:05.123456789Z",
+            "activateDate": "02/03/2026",
+            "terminationDate": null,
+            "terminationType": "Indefinite",
+            "recordStatus": "Active",
+            "excludedExplanation": "Synthetic omitted explanation"
+          },
+          {
+            "createDate": "2026-01-01",
+            "updateDate": "",
+            "recordStatus": "SourceFutureStatus"
+          },
+          null
+        ],
+        "excludedReference": "Synthetic omitted reference"
+      },
+      "exclusionOtherInformation": {
+        "isFASCSAOrder": "N",
+        "excludedLink": "https://unselected.example.test/reference"
+      },
+      "excludedContact": {
+        "name": "Synthetic excluded person"
+      }
+    }
+  ]
+}

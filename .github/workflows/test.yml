@@ -64,7 +64,7 @@ jobs:
         run: uv sync --locked --all-packages
 
       - name: SSRF guard holds with zero drivers
-        run: uv run --locked pytest tests/unit/test_collectors/test_collector_ssrf_guard.py::TestSQLCollectorsSSRF -q
+        run: uv run --locked pytest tests/unit/test_collectors/test_collector_ssrf_guard.py::TestSQLCollectorsSSRF tests/unit/test_collectors/registries/test_base_imports.py -q
 
   test:
     name: pytest (${{ matrix.os }}, Python ${{ matrix.python-version }})

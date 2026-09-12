@@ -9,7 +9,16 @@ import { generateTypes } from "./generate-types.mjs";
 
 let stock;
 let generated;
-const JSON_NAMES = ["JsonValue", "StorageRetentionJsonValue", "EnterpriseRetentionJsonValue"];
+const KNOWN_JSON_NAMES = [
+    "JsonValue",
+    "StorageRetentionJsonValue",
+    "EnterpriseRetentionJsonValue",
+    "RegistryJsonValue",
+    "evidentia_collectors__entra_m365___contracts__JsonValue",
+];
+const JSON_NAMES = KNOWN_JSON_NAMES.filter((name) =>
+    Object.hasOwn(openapiSchema.components.schemas, name),
+);
 
 beforeAll(async () => {
     stock =
@@ -193,4 +202,43 @@ test("a schema without JsonValue keeps the stock generator output", async () => 
 
 test("repeated generation is deterministic", async () => {
     expect(await generateTypes(structuredClone(openapiSchema))).toBe(generated);
+});
+
+test("the short JsonValue name remains supported when the schema uses it", async () => {
+    const name = "JsonValue";
+    const schema = {
+        openapi: "3.1.0",
+        info: { title: "Synthetic recursive JSON", version: "1" },
+        paths: {},
+        components: {
+            schemas: {
+                [name]: {
+                    anyOf: [
+                        { type: "boolean" },
+                        { type: "integer" },
+                        { type: "number" },
+                        { type: "string" },
+                        {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/JsonValue" },
+                        },
+                        {
+                            type: "object",
+                            additionalProperties: {
+                                $ref: "#/components/schemas/JsonValue",
+                            },
+                        },
+                        { type: "null" },
+                    ],
+                },
+            },
+        },
+    };
+    const output = await generateTypes(schema);
+    expect(output).toContain("export type JsonValue =");
+    expect(diagnostics(output)).toEqual([]);
+    schema.components.schemas.JsonValue.anyOf[4].items = {};
+    await expect(generateTypes(schema)).rejects.toThrow(
+        /^Unexpected JsonValue schema$/,
+    );
 });

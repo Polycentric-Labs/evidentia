@@ -1,0 +1,49 @@
+{
+  "objectClassName": "domain",
+  "ldhName": "example.com",
+  "unicodeName": null,
+  "status": [],
+  "events": [
+    null,
+    {},
+    {
+      "eventAction": "expiration",
+      "eventDate": null
+    }
+  ],
+  "notices": [
+    {
+      "title": null,
+      "description": [],
+      "links": [
+        null,
+        {}
+      ],
+      "type": null
+    }
+  ],
+  "rdapConformance": [
+    "rdap_level_0",
+    "redacted"
+  ],
+  "redacted": [
+    {
+      "name": {
+        "type": "Registrant Name",
+        "description": "Synthetic redaction"
+      },
+      "reason": {
+        "type": "Server policy",
+        "description": null
+      },
+      "prePath": "$.entities[0].vcardArray",
+      "postPath": null,
+      "replacementPath": "",
+      "pathLang": "jsonpath",
+      "method": "removal",
+      "extra": "DO-NOT-RETAIN"
+    },
+    null,
+    {}
+  ]
+}

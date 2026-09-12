@@ -1,0 +1,19 @@
+{
+  "entityData": [
+    {
+      "entityRegistration": {
+        "ueiSAM": "ABCDEFGHIJKL",
+        "samRegistered": "Yes",
+        "entityEFTIndicator": null,
+        "legalBusinessName": null,
+        "registrationStatus": "PublisherFutureStatus",
+        "registrationDate": null,
+        "lastUpdateDate": "",
+        "registrationExpirationDate": "date unknown",
+        "unselected": {
+          "person": "Synthetic excluded person"
+        }
+      }
+    }
+  ]
+}

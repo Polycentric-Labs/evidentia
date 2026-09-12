@@ -4,7 +4,13 @@ import { isDeepStrictEqual } from "node:util";
 import openapiTS, { astToString, COMMENT_HEADER } from "openapi-typescript";
 import ts from "typescript";
 
-const JSON_NAMES = ["JsonValue", "StorageRetentionJsonValue", "EnterpriseRetentionJsonValue"];
+const JSON_NAMES = [
+    "JsonValue",
+    "StorageRetentionJsonValue",
+    "EnterpriseRetentionJsonValue",
+    "RegistryJsonValue",
+    "evidentia_collectors__entra_m365___contracts__JsonValue",
+];
 const jsonRef = (name) => `#/components/schemas/${name}`;
 const expectedJsonSchema = (name) => ({
     anyOf: [
