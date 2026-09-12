@@ -213,7 +213,7 @@ def test_selector_actual_single_tls_handshake(trust: str, monkeypatch: pytest.Mo
                 assert result["certificate"]["subjectAltName"] == [["DNS", "example.org"]]
                 assert "notBefore" in result["certificate"] and "notAfter" in result["certificate"]
             else:
-                with pytest.raises(TransportError, match=r"^tls_failure$"):
+                with pytest.raises(TransportError, match=r"^tls_certificate_verification_failed$"):
                     attempt.fetch("example.org", remaining=lambda: 3.0)
             assert socket.getaddrinfo("example.org", 443)[0][4][0] == "9.9.9.9"
         assert connections == [("93.184.216.34", 443)] and lookups == [b"example.org"]

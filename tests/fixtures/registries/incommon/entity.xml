@@ -1,0 +1,13 @@
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:mdrpi="urn:oasis:names:tc:SAML:metadata:rpi" ID="owner-c-root" entityID="urn:synthetic:owner-c:entity" validUntil="2026-09-12T12:00:00.123456Z" cacheDuration="PT6H">
+  <md:Extensions><mdrpi:RegistrationInfo registrationAuthority="urn:synthetic:registration:authority" registrationInstant="2026-08-01T01:02:03.123456789Z" /></md:Extensions>
+  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" />
+  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" />
+  <md:Organization>
+    <md:OrganizationName xml:lang="en">Example Research</md:OrganizationName>
+    <md:OrganizationName xml:lang="fr">Exemple Recherche</md:OrganizationName>
+    <md:OrganizationDisplayName xml:lang="en">Example Display</md:OrganizationDisplayName>
+    <md:OrganizationDisplayName xml:lang="fr" />
+    <md:OrganizationURL xml:lang="en">https://unselected.example.test/organization</md:OrganizationURL>
+  </md:Organization>
+  <md:ContactPerson contactType="technical"><md:GivenName>Synthetic excluded contact</md:GivenName></md:ContactPerson>
+</md:EntityDescriptor>

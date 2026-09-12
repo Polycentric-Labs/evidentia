@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { Fragment, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { SecurityPostureBanner } from "@/components/common/SecurityPostureBanner";
 import { useTheme } from "@/hooks/use-theme";
@@ -111,6 +111,7 @@ function crumbFor(path: string): { label: string; crumb: string } {
 
 export function AppLayout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";
   // Resolved once per render rather than per nav item: the rail maps over
@@ -144,7 +145,7 @@ export function AppLayout() {
     <div className="flex min-h-screen bg-background text-foreground">
       {/* ── Deep-navy brand nav rail ── */}
       <aside
-        className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-chrome-border bg-chrome text-chrome-foreground"
+        className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-chrome-border bg-chrome text-chrome-foreground md:flex"
         aria-label="Primary navigation"
       >
         <Link to="/" className="flex items-center gap-3 px-5 pb-4 pt-5">
@@ -254,10 +255,28 @@ export function AppLayout() {
       {/* ── Workspace ── */}
       <div className="flex min-w-0 flex-1 flex-col">
         <SecurityPostureBanner />
-        <header className="sticky top-0 z-20 flex h-[58px] items-center justify-between gap-4 border-b border-border bg-[hsl(var(--background)/0.85)] px-8 backdrop-blur">
-          <div className="flex items-center gap-2 text-[0.92rem]">
+        <nav aria-label="Mobile navigation" className="border-b border-border px-4 py-3 md:hidden">
+          <label htmlFor="mobile-page" className="sr-only">Page</label>
+          <select
+            id="mobile-page"
+            value={activeKey}
+            onChange={(event) => navigate(event.target.value)}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {NAV_GROUPS.map((group, index) => {
+              const options = group.items.map((to) => (
+                <option key={to} value={to}>{NAV_META[to].label}</option>
+              ));
+              return group.label ? (
+                <optgroup key={group.label} label={group.label}>{options}</optgroup>
+              ) : <Fragment key={index}>{options}</Fragment>;
+            })}
+          </select>
+        </nav>
+        <header className="sticky top-0 z-20 flex min-h-[58px] flex-wrap items-center justify-between gap-2 border-b border-border bg-[hsl(var(--background)/0.85)] px-4 py-2 backdrop-blur sm:px-8">
+          <div className="flex min-w-0 items-center gap-2 text-[0.92rem]">
             <span className="font-semibold tracking-tight">{crumbLabel}</span>
-            <span className="text-[0.8rem] text-muted-foreground">· {crumb}</span>
+            <span className="hidden text-[0.8rem] text-muted-foreground lg:inline">· {crumb}</span>
           </div>
           <div className="flex items-center gap-3.5">
             {offline && (
@@ -294,7 +313,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1180px] flex-1 px-8 pb-12 pt-9">
+        <main className="mx-auto w-full max-w-[1180px] flex-1 px-4 pb-12 pt-6 sm:px-8 sm:pt-9">
           <Suspense
             fallback={
               <div className="grid place-items-center py-24 text-sm text-muted-foreground">

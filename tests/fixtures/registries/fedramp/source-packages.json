@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "export_timestamp": "2026-09-10T00:00:00Z",
+    "total_entries": 3,
+    "description": "Synthetic fixture"
+  },
+  "data": {
+    "frc-cso-pkg": [
+      {
+        "serviceIdentification": {
+          "fedRampPackageId": "F-SYNTHETIC",
+          "providerName": "Synthetic provider",
+          "serviceName": "Synthetic offering",
+          "certificationType": "Authorization"
+        },
+        "ZD_frid_retro": "F-SYNTHETIC",
+        "last_fetched_timestamp": "2026-09-09T00:00:00Z",
+        "id_matches_expected": true
+      },
+      {
+        "serviceIdentification": {
+          "fedRampPackageId": "OTHER",
+          "providerName": "Synthetic provider",
+          "serviceName": "Synthetic offering",
+          "certificationType": "Authorization"
+        },
+        "ZD_frid_retro": "F-SYNTHETIC",
+        "last_fetched_timestamp": "2026-09-09T00:00:00Z",
+        "id_matches_expected": false
+      },
+      {
+        "serviceIdentification": {
+          "fedRampPackageId": "OTHER",
+          "providerName": "Synthetic provider",
+          "serviceName": "Synthetic offering",
+          "certificationType": "Authorization"
+        },
+        "ZD_frid_retro": "OTHER",
+        "last_fetched_timestamp": "2026-09-09T00:00:00Z",
+        "id_matches_expected": true
+      }
+    ]
+  }
+}

@@ -190,6 +190,11 @@ commands:
     api: "POST /api/collectors/retention/collect"
     gui: "/collect"
     status: full
+  - cli: "collect registry"
+    api: "POST /api/collectors/registry"
+    gui: "/collect"
+    status: full
+    reason: "One typed registry selector and finite target form preserve the full result; SSL Labs remains visibly disabled without a network call."
   - cli: "collect sql"
     api: "POST /api/collectors/sql/postgres/collect"
     gui: "/collect"

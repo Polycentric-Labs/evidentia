@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "status": "candidate_pending_domain_fixture_creation",
+  "status": "complete_reviewed_fixture_inventory",
   "fixtures": [
     {
       "path": "tests/fixtures/registries/fedramp/full-source-tuples.json",
@@ -55,491 +55,793 @@
     },
     {
       "path": "tests/fixtures/registries/tls/verified.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "d5c5caba21bf3a7561224bf138fd7278472c6f2e68239c9a72ab0aa20450bbca",
+      "bytes": 1224,
       "kind": "synthetic_source_fixture",
       "scenario": "verified",
       "contract_url": "https://docs.python.org/3.12/library/ssl.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "Python 3.12 ssl API",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest. Public certificate DER was generated from an ephemeral in-memory synthetic EC key; no private key serialization or persistence.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://docs.python.org/3.12/library/ssl.html",
+          "raw_sha256": "c1d4cb26fd241543e91c132e9f01cf54beb547c2a0d9331b26d726f59c2966e0",
+          "raw_bytes": 323409,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/tls/certificate-failure.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "9e0319bcb8da7cec47e8bc1fbc43c8b071e1e0c2226d217c46637d98e717c109",
+      "bytes": 190,
       "kind": "synthetic_source_fixture",
       "scenario": "certificate-failure",
       "contract_url": "https://docs.python.org/3.12/library/ssl.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "Python 3.12 ssl API",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest. Public certificate DER was generated from an ephemeral in-memory synthetic EC key; no private key serialization or persistence. Conditions drive injected SSLCertVerificationError; this is a failure recipe, not a captured certificate response.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://docs.python.org/3.12/library/ssl.html",
+          "raw_sha256": "c1d4cb26fd241543e91c132e9f01cf54beb547c2a0d9331b26d726f59c2966e0",
+          "raw_bytes": 323409,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/tls/unknown-cipher.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "8f34b9e1484ddef4e218d2e8e5b73dbaa34249c48c1c8f1cb2bfbe2503d1dae9",
+      "bytes": 658,
       "kind": "synthetic_source_fixture",
       "scenario": "unknown-cipher",
       "contract_url": "https://docs.python.org/3.12/library/ssl.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "Python 3.12 ssl API",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest. Public certificate DER was generated from an ephemeral in-memory synthetic EC key; no private key serialization or persistence.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://docs.python.org/3.12/library/ssl.html",
+          "raw_sha256": "c1d4cb26fd241543e91c132e9f01cf54beb547c2a0d9331b26d726f59c2966e0",
+          "raw_bytes": 323409,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/rdap/domain-found.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "884fef264aa5e276abdbe94e1a50c5699490885074135b16e8244f7b222d6afc",
+      "bytes": 1100,
       "kind": "synthetic_source_fixture",
       "scenario": "domain-found",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9083 and RFC 9537; RFC 9224 discovery",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9224.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9082.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+          "raw_sha256": "11d1d9ea08527c557fd7fa2d101fa4dd1336193b816459c1ed371d7a9c91dc8d",
+          "raw_bytes": 281665,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc7480.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+          "raw_sha256": "19ae89358f3bd2c2217a5e35d78edab23bd58ee96295c74dd56f1c6001283ffa",
+          "raw_bytes": 113340,
+          "scope": "Versioned redaction contract for selected source fields; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/rdap/domain-redacted.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "9b055feeda59082dd9a212fb66068e41689455a6503305cd069b313604eb1cbc",
+      "bytes": 850,
       "kind": "synthetic_source_fixture",
       "scenario": "domain-redacted",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9083 and RFC 9537; RFC 9224 discovery",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9224.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9082.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+          "raw_sha256": "11d1d9ea08527c557fd7fa2d101fa4dd1336193b816459c1ed371d7a9c91dc8d",
+          "raw_bytes": 281665,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc7480.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+          "raw_sha256": "19ae89358f3bd2c2217a5e35d78edab23bd58ee96295c74dd56f1c6001283ffa",
+          "raw_bytes": 113340,
+          "scope": "Versioned redaction contract for selected source fields; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/rdap/identity-mismatch.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "0963328984b4f580557218a070d32bfb092ea94e2336d0687c793990ae793033",
+      "bytes": 100,
       "kind": "synthetic_source_fixture",
       "scenario": "identity-mismatch",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9083 and RFC 9537; RFC 9224 discovery",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9224.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9082.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+          "raw_sha256": "11d1d9ea08527c557fd7fa2d101fa4dd1336193b816459c1ed371d7a9c91dc8d",
+          "raw_bytes": 281665,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc7480.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+          "raw_sha256": "19ae89358f3bd2c2217a5e35d78edab23bd58ee96295c74dd56f1c6001283ffa",
+          "raw_bytes": 113340,
+          "scope": "Versioned redaction contract for selected source fields; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/rdap/bootstrap-http-only.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "8d37367c6fb399b8aa75727b7facc51c8db654f7f0138a1fa6fc3c479111e936",
+      "bytes": 246,
       "kind": "synthetic_source_fixture",
       "scenario": "bootstrap-http-only",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9083 and RFC 9537; RFC 9224 discovery",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9224.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9082.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+          "raw_sha256": "11d1d9ea08527c557fd7fa2d101fa4dd1336193b816459c1ed371d7a9c91dc8d",
+          "raw_bytes": 281665,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc7480.html",
+          "raw_sha256": null,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        },
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9537.html",
+          "raw_sha256": "19ae89358f3bd2c2217a5e35d78edab23bd58ee96295c74dd56f1c6001283ffa",
+          "raw_bytes": 113340,
+          "scope": "Versioned redaction contract for selected source fields; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/gleif/lei-active.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "3f07f1580196951af4002954ac4cef937a37742fce17852f87f811e5a5fd4165",
+      "bytes": 830,
       "kind": "synthetic_source_fixture",
       "scenario": "lei-active",
       "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
-      "contract_version": "reviewed source index",
+      "contract_version": "Adopted GLEIF public API example and public documentation collection",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.gleif.org/media/pages/lei-data/access-and-use-lei-data/supporting-documents/907316c171-1746444974/GLEIF-API-example.json",
+          "raw_sha256": "8f363418ba93cd919d907ab90edf827b5b9ec8499e05f53b05addeb345da85b9",
+          "raw_bytes": 18530
+        },
+        {
+          "source_url": "https://documenter.gw.postman.com/api/collections/7679680/SVYrrxuU?segregateAuth=true&versionTag=latest",
+          "raw_sha256": "ce01671ff004d4e993930f6cc8adf3bea8013326d45c4ed5755b7ffe40d12474",
+          "raw_bytes": 820781
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/gleif/lei-lapsed-successors.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "d2356c8826d44fac3ef17e2b99573e52b96645262703c830bb335a5458706291",
+      "bytes": 842,
       "kind": "synthetic_source_fixture",
       "scenario": "lei-lapsed-successors",
       "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
-      "contract_version": "reviewed source index",
+      "contract_version": "Adopted GLEIF public API example and public documentation collection",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.gleif.org/media/pages/lei-data/access-and-use-lei-data/supporting-documents/907316c171-1746444974/GLEIF-API-example.json",
+          "raw_sha256": "8f363418ba93cd919d907ab90edf827b5b9ec8499e05f53b05addeb345da85b9",
+          "raw_bytes": 18530
+        },
+        {
+          "source_url": "https://documenter.gw.postman.com/api/collections/7679680/SVYrrxuU?segregateAuth=true&versionTag=latest",
+          "raw_sha256": "ce01671ff004d4e993930f6cc8adf3bea8013326d45c4ed5755b7ffe40d12474",
+          "raw_bytes": 820781
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/gleif/identity-mismatch.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "65ba30d12c837bc4aaa1f5235698d58d0390b15325fc40322a4f92ab57052f02",
+      "bytes": 197,
       "kind": "synthetic_source_fixture",
       "scenario": "identity-mismatch",
       "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
-      "contract_version": "reviewed source index",
+      "contract_version": "Adopted GLEIF public API example and public documentation collection",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.gleif.org/media/pages/lei-data/access-and-use-lei-data/supporting-documents/907316c171-1746444974/GLEIF-API-example.json",
+          "raw_sha256": "8f363418ba93cd919d907ab90edf827b5b9ec8499e05f53b05addeb345da85b9",
+          "raw_bytes": 18530
+        },
+        {
+          "source_url": "https://documenter.gw.postman.com/api/collections/7679680/SVYrrxuU?segregateAuth=true&versionTag=latest",
+          "raw_sha256": "ce01671ff004d4e993930f6cc8adf3bea8013326d45c4ed5755b7ffe40d12474",
+          "raw_bytes": 820781
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/gleif/unknown-null.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "0a89c2be6d75c3375edb68126723eea75269a27f811cc6423e729b08c67f6eb5",
+      "bytes": 602,
       "kind": "synthetic_source_fixture",
       "scenario": "unknown-null",
       "contract_url": "https://www.gleif.org/en/lei-data/gleif-api",
-      "contract_version": "reviewed source index",
+      "contract_version": "Adopted GLEIF public API example and public documentation collection",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.gleif.org/media/pages/lei-data/access-and-use-lei-data/supporting-documents/907316c171-1746444974/GLEIF-API-example.json",
+          "raw_sha256": "8f363418ba93cd919d907ab90edf827b5b9ec8499e05f53b05addeb345da85b9",
+          "raw_bytes": 18530
+        },
+        {
+          "source_url": "https://documenter.gw.postman.com/api/collections/7679680/SVYrrxuU?segregateAuth=true&versionTag=latest",
+          "raw_sha256": "ce01671ff004d4e993930f6cc8adf3bea8013326d45c4ed5755b7ffe40d12474",
+          "raw_bytes": 820781
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/security_txt/valid.txt",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "0fa1945b854368d2d793bfcde092877943b6fe2a9512947eae20abb1f869e721",
+      "bytes": 348,
       "kind": "synthetic_source_fixture",
       "scenario": "valid",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9116",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+          "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+          "raw_bytes": 126914,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/security_txt/expired.txt",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "bb6e665792c1573e630cfefdeba5076bb22c9997619d98996bb9e4db8d4bf8da",
+      "bytes": 67,
       "kind": "synthetic_source_fixture",
       "scenario": "expired",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9116",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+          "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+          "raw_bytes": 126914,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/security_txt/duplicate-singleton.txt",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "674dd0dbe769e07f2f887ae7ac6e22f072754c2343c0a5e094ff4a1ebe3e918d",
+      "bytes": 145,
       "kind": "synthetic_source_fixture",
       "scenario": "duplicate-singleton",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9116",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+          "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+          "raw_bytes": 126914,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/security_txt/signed-unverified.txt",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "2d025114c5de63ad02dcce0b273cf475b7e9e90c563e0a5a7ac643f657916ac1",
+      "bytes": 204,
+      "kind": "synthetic_cleartext_template",
       "scenario": "signed-unverified",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9116",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest. LF template is converted to CRLF framing in memory. The bounded AQIDBA== signature representation carries no cryptographic or publisher authenticity claim.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+          "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+          "raw_bytes": 126914,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/security_txt/unknown-fields.txt",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
+      "status": "created",
+      "raw_sha256": "41fe93e6a029ff86ccd568a12bfa6e8d80b0174a3a7812187cb868cd5e3c387a",
+      "bytes": 211,
       "kind": "synthetic_source_fixture",
       "scenario": "unknown-fields",
       "contract_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
-      "contract_version": "reviewed source index",
+      "contract_version": "RFC 9116",
       "exclusions": [
         "No private keys or credentials",
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic source data. Fixture SHA256 identifies these local bytes and is not a publisher retrieval digest.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://www.rfc-editor.org/rfc/rfc9116.html",
+          "raw_sha256": "88dbdef4ea29234c91c8e8a27bb305db4386d98b699a26454d1ef0644f097058",
+          "raw_bytes": 126914,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fedramp/source-products.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "dab6e2c6e8f9f94bb5221d288bd274d0dd4e01aee82b8fbc3dc64e483adc06ee",
+      "bytes": 643,
+      "kind": "authored_synthetic_json_layout",
       "scenario": "source-products",
-      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/data.json",
+      "contract_version": "19141c5a6fcfda309c0f7541923f205e4878e515",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fedramp/source-statuses.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "71be7618d6240d16f9478cc1d872a731ea1bc6035eee52ae2ad58655bcdcb713",
+      "bytes": 576,
+      "kind": "authored_synthetic_json_layout",
       "scenario": "source-statuses",
-      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-status-changelog.json",
+      "contract_version": "19141c5a6fcfda309c0f7541923f205e4878e515",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fedramp/source-packages.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "f972e6f7188777786149011a0aca8e109c5c3eb045f5fefca77cc69aa1089026",
+      "bytes": 1313,
+      "kind": "authored_synthetic_json_layout",
       "scenario": "source-packages",
-      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-frc-cso-pkg.json",
+      "contract_version": "19141c5a6fcfda309c0f7541923f205e4878e515",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fedramp/source-status-conflict.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "ebed36efed9d649d60ab08a614849714057d4c2a6548a1526c3ee2db2a460e64",
+      "bytes": 956,
+      "kind": "authored_synthetic_json_layout",
       "scenario": "source-status-conflict",
-      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/fedramp-status-changelog.json",
+      "contract_version": "19141c5a6fcfda309c0f7541923f205e4878e515",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fedramp/source-shape-drift.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "834ab8789f57f1264f22e886cd525f0e287b8a522f0f18f683e31627622da03f",
+      "bytes": 500,
+      "kind": "authored_synthetic_json_layout",
       "scenario": "source-shape-drift",
-      "contract_url": "https://github.com/FedRAMP/marketplace-fedramp-gov-data",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://raw.githubusercontent.com/FedRAMP/marketplace-fedramp-gov-data/19141c5a6fcfda309c0f7541923f205e4878e515/data.json",
+      "contract_version": "19141c5a6fcfda309c0f7541923f205e4878e515",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/cmvp/source-active.html",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "3519f131cacc7797281f9990fa6fd001232c04e394a1d50812ff2538decb6c5b",
+      "bytes": 386,
+      "kind": "authored_synthetic_html_layout",
       "scenario": "source-active",
-      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search/all",
+      "contract_version": "Ratified CMVP source fields and captured HTML locator grammar",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/cmvp/source-historical-revoked.html",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "ad88ab78829ef2f57d656e952669adfef4963a507177c6bd4179ee135182a5ea",
+      "bytes": 399,
+      "kind": "authored_synthetic_html_layout",
       "scenario": "source-historical-revoked",
-      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search?SearchMode=Advanced&CertificateStatus=Historical&ValidationYear=0",
+      "contract_version": "Ratified CMVP source fields and captured HTML locator grammar",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/cmvp/source-certificate.html",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "f26380cbb5f3064d12fb6376af14c8aa90122e7a85d690595752a9b827d8bfed",
+      "bytes": 595,
+      "kind": "authored_synthetic_html_layout",
       "scenario": "source-certificate",
-      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5517",
+      "contract_version": "Ratified CMVP source fields and captured HTML locator grammar",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/cmvp/source-layout-drift.html",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "1c279bae53f2b917ffd38c7a6ce955977c7d2e3717075e5c2c9980c60bf53dd2",
+      "bytes": 349,
+      "kind": "authored_synthetic_html_layout",
       "scenario": "source-layout-drift",
-      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search",
-      "contract_version": "reviewed source index",
+      "contract_url": "https://csrc.nist.gov/projects/cryptographic-module-validation-program/validated-modules/search/all",
+      "contract_version": "Ratified CMVP source fields and captured HTML locator grammar",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fcc/source-covered-entries.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "f6519347bc451226488ea16c60535016b4dc692bac9fa91b98e7094828885df3",
+      "bytes": 1363,
+      "kind": "authored_synthetic_reviewed_fact_shape",
       "scenario": "source-covered-entries",
       "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
-      "contract_version": "reviewed source index",
+      "contract_version": "DA 26-957 with DA 26-870 and DA 26-786 context; reviewed_pdf_facts_v1",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fcc/source-conditional-approvals.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "41e1e75975a0cf1361007e41509085362109a60929812d0fa004f3b1cb2657ae",
+      "bytes": 1654,
+      "kind": "authored_synthetic_reviewed_fact_shape",
       "scenario": "source-conditional-approvals",
       "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
-      "contract_version": "reviewed source index",
+      "contract_version": "DA 26-957 with DA 26-870 and DA 26-786 context; reviewed_pdf_facts_v1",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fcc/source-proposal.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "ed71f6802960e64d7bba941ffb40ec5ea34a995370aa8d415ec72ce1fd093eac",
+      "bytes": 1392,
+      "kind": "authored_synthetic_reviewed_fact_shape",
       "scenario": "source-proposal",
       "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
-      "contract_version": "reviewed source index",
+      "contract_version": "DA 26-957 with DA 26-870 and DA 26-786 context; reviewed_pdf_facts_v1",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fcc/source-fact-schema-drift.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "f0ef229fa827c8b998058ef124fa84cfb515ce1bf86d3ac8ab12c935d70a70be",
+      "bytes": 1366,
+      "kind": "authored_synthetic_reviewed_fact_shape",
       "scenario": "source-fact-schema-drift",
       "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
-      "contract_version": "reviewed source index",
+      "contract_version": "DA 26-957 with DA 26-870 and DA 26-786 context; reviewed_pdf_facts_v1",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/fcc/source-category-only.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
+      "status": "created",
+      "raw_sha256": "c80bfd04ef846b35f85954447819504c6a12c42dc9dc1a7de33c01a587778323",
+      "bytes": 1580,
+      "kind": "authored_synthetic_reviewed_fact_shape",
       "scenario": "source-category-only",
       "contract_url": "https://docs.fcc.gov/public/attachments/DA-26-957A1.pdf",
-      "contract_version": "reviewed source index",
+      "contract_version": "DA 26-957 with DA 26-870 and DA 26-786 context; reviewed_pdf_facts_v1",
       "exclusions": [
         "No private keys or credentials",
-        "No live target assessment claim",
-        "No synthetic retrieval digest"
+        "No recorded provider response or invented retrieval digest",
+        "No current registry, eligibility, deployment or legal claim",
+        "No contact or unselected marketing fields in derived tuples"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Authored synthetic identities and values exercise the ratified selected field contract. The contract URL identifies the source definition; it is not a retrieval claim for this fixture.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_entity/entity-public.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "entity-public",
+      "status": "created",
+      "raw_sha256": "449ec13f548093a633a65d10b6bfcc87dbb453dd8f2c1e88703e948f84a5e136",
+      "bytes": 1190,
+      "kind": "synthetic_json_response",
+      "scenario": "Two matching EFT-qualified occurrences with explicit terminal authority unavailable",
       "contract_url": "https://open.gsa.gov/api/entity-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -547,15 +849,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-entity-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/entity-api/",
+          "requested_url": "https://open.gsa.gov/api/entity-api/",
+          "raw_sha256": "c5e50389cf413d32c24ed0e736b6da93caa54d4e8173f89d079adaa4721c8a4d",
+          "raw_bytes": 336185,
+          "retrieved_at": "2026-09-11T07:49:19.389331+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_entity/entity-unregistered.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "entity-unregistered",
+      "status": "created",
+      "raw_sha256": "e27ca61d87ce9d6b05f0f62186b266c1820d7dc3fc9aa3266b861b9b47461f49",
+      "bytes": 524,
+      "kind": "synthetic_json_response",
+      "scenario": "Unregistered source row refused",
       "contract_url": "https://open.gsa.gov/api/entity-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -563,15 +879,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-entity-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/entity-api/",
+          "requested_url": "https://open.gsa.gov/api/entity-api/",
+          "raw_sha256": "c5e50389cf413d32c24ed0e736b6da93caa54d4e8173f89d079adaa4721c8a4d",
+          "raw_bytes": 336185,
+          "retrieved_at": "2026-09-11T07:49:19.389331+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_entity/identity-mismatch.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "identity-mismatch",
+      "status": "created",
+      "raw_sha256": "ca6c5b11e5f6503d6841d4e772e432dd8a4fd36eb29de6cf6ea49f3c8f0a4a60",
+      "bytes": 525,
+      "kind": "synthetic_json_response",
+      "scenario": "Exact UEI mismatch refused",
       "contract_url": "https://open.gsa.gov/api/entity-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -579,15 +909,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-entity-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/entity-api/",
+          "requested_url": "https://open.gsa.gov/api/entity-api/",
+          "raw_sha256": "c5e50389cf413d32c24ed0e736b6da93caa54d4e8173f89d079adaa4721c8a4d",
+          "raw_bytes": 336185,
+          "retrieved_at": "2026-09-11T07:49:19.389331+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_entity/unknown-null.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "unknown-null",
+      "status": "created",
+      "raw_sha256": "2b026a001aa57c71ee2746332a9111a1449a4424d7c148781d959c39510b6a05",
+      "bytes": 468,
+      "kind": "synthetic_json_response",
+      "scenario": "Selected null, empty, unknown literal and omitted activation date remain distinct",
       "contract_url": "https://open.gsa.gov/api/entity-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -595,15 +939,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-entity-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/entity-api/",
+          "requested_url": "https://open.gsa.gov/api/entity-api/",
+          "raw_sha256": "c5e50389cf413d32c24ed0e736b6da93caa54d4e8173f89d079adaa4721c8a4d",
+          "raw_bytes": 336185,
+          "retrieved_at": "2026-09-11T07:49:19.389331+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_exclusions/exclusions-first-page.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "exclusions-first-page",
+      "status": "created",
+      "raw_sha256": "073b5cbee9de0838899ded35d8476eb1b9b01047bbb01bd4ea6ac43ce4d2ffc0",
+      "bytes": 13832,
+      "kind": "synthetic_json_response",
+      "scenario": "First ten source occurrences of eleven, with ordered action and null entries",
       "contract_url": "https://open.gsa.gov/api/exclusions-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -611,15 +969,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-exclusions-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/exclusions-api/",
+          "requested_url": "https://open.gsa.gov/api/exclusions-api/",
+          "raw_sha256": "4473870b3735ac2f8b881c6a7762a08de680308a962d5e9e282d8812f85ef228",
+          "raw_bytes": 73144,
+          "retrieved_at": "2026-09-11T07:49:19.285730+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_exclusions/exclusions-last-page.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "exclusions-last-page",
+      "status": "created",
+      "raw_sha256": "c517cc515ec6a8950248f0765bdd93637808a0251f4bb0a8a61a912d60902589",
+      "bytes": 1425,
+      "kind": "synthetic_json_response",
+      "scenario": "Final documented totalRecords page with one occurrence",
       "contract_url": "https://open.gsa.gov/api/exclusions-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -627,15 +999,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-exclusions-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/exclusions-api/",
+          "requested_url": "https://open.gsa.gov/api/exclusions-api/",
+          "raw_sha256": "4473870b3735ac2f8b881c6a7762a08de680308a962d5e9e282d8812f85ef228",
+          "raw_bytes": 73144,
+          "retrieved_at": "2026-09-11T07:49:19.285730+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_exclusions/exclusions-name-collision.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "exclusions-name-collision",
+      "status": "created",
+      "raw_sha256": "f5349e5c98dc9adfd64e193c0012409b177416e5208c43d5dee95fc6861ee02e",
+      "bytes": 4172,
+      "kind": "synthetic_json_response",
+      "scenario": "Two exact normalized names and one token-order candidate preserve distinct identity scope",
       "contract_url": "https://open.gsa.gov/api/exclusions-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -643,15 +1029,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-exclusions-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/exclusions-api/",
+          "requested_url": "https://open.gsa.gov/api/exclusions-api/",
+          "raw_sha256": "4473870b3735ac2f8b881c6a7762a08de680308a962d5e9e282d8812f85ef228",
+          "raw_bytes": 73144,
+          "retrieved_at": "2026-09-11T07:49:19.285730+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_exclusions/exclusions-no-uei.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "exclusions-no-uei",
+      "status": "created",
+      "raw_sha256": "35296c5c8ad0ff692467d12163eb02f51a576b0886729c34a86fcd33ef806e11",
+      "bytes": 1389,
+      "kind": "synthetic_json_response",
+      "scenario": "Name occurrence with UEI absent",
       "contract_url": "https://open.gsa.gov/api/exclusions-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -659,15 +1059,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-exclusions-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/exclusions-api/",
+          "requested_url": "https://open.gsa.gov/api/exclusions-api/",
+          "raw_sha256": "4473870b3735ac2f8b881c6a7762a08de680308a962d5e9e282d8812f85ef228",
+          "raw_bytes": 73144,
+          "retrieved_at": "2026-09-11T07:49:19.285730+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/sam_exclusions/exclusions-page-loop.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "exclusions-page-loop",
+      "status": "created",
+      "raw_sha256": "796af3960582a4d9be65b766cef3b83ac8f022a99c96b05eec0a79f8a19a0f9f",
+      "bytes": 13782,
+      "kind": "synthetic_json_response",
+      "scenario": "The same complete body is injected twice to prove repeated-page refusal",
       "contract_url": "https://open.gsa.gov/api/exclusions-api/",
       "contract_version": "v4",
       "exclusions": [
@@ -675,15 +1089,29 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "sam-exclusions-doc.html",
+          "source_kind": "publisher_documentation",
+          "source_url": "https://open.gsa.gov/api/exclusions-api/",
+          "requested_url": "https://open.gsa.gov/api/exclusions-api/",
+          "raw_sha256": "4473870b3735ac2f8b881c6a7762a08de680308a962d5e9e282d8812f85ef228",
+          "raw_bytes": 73144,
+          "retrieved_at": "2026-09-11T07:49:19.285730+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/incommon/entity.xml",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_unsigned_template",
-      "scenario": "entity",
+      "status": "created",
+      "raw_sha256": "73fe71ad30b805dcfb20e39c19c29ac2b767940569636d2bbe4456bbcb93ee71",
+      "bytes": 1182,
+      "kind": "synthetic_unsigned_xml_template",
+      "scenario": "Unsigned template signed in memory for selected verified fields and excluded contact controls",
       "contract_url": "https://mdq.incommon.org/",
       "contract_version": "reviewed source index",
       "exclusions": [
@@ -691,15 +1119,49 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Unsigned synthetic XML template. Tests sign selected templates using ephemeral keys in memory and a private trust capability. The production trust pin refuses that signer. No private key or signed provider response is stored.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "incommon-production-certificate.pem",
+          "source_kind": "public_trust_certificate",
+          "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "requested_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "raw_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+          "raw_bytes": 1704,
+          "retrieved_at": "2026-09-11T07:49:20.684142+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "raw_sha256": "204bc7991055dbb889307abbd2ff58022753897dd7064a4d1ca13eb737d2617a",
+          "raw_bytes": 16440,
+          "retrieved_at": "2026-09-11T07:58:18.257709+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata-rpi.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "raw_sha256": "ec1e84db1eb93af943480e7b551048d7ea7da1ced0a8c4ff498cf6593f6c558a",
+          "raw_bytes": 3471,
+          "retrieved_at": "2026-09-11T07:58:18.522057+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/incommon/partner-entity.xml",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_unsigned_template",
-      "scenario": "partner-entity",
+      "status": "created",
+      "raw_sha256": "80be6535a55edf87c0bb5c1b8e5a9479de2b1fbafa8d593563bf649a204ab203",
+      "bytes": 1174,
+      "kind": "synthetic_unsigned_xml_template",
+      "scenario": "Unsigned partner template does not establish federation membership",
       "contract_url": "https://mdq.incommon.org/",
       "contract_version": "reviewed source index",
       "exclusions": [
@@ -707,15 +1169,49 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Unsigned synthetic XML template. Tests sign selected templates using ephemeral keys in memory and a private trust capability. The production trust pin refuses that signer. No private key or signed provider response is stored.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "incommon-production-certificate.pem",
+          "source_kind": "public_trust_certificate",
+          "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "requested_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "raw_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+          "raw_bytes": 1704,
+          "retrieved_at": "2026-09-11T07:49:20.684142+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "raw_sha256": "204bc7991055dbb889307abbd2ff58022753897dd7064a4d1ca13eb737d2617a",
+          "raw_bytes": 16440,
+          "retrieved_at": "2026-09-11T07:58:18.257709+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata-rpi.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "raw_sha256": "ec1e84db1eb93af943480e7b551048d7ea7da1ced0a8c4ff498cf6593f6c558a",
+          "raw_bytes": 3471,
+          "retrieved_at": "2026-09-11T07:58:18.522057+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/incommon/expired-entity.xml",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_unsigned_template",
-      "scenario": "expired-entity",
+      "status": "created",
+      "raw_sha256": "4afd372345d385280a0177f4e8a1480fc8b5bf76be58b6bc80daa294c6cae318",
+      "bytes": 1175,
+      "kind": "synthetic_unsigned_xml_template",
+      "scenario": "Unsigned template signed in memory with expired metadata",
       "contract_url": "https://mdq.incommon.org/",
       "contract_version": "reviewed source index",
       "exclusions": [
@@ -723,15 +1219,49 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Unsigned synthetic XML template. Tests sign selected templates using ephemeral keys in memory and a private trust capability. The production trust pin refuses that signer. No private key or signed provider response is stored.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "incommon-production-certificate.pem",
+          "source_kind": "public_trust_certificate",
+          "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "requested_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "raw_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+          "raw_bytes": 1704,
+          "retrieved_at": "2026-09-11T07:49:20.684142+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "raw_sha256": "204bc7991055dbb889307abbd2ff58022753897dd7064a4d1ca13eb737d2617a",
+          "raw_bytes": 16440,
+          "retrieved_at": "2026-09-11T07:58:18.257709+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata-rpi.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "raw_sha256": "ec1e84db1eb93af943480e7b551048d7ea7da1ced0a8c4ff498cf6593f6c558a",
+          "raw_bytes": 3471,
+          "retrieved_at": "2026-09-11T07:58:18.522057+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/incommon/duplicate-target.xml",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_unsigned_template",
-      "scenario": "duplicate-target",
+      "status": "created",
+      "raw_sha256": "41fe90057949fc78e0a5a9e5eed6931c1decdb1bb0c8c857d7fc50e8823db0fb",
+      "bytes": 343,
+      "kind": "synthetic_unsigned_xml_template",
+      "scenario": "Unsigned wrapping template signed in memory; a container of matching targets is refused",
       "contract_url": "https://mdq.incommon.org/",
       "contract_version": "reviewed source index",
       "exclusions": [
@@ -739,15 +1269,49 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Unsigned synthetic XML template. Tests sign selected templates using ephemeral keys in memory and a private trust capability. The production trust pin refuses that signer. No private key or signed provider response is stored.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "incommon-production-certificate.pem",
+          "source_kind": "public_trust_certificate",
+          "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "requested_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "raw_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+          "raw_bytes": 1704,
+          "retrieved_at": "2026-09-11T07:49:20.684142+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "raw_sha256": "204bc7991055dbb889307abbd2ff58022753897dd7064a4d1ca13eb737d2617a",
+          "raw_bytes": 16440,
+          "retrieved_at": "2026-09-11T07:58:18.257709+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata-rpi.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "raw_sha256": "ec1e84db1eb93af943480e7b551048d7ea7da1ced0a8c4ff498cf6593f6c558a",
+          "raw_bytes": 3471,
+          "retrieved_at": "2026-09-11T07:58:18.522057+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/incommon/unsigned-entity.xml",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_unsigned_template",
-      "scenario": "unsigned-entity",
+      "status": "created",
+      "raw_sha256": "73fe71ad30b805dcfb20e39c19c29ac2b767940569636d2bbe4456bbcb93ee71",
+      "bytes": 1182,
+      "kind": "synthetic_unsigned_xml_template",
+      "scenario": "Unsigned response is refused without a fallback",
       "contract_url": "https://mdq.incommon.org/",
       "contract_version": "reviewed source index",
       "exclusions": [
@@ -755,15 +1319,49 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Unsigned synthetic XML template. Tests sign selected templates using ephemeral keys in memory and a private trust capability. The production trust pin refuses that signer. No private key or signed provider response is stored.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_id": "incommon-production-certificate.pem",
+          "source_kind": "public_trust_certificate",
+          "source_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "requested_url": "https://mdq.incommon.org/certs/inc-md-cert-mdq.pem",
+          "raw_sha256": "d7452bc2ddc24e9aa49554aa7a6045e4026be045d0dfd18d408959442816a2f3",
+          "raw_bytes": 1704,
+          "retrieved_at": "2026-09-11T07:49:20.684142+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/v2.0/saml-schema-metadata-2.0.xsd",
+          "raw_sha256": "204bc7991055dbb889307abbd2ff58022753897dd7064a4d1ca13eb737d2617a",
+          "raw_bytes": 16440,
+          "retrieved_at": "2026-09-11T07:58:18.257709+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        },
+        {
+          "source_id": "saml-metadata-rpi.xsd",
+          "source_kind": "publisher_schema",
+          "source_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "requested_url": "https://docs.oasis-open.org/security/saml/Post2.0/saml-metadata-rpi/v1.0/cs01/xsd/saml-metadata-rpi-v1.0.xsd",
+          "raw_sha256": "ec1e84db1eb93af943480e7b551048d7ea7da1ced0a8c4ff498cf6593f6c558a",
+          "raw_bytes": 3471,
+          "retrieved_at": "2026-09-11T07:58:18.522057+00:00",
+          "scope": "Reviewed captured source bytes; no live target assessment or continuing currency claim"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/ssl_labs/endpoint-ready.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "endpoint-ready",
+      "status": "created",
+      "raw_sha256": "644da35a49989148ed1a2849139a716d220ee412b3ad4b84b419c2d8673b7a6e",
+      "bytes": 523,
+      "kind": "synthetic_json_response",
+      "scenario": "Synthetic Endpoint fields retain a large native integer and omit all Host-only fields",
       "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
       "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
       "exclusions": [
@@ -771,15 +1369,25 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+          "raw_sha256": "92ca8697293ae0525aeb231a80b64877178a62fda293cf74fdd3e7609c7ecb86",
+          "raw_bytes": 120081,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/ssl_labs/endpoint-error.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "endpoint-error",
+      "status": "created",
+      "raw_sha256": "7f85db84baae9e12d3256d0633d69fdfce7250e1cf784bf23b5591494ae636a2",
+      "bytes": 167,
+      "kind": "synthetic_json_response",
+      "scenario": "Synthetic cached error keeps literal nullable fields without a grade inference",
       "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
       "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
       "exclusions": [
@@ -787,15 +1395,25 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+          "raw_sha256": "92ca8697293ae0525aeb231a80b64877178a62fda293cf74fdd3e7609c7ecb86",
+          "raw_bytes": 120081,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/ssl_labs/endpoint-cache-miss.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "endpoint-cache-miss",
+      "status": "created",
+      "raw_sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "bytes": 3,
+      "kind": "synthetic_json_response",
+      "scenario": "Synthetic missing cached Endpoint identity",
       "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
       "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
       "exclusions": [
@@ -803,15 +1421,25 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+          "raw_sha256": "92ca8697293ae0525aeb231a80b64877178a62fda293cf74fdd3e7609c7ecb86",
+          "raw_bytes": 120081,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     },
     {
       "path": "tests/fixtures/registries/ssl_labs/endpoint-identity-mismatch.json",
-      "status": "prospective",
-      "raw_sha256": null,
-      "bytes": null,
-      "kind": "synthetic_source_fixture",
-      "scenario": "endpoint-identity-mismatch",
+      "status": "created",
+      "raw_sha256": "dc3d01701e8e7a8aebf0b327e9172be9d4b534cd9de26ddfcc54b8b3e5762dd6",
+      "bytes": 79,
+      "kind": "synthetic_json_response",
+      "scenario": "Synthetic different endpoint address refused",
       "contract_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
       "contract_version": "v4 commit50e3144b378f2dbc57f8b9eebd6d42c8f519b110",
       "exclusions": [
@@ -819,7 +1447,17 @@
         "No live target assessment claim",
         "No synthetic retrieval digest"
       ],
-      "provenance": "Authored synthetic source data; no original publisher retrieval is claimed"
+      "provenance": "Hand-authored finite synthetic response for the ratified selected-field contract; no provider request or real organization assessment.",
+      "line_endings": "Exact authored LF bytes; Git pins LF for these files.",
+      "contract_sources": [
+        {
+          "source_url": "https://github.com/ssllabs/ssllabs-scan/blob/50e3144b378f2dbc57f8b9eebd6d42c8f519b110/ssllabs-api-docs-v4.md",
+          "raw_sha256": "92ca8697293ae0525aeb231a80b64877178a62fda293cf74fdd3e7609c7ecb86",
+          "raw_bytes": 120081,
+          "scope": "Versioned contract used for the bounded implementation; no provider response is implied"
+        }
+      ],
+      "synthetic": true
     }
   ]
 }

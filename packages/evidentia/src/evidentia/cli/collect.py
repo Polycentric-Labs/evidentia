@@ -2116,3 +2116,77 @@ def collect_enterprise_retention(
     if result.root.status != "complete":
         typer.echo("Collection incomplete; inspect resource and source-read diagnostics in the result.", err=True)
         raise typer.Exit(1)
+
+
+@app.command("registry")
+@require_role_cli("read")
+def collect_registry(
+    registry: str = typer.Option(
+        ..., "--registry", metavar="SELECTOR", help="Registry selector; must match the request file."
+    ),
+    request_file: str = typer.Option(
+        ...,
+        "--request-file",
+        metavar="PATH",
+        help="Named regular JSON request file, at most 65536 bytes; stdin is not accepted.",
+    ),
+    output: str | None = typer.Option(
+        None, "--output", metavar="PATH", help="Atomically write full result JSON; omitted means stdout."
+    ),
+) -> None:
+    """Look up one selected public registry identity with explicit source limits.
+
+    The request selects a typed target. Credentials are configured separately;
+    snapshots are dated and SSL Labs remains live-disabled. No request can
+    change transport, trust, source paths or collection bounds.
+    """
+    try:
+        from evidentia_collectors.registries import RegistryCollector, RegistryInputError, RegistryLookupResult
+        from evidentia_collectors.registries._contracts import parse_request, result_bytes
+
+        from ._retention_io import InputFailure, OutputFailure, ReservedOutput, read_request_file
+    except ModuleNotFoundError as error:
+        missing = error.name in {"evidentia_collectors", "evidentia_collectors.registries"}
+        typer.echo(
+            "Registry collection is not installed." if missing else "Registry collection could not be loaded.", err=True
+        )
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Registry collection could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        source = read_request_file(Path(request_file))
+        selected = parse_request(source.content)
+        if selected.root.registry != registry:
+            raise RegistryInputError()
+        original = selected.model_dump(mode="python", warnings="error")
+    except Exception:
+        typer.echo("Invalid registry request or selector disagreement.", err=True)
+        raise typer.Exit(2) from None
+    try:
+        with ReservedOutput(source, Path(output) if output is not None else None) as destination:
+            with RegistryCollector() as collector:
+                observed = collector.collect_v2(selected)
+            if type(observed) is not RegistryLookupResult:
+                raise ValueError("invalid_result")
+            content = result_bytes(observed)
+            result = RegistryLookupResult.model_validate_json(content)
+            if result.request.model_dump(mode="python", warnings="error") != original:
+                raise ValueError("result_request_mismatch")
+            destination.publish(content)
+    except InputFailure:
+        typer.echo("Invalid registry request.", err=True)
+        raise typer.Exit(2) from None
+    except OutputFailure:
+        typer.echo("Registry output failed.", err=True)
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Registry collection or result output failed.", err=True)
+        raise typer.Exit(1) from None
+    if (
+        result.freshness not in {"current_observation", "dated_snapshot"}
+        or result.collection_status != "complete"
+        or result.lookup_outcome not in {"found", "not_found"}
+    ):
+        typer.echo("Inspect the result's outcome, collection scope, freshness and diagnostics.", err=True)
+        raise typer.Exit(1)

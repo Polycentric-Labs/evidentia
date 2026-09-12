@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "export_timestamp": "2026-09-10T00:00:00Z",
+    "total_entries": 1,
+    "description": "Synthetic fixture"
+  },
+  "data": {
+    "certprocessstatuschangelog": [
+      {
+        "unique_id": "H1",
+        "product_id": "F-SYNTHETIC",
+        "cert_type": "Authorization",
+        "cert_path": "Agency",
+        "cert_class": "Moderate",
+        "from_status": "In Process",
+        "to_status": "Authorized",
+        "transition_date": "2026-01-01",
+        "recorded_date": "2026-09-10T00:00:00Z",
+        "source": "Synthetic source"
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "data": {
+    "id": "AAAAAAAAAAAAAAAAAAAA",
+    "type": "lei-records",
+    "attributes": {
+      "lei": "AAAAAAAAAAAAAAAAAAAA",
+      "entity": {
+        "legalName": {
+          "name": "Synthetic Example Organization",
+          "language": "en"
+        },
+        "status": "ACTIVE",
+        "successorEntities": [
+          {
+            "lei": "BBBBBBBBBBBBBBBBBBBB",
+            "name": "First synthetic successor",
+            "extra": "DO-NOT-RETAIN"
+          },
+          {
+            "lei": "CCCCCCCCCCCCCCCCCCCC",
+            "name": "Second synthetic successor"
+          }
+        ]
+      },
+      "registration": {
+        "initialRegistrationDate": "2020-01-02T03:04:05Z",
+        "lastUpdateDate": "2026-09-01T12:00:00Z",
+        "status": "LAPSED",
+        "nextRenewalDate": "2026-01-02T03:04:05Z"
+      }
+    }
+  }
+}

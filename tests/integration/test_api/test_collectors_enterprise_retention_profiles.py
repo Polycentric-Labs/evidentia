@@ -43,7 +43,7 @@ class BrokenLoader(importlib.abc.Loader):
 
 class Block(importlib.abc.MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
-        wanted = {'parent': 'evidentia_collectors', 'feature': 'evidentia_collectors.enterprise_retention', 'internal': 'evidentia_collectors.enterprise_retention._profiles'}.get(mode)
+        wanted = {'parent': 'evidentia_collectors', 'internal': 'evidentia_collectors.enterprise_retention._profiles'}.get(mode)
         if fullname == wanted:
             raise ModuleNotFoundError('synthetic-private-import', name=fullname)
         if mode in ('transitive', 'symbol', 'syntax') and fullname == 'evidentia_collectors.enterprise_retention':
@@ -168,6 +168,27 @@ async def run(patch):
     return {'startup': 'accepted', 'profile_reads': phase['profile_reads'], 'absence': absent, 'denial_body_reads': 0}
 
 sys.meta_path.insert(0, Block())
+if mode == 'feature':
+    # A missing namespace returns no spec; a finder exception is a failed probe.
+    delegates = tuple(sys.meta_path)
+    class EnterpriseAbsent(importlib.abc.MetaPathFinder):
+        def find_spec(self, fullname, path=None, target=None):
+            namespace = 'evidentia_collectors.enterprise_retention'
+            if fullname == namespace or fullname.startswith(namespace + '.'):
+                return None
+            for finder in delegates:
+                spec = finder.find_spec(fullname, path, target)
+                if spec is not None:
+                    return spec
+            return None
+        def find_distributions(self, *args, **kwargs):
+            for finder in delegates:
+                discover = getattr(finder, 'find_distributions', None)
+                if discover is not None:
+                    yield from discover(*args, **kwargs)
+    sys.meta_path[:] = [EnterpriseAbsent()]
+    from importlib.metadata import version
+    assert version('email-validator')
 with asyncio.Runner() as runner:
     runner.get_loop()
     with pytest.MonkeyPatch.context() as patch:

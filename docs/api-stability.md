@@ -753,3 +753,45 @@ cycle.
 | **NORMATIVE** | **2026-09-10** | **Entra/M365 evidence (V13-02).** Add the six public collector exports, bounded request and full result contract, `collect entra-m365`, `POST /api/collectors/entra-m365/collect` and the `entra-m365` status entry. Nine capability records preserve source coverage, declared identity and precise event windows. Partial/unavailable attempts retain the full response; CLI input/output refusal and read RBAC are explicit. The three fixed `ENTRA_M365_*` references are documented configuration contracts. Existing collector endpoints and result models retain their shapes. |
 | **NORMATIVE** | **2026-09-10** | **Storage retention evidence (V13-04, storage milestone).** Add seven public exports, the provider-discriminated request and full result contract, `collect retention`, `POST /api/collectors/retention/collect`, and the `retention` status entry. Six fixed S3/Azure/GCS reads preserve native configuration fields and every requested resource/component state. CLI read RBAC precedes path metadata access; API authentication and read RBAC precede streamed input. Detached selection checks bind returned provider, scope and ordered targets. Exact browser JSON export preserves native numbers without rounding. Fixed credential references, bounded input/output, safe error classification and unknown compliance are part of the contract. M365/Vault/Splunk/Elastic retention remains subsequent work. |
 | **NORMATIVE** | **2026-09-11** | **Enterprise retention evidence (V13-04, enterprise milestone).** Add nine public exports, the bounded profile-selected request and full result contract, `collect enterprise-retention`, `POST /api/collectors/enterprise-retention/collect`, and the `enterprise_retention` status entry. Google Vault, Splunk Enterprise and Elastic ILM reads preserve native selected fields and per-resource coverage. Authentication and read RBAC precede API streaming; exact API-principal grants and local CLI grants remain separate. The trusted startup registry is named by `EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE`. Partial and unavailable results retain full evidence. Selection validation, atomic CLI output and exact browser JSON export are enforced. Live tenant acceptance, provider identity, effective enforcement, record completeness and Vault retention rules remain unassessed. |
+
+
+### Public registry collection contract (v0.13)
+
+The public exports in `evidentia_collectors.registries` are `RegistryCollector`,
+`RegistryLookupRequest`, `RegistryLookupResult`, `RegistryObservation`,
+`SourceRead`, `RegistryDiagnostic`, `RegistryManifest`, `RegistryContext` and
+`RegistryInputError`. The collector class is imported lazily. Model and schema
+imports do not require the optional XML verifier. `collect_v2(request)` returns
+the authoritative complete result; `collect(request)` returns findings only.
+Underscore modules, source adapters and trusted test capabilities remain internal.
+
+A request selects one of eleven finite registries, its exact typed target and an
+optional scope label. It has no credential, URL, path, trust override or activation
+field. Results preserve lookup outcome, traversal status and freshness separately,
+with literal native observations, complete finding copies, source reads and a
+cross-checked manifest. Source evidence carries no inferred compliance decision.
+
+`collect registry --registry SELECTOR --request-file PATH [--output PATH]` applies
+read authorization before file access, limits input to 65536 bytes and reserves a
+safe output before collection. It emits complete JSON, bounded to 4 MiB. Exit 0
+requires complete found/not_found evidence with current_observation or non-stale
+dated_snapshot freshness. Ambiguous, partial, unavailable, stale or unknown
+freshness exits 1, as do operational failures. Invalid input exits 2; read denial
+exits 77. Output identity is bound to the original detached request.
+
+`POST /api/collectors/registry` uses operation ID `collect_registry`. Real API
+authentication and read RBAC precede actual-byte streaming and collection in one
+worker. Valid full results, including partial/unavailable results and explicit
+verifier dependency failures, return 200. Invalid input returns 422, auth denial
+401/403, exact collector-package absence 503, and internal/result failures 500
+with fixed messages. A missing XML root produces missing_extra before I/O; a
+broken dependency produces dependency_failure, never a false uninstalled claim.
+
+The console uses the same finite request and full response contract. Authentication
+is revalidated before each actual API call. SSL Labs live selection makes no
+network call. Candidate pages show at most twenty observations, each visible
+field at most 16 KiB, and the full validated JSON download preserves the original
+UTF-8 bytes. Native integer/float tokens and source timestamp precision are
+rendered from their original JSON spans. The [registry design](designs/registry-collector-design.md)
+defines source scope, dated snapshots, signature policy and the exact approved
+FedRAMP publisher-data exception.

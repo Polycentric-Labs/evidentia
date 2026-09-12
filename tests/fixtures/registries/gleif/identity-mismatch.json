@@ -1,0 +1,12 @@
+{
+  "data": {
+    "id": "AAAAAAAAAAAAAAAAAAAA",
+    "type": "lei-records",
+    "attributes": {
+      "lei": "BBBBBBBBBBBBBBBBBBBB",
+      "entity": {
+        "status": "ACTIVE"
+      }
+    }
+  }
+}

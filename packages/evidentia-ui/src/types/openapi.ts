@@ -3,14 +3,17 @@
  * Do not make direct changes to the file.
  */
 
-export type JsonValue = boolean | number | string | JsonValue[] | {
-    [key: string]: JsonValue;
-} | null;
 export type StorageRetentionJsonValue = boolean | number | string | StorageRetentionJsonValue[] | {
     [key: string]: StorageRetentionJsonValue;
 } | null;
 export type EnterpriseRetentionJsonValue = boolean | number | string | EnterpriseRetentionJsonValue[] | {
     [key: string]: EnterpriseRetentionJsonValue;
+} | null;
+export type RegistryJsonValue = boolean | number | string | RegistryJsonValue[] | {
+    [key: string]: RegistryJsonValue;
+} | null;
+export type evidentia_collectors__entra_m365___contracts__JsonValue = boolean | number | string | evidentia_collectors__entra_m365___contracts__JsonValue[] | {
+    [key: string]: evidentia_collectors__entra_m365___contracts__JsonValue;
 } | null;
 export interface paths {
     "/api/ai-gov/acquisitions": {
@@ -899,6 +902,26 @@ export interface paths {
          *     accepts a token value.
          */
         post: operations["okta_collect_api_collectors_okta_collect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/collectors/registry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Collect Registry
+         * @description Return the complete selected-query result, including source limitations.
+         */
+        post: operations["collect_registry"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3773,6 +3796,17 @@ export interface components {
             /** Subscription Id */
             subscription_id: string & unknown;
         };
+        /** CMVPRequest */
+        CMVPRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "cmvp";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["CertificateTarget"];
+        };
         /**
          * CadenceSeries
          * @description The dated series for one cadence over a window, with its verdict.
@@ -4136,6 +4170,11 @@ export interface components {
             values: {
                 [key: string]: string | number | boolean | null;
             };
+        };
+        /** CertificateTarget */
+        CertificateTarget: {
+            /** Certificate Number */
+            certificate_number: string;
         };
         /**
          * ChallengeOutcome
@@ -4876,6 +4915,11 @@ export interface components {
              */
             vendors_with_value: number;
         };
+        /** DomainTarget */
+        DomainTarget: {
+            /** Domain */
+            domain: string;
+        };
         /**
          * EUAIActTier
          * @description EU AI Act risk tier per Articles 5, 6, 50.
@@ -5088,6 +5132,13 @@ export interface components {
         ElasticIndexTarget: {
             /** Index */
             index: string & unknown;
+        };
+        /** EndpointTarget */
+        EndpointTarget: {
+            /** Endpoint Ip */
+            endpoint_ip: string;
+            /** Hostname */
+            hostname: string;
         };
         /** EnterpriseRetentionCollectResult */
         EnterpriseRetentionCollectResult: components["schemas"]["VaultCollectResult"] | components["schemas"]["SplunkCollectResult"] | components["schemas"]["ElasticCollectResult"];
@@ -5307,6 +5358,11 @@ export interface components {
              */
             status: "complete" | "partial" | "unavailable";
             target: components["schemas"]["VaultMatterTarget"];
+        };
+        /** EntityTarget */
+        EntityTarget: {
+            /** Entity Id */
+            entity_id: string;
         };
         /** EntraM365CapabilityResult */
         EntraM365CapabilityResult: {
@@ -5672,6 +5728,27 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** FCCOrganizationTarget */
+        FCCOrganizationTarget: {
+            /** Organization Name */
+            organization_name: string;
+            /**
+             * Query Scope
+             * @constant
+             */
+            query_scope: "named_organization_entries";
+        };
+        /** FCCRequest */
+        FCCRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "fcc-covered-list";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["FCCOrganizationTarget"];
+        };
         /**
          * FIPS199Categorization
          * @description FIPS 199 impact categorization for an AI system or component.
@@ -5758,6 +5835,17 @@ export interface components {
             /** Simulations */
             simulations: components["schemas"]["SimulationResult"][];
         };
+        /** FedRAMPRequest */
+        FedRAMPRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "fedramp";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["ProductTarget"];
+        };
         /**
          * FindingStatus
          * @description Status of a security finding.
@@ -5791,6 +5879,17 @@ export interface components {
             relationship: string;
             /** @description Same taxonomy as the parent vendor's `type` field. */
             type: components["schemas"]["VendorType"];
+        };
+        /** GLEIFRequest */
+        GLEIFRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "gleif";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["LEITarget"];
         };
         /**
          * GapAnalysisReport
@@ -6213,12 +6312,28 @@ export interface components {
             /** Rationale */
             rationale?: string | null;
         };
+        /** HostnameTarget */
+        HostnameTarget: {
+            /** Hostname */
+            hostname: string;
+        };
         /**
          * ImplementationEffort
          * @description Estimated effort to remediate a gap.
          * @enum {string}
          */
         ImplementationEffort: "low" | "medium" | "high" | "very_high";
+        /** InCommonRequest */
+        InCommonRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "incommon";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["EntityTarget"];
+        };
         /**
          * InitWizardCommitRequest
          * @description Body of `POST /api/init/commit` — write the starter files to disk.
@@ -6337,9 +6452,13 @@ export interface components {
             system_context_yaml: string;
         };
         JsonObject: {
-            [key: string]: components["schemas"]["JsonValue"];
+            [key: string]: components["schemas"]["evidentia_collectors__entra_m365___contracts__JsonValue"];
         };
-        JsonValue: JsonValue;
+        /** LEITarget */
+        LEITarget: {
+            /** Lei */
+            lei: string;
+        };
         /**
          * LLMConfig
          * @description LLM defaults honored by ``evidentia risk generate``.
@@ -7033,6 +7152,16 @@ export interface components {
             /** @description OMB M-24-10 §5(b) category: rights_impacting / safety_impacting / rights_and_safety_impacting / neither. */
             category: components["schemas"]["OMBImpactCategory"];
         };
+        /** ObservationTrust */
+        ObservationTrust: {
+            /**
+             * Source Signature
+             * @enum {string}
+             */
+            source_signature: "verified" | "unverified" | "not_applicable";
+            /** Transport Verified */
+            transport_verified: boolean | null;
+        };
         /**
          * OpenFAIRScenario
          * @description A risk scenario expressed in Open FAIR terms.
@@ -7391,6 +7520,11 @@ export interface components {
              */
             reported_to_omb_on?: string | null;
         };
+        /** ProductTarget */
+        ProductTarget: {
+            /** Product Id */
+            product_id: string;
+        };
         /**
          * Provenance
          * @description Model provenance — who built it.
@@ -7481,6 +7615,17 @@ export interface components {
          * @enum {string}
          */
         QuestionnaireFormat: "evidentia-generic" | "caiq-lite" | "caiq-full" | "sig" | "sig-lite";
+        /** RDAPRequest */
+        RDAPRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "rdap";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["DomainTarget"];
+        };
         /**
          * RegisterAcquisitionRequest
          * @description Body for ``POST /ai-gov/acquisitions``.
@@ -7542,6 +7687,226 @@ export interface components {
             owner: string;
             /** Provider */
             provider: string;
+        };
+        /** RegistryContext */
+        RegistryContext: {
+            /** Collected At */
+            collected_at: string;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "public-registry";
+            /** Collector Version */
+            collector_version: string;
+            /**
+             * Credential Identity
+             * @constant
+             */
+            credential_identity: "not-established";
+            /** Evidentia Version */
+            evidentia_version: string;
+            /** Filter Applied */
+            filter_applied: {
+                [key: string]: unknown;
+            };
+            /** Pagination Context */
+            pagination_context: null;
+            /** Run Id */
+            run_id: string;
+            /** Source System Id */
+            source_system_id: string;
+        };
+        /** RegistryDiagnostic */
+        RegistryDiagnostic: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "offline_refused" | "live_disabled" | "missing_credential" | "invalid_credential" | "missing_extra" | "dependency_failure" | "destination_refused" | "dns_failure" | "tls_failure" | "tls_certificate_verification_failed" | "connection_failure" | "timeout" | "http_error" | "redirect_refused" | "retry_exhausted" | "body_limit" | "run_byte_limit" | "invalid_response" | "identity_mismatch" | "source_terminal_unproven" | "source_match_scope_limited" | "traversal_incomplete" | "page_limit" | "record_limit" | "attempt_limit" | "read_limit" | "diagnostic_limit" | "observation_limit" | "result_limit" | "deadline_exceeded" | "duplicate_conflict" | "repeated_page" | "total_changed" | "projection_mismatch" | "snapshot_missing" | "snapshot_invalid" | "signature_missing" | "signature_invalid" | "signature_unsupported" | "signature_expired" | "source_time_unsupported" | "source_value_unknown" | "source_name_conflict" | "source_name_comparison_unsupported" | "expired_source" | "expiry_beyond_one_year" | "syntax_invalid" | "signature_unverified" | "cache_miss" | "category_applicability_not_assessed" | "indirect_affiliate_applicability_not_assessed" | "conditional_approval_applicability_not_assessed" | "cleanup_failure";
+            /**
+             * Effect
+             * @enum {string}
+             */
+            effect: "advisory" | "gap";
+            /** Source Read Id */
+            source_read_id?: string | null;
+        };
+        /** RegistryFinding */
+        RegistryFinding: {
+            collection_context: components["schemas"]["RegistryContext"];
+            /**
+             * Compliance Status
+             * @constant
+             */
+            compliance_status: "unknown";
+            /** Control Mappings */
+            control_mappings: components["schemas"]["ControlMapping"][];
+            /** Description */
+            description: string;
+            /** First Observed */
+            first_observed: string;
+            /** Id */
+            id: string;
+            /** Last Observed */
+            last_observed: string;
+            raw_data: components["schemas"]["evidentia_collectors__registries___contracts___FindingData"];
+            /** Remediation */
+            remediation: null;
+            /** Resolved At */
+            resolved_at: null;
+            /** Resource Account */
+            resource_account: null;
+            /** Resource Id */
+            resource_id: string;
+            /** Resource Region */
+            resource_region: null;
+            /**
+             * Resource Type
+             * @constant
+             */
+            resource_type: "selected_registry_query";
+            /**
+             * Severity
+             * @constant
+             */
+            severity: "informational";
+            /** Source Finding Id */
+            source_finding_id: string;
+            /**
+             * Source System
+             * @constant
+             */
+            source_system: "public-registry";
+            /**
+             * Status
+             * @constant
+             */
+            status: "active";
+            /** Title */
+            title: string;
+        };
+        RegistryJsonValue: RegistryJsonValue;
+        /** RegistryLookupRequest */
+        RegistryLookupRequest: components["schemas"]["TLSRequest"] | components["schemas"]["RDAPRequest"] | components["schemas"]["SAMEntityRequest"] | components["schemas"]["SAMExclusionsRequest"] | components["schemas"]["GLEIFRequest"] | components["schemas"]["FedRAMPRequest"] | components["schemas"]["CMVPRequest"] | components["schemas"]["FCCRequest"] | components["schemas"]["InCommonRequest"] | components["schemas"]["SSLLabsRequest"] | components["schemas"]["SecurityTxtRequest"];
+        /** RegistryLookupResult */
+        RegistryLookupResult: {
+            /**
+             * Collection Status
+             * @enum {string}
+             */
+            collection_status: "complete" | "partial" | "unavailable";
+            /** Diagnostics */
+            diagnostics: components["schemas"]["RegistryDiagnostic"][];
+            /** Findings */
+            findings: components["schemas"]["RegistryFinding"][];
+            /**
+             * Freshness
+             * @enum {string}
+             */
+            freshness: "current_observation" | "dated_snapshot" | "stale" | "unknown";
+            /**
+             * Lookup Outcome
+             * @enum {string}
+             */
+            lookup_outcome: "found" | "not_found" | "ambiguous" | "unavailable";
+            manifest: components["schemas"]["RegistryManifest"];
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "selected_registry_query";
+            /** Observations */
+            observations: components["schemas"]["RegistryObservation"][];
+            /**
+             * Registry
+             * @enum {string}
+             */
+            registry: "tls" | "rdap" | "sam-entity" | "sam-exclusions" | "gleif" | "fedramp" | "cmvp" | "fcc-covered-list" | "incommon" | "ssl-labs" | "security-txt";
+            request: components["schemas"]["RegistryLookupRequest"];
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "1";
+            /** Source Reads */
+            source_reads: components["schemas"]["SourceRead"][];
+        };
+        /** RegistryManifest */
+        RegistryManifest: {
+            /** Collection Finished At */
+            collection_finished_at: string;
+            /** Collection Started At */
+            collection_started_at: string;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "public-registry";
+            /** Collector Version */
+            collector_version: string;
+            /** Coverage Counts */
+            coverage_counts: components["schemas"]["CoverageCount"][];
+            /** Empty Categories */
+            empty_categories: string[];
+            /** Errors */
+            errors: string[];
+            /** Evidentia Version */
+            evidentia_version: string;
+            /** Filters Applied */
+            filters_applied: {
+                [key: string]: unknown;
+            };
+            /** Incomplete Reason */
+            incomplete_reason: "selected_query_incomplete" | null;
+            /** Is Complete */
+            is_complete: boolean;
+            /** Run Id */
+            run_id: string;
+            /** Source System Ids */
+            source_system_ids: string[];
+            /** Total Findings */
+            total_findings: number;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** RegistryObservation */
+        RegistryObservation: {
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: "present" | "absent" | "null" | "unknown";
+            };
+            /** Fields */
+            fields: {
+                [key: string]: components["schemas"]["RegistryJsonValue"];
+            };
+            /** Interpretation */
+            interpretation: string;
+            /**
+             * Match Basis
+             * @enum {string}
+             */
+            match_basis: "exact_identifier" | "exact_normalized_name" | "provider_candidate";
+            /** Matched Identity */
+            matched_identity: string;
+            /** Observation Id */
+            observation_id: string;
+            /**
+             * Registry
+             * @enum {string}
+             */
+            registry: "tls" | "rdap" | "sam-entity" | "sam-exclusions" | "gleif" | "fedramp" | "cmvp" | "fcc-covered-list" | "incommon" | "ssl-labs" | "security-txt";
+            /** Source Identity */
+            source_identity: {
+                [key: string]: components["schemas"]["RegistryJsonValue"];
+            };
+            /** Source Read Id */
+            source_read_id: string;
+            /** Source Times */
+            source_times: components["schemas"]["SourceTime"][];
+            trust: components["schemas"]["ObservationTrust"];
         };
         /**
          * RegulatoryClassification
@@ -7783,6 +8148,45 @@ export interface components {
              */
             region: "af-south-1" | "ap-east-1" | "ap-east-2" | "ap-northeast-1" | "ap-northeast-2" | "ap-northeast-3" | "ap-south-1" | "ap-south-2" | "ap-southeast-1" | "ap-southeast-2" | "ap-southeast-3" | "ap-southeast-4" | "ap-southeast-5" | "ap-southeast-6" | "ap-southeast-7" | "ca-central-1" | "ca-west-1" | "eu-central-1" | "eu-central-2" | "eu-north-1" | "eu-south-1" | "eu-south-2" | "eu-west-1" | "eu-west-2" | "eu-west-3" | "il-central-1" | "me-central-1" | "me-south-1" | "mx-central-1" | "sa-east-1" | "us-east-1" | "us-east-2" | "us-west-1" | "us-west-2";
         };
+        /** SAMEntityRequest */
+        SAMEntityRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "sam-entity";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["UEITarget"];
+        };
+        /** SAMExclusionsRequest */
+        SAMExclusionsRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "sam-exclusions";
+            /** Scope Label */
+            scope_label?: string | null;
+            /** Target */
+            target: components["schemas"]["UEITarget"] | components["schemas"]["SAMOrganizationTarget"];
+        };
+        /** SAMOrganizationTarget */
+        SAMOrganizationTarget: {
+            /** Organization Name */
+            organization_name: string;
+        };
+        /** SSLLabsRequest */
+        SSLLabsRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "ssl-labs";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["EndpointTarget"];
+        };
         /**
          * SecurityFinding
          * @description A security finding from an evidence collector.
@@ -7865,6 +8269,17 @@ export interface components {
             status: components["schemas"]["FindingStatus"];
             /** Title */
             title: string;
+        };
+        /** SecurityTxtRequest */
+        SecurityTxtRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "security-txt";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["HostnameTarget"];
         };
         /**
          * SeriesGap
@@ -8096,6 +8511,95 @@ export interface components {
              */
             stddev: number;
         };
+        /** SourceRead */
+        SourceRead: {
+            /** Accepted Pages */
+            accepted_pages: number;
+            /** Admitted Records */
+            admitted_records: number;
+            /** Attempted Pages */
+            attempted_pages: number;
+            /** Body Complete */
+            body_complete: boolean;
+            /**
+             * Cache State
+             * @enum {string}
+             */
+            cache_state: "not_applicable" | "cache_only" | "unknown";
+            /** Decoded Bytes */
+            decoded_bytes: number | null;
+            /**
+             * Freshness
+             * @enum {string}
+             */
+            freshness: "current_observation" | "dated_snapshot" | "stale" | "unknown";
+            /** Http Status */
+            http_status: number | null;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "GET" | "TLS" | "LOCAL" | "DISABLED";
+            /** Network Attempts */
+            network_attempts: number;
+            /** Ordinal */
+            ordinal: number;
+            /** Publisher Date */
+            publisher_date: string | null;
+            /** Publisher Version */
+            publisher_version: string | null;
+            query_scope: components["schemas"]["RegistryLookupRequest"];
+            /** Raw Bytes */
+            raw_bytes: number | null;
+            /** Read Id */
+            read_id: string;
+            /**
+             * Registry
+             * @enum {string}
+             */
+            registry: "tls" | "rdap" | "sam-entity" | "sam-exclusions" | "gleif" | "fedramp" | "cmvp" | "fcc-covered-list" | "incommon" | "ssl-labs" | "security-txt";
+            /** Retrieved At */
+            retrieved_at: string;
+            /** Snapshot Source */
+            snapshot_source: string | null;
+            /** Source Digest */
+            source_digest: string | null;
+            /** Source Records */
+            source_records: number;
+            /**
+             * Source Signature
+             * @enum {string}
+             */
+            source_signature: "verified" | "unverified" | "not_applicable";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Template */
+            template: string;
+            /**
+             * Transport Kind
+             * @enum {string}
+             */
+            transport_kind: "https" | "tls" | "snapshot" | "none";
+            /** Transport Verified */
+            transport_verified: boolean | null;
+        };
+        /** SourceTime */
+        SourceTime: {
+            /** Literal */
+            literal: string | number | null;
+            /** Normalized Utc */
+            normalized_utc: string | null;
+            /** Path */
+            path: string;
+            /**
+             * Representation
+             * @enum {string}
+             */
+            representation: "rfc3339" | "unix_milliseconds" | "source_text";
+        };
         /** SplunkCollectResult */
         SplunkCollectResult: {
             /**
@@ -8313,6 +8817,17 @@ export interface components {
             /** Target */
             target: components["schemas"]["S3Target"] | components["schemas"]["AzureTarget"] | components["schemas"]["GcsTarget"];
         };
+        /** TLSRequest */
+        TLSRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            registry: "tls";
+            /** Scope Label */
+            scope_label?: string | null;
+            target: components["schemas"]["HostnameTarget"];
+        };
         /**
          * Tier
          * @description SR 11-7 model criticality tier.
@@ -8359,6 +8874,11 @@ export interface components {
              * @description Human-readable matrix title.
              */
             title: string;
+        };
+        /** UEITarget */
+        UEITarget: {
+            /** Uei */
+            uei: string;
         };
         /**
          * UpdateSystemRequest
@@ -8970,7 +9490,7 @@ export interface components {
             id: string & unknown;
             /** Last Observed */
             last_observed: string & unknown;
-            raw_data: components["schemas"]["_FindingData"];
+            raw_data: components["schemas"]["evidentia_collectors__enterprise_retention___contracts___FindingData"];
             /** Remediation */
             remediation: null;
             /** Resolved At */
@@ -9100,27 +9620,6 @@ export interface components {
             run_id: string & unknown;
             /** Source System Id */
             source_system_id: string;
-        };
-        /** _FindingData */
-        _FindingData: {
-            /** Field Coverage */
-            field_coverage: {
-                [key: string]: components["schemas"]["CoverageCounts"];
-            };
-            /**
-             * Policy Resolution
-             * @enum {string}
-             */
-            policy_resolution: "not_applicable" | "resolved" | "unresolved";
-            /** Reads */
-            reads: components["schemas"]["_FindingRead"][];
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "complete" | "partial" | "unavailable";
-            /** Target */
-            target: components["schemas"]["VaultMatterTarget"] | components["schemas"]["SplunkIndexTarget"] | components["schemas"]["ElasticIndexTarget"];
         };
         /** _FindingPagination */
         _FindingPagination: {
@@ -9360,6 +9859,33 @@ export interface components {
         _WireJsonObject: {
             [key: string]: components["schemas"]["StorageRetentionJsonValue"];
         };
+        /** _FindingData */
+        evidentia_collectors__enterprise_retention___contracts___FindingData: {
+            /** Field Coverage */
+            field_coverage: {
+                [key: string]: components["schemas"]["CoverageCounts"];
+            };
+            /**
+             * Policy Resolution
+             * @enum {string}
+             */
+            policy_resolution: "not_applicable" | "resolved" | "unresolved";
+            /** Reads */
+            reads: components["schemas"]["_FindingRead"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Target */
+            target: components["schemas"]["VaultMatterTarget"] | components["schemas"]["SplunkIndexTarget"] | components["schemas"]["ElasticIndexTarget"];
+        };
+        evidentia_collectors__entra_m365___contracts__JsonValue: evidentia_collectors__entra_m365___contracts__JsonValue;
+        /** _FindingData */
+        evidentia_collectors__registries___contracts___FindingData: {
+            observation: components["schemas"]["RegistryObservation"];
+        };
+        pydantic__types__JsonValue: unknown;
     };
     responses: never;
     parameters: never;
@@ -11282,6 +11808,232 @@ export interface operations {
                 };
             };
             /** @description Collector import failed, ``OKTA_API_TOKEN`` unset, or Okta unreachable (``error: feature_unavailable`` / ``error: credentials_missing`` / ``error: upstream_error``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    collect_registry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "tls";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** HostnameTarget */
+                    target: {
+                        /** Hostname */
+                        hostname: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "rdap";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** DomainTarget */
+                    target: {
+                        /** Domain */
+                        domain: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "sam-entity";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** UEITarget */
+                    target: {
+                        /** Uei */
+                        uei: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "sam-exclusions";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** Target */
+                    target: {
+                        /** Uei */
+                        uei: string;
+                    } | {
+                        /** Organization Name */
+                        organization_name: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "gleif";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** LEITarget */
+                    target: {
+                        /** Lei */
+                        lei: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "fedramp";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** ProductTarget */
+                    target: {
+                        /** Product Id */
+                        product_id: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "cmvp";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** CertificateTarget */
+                    target: {
+                        /** Certificate Number */
+                        certificate_number: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "fcc-covered-list";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** FCCOrganizationTarget */
+                    target: {
+                        /** Organization Name */
+                        organization_name: string;
+                        /**
+                         * Query Scope
+                         * @constant
+                         */
+                        query_scope: "named_organization_entries";
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "incommon";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** EntityTarget */
+                    target: {
+                        /** Entity Id */
+                        entity_id: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "ssl-labs";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** EndpointTarget */
+                    target: {
+                        /** Endpoint Ip */
+                        endpoint_ip: string;
+                        /** Hostname */
+                        hostname: string;
+                    };
+                } | {
+                    /**
+                     * Registry
+                     * @constant
+                     */
+                    registry: "security-txt";
+                    /** Scope Label */
+                    scope_label?: string | null;
+                    /** HostnameTarget */
+                    target: {
+                        /** Hostname */
+                        hostname: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistryLookupResult"];
+                };
+            };
+            /** @description API authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                        provider: string;
+                        reason: string | null;
+                    };
+                };
+            };
+            /** @description Configured authentication and read permission are required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The bounded registry request is invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"] | components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Collection could not produce a valid result. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The optional registry collector is not installed. */
             503: {
                 headers: {
                     [name: string]: unknown;

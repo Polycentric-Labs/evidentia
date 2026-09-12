@@ -28,9 +28,19 @@ import {
   type SecurityFinding,
 } from "@/lib/api";
 import { IS_DEMO } from "@/lib/demo";
-import { buildEnterpriseRetentionRequest, parseEnterpriseRetentionRequest, parseEnterpriseRetentionResponse, snapshotEnterpriseRetentionRequest, EnterpriseRetentionResponseError, ENTERPRISE_REQUEST_BYTE_LIMIT, type EnterpriseProvider, type EnterpriseRetentionResponse } from "@/lib/enterprise-retention";
+import {
+  buildEnterpriseRetentionRequest,
+  parseEnterpriseRetentionRequest,
+  parseEnterpriseRetentionResponse,
+  snapshotEnterpriseRetentionRequest,
+  EnterpriseRetentionResponseError,
+  ENTERPRISE_REQUEST_BYTE_LIMIT,
+  type EnterpriseProvider,
+  type EnterpriseRetentionResponse,
+} from "@/lib/enterprise-retention";
 import { cn } from "@/lib/utils";
 import { StorageRetentionTab } from "@/routes/StorageRetentionTab";
+import { RegistryCollectAction } from "@/routes/RegistryCollectAction";
 
 /**
  * Collectors console (/collect) — Wave-4 HIGH-risk surface.
@@ -122,7 +132,10 @@ export function CollectPage() {
           <TabsTrigger value="collectors">Collectors</TabsTrigger>
           <TabsTrigger value="entra-m365">Entra/M365</TabsTrigger>
           <TabsTrigger value="storage-retention">Storage retention</TabsTrigger>
-          <TabsTrigger value="enterprise-retention">Enterprise retention</TabsTrigger>
+          <TabsTrigger value="enterprise-retention">
+            Enterprise retention
+          </TabsTrigger>
+          <TabsTrigger value="registries">Public registries</TabsTrigger>
           <TabsTrigger value="ocsf">OCSF ingest</TabsTrigger>
           <TabsTrigger value="nessus">Nessus scan</TabsTrigger>
           <TabsTrigger value="greenbone">Greenbone report</TabsTrigger>
@@ -137,10 +150,22 @@ export function CollectPage() {
           <EntraM365Tab freshAuth={freshAuth} verifyAuth={verifyEntraAuth} />
         </TabsContent>
         <TabsContent value="storage-retention">
-          <StorageRetentionTab freshAuth={freshAuth} verifyAuth={verifyEntraAuth} />
+          <StorageRetentionTab
+            freshAuth={freshAuth}
+            verifyAuth={verifyEntraAuth}
+          />
         </TabsContent>
         <TabsContent value="enterprise-retention">
-          <EnterpriseRetentionTab freshAuth={freshAuth} verifyAuth={verifyEntraAuth} />
+          <EnterpriseRetentionTab
+            freshAuth={freshAuth}
+            verifyAuth={verifyEntraAuth}
+          />
+        </TabsContent>
+        <TabsContent value="registries">
+          <RegistryCollectAction
+            freshAuth={freshAuth}
+            verifyAuth={verifyEntraAuth}
+          />
         </TabsContent>
         <TabsContent value="ocsf">
           <OcsfTab authed={authed} />
@@ -1621,28 +1646,47 @@ function EntraM365Result({ result }: { result: EntraM365CollectResult }) {
 }
 
 const ENTERPRISE_HINTS: Record<EnterpriseProvider, string> = {
-  "google-vault": "Read each selected matter and its holds. Default and custom retention rules, and coverage of held records, remain unassessed.",
-  "splunk-enterprise": "Read each selected index's configuration. Event coverage, archival execution, SmartStore, volumes and cluster-wide configuration remain unassessed.",
-  "elastic-ilm": "Read selected indexes, ILM service status and referenced current policies. This is not an atomic provider snapshot; document coverage and lifecycle execution remain unassessed.",
+  "google-vault":
+    "Read each selected matter and its holds. Default and custom retention rules, and coverage of held records, remain unassessed.",
+  "splunk-enterprise":
+    "Read each selected index's configuration. Event coverage, archival execution, SmartStore, volumes and cluster-wide configuration remain unassessed.",
+  "elastic-ilm":
+    "Read selected indexes, ILM service status and referenced current policies. This is not an atomic provider snapshot; document coverage and lifecycle execution remain unassessed.",
 };
-const enterpriseDemoTargets = (provider: EnterpriseProvider) => provider === "google-vault" ? ["matter-0", "matter-1"] : ["events-0", "events-1"];
+const enterpriseDemoTargets = (provider: EnterpriseProvider) =>
+  provider === "google-vault"
+    ? ["matter-0", "matter-1"]
+    : ["events-0", "events-1"];
 function enterpriseError(error: unknown): string {
   if (error instanceof EnterpriseRetentionResponseError) return error.message;
   if (error instanceof ApiError) {
-    if (error.status === 401) return "API authentication is required. Check the deployment's access configuration.";
-    if (error.status === 403) return "Read access or use of the selected profile was denied.";
-    if ([400, 413, 415, 422].includes(error.status)) return "The enterprise request is invalid or exceeds the accepted limits.";
-    if (error.status === 503) return "Enterprise collection is unavailable in this installation.";
+    if (error.status === 401)
+      return "API authentication is required. Check the deployment's access configuration.";
+    if (error.status === 403)
+      return "Read access or use of the selected profile was denied.";
+    if ([400, 413, 415, 422].includes(error.status))
+      return "The enterprise request is invalid or exceeds the accepted limits.";
+    if (error.status === 503)
+      return "Enterprise collection is unavailable in this installation.";
   }
   return "Enterprise collection failed. Check the API's availability and try again.";
 }
 
-function EnterpriseRetentionTab({ freshAuth, verifyAuth }: { freshAuth: boolean; verifyAuth: () => Promise<boolean> }) {
+function EnterpriseRetentionTab({
+  freshAuth,
+  verifyAuth,
+}: {
+  freshAuth: boolean;
+  verifyAuth: () => Promise<boolean>;
+}) {
   const [provider, setProvider] = useState<EnterpriseProvider>("google-vault");
   const [profile, setProfile] = useState(IS_DEMO ? "selected" : "");
   const [scope, setScope] = useState(IS_DEMO ? "synthetic" : "");
-  const [targets, setTargets] = useState<string[]>(IS_DEMO ? enterpriseDemoTargets("google-vault") : [""]);
-  const [scenario, setScenario] = useState<EnterpriseRetentionDemoScenario>("partial");
+  const [targets, setTargets] = useState<string[]>(
+    IS_DEMO ? enterpriseDemoTargets("google-vault") : [""],
+  );
+  const [scenario, setScenario] =
+    useState<EnterpriseRetentionDemoScenario>("partial");
   const [result, setResult] = useState<EnterpriseRetentionResponse>();
   const [error, setError] = useState<string>();
   const [reading, setReading] = useState(false);
@@ -1651,7 +1695,12 @@ function EnterpriseRetentionTab({ freshAuth, verifyAuth }: { freshAuth: boolean;
   const running = useRef(false);
   const generation = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
-  useEffect(() => () => { ++generation.current; }, []);
+  useEffect(
+    () => () => {
+      ++generation.current;
+    },
+    [],
+  );
   const invalidate = () => {
     ++generation.current;
     setResult(undefined);
@@ -1670,28 +1719,52 @@ function EnterpriseRetentionTab({ freshAuth, verifyAuth }: { freshAuth: boolean;
       if (file.size > ENTERPRISE_REQUEST_BYTE_LIMIT) throw new Error("size");
       const bytes = await file.arrayBuffer();
       if (generation.current !== active) return;
-      if (bytes.byteLength > ENTERPRISE_REQUEST_BYTE_LIMIT) throw new Error("size");
-      const raw = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+      if (bytes.byteLength > ENTERPRISE_REQUEST_BYTE_LIMIT)
+        throw new Error("size");
+      const raw = new TextDecoder("utf-8", {
+        fatal: true,
+        ignoreBOM: true,
+      }).decode(bytes);
       const request = parseEnterpriseRetentionRequest(raw);
       setProvider(request.provider);
       setProfile(request.profile_alias);
       setScope(request.scope_label);
-      setTargets(request.targets.map(target => "matter_id" in target ? target.matter_id : target.index));
+      setTargets(
+        request.targets.map((target) =>
+          "matter_id" in target ? target.matter_id : target.index,
+        ),
+      );
     } catch {
       if (generation.current === active) {
         setFileRejected(true);
-        setError("The request file must contain strict UTF-8 JSON within 64 KiB and a valid profile, scope and target selection.");
+        setError(
+          "The request file must contain strict UTF-8 JSON within 64 KiB and a valid profile, scope and target selection.",
+        );
       }
     } finally {
       if (generation.current === active) setReading(false);
     }
   };
   const submit = async () => {
-    if (running.current || reading || fileRejected || (!IS_DEMO && !freshAuth)) return;
+    if (running.current || reading || fileRejected || (!IS_DEMO && !freshAuth))
+      return;
     invalidate();
     let request: EnterpriseRetentionCollectRequest;
-    try { request = buildEnterpriseRetentionRequest(provider, profile, scope, targets); }
-    catch (error) { setError(error instanceof Error ? error.message : "The enterprise request is invalid."); return; }
+    try {
+      request = buildEnterpriseRetentionRequest(
+        provider,
+        profile,
+        scope,
+        targets,
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "The enterprise request is invalid.",
+      );
+      return;
+    }
     const expected = snapshotEnterpriseRetentionRequest(request);
     const active = generation.current;
     running.current = true;
@@ -1699,91 +1772,520 @@ function EnterpriseRetentionTab({ freshAuth, verifyAuth }: { freshAuth: boolean;
     try {
       if (!IS_DEMO) {
         let confirmed = false;
-        try { confirmed = await verifyAuth(); } catch { /* A failed health read leaves authentication unconfirmed. */ }
+        try {
+          confirmed = await verifyAuth();
+        } catch {
+          /* A failed health read leaves authentication unconfirmed. */
+        }
         if (generation.current !== active) return;
-        if (!confirmed) { setError("Current API authentication could not be confirmed. No collection was started."); return; }
+        if (!confirmed) {
+          setError(
+            "Current API authentication could not be confirmed. No collection was started.",
+          );
+          return;
+        }
       }
       const received = await api.collectEnterpriseRetention(request, scenario);
-      if (generation.current === active) setResult(parseEnterpriseRetentionResponse(received.rawJson, expected));
+      if (generation.current === active)
+        setResult(parseEnterpriseRetentionResponse(received.rawJson, expected));
     } catch (error) {
       if (generation.current === active) setError(enterpriseError(error));
     } finally {
-      if (generation.current === active) { running.current = false; setBusy(false); }
+      if (generation.current === active) {
+        running.current = false;
+        setBusy(false);
+      }
     }
   };
-  return <section className="stack-6" aria-label="Enterprise retention collection">
-    <Card><CardHeader><CardTitle>Enterprise retention configuration</CardTitle><CardDescription>
-      Collect configuration evidence for 1 to 20 selected resources through an administrator-configured profile. Observations do not establish record coverage, effective enforcement or compliance.
-    </CardDescription></CardHeader><CardContent className="stack-4">
-      {IS_DEMO && <Alert role="note"><AlertTitle>Synthetic enterprise examples</AlertTitle><AlertDescription>No tenant or server is queried. Choose a provider and result scenario to inspect fixed synthetic observations.</AlertDescription></Alert>}
-      {!IS_DEMO && !freshAuth && <Alert role="status"><AlertTitle>API authentication required</AlertTitle><AlertDescription>Collection is disabled until current API health confirms authentication is configured. The API also checks read permission and access to the selected profile.</AlertDescription></Alert>}
-      <form className="stack-4" aria-label="Enterprise retention request" noValidate onSubmit={event => { event.preventDefault(); void submit(); }}>
-        <fieldset className="stack-4" disabled={busy}>
-          <legend className="sr-only">Selected enterprise resources</legend>
-          <div className="stack-2"><Label htmlFor="enterprise-provider">Enterprise provider</Label><select id="enterprise-provider" className="input" value={provider} onChange={event => {
-            if (running.current) return;
-            const next = event.target.value;
-            if (next !== "google-vault" && next !== "splunk-enterprise" && next !== "elastic-ilm") return;
-            invalidate(); setProvider(next); setTargets(IS_DEMO ? enterpriseDemoTargets(next) : [""]);
-          }}><option value="google-vault">Google Vault</option><option value="splunk-enterprise">Splunk Enterprise</option><option value="elastic-ilm">Elasticsearch ILM</option></select></div>
-          <p className="text-sm muted">{ENTERPRISE_HINTS[provider]}</p>
-          <fieldset className="stack-4" disabled={IS_DEMO}>
-            <legend className="sr-only">Profile and target selection</legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="stack-2"><Label htmlFor="enterprise-profile">Profile alias</Label><Input id="enterprise-profile" value={profile} maxLength={64} autoComplete="off" spellCheck={false} onChange={event => { if (!running.current) { invalidate(); setProfile(event.target.value); } }} /><p className="text-xs muted">Nonsecret alias supplied by the administrator. Profiles and credentials are configured on the API server.</p></div>
-              <div className="stack-2"><Label htmlFor="enterprise-scope">Enterprise scope label</Label><Input id="enterprise-scope" value={scope} maxLength={64} autoComplete="off" spellCheck={false} onChange={event => { if (!running.current) { invalidate(); setScope(event.target.value); } }} /><p className="text-xs muted">Operator-declared label. Authenticated source identity remains unverified.</p></div>
+  return (
+    <section className="stack-6" aria-label="Enterprise retention collection">
+      <Card>
+        <CardHeader>
+          <CardTitle>Enterprise retention configuration</CardTitle>
+          <CardDescription>
+            Collect configuration evidence for 1 to 20 selected resources
+            through an administrator-configured profile. Observations do not
+            establish record coverage, effective enforcement or compliance.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="stack-4">
+          {IS_DEMO && (
+            <Alert role="note">
+              <AlertTitle>Synthetic enterprise examples</AlertTitle>
+              <AlertDescription>
+                No tenant or server is queried. Choose a provider and result
+                scenario to inspect fixed synthetic observations.
+              </AlertDescription>
+            </Alert>
+          )}
+          {!IS_DEMO && !freshAuth && (
+            <Alert role="status">
+              <AlertTitle>API authentication required</AlertTitle>
+              <AlertDescription>
+                Collection is disabled until current API health confirms
+                authentication is configured. The API also checks read
+                permission and access to the selected profile.
+              </AlertDescription>
+            </Alert>
+          )}
+          <form
+            className="stack-4"
+            aria-label="Enterprise retention request"
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
+            }}
+          >
+            <fieldset className="stack-4" disabled={busy}>
+              <legend className="sr-only">Selected enterprise resources</legend>
+              <div className="stack-2">
+                <Label htmlFor="enterprise-provider">Enterprise provider</Label>
+                <select
+                  id="enterprise-provider"
+                  className="input"
+                  value={provider}
+                  onChange={(event) => {
+                    if (running.current) return;
+                    const next = event.target.value;
+                    if (
+                      next !== "google-vault" &&
+                      next !== "splunk-enterprise" &&
+                      next !== "elastic-ilm"
+                    )
+                      return;
+                    invalidate();
+                    setProvider(next);
+                    setTargets(IS_DEMO ? enterpriseDemoTargets(next) : [""]);
+                  }}
+                >
+                  <option value="google-vault">Google Vault</option>
+                  <option value="splunk-enterprise">Splunk Enterprise</option>
+                  <option value="elastic-ilm">Elasticsearch ILM</option>
+                </select>
+              </div>
+              <p className="text-sm muted">{ENTERPRISE_HINTS[provider]}</p>
+              <fieldset className="stack-4" disabled={IS_DEMO}>
+                <legend className="sr-only">
+                  Profile and target selection
+                </legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="stack-2">
+                    <Label htmlFor="enterprise-profile">Profile alias</Label>
+                    <Input
+                      id="enterprise-profile"
+                      value={profile}
+                      maxLength={64}
+                      autoComplete="off"
+                      spellCheck={false}
+                      onChange={(event) => {
+                        if (!running.current) {
+                          invalidate();
+                          setProfile(event.target.value);
+                        }
+                      }}
+                    />
+                    <p className="text-xs muted">
+                      Nonsecret alias supplied by the administrator. Profiles
+                      and credentials are configured on the API server.
+                    </p>
+                  </div>
+                  <div className="stack-2">
+                    <Label htmlFor="enterprise-scope">
+                      Enterprise scope label
+                    </Label>
+                    <Input
+                      id="enterprise-scope"
+                      value={scope}
+                      maxLength={64}
+                      autoComplete="off"
+                      spellCheck={false}
+                      onChange={(event) => {
+                        if (!running.current) {
+                          invalidate();
+                          setScope(event.target.value);
+                        }
+                      }}
+                    />
+                    <p className="text-xs muted">
+                      Operator-declared label. Authenticated source identity
+                      remains unverified.
+                    </p>
+                  </div>
+                </div>
+                {targets.map((target, index) => (
+                  <div className="stack-2 rounded border p-3" key={index}>
+                    <Label htmlFor={`enterprise-target-${index}`}>
+                      {provider === "google-vault" ? "Matter ID" : "Index name"}{" "}
+                      {index + 1}
+                    </Label>
+                    <Input
+                      id={`enterprise-target-${index}`}
+                      value={target}
+                      maxLength={
+                        provider === "google-vault"
+                          ? 128
+                          : provider === "splunk-enterprise"
+                            ? 80
+                            : 255
+                      }
+                      autoComplete="off"
+                      spellCheck={false}
+                      onChange={(event) => {
+                        if (!running.current) {
+                          invalidate();
+                          setTargets((current) =>
+                            current.map((item, n) =>
+                              n === index ? event.target.value : item,
+                            ),
+                          );
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={targets.length === 1}
+                      onClick={() => {
+                        if (!running.current) {
+                          invalidate();
+                          setTargets((current) =>
+                            current.filter((_item, n) => n !== index),
+                          );
+                        }
+                      }}
+                    >
+                      Remove enterprise target {index + 1}
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={targets.length >= 20}
+                  onClick={() => {
+                    if (!running.current && targets.length < 20) {
+                      invalidate();
+                      setTargets((current) => [...current, ""]);
+                    }
+                  }}
+                >
+                  Add enterprise target
+                </Button>
+                <div className="stack-2">
+                  <Label htmlFor="enterprise-request-file">
+                    Enterprise request JSON
+                  </Label>
+                  <Input
+                    id="enterprise-request-file"
+                    ref={fileInput}
+                    type="file"
+                    accept="application/json,.json"
+                    onChange={(event) => {
+                      void readFile(event.target.files?.[0]);
+                    }}
+                  />
+                  <p className="text-xs muted">
+                    Optional local UTF-8 JSON request, at most 64 KiB.
+                    Successful import fills this form; no server path or
+                    credential is submitted.
+                  </p>
+                </div>
+              </fieldset>
+              {IS_DEMO && (
+                <div className="stack-2">
+                  <Label htmlFor="enterprise-scenario">
+                    Enterprise synthetic scenario
+                  </Label>
+                  <select
+                    id="enterprise-scenario"
+                    className="input"
+                    value={scenario}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      if (
+                        next === "complete" ||
+                        next === "partial" ||
+                        next === "unavailable"
+                      ) {
+                        invalidate();
+                        setScenario(next);
+                      }
+                    }}
+                  >
+                    <option value="complete">Selected reads complete</option>
+                    <option value="partial">Partial collection</option>
+                    <option value="unavailable">Unavailable collection</option>
+                  </select>
+                </div>
+              )}
+            </fieldset>
+            <p className="text-sm muted">
+              Use literal matter IDs or index names. Collection does not
+              enumerate all resources. Bounded reads can return partial or
+              unavailable evidence.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="submit"
+                disabled={
+                  busy || reading || fileRejected || (!IS_DEMO && !freshAuth)
+                }
+              >
+                {busy
+                  ? "Collecting enterprise configuration"
+                  : IS_DEMO
+                    ? "Show synthetic enterprise result"
+                    : "Collect enterprise configuration"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  if (running.current) return;
+                  invalidate();
+                  setProvider("google-vault");
+                  setProfile(IS_DEMO ? "selected" : "");
+                  setScope(IS_DEMO ? "synthetic" : "");
+                  setTargets(
+                    IS_DEMO ? enterpriseDemoTargets("google-vault") : [""],
+                  );
+                  setScenario("partial");
+                }}
+              >
+                Reset enterprise form
+              </Button>
             </div>
-            {targets.map((target, index) => <div className="stack-2 rounded border p-3" key={index}>
-              <Label htmlFor={`enterprise-target-${index}`}>{provider === "google-vault" ? "Matter ID" : "Index name"} {index + 1}</Label>
-              <Input id={`enterprise-target-${index}`} value={target} maxLength={provider === "google-vault" ? 128 : provider === "splunk-enterprise" ? 80 : 255} autoComplete="off" spellCheck={false} onChange={event => { if (!running.current) { invalidate(); setTargets(current => current.map((item, n) => n === index ? event.target.value : item)); } }} />
-              <Button type="button" variant="outline" disabled={targets.length === 1} onClick={() => { if (!running.current) { invalidate(); setTargets(current => current.filter((_item, n) => n !== index)); } }}>Remove enterprise target {index + 1}</Button>
-            </div>)}
-            <Button type="button" variant="outline" disabled={targets.length >= 20} onClick={() => { if (!running.current && targets.length < 20) { invalidate(); setTargets(current => [...current, ""]); } }}>Add enterprise target</Button>
-            <div className="stack-2"><Label htmlFor="enterprise-request-file">Enterprise request JSON</Label><Input id="enterprise-request-file" ref={fileInput} type="file" accept="application/json,.json" onChange={event => { void readFile(event.target.files?.[0]); }} /><p className="text-xs muted">Optional local UTF-8 JSON request, at most 64 KiB. Successful import fills this form; no server path or credential is submitted.</p></div>
-          </fieldset>
-          {IS_DEMO && <div className="stack-2"><Label htmlFor="enterprise-scenario">Enterprise synthetic scenario</Label><select id="enterprise-scenario" className="input" value={scenario} onChange={event => { const next = event.target.value; if (next === "complete" || next === "partial" || next === "unavailable") { invalidate(); setScenario(next); } }}><option value="complete">Selected reads complete</option><option value="partial">Partial collection</option><option value="unavailable">Unavailable collection</option></select></div>}
-        </fieldset>
-        <p className="text-sm muted">Use literal matter IDs or index names. Collection does not enumerate all resources. Bounded reads can return partial or unavailable evidence.</p>
-        <div className="flex flex-wrap gap-3"><Button type="submit" disabled={busy || reading || fileRejected || (!IS_DEMO && !freshAuth)}>{busy ? "Collecting enterprise configuration" : IS_DEMO ? "Show synthetic enterprise result" : "Collect enterprise configuration"}</Button>
-          <Button type="button" variant="outline" disabled={busy} onClick={() => { if (running.current) return; invalidate(); setProvider("google-vault"); setProfile(IS_DEMO ? "selected" : ""); setScope(IS_DEMO ? "synthetic" : ""); setTargets(IS_DEMO ? enterpriseDemoTargets("google-vault") : [""]); setScenario("partial"); }}>Reset enterprise form</Button></div>
-      </form>
-      {reading && <p role="status">Reading the bounded local request.</p>}
-      {busy && <p role="status">Collecting selected configuration and retaining each source-read outcome.</p>}
-      {error && <Alert variant="destructive"><AlertTitle>Enterprise collection could not finish</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-    </CardContent></Card>
-    {result && <EnterpriseRetentionResult response={result} key={result.result.manifest.run_id} />}
-  </section>;
+          </form>
+          {reading && <p role="status">Reading the bounded local request.</p>}
+          {busy && (
+            <p role="status">
+              Collecting selected configuration and retaining each source-read
+              outcome.
+            </p>
+          )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Enterprise collection could not finish</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+      {result && (
+        <EnterpriseRetentionResult
+          response={result}
+          key={result.result.manifest.run_id}
+        />
+      )}
+    </section>
+  );
 }
 
 function EnterpriseJson({ label, raw }: { label: string; raw: string }) {
   const [open, setOpen] = useState(false);
-  return <details className="rounded border p-3" onToggle={event => setOpen(event.currentTarget.open)}><summary className="cursor-pointer font-medium">{label}</summary>{open && <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs"><code>{raw}</code></pre>}</details>;
+  return (
+    <details
+      className="rounded border p-3"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="cursor-pointer font-medium">{label}</summary>
+      {open && (
+        <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">
+          <code>{raw}</code>
+        </pre>
+      )}
+    </details>
+  );
 }
-function EnterpriseRetentionResult({ response }: { response: EnterpriseRetentionResponse }) {
+function EnterpriseRetentionResult({
+  response,
+}: {
+  response: EnterpriseRetentionResponse;
+}) {
   const { result, rawJson, nativeFieldsJson } = response;
   const [downloadError, setDownloadError] = useState(false);
   const download = () => {
     let url: string | undefined;
     let link: HTMLAnchorElement | undefined;
     try {
-      url = URL.createObjectURL(new Blob([rawJson], { type: "application/json" }));
-      link = document.createElement("a"); link.href = url; link.download = "enterprise-retention-result.json";
-      document.body.append(link); link.click(); setDownloadError(false);
-    } catch { setDownloadError(true); }
-    finally { link?.remove(); if (url) URL.revokeObjectURL(url); }
+      url = URL.createObjectURL(
+        new Blob([rawJson], { type: "application/json" }),
+      );
+      link = document.createElement("a");
+      link.href = url;
+      link.download = "enterprise-retention-result.json";
+      document.body.append(link);
+      link.click();
+      setDownloadError(false);
+    } catch {
+      setDownloadError(true);
+    } finally {
+      link?.remove();
+      if (url) URL.revokeObjectURL(url);
+    }
   };
-  return <section className="stack-6" aria-label="Enterprise retention result">
-    <Alert variant={result.status === "complete" ? "default" : "destructive"}><AlertTitle>{result.status === "complete" ? "Selected reads complete" : `Collection incomplete: ${result.status}`}</AlertTitle><AlertDescription>Completeness describes the selected reads. Configuration interpretation may still be limited. Compliance, record coverage and effective enforcement are unassessed.</AlertDescription></Alert>
-    <p>Provider: {result.provider}. Profile: {result.profile_alias}. Scope: {result.scope_label}. Identity basis: {result.identity_basis}. Authenticated identity verified: no.</p>
-    <p className="mono text-xs">Run: {result.manifest.run_id}. Collection: {result.started_at} to {result.finished_at}.</p>
-    <p>Resources requested: {result.manifest.resources_requested}. Resources attempted: {result.manifest.resources_attempted}. Unique reads: {result.manifest.reads_planned}. Reads complete: {result.manifest.reads_completed}. Findings retained: {result.findings.length}.</p>
-    <p>Unassessed surfaces: {result.unassessed_surfaces.join(", ")}{result.provider === "google-vault" ? ". Retention rules assessed: no." : "."}</p>
-    <Button type="button" variant="outline" onClick={download}>Download full enterprise result JSON</Button>
-    {downloadError && <p role="alert">The result could not be downloaded. The collection remains available here.</p>}
-    {result.diagnostics.length > 0 && <ul>{result.diagnostics.map((item, index) => <li key={index}>{item.code}{item.safe_http_status === null ? "" : ` (HTTP ${item.safe_http_status})`}</li>)}</ul>}
-    <div className="grid gap-4 md:grid-cols-2">{result.resources.map(resource => <Card key={resource.canonical_resource_id} aria-label={`${resource.canonical_resource_id} result`}><CardHeader><CardTitle>{"matter_id" in resource.target ? resource.target.matter_id : resource.target.index}</CardTitle><Badge variant="outline">{resource.status}</Badge></CardHeader><CardContent className="stack-2 text-sm"><p className="break-all mono">{resource.canonical_resource_id}</p><p>Policy reference: {resource.policy_resolution}.</p><ul>{resource.read_ids.map(id => <li className="break-all" key={id}>{id}</li>)}</ul>{resource.diagnostics.map((item, index) => <p key={index}>{item.code}</p>)}</CardContent></Card>)}</div>
-    <div className="stack-4">{result.source_reads.map((read, index) => <Card key={read.read_id} aria-label={`${read.kind} ${read.source_id} read`}><CardHeader><CardTitle>{read.kind}: {read.source_id}</CardTitle><Badge variant="outline">{read.status}</Badge></CardHeader><CardContent className="stack-3 text-sm"><p>Method: {read.method_id}. Attempts: {read.attempts}. Responses: {read.responses_received}. Pages admitted: {read.pages_admitted}. Records admitted: {read.records_admitted}. Duplicate records: {read.duplicates_coalesced}. Quarantined conflicts: {read.conflicts_quarantined}.</p><p>Terminal reason: {read.terminal_reason ?? "none"}. HTTP status: {read.safe_http_status ?? "not applicable or mixed"}. Raw bytes: {read.raw_bytes}. Decoded bytes: {read.decoded_bytes}.</p><p className="mono text-xs">Read window: {read.started_at ?? "not started"} to {read.finished_at ?? "not finished"}.</p>{read.diagnostics.map((item, n) => <p key={n}>{item.code}</p>)}{read.observations.length > 10 && <p>Showing the first 10 observations. Download the full result for every retained observation.</p>}{read.observations.slice(0, 10).map((observed, n) => <div className="stack-2 rounded border p-3" key={observed.source_identity}><p className="break-all">Source: {observed.source_identity}. Interpretation: {observed.interpretation_status}.</p><p className="break-all mono text-xs">Projection SHA-256: {observed.canonical_projection_sha256}</p>{observed.diagnostics.map((item, k) => <p key={k}>{item.code}</p>)}<EnterpriseJson label={`Native fields for ${observed.source_identity}`} raw={nativeFieldsJson[index][n]} /><EnterpriseJson label={`Field coverage for ${observed.source_identity}`} raw={JSON.stringify(observed.field_coverage, null, 2)} /></div>)}</CardContent></Card>)}</div>
-    <EnterpriseJson label="Aggregate field coverage" raw={JSON.stringify(result.field_coverage, null, 2)} />
-    <EnterpriseJson label="Full enterprise result JSON" raw={rawJson} />
-  </section>;
+  return (
+    <section className="stack-6" aria-label="Enterprise retention result">
+      <Alert variant={result.status === "complete" ? "default" : "destructive"}>
+        <AlertTitle>
+          {result.status === "complete"
+            ? "Selected reads complete"
+            : `Collection incomplete: ${result.status}`}
+        </AlertTitle>
+        <AlertDescription>
+          Completeness describes the selected reads. Configuration
+          interpretation may still be limited. Compliance, record coverage and
+          effective enforcement are unassessed.
+        </AlertDescription>
+      </Alert>
+      <p>
+        Provider: {result.provider}. Profile: {result.profile_alias}. Scope:{" "}
+        {result.scope_label}. Identity basis: {result.identity_basis}.
+        Authenticated identity verified: no.
+      </p>
+      <p className="mono text-xs">
+        Run: {result.manifest.run_id}. Collection: {result.started_at} to{" "}
+        {result.finished_at}.
+      </p>
+      <p>
+        Resources requested: {result.manifest.resources_requested}. Resources
+        attempted: {result.manifest.resources_attempted}. Unique reads:{" "}
+        {result.manifest.reads_planned}. Reads complete:{" "}
+        {result.manifest.reads_completed}. Findings retained:{" "}
+        {result.findings.length}.
+      </p>
+      <p>
+        Unassessed surfaces: {result.unassessed_surfaces.join(", ")}
+        {result.provider === "google-vault"
+          ? ". Retention rules assessed: no."
+          : "."}
+      </p>
+      <Button type="button" variant="outline" onClick={download}>
+        Download full enterprise result JSON
+      </Button>
+      {downloadError && (
+        <p role="alert">
+          The result could not be downloaded. The collection remains available
+          here.
+        </p>
+      )}
+      {result.diagnostics.length > 0 && (
+        <ul>
+          {result.diagnostics.map((item, index) => (
+            <li key={index}>
+              {item.code}
+              {item.safe_http_status === null
+                ? ""
+                : ` (HTTP ${item.safe_http_status})`}
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="grid gap-4 md:grid-cols-2">
+        {result.resources.map((resource) => (
+          <Card
+            key={resource.canonical_resource_id}
+            aria-label={`${resource.canonical_resource_id} result`}
+          >
+            <CardHeader>
+              <CardTitle>
+                {"matter_id" in resource.target
+                  ? resource.target.matter_id
+                  : resource.target.index}
+              </CardTitle>
+              <Badge variant="outline">{resource.status}</Badge>
+            </CardHeader>
+            <CardContent className="stack-2 text-sm">
+              <p className="break-all mono">{resource.canonical_resource_id}</p>
+              <p>Policy reference: {resource.policy_resolution}.</p>
+              <ul>
+                {resource.read_ids.map((id) => (
+                  <li className="break-all" key={id}>
+                    {id}
+                  </li>
+                ))}
+              </ul>
+              {resource.diagnostics.map((item, index) => (
+                <p key={index}>{item.code}</p>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="stack-4">
+        {result.source_reads.map((read, index) => (
+          <Card
+            key={read.read_id}
+            aria-label={`${read.kind} ${read.source_id} read`}
+          >
+            <CardHeader>
+              <CardTitle>
+                {read.kind}: {read.source_id}
+              </CardTitle>
+              <Badge variant="outline">{read.status}</Badge>
+            </CardHeader>
+            <CardContent className="stack-3 text-sm">
+              <p>
+                Method: {read.method_id}. Attempts: {read.attempts}. Responses:{" "}
+                {read.responses_received}. Pages admitted: {read.pages_admitted}
+                . Records admitted: {read.records_admitted}. Duplicate records:{" "}
+                {read.duplicates_coalesced}. Quarantined conflicts:{" "}
+                {read.conflicts_quarantined}.
+              </p>
+              <p>
+                Terminal reason: {read.terminal_reason ?? "none"}. HTTP status:{" "}
+                {read.safe_http_status ?? "not applicable or mixed"}. Raw bytes:{" "}
+                {read.raw_bytes}. Decoded bytes: {read.decoded_bytes}.
+              </p>
+              <p className="mono text-xs">
+                Read window: {read.started_at ?? "not started"} to{" "}
+                {read.finished_at ?? "not finished"}.
+              </p>
+              {read.diagnostics.map((item, n) => (
+                <p key={n}>{item.code}</p>
+              ))}
+              {read.observations.length > 10 && (
+                <p>
+                  Showing the first 10 observations. Download the full result
+                  for every retained observation.
+                </p>
+              )}
+              {read.observations.slice(0, 10).map((observed, n) => (
+                <div
+                  className="stack-2 rounded border p-3"
+                  key={observed.source_identity}
+                >
+                  <p className="break-all">
+                    Source: {observed.source_identity}. Interpretation:{" "}
+                    {observed.interpretation_status}.
+                  </p>
+                  <p className="break-all mono text-xs">
+                    Projection SHA-256: {observed.canonical_projection_sha256}
+                  </p>
+                  {observed.diagnostics.map((item, k) => (
+                    <p key={k}>{item.code}</p>
+                  ))}
+                  <EnterpriseJson
+                    label={`Native fields for ${observed.source_identity}`}
+                    raw={nativeFieldsJson[index][n]}
+                  />
+                  <EnterpriseJson
+                    label={`Field coverage for ${observed.source_identity}`}
+                    raw={JSON.stringify(observed.field_coverage, null, 2)}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <EnterpriseJson
+        label="Aggregate field coverage"
+        raw={JSON.stringify(result.field_coverage, null, 2)}
+      />
+      <EnterpriseJson label="Full enterprise result JSON" raw={rawJson} />
+    </section>
+  );
 }

@@ -1,0 +1,27 @@
+{
+  "data": {
+    "id": "AAAAAAAAAAAAAAAAAAAA",
+    "type": "lei-records",
+    "attributes": {
+      "lei": "AAAAAAAAAAAAAAAAAAAA",
+      "entity": {
+        "legalName": null,
+        "status": "FUTURE_ENTITY_STATUS",
+        "successorEntities": [
+          null,
+          {},
+          {
+            "lei": null,
+            "name": ""
+          }
+        ]
+      },
+      "registration": {
+        "initialRegistrationDate": null,
+        "lastUpdateDate": "2026-09-12T12:00:00.0000001Z",
+        "status": "FUTURE_REGISTRATION_STATUS",
+        "nextRenewalDate": "2026-10-01"
+      }
+    }
+  }
+}

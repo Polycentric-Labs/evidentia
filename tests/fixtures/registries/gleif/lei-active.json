@@ -1,0 +1,34 @@
+{
+  "data": {
+    "id": "AAAAAAAAAAAAAAAAAAAA",
+    "type": "lei-records",
+    "attributes": {
+      "lei": "AAAAAAAAAAAAAAAAAAAA",
+      "entity": {
+        "legalName": {
+          "name": "Synthetic Example Organization",
+          "language": "en",
+          "extra": "DO-NOT-RETAIN"
+        },
+        "status": "ACTIVE",
+        "successorEntities": [],
+        "legalAddress": {
+          "city": "DO-NOT-RETAIN"
+        }
+      },
+      "registration": {
+        "initialRegistrationDate": "2020-01-02T03:04:05Z",
+        "lastUpdateDate": "2026-09-01T12:00:00Z",
+        "status": "ISSUED",
+        "nextRenewalDate": "2027-01-02T03:04:05Z",
+        "managingLou": "DO-NOT-RETAIN"
+      }
+    },
+    "relationships": {
+      "extra": "DO-NOT-RETAIN"
+    }
+  },
+  "links": {
+    "self": "https://example.org/unused"
+  }
+}

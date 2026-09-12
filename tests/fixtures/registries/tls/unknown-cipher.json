@@ -1,0 +1,8 @@
+{
+  "protocol": null,
+  "cipher": null,
+  "peer_address": "93.184.216.34",
+  "der_sha256": "dc6f334aaf6511e6529eb394587ad4641b93c69641b2004b977ef02c63a6169c",
+  "certificate": null,
+  "fixture_public_der_base64": "MIIBRTCB7KADAgECAgEBMAoGCCqGSM49BAMCMBYxFDASBgNVBAMMC2V4YW1wbGUub3JnMB4XDTI2MDkwMTAwMDAwMFoXDTI2MTAwMTAwMDAwMFowFjEUMBIGA1UEAwwLZXhhbXBsZS5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATmtp8fEe4z3PHM9zRy4peogTP+ejvZX3nWcir5+K7unf9OFrN/gt4FkFx6X1mRZgZLzNn5WPFZlp+/5sd/kXXVoyswKTAnBgNVHREEIDAeggtleGFtcGxlLm9yZ4IPd3d3LmV4YW1wbGUub3JnMAoGCCqGSM49BAMCA0gAMEUCIQD210OdlcVuYPOUgseVF1+cqebqvBWNyKtem7/BV6ihxAIgKdXhI90TsltSjyDfuswFp+Zuzh52fYKpU/ICuldXQPs="
+}

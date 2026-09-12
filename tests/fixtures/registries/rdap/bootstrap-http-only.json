@@ -1,0 +1,15 @@
+{
+  "description": "Authored synthetic HTTP-only bootstrap",
+  "publication": "2026-09-01T00:00:00Z",
+  "version": "1.0",
+  "services": [
+    [
+      [
+        "com"
+      ],
+      [
+        "http://rdap.example.org/service/"
+      ]
+    ]
+  ]
+}

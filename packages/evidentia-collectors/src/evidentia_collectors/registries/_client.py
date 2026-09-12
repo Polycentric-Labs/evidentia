@@ -633,9 +633,10 @@ class RegistryReadSession:
         if cached is not None:
             return cached
         target = cast(HostnameTarget, self.request.root.target)
+        query_hostname = canonical_hostname(target.hostname)
         read = self._read(kind="https", method="GET")
         try:
-            original = "https://" + target.hostname + "/.well-known/security.txt"
+            original = "https://" + query_hostname + "/.well-known/security.txt"
             content, final_url, redirects = self._http_redirected(read, original)
             if len(self._http_content_types) != 1:
                 raise ReadFault("invalid_response")
@@ -667,13 +668,13 @@ class RegistryReadSession:
                 read,
                 candidate,
                 identity={
-                    "hostname": target.hostname,
+                    "hostname": query_hostname,
                     "initial_retrieval_uri": original,
                     "retrieval_uri": final_url,
                     "redirects": redirects,
                 },
                 shape="security_text_adapter",
-                matched=target.hostname,
+                matched=query_hostname,
                 projector=projector,
                 freshness=freshness,
             )
@@ -692,6 +693,7 @@ class RegistryReadSession:
         if cached is not None:
             return cached
         target = cast(DomainTarget, self.request.root.target)
+        query_domain = canonical_hostname(target.domain)
         read = self._read(kind="https", method="GET")
         try:
             self._remaining()
@@ -701,7 +703,7 @@ class RegistryReadSession:
             read["publisher_date"] = bootstrap.publication
             read["publisher_version"] = "1.0"
             try:
-                selection = bootstrap.select(target.domain)
+                selection = bootstrap.select(query_domain)
             except SnapshotFault:
                 raise ReadFault("destination_refused") from None
             publication = normalized_source_time(selection.publication)
@@ -714,7 +716,7 @@ class RegistryReadSession:
             else:
                 freshness = "current_observation"
             content, url, redirects = self._http_redirected(
-                read, selection.service_base + "domain/" + target.domain, service_base=selection.service_base
+                read, selection.service_base + "domain/" + query_domain, service_base=selection.service_base
             )
             body = parse_strict_json(content)
             if type(body) is not dict:
@@ -723,18 +725,21 @@ class RegistryReadSession:
             if body.get("objectClassName") != "domain" or type(body.get("ldhName")) is not str:
                 raise ReadFault("identity_mismatch")
             ldh = cast(str, body["ldhName"])
-            if not ldh.isascii() or canonical_hostname(ldh) != target.domain:
+            if not ldh.isascii() or canonical_hostname(ldh) != query_domain:
                 raise ReadFault("identity_mismatch")
             unicode_name = body.get("unicodeName")
             if type(unicode_name) is str:
-                try:
-                    agrees = canonical_hostname(unicode_name) == target.domain
-                except ValueError:
-                    agrees = False
-                if not agrees:
-                    self._diagnose("source_name_conflict", read)
+                if not unicode_name.isascii():
+                    self._diagnose("source_name_comparison_unsupported", read)
+                else:
+                    try:
+                        agrees = canonical_hostname(unicode_name) == query_domain
+                    except ValueError:
+                        agrees = False
+                    if not agrees:
+                        self._diagnose("source_name_conflict", read)
             identity = {
-                "domain": target.domain,
+                "domain": query_domain,
                 "ldhName": ldh,
                 "bootstrap": {
                     "sha256": selection.bootstrap_sha256,
@@ -748,7 +753,7 @@ class RegistryReadSession:
                 "redirects": redirects,
             }
             self._admit_page(
-                read, [_Admission(body, identity, "domain_record", target.domain)], projector, freshness=freshness
+                read, [_Admission(body, identity, "domain_record", query_domain)], projector, freshness=freshness
             )
         except (ReadFault, SnapshotFault) as error:
             self._diagnose(error.code, read)
@@ -854,6 +859,13 @@ class RegistryReadSession:
         read["status"] = status
         read["freshness"] = freshness
         self._recount()
+        if any(
+            stamp.literal is not None and stamp.representation != "source_text" and stamp.normalized_utc is None
+            for observation in candidate
+            if observation.source_read_id == read["read_id"]
+            for stamp in observation.source_times
+        ):
+            self._diagnose("source_time_unsupported", read)
 
     def _admit_one(
         self,
@@ -1124,20 +1136,21 @@ class RegistryReadSession:
         if cached is not None:
             return cached
         target = cast(HostnameTarget, self.request.root.target)
+        query_hostname = canonical_hostname(target.hostname)
         read = self._read(kind="tls", method="TLS")
         attempt = self._tls_factory()
         try:
             self._remaining()
             self._attempts += 1
             read["network_attempts"] = read["attempted_pages"] = 1
-            source = attempt.fetch(target.hostname, remaining=self._remaining)
+            source = attempt.fetch(query_hostname, remaining=self._remaining)
             read["source_records"] = 1
             read["retrieved_at"] = self._now()
             read["transport_verified"] = True
             read["body_complete"] = True
             read["source_digest"] = source["der_sha256"]
             self._admit_one(
-                read, source, identity={"hostname": target.hostname}, shape="verified_tls_adapter", projector=projector
+                read, source, identity={"hostname": query_hostname}, shape="verified_tls_adapter", projector=projector
             )
         except (ReadFault, TransportError) as error:
             if error.code == "offline_refused":

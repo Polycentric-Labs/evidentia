@@ -1,0 +1,4 @@
+<md:EntitiesDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" ID="owner-c-container">
+  <md:EntityDescriptor ID="first" entityID="urn:synthetic:owner-c:entity" validUntil="2026-09-12T12:00:00Z" />
+  <md:EntityDescriptor ID="second" entityID="urn:synthetic:owner-c:entity" validUntil="2026-09-12T12:00:00Z" />
+</md:EntitiesDescriptor>

@@ -15,7 +15,13 @@ from types import UnionType
 from typing import Annotated, Any, Literal, Self, Union, cast, get_args, get_origin
 
 from evidentia_core.audit.provenance import CollectionContext, CollectionManifest, CoverageCount, new_run_id
-from evidentia_core.models.common import ControlMapping, Severity, current_version, deterministic_finding_id
+from evidentia_core.models.common import (
+    NON_BLANK_PATTERN,
+    ControlMapping,
+    Severity,
+    current_version,
+    deterministic_finding_id,
+)
 from evidentia_core.models.finding import ComplianceStatus, FindingStatus, SecurityFinding
 from pydantic import (
     BaseModel,
@@ -47,6 +53,8 @@ from ._parsing import (
     parse_strict_json,
     result_json_bytes,
 )
+
+type RegistryJsonValue = bool | int | float | str | list[RegistryJsonValue] | dict[str, RegistryJsonValue] | None
 
 RegistryName = Literal[
     "tls",
@@ -135,6 +143,14 @@ def _declared_schema(schema: CoreSchema) -> CoreSchema:
     return cast(CoreSchema, declared)
 
 
+def _non_blank_schema(schema: JsonSchemaValue) -> None:
+    """Publish non-blank admission while retaining narrower field patterns."""
+    pattern = schema.get("pattern")
+    if pattern is not None and pattern != NON_BLANK_PATTERN:
+        schema["allOf"] = [*schema.get("allOf", []), {"type": "string", "pattern": pattern}]
+    schema["pattern"] = NON_BLANK_PATTERN
+
+
 class _WireModel(BaseModel):
     model_config = _STRICT
 
@@ -167,7 +183,7 @@ class _WireModel(BaseModel):
 
 
 class HostnameTarget(_WireModel):
-    hostname: Annotated[str, Field(min_length=1, max_length=254)]
+    hostname: Annotated[str, Field(min_length=1, max_length=254, json_schema_extra=_non_blank_schema)]
 
     @field_validator("hostname")
     @classmethod
@@ -177,7 +193,7 @@ class HostnameTarget(_WireModel):
 
 
 class DomainTarget(_WireModel):
-    domain: Annotated[str, Field(min_length=1, max_length=254)]
+    domain: Annotated[str, Field(min_length=1, max_length=254, json_schema_extra=_non_blank_schema)]
 
     @field_validator("domain")
     @classmethod
@@ -209,7 +225,7 @@ class LEITarget(_WireModel):
 
 
 class ProductTarget(_WireModel):
-    product_id: Annotated[str, Field(min_length=1, max_length=128)]
+    product_id: Annotated[str, Field(min_length=1, max_length=128, json_schema_extra=_non_blank_schema)]
 
     @field_validator("product_id")
     @classmethod
@@ -218,7 +234,9 @@ class ProductTarget(_WireModel):
 
 
 class CertificateTarget(_WireModel):
-    certificate_number: Annotated[str, Field(min_length=1, max_length=128, pattern=r"^[0-9]+$")]
+    certificate_number: Annotated[
+        str, Field(min_length=1, max_length=128, pattern=r"^[0-9]+$", json_schema_extra=_non_blank_schema)
+    ]
 
     @field_validator("certificate_number")
     @classmethod
@@ -229,7 +247,7 @@ class CertificateTarget(_WireModel):
 
 
 class EntityTarget(_WireModel):
-    entity_id: Annotated[str, Field(min_length=1, max_length=2048)]
+    entity_id: Annotated[str, Field(min_length=1, max_length=2048, json_schema_extra=_non_blank_schema)]
 
     @field_validator("entity_id")
     @classmethod
@@ -238,7 +256,7 @@ class EntityTarget(_WireModel):
 
 
 class OrganizationTarget(_WireModel):
-    organization_name: Annotated[str, Field(min_length=1, max_length=512)]
+    organization_name: Annotated[str, Field(min_length=1, max_length=512, json_schema_extra=_non_blank_schema)]
 
     @field_validator("organization_name")
     @classmethod
@@ -261,7 +279,7 @@ class FCCOrganizationTarget(OrganizationTarget):
 
 
 class EndpointTarget(HostnameTarget):
-    endpoint_ip: Annotated[str, Field(min_length=1, max_length=45)]
+    endpoint_ip: Annotated[str, Field(min_length=1, max_length=45, json_schema_extra=_non_blank_schema)]
 
     @field_validator("endpoint_ip")
     @classmethod
@@ -278,7 +296,7 @@ class EndpointTarget(HostnameTarget):
 
 
 class _Request(_WireModel):
-    scope_label: Annotated[str, Field(min_length=1, max_length=128)] | None = None
+    scope_label: Annotated[str, Field(min_length=1, max_length=128, json_schema_extra=_non_blank_schema)] | None = None
 
     @field_validator("scope_label")
     @classmethod
@@ -574,6 +592,7 @@ DiagnosticCode = Literal[
     "destination_refused",
     "dns_failure",
     "tls_failure",
+    "tls_certificate_verification_failed",
     "connection_failure",
     "timeout",
     "http_error",
@@ -607,6 +626,7 @@ DiagnosticCode = Literal[
     "source_time_unsupported",
     "source_value_unknown",
     "source_name_conflict",
+    "source_name_comparison_unsupported",
     "expired_source",
     "expiry_beyond_one_year",
     "syntax_invalid",
@@ -625,6 +645,7 @@ _ADVISORY_CODES = frozenset(
         "source_time_unsupported",
         "source_value_unknown",
         "source_name_conflict",
+        "source_name_comparison_unsupported",
         "expired_source",
         "expiry_beyond_one_year",
         "syntax_invalid",
@@ -634,7 +655,9 @@ _ADVISORY_CODES = frozenset(
 _COUNTER = Annotated[int, Field(strict=True, ge=0, le=50_000)]
 _DIGEST = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$", min_length=64, max_length=64)]
 _RUN = Annotated[str, Field(pattern=r"^[0-7][0-9A-HJKMNP-TV-Z]{25}$", min_length=26, max_length=26)]
-_VERSION_TEXT = Annotated[str, Field(pattern=r"^[0-9A-Za-z.+-]{1,32}$", min_length=1, max_length=32)]
+_VERSION_TEXT = Annotated[
+    str, Field(pattern=r"^[0-9A-Za-z.+-]{1,32}$", min_length=1, max_length=32, json_schema_extra=_non_blank_schema)
+]
 
 
 class _FrozenDict(dict[str, Any]):
@@ -791,7 +814,7 @@ def _strict_model_types(model: type[BaseModel], value: object) -> None:
 
 def _native_field_type(value: object, annotation: Any) -> bool:
     """Enforce exact scalar types before a caller can request lax validation."""
-    if annotation is Any or annotation is JsonValue:
+    if annotation is Any or annotation is JsonValue or annotation is RegistryJsonValue:
         return True
     if annotation is type(None):
         return value is None
@@ -970,7 +993,7 @@ def normalized_source_time(
 
 
 class SourceTime(_ResultWire):
-    path: Annotated[str, Field(min_length=1, max_length=128)]
+    path: Annotated[str, Field(min_length=1, max_length=128, json_schema_extra=_non_blank_schema)]
     literal: str | int | float | None
     representation: Literal["rfc3339", "unix_milliseconds", "source_text"]
     normalized_utc: str | None
@@ -1038,10 +1061,10 @@ class RegistryObservation(_ResultWire):
     registry: RegistryName
     observation_id: Annotated[str, Field(pattern=r"^observation-[0-9a-f]{64}$", min_length=76, max_length=76)]
     source_read_id: Annotated[str, Field(pattern=r"^read-[0-9a-f]{64}$", min_length=69, max_length=69)]
-    source_identity: dict[str, JsonValue]
-    matched_identity: Annotated[str, Field(min_length=1, max_length=2048)]
+    source_identity: dict[str, RegistryJsonValue]
+    matched_identity: Annotated[str, Field(min_length=1, max_length=2048, json_schema_extra=_non_blank_schema)]
     match_basis: MatchBasis
-    fields: dict[str, JsonValue]
+    fields: dict[str, RegistryJsonValue]
     field_coverage: Annotated[dict[str, CoverageState], Field(max_length=128)]
     source_times: Annotated[list[SourceTime], Field(max_length=64)]
     trust: ObservationTrust
@@ -1124,7 +1147,7 @@ class SourceRead(_ResultWire):
     registry: RegistryName
     ordinal: Annotated[int, Field(ge=0, lt=24)]
     method: Literal["GET", "TLS", "LOCAL", "DISABLED"]
-    template: Annotated[str, Field(min_length=1, max_length=64)]
+    template: Annotated[str, Field(min_length=1, max_length=64, json_schema_extra=_non_blank_schema)]
     query_scope: RegistryLookupRequest
     transport_kind: Literal["https", "tls", "snapshot", "none"]
     status: CollectionStatus
@@ -1204,7 +1227,7 @@ class RegistryContext(_ResultWire, CollectionContext):
     run_id: _RUN
     collected_at: UtcClock
     credential_identity: Literal["not-established"]
-    source_system_id: Annotated[str, Field(min_length=1, max_length=64)]
+    source_system_id: Annotated[str, Field(min_length=1, max_length=64, json_schema_extra=_non_blank_schema)]
     filter_applied: dict[str, Any]
     pagination_context: None
     evidentia_version: _VERSION_TEXT
@@ -1248,8 +1271,8 @@ class _FindingData(_ResultWire):
 
 class RegistryFinding(_ResultWire, SecurityFinding):
     id: Annotated[str, Field(min_length=36, max_length=36)]
-    title: Annotated[str, Field(min_length=1, max_length=128)]
-    description: Annotated[str, Field(min_length=1, max_length=256)]
+    title: Annotated[str, Field(min_length=1, max_length=128, json_schema_extra=_non_blank_schema)]
+    description: Annotated[str, Field(min_length=1, max_length=256, json_schema_extra=_non_blank_schema)]
     severity: Literal[Severity.INFORMATIONAL]
     status: Literal[FindingStatus.ACTIVE]
     compliance_status: Literal[ComplianceStatus.UNKNOWN]
@@ -1257,7 +1280,7 @@ class RegistryFinding(_ResultWire, SecurityFinding):
     source_system: Literal["public-registry"]
     source_finding_id: Annotated[str, Field(min_length=76, max_length=76)]
     resource_type: Literal["selected_registry_query"]
-    resource_id: Annotated[str, Field(min_length=1, max_length=2048)]
+    resource_id: Annotated[str, Field(min_length=1, max_length=2048, json_schema_extra=_non_blank_schema)]
     resource_region: None
     resource_account: None
     control_mappings: Annotated[list[ControlMapping], Field(max_length=0)]

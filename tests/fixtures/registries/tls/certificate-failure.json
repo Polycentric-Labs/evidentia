@@ -1,0 +1,9 @@
+{
+  "error_class": "SSLCertVerificationError",
+  "conditions": [
+    "expired",
+    "wrong_host"
+  ],
+  "expected_diagnostic": "tls_certificate_verification_failed",
+  "certificate": null
+}

@@ -1,0 +1,43 @@
+{
+  "named_entries": [
+    {
+      "derived_appendix_a_row_ordinal": true,
+      "publisher_row_identifier_presence": "absent",
+      "names_source_literal": [
+        "Synthetic Organization",
+        "Synthetic Alias"
+      ],
+      "equipment_service_scope_source_literal": "Synthetic described equipment only",
+      "inclusion_date_source_literal": "January 1, 2026",
+      "applicable_appendix_a_footnote_markers": [
+        "*",
+        "±"
+      ],
+      "source_occurrences": [
+        {
+          "snapshot_update_source_literal": "September 9, 2026",
+          "equipment_service_cell": {
+            "document": "SYNTHETIC-1",
+            "pdf_page": 1,
+            "appendix": "A",
+            "printed_appendix_page": "1",
+            "table_index_one_based": 1,
+            "physical_table_row_index_one_based": 2,
+            "physical_column_index_one_based": 1,
+            "source_literal_lines": "Synthetic organization"
+          },
+          "inclusion_date_cell": {
+            "document": "SYNTHETIC-1",
+            "pdf_page": 1,
+            "appendix": "A",
+            "printed_appendix_page": "1",
+            "table_index_one_based": 1,
+            "physical_table_row_index_one_based": 2,
+            "physical_column_index_one_based": 2,
+            "source_literal_lines": "January 1, 2026"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -29,6 +29,7 @@ class TransportError(ValueError):
             "destination_refused",
             "dns_failure",
             "tls_failure",
+            "tls_certificate_verification_failed",
             "connection_failure",
             "timeout",
             "invalid_response",
@@ -235,7 +236,16 @@ class TLSAttempt:
         raw: socket.socket | None = None
         secured: ssl.SSLSocket | None = None
         primary: BaseException | None = None
-        failure: Literal["tls_failure", "connection_failure", "timeout", "invalid_response"] | None = None
+        failure: (
+            Literal[
+                "tls_failure",
+                "tls_certificate_verification_failed",
+                "connection_failure",
+                "timeout",
+                "invalid_response",
+            ]
+            | None
+        ) = None
         result: dict[str, Any] | None = None
         try:
             self._remaining(remaining)
@@ -276,6 +286,8 @@ class TLSAttempt:
         except BaseException as error:
             if error is self._callback_error or not isinstance(error, Exception) or isinstance(error, TransportError):
                 primary = error
+            elif isinstance(error, ssl.SSLCertVerificationError):
+                failure = "tls_certificate_verification_failed"
             elif isinstance(error, ssl.SSLError):
                 failure = "tls_failure"
             elif isinstance(error, TimeoutError):

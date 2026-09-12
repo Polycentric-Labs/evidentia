@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Public registry evidence (V13-07 and V13-27).** `collect registry`, its API
+  endpoint, Python collector and console screen select one identity across eleven
+  registry contracts. Full results retain native values, source reads, traversal
+  limits, literal dates, trust state and lookup outcome. Reviewed FedRAMP, CMVP
+  and FCC packages regenerate from their complete selected tuples. InCommon uses
+  a pinned verifier and an explicit optional extra. SSL Labs live access stays
+  disabled before all I/O. Synthetic examples cover supported result states
+  without live-provider acceptance claims. The narrowly approved FedRAMP data
+  exception preserves 22 publisher-data matches in two exact files; all other
+  standing rules and gates continue to apply. See the
+  [registry design](docs/designs/registry-collector-design.md). A mobile page
+  selector keeps navigation accessible while giving forms the available width.
 - **Enterprise retention configuration (V13-04).** `collect enterprise-retention`,
   its API endpoint, Python collector and console tab read selected Google Vault
   matters/holds, Splunk Enterprise indexes and Elasticsearch ILM configuration.
@@ -2355,7 +2367,7 @@ first operator-visible payoff, SARIF emit for `evidentia gap`.
   `evidentia_core.ocsf` package. `finding_to_ocsf` / `finding_from_ocsf`
   convert `SecurityFinding` to and from the OCSF Compliance Finding
   class (`class_uid` 2003), with a lossless round trip for
-  Evidentia-produced findings (the complete finding rides in the
+  findings produced by Evidentia (the complete finding rides in the
   OCSF-standard `unmapped` block, so OLIR control mappings and
   `CollectionContext` provenance survive export/import). New optional
   `ocsf` extra — `pip install 'evidentia-core[ocsf]'` — pulls
@@ -2943,7 +2955,7 @@ Direct-push ship workflow per the post-v0.9.4 lesson.
     enforcement Nov 10 2026.
   - **F-V95-F2**: `docs/positioning-and-value.md` §5.5 commercial-
     landscape Eramba row corrected — Eramba still ships
-    Community Edition (free, on-premise) + paid Enterprise tier.
+    Community Edition (free, on-premise) plus the paid Enterprise offering.
     The v0.7.8 baseline claim that "Eramba shifted to closed-
     source application Q1 2026" was inaccurate (verified
     2026-05-18 via direct WebFetch of eramba.org).

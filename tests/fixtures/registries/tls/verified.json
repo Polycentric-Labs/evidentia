@@ -1,0 +1,42 @@
+{
+  "protocol": "TLSv1.3",
+  "cipher": {
+    "name": "TLS_AES_128_GCM_SHA256",
+    "protocol": "TLSv1.3",
+    "secret_bits": 128
+  },
+  "peer_address": "93.184.216.34",
+  "der_sha256": "dc6f334aaf6511e6529eb394587ad4641b93c69641b2004b977ef02c63a6169c",
+  "certificate": {
+    "subject": [
+      [
+        [
+          "commonName",
+          "example.org"
+        ]
+      ]
+    ],
+    "issuer": [
+      [
+        [
+          "commonName",
+          "example.org"
+        ]
+      ]
+    ],
+    "subjectAltName": [
+      [
+        "DNS",
+        "example.org"
+      ],
+      [
+        "DNS",
+        "www.example.org"
+      ]
+    ],
+    "notBefore": "Sep  1 00:00:00 2026 GMT",
+    "notAfter": "Oct  1 00:00:00 2026 GMT",
+    "serialNumber": "01"
+  },
+  "fixture_public_der_base64": "MIIBRTCB7KADAgECAgEBMAoGCCqGSM49BAMCMBYxFDASBgNVBAMMC2V4YW1wbGUub3JnMB4XDTI2MDkwMTAwMDAwMFoXDTI2MTAwMTAwMDAwMFowFjEUMBIGA1UEAwwLZXhhbXBsZS5vcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATmtp8fEe4z3PHM9zRy4peogTP+ejvZX3nWcir5+K7unf9OFrN/gt4FkFx6X1mRZgZLzNn5WPFZlp+/5sd/kXXVoyswKTAnBgNVHREEIDAeggtleGFtcGxlLm9yZ4IPd3d3LmV4YW1wbGUub3JnMAoGCCqGSM49BAMCA0gAMEUCIQD210OdlcVuYPOUgseVF1+cqebqvBWNyKtem7/BV6ihxAIgKdXhI90TsltSjyDfuswFp+Zuzh52fYKpU/ICuldXQPs="
+}

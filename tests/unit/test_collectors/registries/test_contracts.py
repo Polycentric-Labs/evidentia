@@ -6,6 +6,8 @@ import json
 
 import pytest
 from evidentia_collectors.registries._contracts import (
+    CertificateTarget,
+    RegistryContext,
     RegistryInputError,
     RegistryLookupRequest,
     normalized_organization_name,
@@ -13,6 +15,9 @@ from evidentia_collectors.registries._contracts import (
     request_identity,
     validated_request,
 )
+from jsonschema import Draft202012Validator
+from pydantic import BaseModel
+from pydantic.json_schema import JsonSchemaMode
 
 
 def request(registry: str, target: dict[str, object]) -> dict[str, object]:
@@ -218,3 +223,24 @@ def test_constructed_extras_are_refused_before_truth_callbacks() -> None:
     with pytest.raises(RegistryInputError):
         validated_request(checked)
     assert calls == []
+
+
+@pytest.mark.parametrize("mode", ["validation", "serialization"])
+@pytest.mark.parametrize(
+    ("model", "field", "accepted", "rejected"),
+    [
+        (CertificateTarget, "certificate_number", ["00123", "0"], ["", " ", "\u00a0", "123.0", "-1", "ABC"]),
+        (RegistryContext, "collector_version", ["0.12.1", "1.0+local"], ["", " ", "\u0085", "a/b", "1" * 33]),
+    ],
+)
+def test_non_blank_schema_preserves_narrower_identity_and_version_patterns(
+    mode: JsonSchemaMode,
+    model: type[BaseModel],
+    field: str,
+    accepted: list[str],
+    rejected: list[str],
+) -> None:
+    schema = model.model_json_schema(mode=mode)["properties"][field]
+    validator = Draft202012Validator(schema)
+    assert all(validator.is_valid(value) for value in accepted)
+    assert all(not validator.is_valid(value) for value in rejected)

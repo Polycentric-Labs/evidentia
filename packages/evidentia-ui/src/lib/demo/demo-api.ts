@@ -13,6 +13,8 @@
  * resolve without a backend; nothing is persisted across a reload.
  */
 
+import { registryDemoResponse } from "@/lib/demo/registry-fixtures";
+import type { RegistryRequest } from "@/lib/registry";
 import type {
   EnterpriseRetentionCollectRequest,
   EnterpriseRetentionDemoScenario,
@@ -130,7 +132,10 @@ import {
   DEMO_VERSION,
 } from "./fixtures";
 import { ENTERPRISE_RETENTION_DEMO } from "./fixtures";
-import { parseEnterpriseRetentionResponse, snapshotEnterpriseRetentionRequest } from "@/lib/enterprise-retention";
+import {
+  parseEnterpriseRetentionResponse,
+  snapshotEnterpriseRetentionRequest,
+} from "@/lib/enterprise-retention";
 
 /** Clone helper so callers can never mutate the shared fixture objects. */
 function clone<T>(value: T): T {
@@ -1587,7 +1592,12 @@ export const demoApi = {
           : DEMO_ENTRA_M365_PARTIAL,
       ),
     ),
-  collectEnterpriseRetention: async (body: EnterpriseRetentionCollectRequest, scenario: EnterpriseRetentionDemoScenario = "partial") => {
+  collectRegistry: async (body: RegistryRequest, scenario = "") =>
+    registryDemoResponse(body, scenario),
+  collectEnterpriseRetention: async (
+    body: EnterpriseRetentionCollectRequest,
+    scenario: EnterpriseRetentionDemoScenario = "partial",
+  ) => {
     const expected = snapshotEnterpriseRetentionRequest(body);
     const example = ENTERPRISE_RETENTION_DEMO[expected.provider][scenario];
     return parseEnterpriseRetentionResponse(example.rawJson, expected);
