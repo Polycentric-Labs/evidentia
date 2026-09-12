@@ -313,6 +313,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SAM transport test portability.** Native HTTP response fixtures use
+  bounded loopback TCP sockets on every supported platform, preserving the
+  connection, parsing, deadline and cleanup checks.
 - **MCP scope and signing dispatch.** Real protocol calls on the prior locked
   SDK 1.29.1 could bypass wrappers attached after server construction. The typed
   dispatch path now checks scope before handler or signer execution. Malformed

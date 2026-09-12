@@ -28,7 +28,18 @@ def request(registry: str = "sam-entity", **target: str) -> Any:
 
 class Wire:
     def __init__(self, response: bytes) -> None:
-        self.client, self.server = socket.socketpair()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen(1)
+            listener.settimeout(3)
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                self.client.settimeout(3)
+                self.client.connect(listener.getsockname())
+                self.server, _ = listener.accept()
+            except BaseException:
+                self.client.close()
+                raise
         self.response = response
         self.request = b""
         self.thread = threading.Thread(target=self.serve, daemon=True)
