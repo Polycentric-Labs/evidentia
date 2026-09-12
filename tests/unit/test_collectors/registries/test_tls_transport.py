@@ -116,6 +116,27 @@ def test_tls_context_ignores_keylog_environment(monkeypatch: pytest.MonkeyPatch,
     assert context.keylog_filename is None and not keylog.exists()
 
 
+def test_tls_context_enforces_tls12_with_weaker_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    from evidentia_collectors.registries import _tls
+
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
+    factory = SimpleNamespace(
+        SSLContext=lambda protocol: context,
+        PROTOCOL_TLS_CLIENT=ssl.PROTOCOL_TLS_CLIENT,
+        TLSVersion=ssl.TLSVersion,
+        CERT_REQUIRED=ssl.CERT_REQUIRED,
+    )
+    monkeypatch.setattr(_tls, "ssl", factory)
+    configured = tls_context()
+    assert configured is context
+    assert configured.minimum_version == ssl.TLSVersion.TLSv1_2
+    assert configured.verify_mode == ssl.CERT_REQUIRED and configured.check_hostname
+    assert configured.keylog_filename is None
+
+
 @pytest.mark.parametrize("trust", ["verified", "untrusted", "wrong-host"])
 def test_selector_actual_single_tls_handshake(trust: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
     import hashlib

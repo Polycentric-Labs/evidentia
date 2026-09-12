@@ -313,6 +313,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Registry TLS minimum.** Every registry HTTPS context now explicitly requires
+  TLS 1.2 or later. Certificate trust, hostname verification and disabled key
+  logging remain enforced; a weaker context default cannot lower the protocol floor.
+
 - **SAM transport test portability.** Native HTTP response fixtures use
   bounded loopback TCP sockets on every supported platform, preserving the
   connection, parsing, deadline and cleanup checks.

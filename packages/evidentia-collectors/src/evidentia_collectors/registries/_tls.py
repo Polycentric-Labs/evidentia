@@ -42,6 +42,7 @@ class TransportError(ValueError):
 
 def tls_context() -> ssl.SSLContext:
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.load_verify_locations(cafile=certifi.where())
     if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname or context.keylog_filename is not None:
         raise TransportError("tls_failure")
