@@ -1,0 +1,91 @@
+{
+  "schema_version": "1",
+  "provenance": "All response fixtures are authored synthetic data. They are not captured provider responses or evidence of live compatibility, entitlement, account permissions or organization workflow meaning.",
+  "capture_review_date": "2026-09-12",
+  "references": [
+    {
+      "provider": "jira",
+      "url": "https://dac-static.atlassian.com/cloud/jira/platform/swagger-v3.v3.json?_v=1.8516.108",
+      "sha256": "44a651e69946782fcb943bab316bee98f5d831fb69aa9b3b0d566dade3b66ba8",
+      "version": "1001.0.0-SNAPSHOT-3d120dbfd2d826e450656947143e5b8779387242"
+    },
+    {
+      "provider": "pagerduty",
+      "url": "https://raw.githubusercontent.com/PagerDuty/api-schema/2326e6b9f4737ca7f383214e1cd9d783c81fd2c6/reference/REST/openapiv3.json",
+      "sha256": "b2e80f8b83b170f29702e96a69adf230702b4ec43dddab7e348a2985c707ef35",
+      "commit": "2326e6b9f4737ca7f383214e1cd9d783c81fd2c6"
+    },
+    {
+      "provider": "servicenow",
+      "url": "https://www.servicenow.com/docs/r/xanadu/api-reference/rest-apis/c_TableAPI.html",
+      "release": "Xanadu",
+      "reference_updated": "2024-08-01",
+      "review_capture_sha256": "d016667e0920d1b184675ee084a9b21487e85a728f5589706f2ce46cae004203"
+    }
+  ],
+  "fixtures": [
+    {
+      "path": "jira/accessible-resources.json",
+      "bytes": 290,
+      "sha256": "b9b9ff0e6325331f16b4b971798be644bc5a8d672885355f0fbaf6248c58b427",
+      "kind": "authored_synthetic_response",
+      "provider": "jira"
+    },
+    {
+      "path": "jira/issue.json",
+      "bytes": 77,
+      "sha256": "4e16bb223bb6d09724d809db16b0c0e17cf19cf9d4f4b22f6e815dda0cc87670",
+      "kind": "authored_synthetic_response",
+      "provider": "jira"
+    },
+    {
+      "path": "jira/changelog-page1.json",
+      "bytes": 285,
+      "sha256": "14866ed6b163002f7f838426cf8e1efec0c487839134be2226fee6ce17ce60f3",
+      "kind": "authored_synthetic_response",
+      "provider": "jira"
+    },
+    {
+      "path": "jira/changelog-page2.json",
+      "bytes": 285,
+      "sha256": "4136985ef8adfd181d77446241fe3e0b93fa4b25292615c0a62afdb1e31d326c",
+      "kind": "authored_synthetic_response",
+      "provider": "jira"
+    },
+    {
+      "path": "servicenow/record.json",
+      "bytes": 145,
+      "sha256": "ff3870d590ea8e7245a0fd1534808cd92163022bd6b3ad0f627857330869ad7b",
+      "kind": "authored_synthetic_response",
+      "provider": "servicenow"
+    },
+    {
+      "path": "servicenow/missing-fields.json",
+      "bytes": 107,
+      "sha256": "d57bf974443824cd922afc71f295d609c026a49592cebf2e932d67057fe2ad26",
+      "kind": "authored_synthetic_response",
+      "provider": "servicenow"
+    },
+    {
+      "path": "pagerduty/incident.json",
+      "bytes": 84,
+      "sha256": "efd64790fe3a0cdb7dfdc2aba0b2e06c9bda5599b702075dd8f6be953b5afe46",
+      "kind": "authored_synthetic_response",
+      "provider": "pagerduty"
+    },
+    {
+      "path": "pagerduty/logs-page1.json",
+      "bytes": 251,
+      "sha256": "b4b2cee96adaf3d5962df689efc37a7bee475668a0c3021b0e1c130bf1afd098",
+      "kind": "authored_synthetic_response",
+      "provider": "pagerduty"
+    },
+    {
+      "path": "pagerduty/logs-page2.json",
+      "bytes": 248,
+      "sha256": "4e51abbf3621e310baba962e448fc7a65e8447422132fc4b72b64b7736ff8eaa",
+      "kind": "authored_synthetic_response",
+      "provider": "pagerduty"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "offset": 0,
+  "limit": 100,
+  "total": 2,
+  "more": true,
+  "log_entries": [
+    {
+      "id": "E1",
+      "type": "acknowledge_log_entry",
+      "created_at": "2024-01-01T00:00:00Z",
+      "incident": {
+        "id": "P-123"
+      }
+    }
+  ]
+}

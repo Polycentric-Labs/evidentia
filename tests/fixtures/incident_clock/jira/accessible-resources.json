@@ -1,0 +1,16 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "scopes": [
+      "read:jira-work"
+    ],
+    "name": "Synthetic selected site"
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "scopes": [
+      "read:jira-work"
+    ],
+    "name": "Synthetic unrelated site"
+  }
+]
