@@ -31,7 +31,7 @@ def local_path(value: object) -> Path:
     if not text or "://" in text or "\x00" in text or text.startswith(("//", "\\\\")):
         raise ScapFailure("invalid_request")
     target = Path(os.path.abspath(text))
-    if os.name == "nt":
+    if sys.platform == "win32":
         for part in target.parts[1:]:
             if ":" in part or part.rstrip(" .") != part or part.split(".", 1)[0].upper() in _RESERVED:
                 raise ScapFailure("invalid_request")
@@ -131,7 +131,7 @@ def check_paths(source: object, claim: object = None, output: object = None) -> 
 
 
 def _handle_path(descriptor: int, expected: Path) -> None:
-    if os.name != "nt":
+    if sys.platform != "win32":
         return
     import ctypes
     import msvcrt
