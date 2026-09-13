@@ -6181,9 +6181,14 @@
             "type": "string"
           },
           "collector_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
             "maxLength": 64,
             "minLength": 1,
-            "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Collector Version",
             "type": "string"
           },
@@ -6193,9 +6198,14 @@
             "type": "string"
           },
           "evidentia_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
             "maxLength": 64,
             "minLength": 1,
-            "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Evidentia Version",
             "type": "string"
           },
@@ -6292,9 +6302,14 @@
             "type": "array"
           },
           "description": {
+            "allOf": [
+              {
+                "pattern": "^[ -~]{1,256}$"
+              }
+            ],
             "maxLength": 256,
             "minLength": 1,
-            "pattern": "^[ -~]{1,256}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Description",
             "type": "string"
           },
@@ -6329,9 +6344,14 @@
             "type": "null"
           },
           "resource_id": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            ],
             "maxLength": 128,
             "minLength": 1,
-            "pattern": "^[A-Za-z0-9_-]+$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Resource Id",
             "type": "string"
           },
@@ -6410,9 +6430,14 @@
             "type": "string"
           },
           "collector_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
             "maxLength": 64,
             "minLength": 1,
-            "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Collector Version",
             "type": "string"
           },
@@ -6440,9 +6465,14 @@
             "type": "array"
           },
           "evidentia_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
             "maxLength": 64,
             "minLength": 1,
-            "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Evidentia Version",
             "type": "string"
           },
@@ -7027,6 +7057,7 @@
           "field_id": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Field Id",
             "type": "string"
           },
@@ -7036,12 +7067,14 @@
           "label": {
             "maxLength": 128,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Label",
             "type": "string"
           },
           "meaning": {
             "maxLength": 512,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Meaning",
             "type": "string"
           },
@@ -7065,6 +7098,7 @@
           "history_id": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "History Id",
             "type": "string"
           },
@@ -7086,7 +7120,12 @@
         "additionalProperties": false,
         "properties": {
           "clock_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Clock Alias",
             "type": "string"
           },
@@ -7101,7 +7140,12 @@
             ]
           },
           "profile_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Profile Alias",
             "type": "string"
           },
@@ -7111,9 +7155,14 @@
             "type": "string"
           },
           "record_id": {
+            "allOf": [
+              {
+                "pattern": "^[1-9][0-9]{0,31}$"
+              }
+            ],
             "maxLength": 32,
             "minLength": 1,
-            "pattern": "^[1-9][0-9]{0,31}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Record Id",
             "type": "string"
           },
@@ -8647,12 +8696,14 @@
           "label": {
             "maxLength": 128,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Label",
             "type": "string"
           },
           "meaning": {
             "maxLength": 512,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Meaning",
             "type": "string"
           }
@@ -8671,6 +8722,7 @@
           "event_id": {
             "maxLength": 256,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Event Id",
             "type": "string"
           }
@@ -8685,7 +8737,12 @@
         "additionalProperties": false,
         "properties": {
           "clock_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Clock Alias",
             "type": "string"
           },
@@ -8700,7 +8757,12 @@
             ]
           },
           "profile_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Profile Alias",
             "type": "string"
           },
@@ -8710,15 +8772,21 @@
             "type": "string"
           },
           "record_id": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+              }
+            ],
             "maxLength": 128,
             "minLength": 1,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Record Id",
             "type": "string"
           },
           "since": {
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Since",
             "type": "string"
           },
@@ -8735,6 +8803,7 @@
           "until": {
             "maxLength": 2048,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Until",
             "type": "string"
           }
@@ -8965,13 +9034,19 @@
         "additionalProperties": false,
         "properties": {
           "clock_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Clock Alias",
             "type": "string"
           },
           "declared_workflow_meaning": {
             "maxLength": 1024,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Declared Workflow Meaning",
             "type": "string"
           },
@@ -8999,12 +9074,14 @@
           "label": {
             "maxLength": 128,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Label",
             "type": "string"
           },
           "mapping_reference": {
             "maxLength": 512,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Mapping Reference",
             "type": "string"
           },
@@ -10858,6 +10935,7 @@
           "record_id": {
             "maxLength": 128,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Record Id",
             "type": "string"
           }
@@ -11097,21 +11175,28 @@
         "additionalProperties": false,
         "properties": {
           "field": {
+            "allOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{0,79}$"
+              }
+            ],
             "maxLength": 80,
             "minLength": 1,
-            "pattern": "^[a-z][a-z0-9_]{0,79}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Field",
             "type": "string"
           },
           "label": {
             "maxLength": 128,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Label",
             "type": "string"
           },
           "meaning": {
             "maxLength": 512,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Meaning",
             "type": "string"
           }
@@ -11128,9 +11213,14 @@
         "additionalProperties": false,
         "properties": {
           "field": {
+            "allOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{0,79}$"
+              }
+            ],
             "maxLength": 80,
             "minLength": 1,
-            "pattern": "^[a-z][a-z0-9_]{0,79}$",
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Field",
             "type": "string"
           }
@@ -11145,12 +11235,22 @@
         "additionalProperties": false,
         "properties": {
           "clock_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Clock Alias",
             "type": "string"
           },
           "profile_alias": {
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Profile Alias",
             "type": "string"
           },
@@ -11465,6 +11565,7 @@
           "record_id": {
             "maxLength": 128,
             "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
             "title": "Record Id",
             "type": "string"
           },
@@ -17506,14 +17607,26 @@
                     "additionalProperties": false,
                     "properties": {
                       "clock_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
                         "maxLength": 64,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Clock Alias",
                         "type": "string"
                       },
                       "profile_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
                         "maxLength": 64,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Profile Alias",
                         "type": "string"
                       },
@@ -17543,8 +17656,14 @@
                     "additionalProperties": false,
                     "properties": {
                       "clock_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
                         "maxLength": 64,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Clock Alias",
                         "type": "string"
                       },
@@ -17556,6 +17675,7 @@
                               "history_id": {
                                 "maxLength": 256,
                                 "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                                 "title": "History Id",
                                 "type": "string"
                               },
@@ -17579,8 +17699,14 @@
                         ]
                       },
                       "profile_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
                         "maxLength": 64,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Profile Alias",
                         "type": "string"
                       },
@@ -17590,9 +17716,14 @@
                         "type": "string"
                       },
                       "record_id": {
+                        "allOf": [
+                          {
+                            "pattern": "^[1-9][0-9]{0,31}$"
+                          }
+                        ],
                         "maxLength": 32,
                         "minLength": 1,
-                        "pattern": "^[1-9][0-9]{0,31}$",
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Record Id",
                         "type": "string"
                       },
@@ -17604,6 +17735,7 @@
                               "history_id": {
                                 "maxLength": 256,
                                 "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                                 "title": "History Id",
                                 "type": "string"
                               },
@@ -17640,8 +17772,14 @@
                     "additionalProperties": false,
                     "properties": {
                       "clock_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
                         "maxLength": 64,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Clock Alias",
                         "type": "string"
                       },
@@ -17653,6 +17791,7 @@
                               "event_id": {
                                 "maxLength": 256,
                                 "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                                 "title": "Event Id",
                                 "type": "string"
                               }
@@ -17669,8 +17808,14 @@
                         ]
                       },
                       "profile_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
                         "maxLength": 64,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Profile Alias",
                         "type": "string"
                       },
@@ -17680,15 +17825,21 @@
                         "type": "string"
                       },
                       "record_id": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+                          }
+                        ],
                         "maxLength": 128,
                         "minLength": 1,
-                        "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Record Id",
                         "type": "string"
                       },
                       "since": {
                         "maxLength": 2048,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Since",
                         "type": "string"
                       },
@@ -17700,6 +17851,7 @@
                               "event_id": {
                                 "maxLength": 256,
                                 "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                                 "title": "Event Id",
                                 "type": "string"
                               }
@@ -17718,6 +17870,7 @@
                       "until": {
                         "maxLength": 2048,
                         "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
                         "title": "Until",
                         "type": "string"
                       }

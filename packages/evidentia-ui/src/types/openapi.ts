@@ -6419,14 +6419,14 @@ export interface components {
              */
             collector_id: "incident-clock";
             /** Collector Version */
-            collector_version: string;
+            collector_version: string & unknown;
             /**
              * Credential Identity
              * @constant
              */
             credential_identity: "not-established";
             /** Evidentia Version */
-            evidentia_version: string;
+            evidentia_version: string & unknown;
             /** Filter Applied */
             filter_applied: components["schemas"]["SelectionFilter"];
             /** Pagination Context */
@@ -6461,7 +6461,7 @@ export interface components {
             /** Control Mappings */
             control_mappings: components["schemas"]["ControlMapping"][];
             /** Description */
-            description: string;
+            description: string & unknown;
             /** First Observed */
             first_observed: string;
             /** Id */
@@ -6476,7 +6476,7 @@ export interface components {
             /** Resource Account */
             resource_account: null;
             /** Resource Id */
-            resource_id: string;
+            resource_id: string & unknown;
             /** Resource Region */
             resource_region: null;
             /**
@@ -6519,7 +6519,7 @@ export interface components {
              */
             collector_id: "incident-clock";
             /** Collector Version */
-            collector_version: string;
+            collector_version: string & unknown;
             /** Coverage Counts */
             coverage_counts: components["schemas"]["IncidentClockCoverage"][];
             /** Empty Categories */
@@ -6527,7 +6527,7 @@ export interface components {
             /** Errors */
             errors: string[];
             /** Evidentia Version */
-            evidentia_version: string;
+            evidentia_version: string & unknown;
             /** Filters Applied */
             filters_applied: components["schemas"]["SelectionFilter"];
             /** Incomplete Reason */
@@ -6759,17 +6759,17 @@ export interface components {
         /** JiraRequest */
         JiraRequest: {
             /** Clock Alias */
-            clock_alias: string;
+            clock_alias: string & unknown;
             end_occurrence?: components["schemas"]["JiraOccurrence"] | null;
             /** Profile Alias */
-            profile_alias: string;
+            profile_alias: string & unknown;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             provider: "jira";
             /** Record Id */
-            record_id: string;
+            record_id: string & unknown;
             start_occurrence?: components["schemas"]["JiraOccurrence"] | null;
         };
         JsonObject: {
@@ -7731,17 +7731,17 @@ export interface components {
         /** PagerDutyRequest */
         PagerDutyRequest: {
             /** Clock Alias */
-            clock_alias: string;
+            clock_alias: string & unknown;
             end_occurrence?: components["schemas"]["PagerDutyOccurrence"] | null;
             /** Profile Alias */
-            profile_alias: string;
+            profile_alias: string & unknown;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             provider: "pagerduty";
             /** Record Id */
-            record_id: string;
+            record_id: string & unknown;
             /** Since */
             since: string;
             start_occurrence?: components["schemas"]["PagerDutyOccurrence"] | null;
@@ -7906,7 +7906,7 @@ export interface components {
         /** PublishedClockDefinition */
         PublishedClockDefinition: {
             /** Clock Alias */
-            clock_alias: string;
+            clock_alias: string & unknown;
             /** Declared Workflow Meaning */
             declared_workflow_meaning: string;
             /** Definition Sha256 */
@@ -8791,7 +8791,7 @@ export interface components {
         /** ServiceNowMapping */
         ServiceNowMapping: {
             /** Field */
-            field: string;
+            field: string & unknown;
             /** Label */
             label: string;
             /** Meaning */
@@ -8800,14 +8800,14 @@ export interface components {
         /** ServiceNowOccurrence */
         ServiceNowOccurrence: {
             /** Field */
-            field: string;
+            field: string & unknown;
         };
         /** ServiceNowRequest */
         ServiceNowRequest: {
             /** Clock Alias */
-            clock_alias: string;
+            clock_alias: string & unknown;
             /** Profile Alias */
-            profile_alias: string;
+            profile_alias: string & unknown;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -12165,9 +12165,9 @@ export interface operations {
             content: {
                 "application/json": {
                     /** Clock Alias */
-                    clock_alias: string;
+                    clock_alias: string & unknown;
                     /** Profile Alias */
-                    profile_alias: string;
+                    profile_alias: string & unknown;
                     /**
                      * Provider
                      * @constant
@@ -12177,7 +12177,7 @@ export interface operations {
                     record_id: string;
                 } | {
                     /** Clock Alias */
-                    clock_alias: string;
+                    clock_alias: string & unknown;
                     end_occurrence?: {
                         /** History Id */
                         history_id: string;
@@ -12185,14 +12185,14 @@ export interface operations {
                         item_index: number;
                     } | null;
                     /** Profile Alias */
-                    profile_alias: string;
+                    profile_alias: string & unknown;
                     /**
                      * Provider
                      * @constant
                      */
                     provider: "jira";
                     /** Record Id */
-                    record_id: string;
+                    record_id: string & unknown;
                     start_occurrence?: {
                         /** History Id */
                         history_id: string;
@@ -12201,20 +12201,20 @@ export interface operations {
                     } | null;
                 } | {
                     /** Clock Alias */
-                    clock_alias: string;
+                    clock_alias: string & unknown;
                     end_occurrence?: {
                         /** Event Id */
                         event_id: string;
                     } | null;
                     /** Profile Alias */
-                    profile_alias: string;
+                    profile_alias: string & unknown;
                     /**
                      * Provider
                      * @constant
                      */
                     provider: "pagerduty";
                     /** Record Id */
-                    record_id: string;
+                    record_id: string & unknown;
                     /** Since */
                     since: string;
                     start_occurrence?: {

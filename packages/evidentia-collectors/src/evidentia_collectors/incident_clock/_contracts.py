@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, Union, cast, ge
 from uuid import NAMESPACE_URL, uuid5
 
 from evidentia_core.audit.provenance import CollectionContext, CollectionManifest, CoverageCount
-from evidentia_core.models.common import ControlMapping, Severity
+from evidentia_core.models.common import NON_BLANK_PATTERN, ControlMapping, Severity
 from evidentia_core.models.finding import ComplianceStatus, FindingStatus, SecurityFinding
 from pydantic import (
     BaseModel,
@@ -211,11 +211,28 @@ def _alias(value: object) -> str:
     return text
 
 
+def _non_blank_schema(schema: dict[str, Any]) -> None:
+    """Publish nonblank text without discarding a field's narrower grammar."""
+    pattern = schema.get("pattern")
+    if pattern is not None and pattern != NON_BLANK_PATTERN:
+        schema["allOf"] = [*schema.get("allOf", []), {"pattern": pattern}]
+    schema["pattern"] = NON_BLANK_PATTERN
+
+
 Alias = Annotated[
-    str, BeforeValidator(_alias), Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+    str,
+    BeforeValidator(_alias),
+    Field(
+        min_length=1,
+        json_schema_extra={"pattern": NON_BLANK_PATTERN, "allOf": [{"pattern": r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"}]},
+        max_length=64,
+        pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+    ),
 ]
 OpaqueId = Annotated[
-    str, BeforeValidator(lambda value: bounded_text(value, 256, nonblank=True)), Field(min_length=1, max_length=256)
+    str,
+    BeforeValidator(lambda value: bounded_text(value, 256, nonblank=True)),
+    Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=256),
 ]
 Sha256 = Annotated[str, Field(min_length=64, max_length=64, pattern=r"^[0-9a-f]{64}$")]
 ReadId = Annotated[str, Field(min_length=69, max_length=69, pattern=r"^read-[0-9a-f]{64}$")]
@@ -232,7 +249,9 @@ class PagerDutyOccurrence(_WireModel):
 
 
 class ServiceNowOccurrence(_WireModel):
-    field: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_]{0,79}$")
+    field: str = Field(
+        min_length=1, json_schema_extra=_non_blank_schema, max_length=80, pattern=r"^[a-z][a-z0-9_]{0,79}$"
+    )
 
 
 Occurrence = ServiceNowOccurrence | JiraOccurrence | PagerDutyOccurrence
@@ -250,16 +269,20 @@ class ServiceNowRequest(_Request):
 
 class JiraRequest(_Request):
     provider: Literal["jira"]
-    record_id: str = Field(min_length=1, max_length=32, pattern=r"^[1-9][0-9]{0,31}$")
+    record_id: str = Field(
+        min_length=1, json_schema_extra=_non_blank_schema, max_length=32, pattern=r"^[1-9][0-9]{0,31}$"
+    )
     start_occurrence: JiraOccurrence | None = None
     end_occurrence: JiraOccurrence | None = None
 
 
 class PagerDutyRequest(_Request):
     provider: Literal["pagerduty"]
-    record_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
-    since: str = Field(min_length=1, max_length=2048)
-    until: str = Field(min_length=1, max_length=2048)
+    record_id: str = Field(
+        min_length=1, json_schema_extra=_non_blank_schema, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    )
+    since: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=2048)
+    until: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=2048)
     start_occurrence: PagerDutyOccurrence | None = None
     end_occurrence: PagerDutyOccurrence | None = None
 
@@ -350,8 +373,8 @@ def native_text_cell(data: object, key: str, *, maximum: int = 65536) -> NativeT
 
 
 class _Mapping(_WireModel):
-    label: str = Field(min_length=1, max_length=128)
-    meaning: str = Field(min_length=1, max_length=512)
+    label: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=128)
+    meaning: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=512)
 
     @field_validator("label", "meaning", mode="before")
     @classmethod
@@ -360,7 +383,9 @@ class _Mapping(_WireModel):
 
 
 class ServiceNowMapping(_Mapping):
-    field: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_]{0,79}$")
+    field: str = Field(
+        min_length=1, json_schema_extra=_non_blank_schema, max_length=80, pattern=r"^[a-z][a-z0-9_]{0,79}$"
+    )
 
 
 class JiraMapping(_Mapping):
@@ -405,9 +430,9 @@ EventMapping = ServiceNowMapping | JiraMapping | PagerDutyMapping
 
 class PublishedClockDefinition(_WireModel):
     clock_alias: Alias
-    label: str = Field(min_length=1, max_length=128)
-    mapping_reference: str = Field(min_length=1, max_length=512)
-    declared_workflow_meaning: str = Field(min_length=1, max_length=1024)
+    label: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=128)
+    mapping_reference: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=512)
+    declared_workflow_meaning: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=1024)
     definition_sha256: Sha256
     start: EventMapping
     end: EventMapping
@@ -645,7 +670,7 @@ def valid_record_id(provider: Provider, value: object) -> str:
 
 class SelectedRecordProjection(_WireModel):
     provider: Provider
-    record_id: str = Field(min_length=1, max_length=128)
+    record_id: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=128)
     read_id: ReadId
     fields: dict[str, NativeTextCell] = Field(min_length=2, max_length=3)
 
@@ -683,7 +708,7 @@ def occurrence_provider(value: Occurrence) -> Provider:
 
 class SourceEvent(_WireModel):
     event_id: EventId
-    record_id: str = Field(min_length=1, max_length=128)
+    record_id: str = Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=128)
     read_id: ReadId
     occurrence: Occurrence
     timestamp: NativeTextCell
@@ -949,7 +974,10 @@ _MODEL_TYPES += (
 
 
 RunId = Annotated[str, Field(min_length=26, max_length=26, pattern=r"^[0-7][0-9A-HJKMNP-TV-Z]{25}$")]
-VersionText = Annotated[str, Field(min_length=1, max_length=64, pattern=r"^[0-9][A-Za-z0-9.+_-]{0,63}$")]
+VersionText = Annotated[
+    str,
+    Field(min_length=1, json_schema_extra=_non_blank_schema, max_length=64, pattern=r"^[0-9][A-Za-z0-9.+_-]{0,63}$"),
+]
 SourceSystemId = Annotated[
     str, Field(min_length=84, max_length=90, pattern=r"^incident-clock:(servicenow|jira|pagerduty):[0-9a-f]{64}$")
 ]
@@ -1122,7 +1150,9 @@ class IncidentClockFinding(_PublicationModel, SecurityFinding):
         min_length=36, max_length=36, pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     )
     title: Literal["Incident clock observation"]
-    description: str = Field(min_length=1, max_length=256, pattern=r"^[ -~]{1,256}$")
+    description: str = Field(
+        min_length=1, json_schema_extra=_non_blank_schema, max_length=256, pattern=r"^[ -~]{1,256}$"
+    )
     severity: Literal[Severity.INFORMATIONAL]
     status: Literal[FindingStatus.ACTIVE]
     compliance_status: Literal[ComplianceStatus.UNKNOWN]
@@ -1130,7 +1160,9 @@ class IncidentClockFinding(_PublicationModel, SecurityFinding):
     source_system: Literal["incident-clock"]
     source_finding_id: None
     resource_type: Literal["selected_incident_clock"]
-    resource_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+    resource_id: str = Field(
+        min_length=1, json_schema_extra=_non_blank_schema, max_length=128, pattern=r"^[A-Za-z0-9_-]+$"
+    )
     resource_region: None
     resource_account: None
     control_mappings: list[ControlMapping] = Field(max_length=0)

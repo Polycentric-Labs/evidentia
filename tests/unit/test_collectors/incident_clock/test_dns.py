@@ -54,8 +54,11 @@ def test_native_direct_worker_and_launch_isolation(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(dns, "_WORKER_PROGRAM", "import json,os; print(json.dumps(sorted(os.environ)))")
     monkeypatch.setenv("INCIDENT_CLOCK_SYNTHETIC_TEST_TOKEN", "synthetic-not-an-authentication-value")
     monkeypatch.setenv("PYTHONPATH", "unused-synthetic-path")
+    monkeypatch.setenv("__CF_USER_TEXT_ENCODING", "synthetic-parent-value")
     result = dns._run_worker("fixture.example.org", time.monotonic() + 3)
     allowed = {"SYSTEMROOT", "WINDIR"} if os.name == "nt" else {"LC_CTYPE"}
+    if sys.platform == "darwin":
+        allowed.add("__CF_USER_TEXT_ENCODING")
     assert {key.upper() for key in json.loads(result)} <= allowed
     options = launches[0]["kwargs"]
     arguments = launches[0]["args"][0]
@@ -67,6 +70,11 @@ def test_native_direct_worker_and_launch_isolation(monkeypatch: pytest.MonkeyPat
         and options["stderr"] == subprocess.DEVNULL
     )
     assert "INCIDENT_CLOCK_SYNTHETIC_TEST_TOKEN" not in options["env"] and "PYTHONPATH" not in options["env"]
+    expected_environment = (
+        {key: os.environ[key] for key in ("SystemRoot", "WINDIR") if key in os.environ} if os.name == "nt" else {}
+    )
+    assert options["env"] == expected_environment
+    assert "__CF_USER_TEXT_ENCODING" not in options["env"]
     if os.name == "nt":
         assert options["creationflags"] == subprocess.CREATE_NO_WINDOW
     assert_reaped(processes, readers)
