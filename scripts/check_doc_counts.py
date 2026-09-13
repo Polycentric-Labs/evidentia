@@ -23,6 +23,8 @@ guards):
               the ``/collect`` verb but is intentionally excluded — it ingests
               already-collected OCSF (file/URL, no credentials); it is an
               importer, not an evidence-collection agent.
+              Incident clocks use POST /api/collectors/incident-clock and are
+              counted explicitly despite having no /collect suffix.
   mcp_tools   count of ``@server.tool()`` registrations in evidentia_mcp
               server.py.
 
@@ -136,7 +138,8 @@ def count_mcp_tools(server_text: str) -> int:
 # (docs/designs/cadence-assertion-layer-design.md section 2.6): file-import
 # collectors do not raise the README's credentialed-collector count; API
 # pollers do.
-_NON_COLLECTOR_INGEST = frozenset({"ocsf", "nessus", "greenbone"})
+# SCAP likewise imports local results without contacting a credentialed source.
+_NON_COLLECTOR_INGEST = frozenset({"ocsf", "nessus", "greenbone", "scap"})
 
 
 def count_collector_endpoints(openapi: dict[str, Any]) -> int:
@@ -152,14 +155,21 @@ def count_collector_endpoints(openapi: dict[str, Any]) -> int:
     are excluded for the identical reason: a Nessus v2 XML export or a
     Greenbone GMP report XML export is already-collected third-party
     output, ingested as text with no credentials and no network access.
+    SCAP has the same local-import exclusion. Incident clocks reach a
+    credentialed source through the exact suffix-free operation.
     """
     paths = openapi.get("paths") or {}
     total = 0
     for op_path, methods in paths.items():
         if not isinstance(methods, dict):
             continue
+        if "post" not in {k.lower() for k in methods}:
+            continue
+        if op_path == "/api/collectors/incident-clock":
+            total += 1
+            continue
         m = re.match(r"^/api/collectors/(.+)/collect$", op_path)
-        if not m or "post" not in {k.lower() for k in methods}:
+        if not m:
             continue
         if m.group(1) in _NON_COLLECTOR_INGEST:
             continue

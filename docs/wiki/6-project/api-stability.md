@@ -863,3 +863,58 @@ finite traversal/publication bounds. Tests and demo cases are synthetic. Live
 provider access, entitlement and workflow correctness remain unverified. See the
 [incident clock design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/incident-clock-collector-design.md) and
 [operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/wiki/2-guides/run-collectors.md#incident-workflow-clocks).
+
+### SCAP import contract (v0.13)
+
+The public exports in `evidentia_collectors.scap` are `collect_scap_bytes`,
+`collect_scap_file`, `ScapCollectionResult`, `ScapCompletionAssertion`,
+`ScapSourceProfile` and `ScapError`. Underscore modules, prepared import objects,
+clock seams and adapter helpers are internal. Existing collector APIs and
+response schemas retain their contracts.
+
+An import requires an explicit source profile and zero-based assessment index.
+Supported profiles are `xccdf-1.2-results`, `oval-5.8-core-results`,
+`oval-5.11.2-core-results` and `oval-5.12.3-core-results`. The result carries exact
+source byte/hash binding, the complete decoded native graph, the selected
+assessment, a summary finding, manifest, completion provenance, nullable
+evidence artifact, availability reasons, cadence association and diagnostics.
+Native outcomes do not establish compliance. Source references and instructions
+remain inert. Source authenticity and full XSD/platform validation are outside
+this contract.
+
+`collect scap --file PATH --source-profile PROFILE --assessment-index INDEX`
+returns the full result by default. `--output-view artifact` selects artifact
+JSON; an unavailable artifact exits 2 without opening its destination.
+`--output PATH` uses bounded, checked file publication; otherwise output uses
+stdout with fixed failures and no delivery retry. Read-role refusal precedes
+adapter access. Optional `--completion-assertion PATH` requires `--asserted-by`
+for caller-declared provenance. `--cadence-slug` associates an existing cadence
+definition without scheduling collection.
+
+`POST /api/collectors/scap/collect` accepts raw `application/xml` with identity
+encoding after configured-provider authentication and read authorization. Query
+fields are the required `source_profile` and `assessment_index`, plus optional
+`cadence_slug`. The optional `X-Evidentia-SCAP-Completion-Assertion` header is
+strict ASCII JSON, at most 2,048 bytes. Its six fields bind schema version, source
+hash, profile, selection, completion timestamp and reference. The API supplies
+the actor from the authenticated provider and principal; the caller cannot
+choose it. OVAL assertions do not turn generator timestamps into assessment
+completion, and XCCDF rejects caller completion assertions.
+
+The source limit is 8 MiB and the full result limit is 16 MiB. Independent
+structural and decoded-size bounds apply even below the raw limit. CLI
+preparation, optional sidecar I/O, source processing and publication share the
+original 60-second deadline and UTC anchor, with a 10-second publication reserve.
+The API starts that clock after media, query, assertion-header and
+actor-provenance admission, before consuming the body.
+Unsupported, malformed, unsafe or over-limit input cannot return a partial
+success. Genuine missing optional support is distinguished from broken installed
+support. Fixed error messages keep source values and internal exceptions out of
+error responses.
+
+The console validates the complete response and cross-copy correspondence before
+replacing the last good result. Result downloads preserve the full JSON; artifact
+downloads preserve the validated artifact. Saving remains a separate authorized
+action through the evidence store. Stable artifact identity does not advance its
+version, and duplicate version-1 saves retain append-only refusal. See the
+[SCAP operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/scap-collectors.md) for exact limits and error behavior.

@@ -195,6 +195,11 @@ commands:
     gui: "/collect"
     status: full
     reason: "One authorized record and workflow clock retain full native evidence, exact elapsed seconds and separate source/clock states across all three providers."
+  - cli: "collect scap"
+    api: "POST /api/collectors/scap/collect"
+    gui: "/collect"
+    status: full
+    reason: "Explicit local XML, profile and assessment selection retain the full native result, completion provenance and nullable artifact across CLI, API and console."
   - cli: "collect registry"
     api: "POST /api/collectors/registry"
     gui: "/collect"

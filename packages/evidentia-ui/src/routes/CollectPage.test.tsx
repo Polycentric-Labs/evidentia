@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -21,6 +22,7 @@ import type {
   SecurityFinding,
 } from "@/lib/api";
 import { CollectPage } from "@/routes/CollectPage";
+import { scapDemoSource, scapDemoResponse } from "@/lib/demo/scap-fixtures";
 import {
   DEMO_ENTRA_M365_PARTIAL,
   DEMO_ENTRA_M365_UNAVAILABLE,
@@ -51,6 +53,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
       collectGreenbone: vi.fn(),
       collectEntraM365: vi.fn(),
       collectIncidentClock: vi.fn(),
+      collectScap: vi.fn(),
       collectConvert: vi.fn(),
       collectorsStatus: vi.fn(),
     },
@@ -759,5 +762,207 @@ describe("Incident clock collection tab", () => {
       ),
     ).toBeInTheDocument();
     expect(api.collectIncidentClock).not.toHaveBeenCalled();
+  });
+});
+
+describe("SCAP collection tab", () => {
+  beforeEach(() => {
+    healthMock.mockReset();
+    healthMock.mockResolvedValue(healthValue(true));
+    vi.mocked(api.collectScap).mockReset();
+  });
+
+  async function openScap() {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <CollectPage />
+      </QueryClientProvider>,
+    );
+    await userEvent.click(screen.getByRole("tab", { name: "SCAP" }));
+    const source = scapDemoSource("xccdf-qualified");
+    await userEvent.upload(
+      screen.getByLabelText("Local SCAP XML file"),
+      new File([source.raw], "synthetic.xml", { type: "application/xml" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect SCAP" }),
+      ).toBeEnabled(),
+    );
+    return { ...source, client };
+  }
+
+  it("refreshes authentication and submits the selected exact file bytes", async () => {
+    const source = await openScap();
+    const response = await scapDemoResponse(
+      source.raw,
+      source.request,
+      "xccdf-qualified",
+    );
+    vi.mocked(api.collectScap).mockResolvedValue(response);
+    await userEvent.click(screen.getByRole("button", { name: "Collect SCAP" }));
+    expect(
+      await screen.findByRole("region", { name: "SCAP collection result" }),
+    ).toBeInTheDocument();
+    expect(api.collectScap).toHaveBeenCalledExactlyOnceWith(
+      source.raw,
+      source.request,
+      "",
+    );
+    expect(healthMock.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it("a fresh negative health response prevents SCAP submission", async () => {
+    await openScap();
+    healthMock.mockResolvedValue(healthValue(false));
+    await userEvent.click(screen.getByRole("button", { name: "Collect SCAP" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect SCAP" }),
+      ).toBeDisabled(),
+    );
+    expect(api.collectScap).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("region", { name: "SCAP collection result" }),
+    ).not.toBeInTheDocument();
+  });
+  it.each([true, false])(
+    "waits for delayed health confirmation (%s) before submitting",
+    async (confirmed) => {
+      const source = await openScap();
+      const response = await scapDemoResponse(
+        source.raw,
+        source.request,
+        "xccdf-qualified",
+      );
+      vi.mocked(api.collectScap).mockResolvedValue(response);
+      let finish!: (value: ReturnType<typeof healthValue>) => void;
+      healthMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: "Collect SCAP" }),
+      );
+      await screen.findByText(
+        "Current authentication is required before collection.",
+      );
+      expect(api.collectScap).not.toHaveBeenCalled();
+      await act(async () => {
+        finish(healthValue(confirmed));
+      });
+      if (confirmed) {
+        await screen.findByRole("region", { name: "SCAP collection result" });
+        expect(api.collectScap).toHaveBeenCalledExactlyOnceWith(
+          source.raw,
+          source.request,
+          "",
+        );
+      } else {
+        await waitFor(() =>
+          expect(
+            screen.getByRole("button", { name: "Collect SCAP" }),
+          ).toBeDisabled(),
+        );
+        expect(api.collectScap).not.toHaveBeenCalled();
+        expect(
+          screen.queryByRole("region", { name: "SCAP collection result" }),
+        ).not.toBeInTheDocument();
+      }
+    },
+  );
+
+  it("refuses a failed delayed health refresh", async () => {
+    await openScap();
+    let fail!: (error: Error) => void;
+    healthMock.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          fail = reject;
+        }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Collect SCAP" }));
+    await screen.findByText(
+      "Current authentication is required before collection.",
+    );
+    await act(async () => {
+      fail(new Error("synthetic health failure"));
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect SCAP" }),
+      ).toBeDisabled(),
+    );
+    expect(api.collectScap).not.toHaveBeenCalled();
+  });
+
+  it("discards a response when authentication is revoked after submission", async () => {
+    const source = await openScap();
+    const response = await scapDemoResponse(
+      source.raw,
+      source.request,
+      "xccdf-qualified",
+    );
+    let finish!: (value: typeof response) => void;
+    vi.mocked(api.collectScap).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Collect SCAP" }));
+    await waitFor(() => expect(api.collectScap).toHaveBeenCalledOnce());
+    await act(async () => {
+      source.client.setQueryData(["health"], healthValue(false));
+    });
+    await screen.findByText(
+      "Current authentication is required before collection.",
+    );
+    await act(async () => {
+      finish(response);
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect SCAP" }),
+      ).toBeDisabled(),
+    );
+    expect(
+      screen.queryByRole("region", { name: "SCAP collection result" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("discards a pending health confirmation after the selection changes", async () => {
+    await openScap();
+    let finish!: (value: ReturnType<typeof healthValue>) => void;
+    healthMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Collect SCAP" }));
+    await screen.findByText(
+      "Current authentication is required before collection.",
+    );
+    fireEvent.change(screen.getByLabelText("Assessment index (zero-based)"), {
+      target: { value: "1" },
+    });
+    await act(async () => {
+      finish(healthValue(true));
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect SCAP" }),
+      ).toBeEnabled(),
+    );
+    expect(api.collectScap).not.toHaveBeenCalled();
   });
 });

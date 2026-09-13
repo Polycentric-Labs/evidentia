@@ -49,6 +49,12 @@ import type { ControlCatalog, CatalogControl } from "@/types/catalog";
 import type { EvidentiaConfig } from "@/types/config";
 import type { components, operations } from "@/types/openapi";
 
+import {
+  prepareScapUpload,
+  readScapResponse,
+  type ScapRequest,
+} from "@/lib/scap";
+
 export class ApiError extends Error {
   public readonly status: number;
   public readonly payload: unknown;
@@ -1379,6 +1385,39 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  collectScap: async (
+    raw: ArrayBuffer,
+    request: ScapRequest,
+    _scenario = "",
+  ) => {
+    const prepared = await prepareScapUpload(raw, request);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/xml",
+      Accept: "application/json",
+    };
+    if (prepared.assertionHeader !== null) {
+      headers["X-Evidentia-SCAP-Completion-Assertion"] =
+        prepared.assertionHeader;
+    }
+    const response = await fetch(
+      "/api/collectors/scap/collect?" + prepared.query,
+      {
+        method: "POST",
+        headers,
+        body: prepared.body,
+      },
+    );
+    if (!response.ok) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        /* Preserve the fixed status error. */
+      }
+      throw new ApiError("SCAP collection failed", response.status, null);
+    }
+    return readScapResponse(response, prepared.expected);
+  },
+
   collectIncidentClock: async (body: IncidentClockRequest, _scenario = "") => {
     const expected = snapshotIncidentRequest(body);
     const response = await fetch("/api/collectors/incident-clock", {

@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Local SCAP imports (V13-25).** `collect scap`, its raw XML API and the
+  Collect screen accept explicit XCCDF 1.2 and OVAL 5.8, 5.11.2 or 5.12.3
+  core-results profiles. Full native graphs, selected assessments and exact
+  source hashes retain completion provenance and artifact-unavailability reasons.
+  Bounded parsing keeps source references and instructions inert. File and
+  browser downloads preserve complete validated JSON; saving remains an explicit
+  action. OVAL completion assertions retain their caller-declared or authenticated
+  actor provenance without treating generator timestamps as assessment completion.
+  See the [SCAP operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/scap-collectors.md).
+
 - **Incident workflow clocks (V13-06).** `collect incident-clock`, its API
   operation and console tab observe one selected ServiceNow, Jira Cloud or
   PagerDuty record under an explicit profile grant. Full results preserve native

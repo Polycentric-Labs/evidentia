@@ -196,3 +196,38 @@ def test_parity_badge_fails_when_the_badge_is_missing(monkeypatch) -> None:
     errs = c.check_parity_badge("# Evidentia\n\nNo badge here.\n")
     assert len(errs) == 1
     assert "no CLI<->GUI parity badge" in errs[0]
+
+
+def test_local_xml_importers_do_not_increment_credentialed_count() -> None:
+    openapi = {
+        "paths": {
+            "/api/collectors/aws/collect": {"post": {}},
+            "/api/collectors/nessus/collect": {"post": {}},
+            "/api/collectors/greenbone/collect": {"post": {}},
+            "/api/collectors/scap/collect": {"post": {}},
+        }
+    }
+    assert c.count_collector_endpoints(openapi) == 1
+
+
+def test_incident_clock_is_counted_without_a_collect_suffix() -> None:
+    openapi = {
+        "paths": {
+            "/api/collectors/aws/collect": {"post": {}},
+            "/api/collectors/incident-clock": {"post": {}},
+            "/api/collectors/scap/collect": {"post": {}},
+            "/api/collectors/registry": {"post": {}},
+        }
+    }
+    assert c.count_collector_endpoints(openapi) == 2
+
+
+def test_incident_clock_requires_the_exact_post_operation() -> None:
+    openapi = {
+        "paths": {
+            "/api/collectors/incident-clock": {"get": {}},
+            "/api/collectors/incident-clock/status": {"post": {}},
+            "/other/incident-clock": {"post": {}},
+        }
+    }
+    assert c.count_collector_endpoints(openapi) == 0

@@ -170,6 +170,51 @@ def _invoke_factory(finalize: Callable[..., _Accepted], inputs: dict[str, object
     return finalize(**inputs)
 
 
+@dataclass(frozen=True, slots=True)
+class _PreparedImport:
+    budget: Budget
+    begin: Callable[..., _Import]
+
+
+def _prepare_import() -> _PreparedImport:
+    """Capture the original clock before an internal surface reads a claim file."""
+    budget = start_budget()
+    original_deadline = budget.deadline
+    imported = datetime.now(UTC)
+    reader_budget = Budget(original_deadline)
+    preparation_lock = Lock()
+
+    def begin(
+        *,
+        source_profile: object,
+        assessment_index: object,
+        cadence_slug: object = None,
+        completion_assertion: object = None,
+        actor: object = None,
+    ) -> _Import:
+        if not preparation_lock.acquire(blocking=False):
+            raise ScapFailure()
+        if (
+            type(budget.deadline) is not float
+            or type(reader_budget.deadline) is not float
+            or budget.deadline != original_deadline
+            or reader_budget.deadline != original_deadline
+        ):
+            raise ScapFailure()
+        budget.check()
+        return _bind_import(
+            budget=budget,
+            imported=imported,
+            source_profile=source_profile,
+            assessment_index=assessment_index,
+            cadence_slug=cadence_slug,
+            completion_assertion=completion_assertion,
+            actor=actor,
+        )
+
+    return _PreparedImport(budget=reader_budget, begin=begin)
+
+
 def _begin_import(
     *,
     source_profile: object,
@@ -179,9 +224,27 @@ def _begin_import(
     actor: object = None,
 ) -> _Import:
     """Capture real request authority before the admitted surface reads its source."""
-    budget = start_budget()
+    return _prepare_import().begin(
+        source_profile=source_profile,
+        assessment_index=assessment_index,
+        cadence_slug=cadence_slug,
+        completion_assertion=completion_assertion,
+        actor=actor,
+    )
+
+
+def _bind_import(
+    *,
+    budget: Budget,
+    imported: datetime,
+    source_profile: object,
+    assessment_index: object,
+    cadence_slug: object = None,
+    completion_assertion: object = None,
+    actor: object = None,
+) -> _Import:
+    """Capture real request authority before the admitted surface reads its source."""
     original_deadline = budget.deadline
-    imported = datetime.now(UTC)
     request_bytes, actor_bytes = _request(
         source_profile, assessment_index, cadence_slug, completion_assertion, actor, budget
     )

@@ -382,9 +382,6 @@ def create_app(
         collectors as collectors_router,
     )
     from evidentia_api.routers import (
-        scap as scap_router,
-    )
-    from evidentia_api.routers import (
         config as config_router,
     )
     from evidentia_api.routers import (
@@ -437,6 +434,9 @@ def create_app(
     )
     from evidentia_api.routers import (
         risks as risks_router,
+    )
+    from evidentia_api.routers import (
+        scap as scap_router,
     )
     from evidentia_api.routers import (
         tprm as tprm_router,

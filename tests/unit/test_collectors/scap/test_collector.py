@@ -381,3 +381,117 @@ def test_publication_bytes_remain_immutable_after_caller_model_mutation():
     assert accepted.output_bytes() == before
     artifact = json.loads(accepted.output_bytes("artifact"))
     assert len(artifact["content"]["native_document"]["nodes"]) == 12
+
+
+def test_preparation_starts_one_real_clock_before_sidecar_io(monkeypatch):
+    import time
+
+    starts = []
+    original_start = collector.start_budget
+
+    def capture_start():
+        budget = original_start()
+        starts.append(budget.deadline)
+        return budget
+
+    monkeypatch.setattr(collector, "start_budget", capture_start)
+    before = datetime.now(UTC)
+    prepared = collector._prepare_import()
+    sidecar_started = datetime.now(UTC)
+    time.sleep(0.02)
+    raw = fixture("oval-5.8")
+    assertion = claim(raw)
+    operation = prepared.begin(
+        source_profile="oval-5.8-core-results",
+        assessment_index=0,
+        completion_assertion=assertion,
+        actor=collector._caller_actor(assertion, "Synthetic operator"),
+    )
+    accepted = operation.consume(raw)
+    assert starts == [prepared.budget.deadline]
+    assert operation.budget.deadline == accepted.original_deadline == starts[0]
+    assert before <= datetime.fromisoformat(accepted.result.imported_at) <= sidecar_started
+    assert accepted.result.completion.state == "operator_qualified"
+    assert accepted.result.evidence_artifact is not None
+
+
+def test_preparation_expiry_refuses_before_runtime_or_source_work(monkeypatch):
+    import time
+
+    from evidentia_collectors.scap._limits import Budget
+
+    monkeypatch.setattr(collector, "start_budget", lambda: Budget(time.monotonic() + 0.03))
+    prepared = collector._prepare_import()
+    time.sleep(max(0, prepared.budget.deadline - time.monotonic()) + 0.01)
+    runtime_calls = []
+    monkeypatch.setattr(collector.metadata, "version", lambda name: runtime_calls.append(name))
+    with pytest.raises(ScapFailure) as raised:
+        prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+    assert raised.value.code == "processing_deadline_exceeded"
+    assert runtime_calls == []
+    with pytest.raises(ScapFailure):
+        prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+
+
+@pytest.mark.parametrize("replacement", [True, 1, float("inf"), float("nan"), "later", None])
+def test_preparation_refuses_changed_reader_clock_before_binding(monkeypatch, replacement):
+    prepared = collector._prepare_import()
+    object.__setattr__(prepared.budget, "deadline", replacement)
+    bindings = []
+    monkeypatch.setattr(collector, "_bind_import", lambda **values: bindings.append(values))
+    with pytest.raises(ScapFailure):
+        prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+    assert bindings == []
+
+
+def test_preparation_refuses_extended_reader_deadline(monkeypatch):
+    prepared = collector._prepare_import()
+    object.__setattr__(prepared.budget, "deadline", prepared.budget.deadline + 1.0)
+    bindings = []
+    monkeypatch.setattr(collector, "_bind_import", lambda **values: bindings.append(values))
+    with pytest.raises(ScapFailure):
+        prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+    assert bindings == []
+
+
+@pytest.mark.parametrize("outcome", ["success", "invalid_request", "cancelled"])
+def test_preparation_begin_is_single_use_even_after_failure(monkeypatch, outcome):
+    prepared = collector._prepare_import()
+    signal = KeyboardInterrupt()
+    if outcome == "cancelled":
+
+        def cancel(**values):
+            raise signal
+
+        monkeypatch.setattr(collector, "_bind_import", cancel)
+        with pytest.raises(KeyboardInterrupt) as raised:
+            prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+        assert raised.value is signal
+    elif outcome == "invalid_request":
+        with pytest.raises(ScapFailure) as raised:
+            prepared.begin(source_profile="unsupported", assessment_index=0)
+        assert raised.value.code == "unsupported_profile"
+    else:
+        prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+    with pytest.raises(ScapFailure):
+        prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+
+
+def test_preparation_allows_only_one_concurrent_begin():
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    prepared = collector._prepare_import()
+    barrier = Barrier(2)
+
+    def attempt():
+        barrier.wait(timeout=5)
+        try:
+            prepared.begin(source_profile="xccdf-1.2-results", assessment_index=0)
+        except ScapFailure:
+            return False
+        return True
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        attempts = [workers.submit(attempt) for _ in range(2)]
+        assert sorted(attempt.result(timeout=5) for attempt in attempts) == [False, True]
