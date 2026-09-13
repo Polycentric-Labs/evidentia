@@ -57,6 +57,8 @@ export const REQUEST_SCHEMA: JsonSchema = {
         history_id: {
           maxLength: 256,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         item_index: {
@@ -72,13 +74,27 @@ export const REQUEST_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         profile_alias: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         clock_alias: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         provider: {
@@ -86,9 +102,15 @@ export const REQUEST_SCHEMA: JsonSchema = {
           type: "string",
         },
         record_id: {
+          allOf: [
+            {
+              pattern: "^[1-9][0-9]{0,31}$",
+            },
+          ],
           maxLength: 32,
           minLength: 1,
-          pattern: "^[1-9][0-9]{0,31}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         start_occurrence: {
@@ -121,6 +143,8 @@ export const REQUEST_SCHEMA: JsonSchema = {
         event_id: {
           maxLength: 256,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
       },
@@ -131,13 +155,27 @@ export const REQUEST_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         profile_alias: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         clock_alias: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         provider: {
@@ -145,19 +183,29 @@ export const REQUEST_SCHEMA: JsonSchema = {
           type: "string",
         },
         record_id: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+            },
+          ],
           maxLength: 128,
           minLength: 1,
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         since: {
           maxLength: 2048,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         until: {
           maxLength: 2048,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         start_occurrence: {
@@ -195,13 +243,27 @@ export const REQUEST_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         profile_alias: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         clock_alias: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         provider: {
@@ -502,9 +564,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "string",
         },
         collector_version: {
+          allOf: [
+            {
+              pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
-          pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         run_id: {
@@ -533,9 +601,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "null",
         },
         evidentia_version: {
+          allOf: [
+            {
+              pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
-          pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
       },
@@ -593,9 +667,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "string",
         },
         description: {
+          allOf: [
+            {
+              pattern: "^[ -~]{1,256}$",
+            },
+          ],
           maxLength: 256,
           minLength: 1,
-          pattern: "^[ -~]{1,256}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         severity: {
@@ -625,9 +705,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "string",
         },
         resource_id: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9_-]+$",
+            },
+          ],
           maxLength: 128,
           minLength: 1,
-          pattern: "^[A-Za-z0-9_-]+$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         resource_region: {
@@ -696,9 +782,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "string",
         },
         collector_version: {
+          allOf: [
+            {
+              pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
-          pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         collection_started_at: {
@@ -773,9 +865,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "array",
         },
         evidentia_version: {
+          allOf: [
+            {
+              pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+            },
+          ],
           maxLength: 64,
           minLength: 1,
-          pattern: "^[0-9][A-Za-z0-9.+_-]{0,63}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
       },
@@ -920,16 +1018,22 @@ export const RESULT_SCHEMA: JsonSchema = {
         label: {
           maxLength: 128,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         meaning: {
           maxLength: 512,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         field_id: {
           maxLength: 256,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         from: {
@@ -948,6 +1052,8 @@ export const RESULT_SCHEMA: JsonSchema = {
         history_id: {
           maxLength: 256,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         item_index: {
@@ -963,11 +1069,23 @@ export const RESULT_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         profile_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         clock_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         provider: {
@@ -975,9 +1093,15 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "string",
         },
         record_id: {
+          allOf: [
+            {
+              pattern: "^[1-9][0-9]{0,31}$",
+            },
+          ],
           maxLength: 32,
           minLength: 1,
-          pattern: "^[1-9][0-9]{0,31}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         start_occurrence: {
@@ -1042,11 +1166,15 @@ export const RESULT_SCHEMA: JsonSchema = {
         label: {
           maxLength: 128,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         meaning: {
           maxLength: 512,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         event_type: {
@@ -1081,6 +1209,8 @@ export const RESULT_SCHEMA: JsonSchema = {
         event_id: {
           maxLength: 256,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
       },
@@ -1091,11 +1221,23 @@ export const RESULT_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         profile_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         clock_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         provider: {
@@ -1103,19 +1245,29 @@ export const RESULT_SCHEMA: JsonSchema = {
           type: "string",
         },
         record_id: {
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+            },
+          ],
           maxLength: 128,
           minLength: 1,
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         since: {
           maxLength: 2048,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         until: {
           maxLength: 2048,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         start_occurrence: {
@@ -1153,22 +1305,34 @@ export const RESULT_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         clock_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         label: {
           maxLength: 128,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         mapping_reference: {
           maxLength: 512,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         declared_workflow_meaning: {
           maxLength: 1024,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         definition_sha256: {
@@ -1225,6 +1389,8 @@ export const RESULT_SCHEMA: JsonSchema = {
         record_id: {
           maxLength: 128,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         read_id: {
@@ -1292,17 +1458,27 @@ export const RESULT_SCHEMA: JsonSchema = {
         label: {
           maxLength: 128,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         meaning: {
           maxLength: 512,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         field: {
+          allOf: [
+            {
+              pattern: "^[a-z][a-z0-9_]{0,79}$",
+            },
+          ],
           maxLength: 80,
           minLength: 1,
-          pattern: "^[a-z][a-z0-9_]{0,79}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
       },
@@ -1313,9 +1489,15 @@ export const RESULT_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         field: {
+          allOf: [
+            {
+              pattern: "^[a-z][a-z0-9_]{0,79}$",
+            },
+          ],
           maxLength: 80,
           minLength: 1,
-          pattern: "^[a-z][a-z0-9_]{0,79}$",
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
       },
@@ -1326,11 +1508,23 @@ export const RESULT_SCHEMA: JsonSchema = {
       additionalProperties: false,
       properties: {
         profile_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         clock_alias: {
-          pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+          allOf: [
+            {
+              pattern: "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$",
+            },
+          ],
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         provider: {
@@ -1359,6 +1553,8 @@ export const RESULT_SCHEMA: JsonSchema = {
         record_id: {
           maxLength: 128,
           minLength: 1,
+          pattern:
+            "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
           type: "string",
         },
         read_id: {
@@ -1828,7 +2024,10 @@ function matches(
   if (schema.enum && !schema.enum.includes(value)) return false;
   if (schema.type === "null") return value === null;
   if (schema.type === "boolean") return typeof value === "boolean";
-  if (schema.type === "string") {
+  if (
+    schema.type === "string" ||
+    (schema.type === undefined && typeof value === "string")
+  ) {
     if (typeof value !== "string" || /\p{Surrogate}/u.test(value)) return false;
     const length = [...value].length;
     if (

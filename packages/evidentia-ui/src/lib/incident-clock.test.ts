@@ -287,3 +287,24 @@ describe("native source-read counts", () => {
     },
   );
 });
+
+describe("native version grammar in composed string schemas", () => {
+  test.each(["servicenow", "jira", "pagerduty"])(
+    "rejects invalid native versions for %s",
+    (provider) => {
+      const sample = INCIDENT_FIXTURES.find(
+        (item) => item.name === provider + "-complete",
+      )!;
+      for (const version of ["release", "1 release", "1.0\n"]) {
+        const result = JSON.parse(sample.raw, (key, value) =>
+          key === "collector_version" || key === "evidentia_version"
+            ? version
+            : value,
+        );
+        expect(() =>
+          parseIncidentResponse(JSON.stringify(result), result.request),
+        ).toThrow();
+      }
+    },
+  );
+});

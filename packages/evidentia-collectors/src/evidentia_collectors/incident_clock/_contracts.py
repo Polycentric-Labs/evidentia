@@ -102,7 +102,15 @@ def _native(value: object, depth: int = 0, budget: list[int] | None = None) -> A
         or native_type is datetime
     ):
         return value
-    if any(native_type is model for model in _MODEL_TYPES):
+    if native_type is dict:
+        data = cast(dict[object, object], value)
+    elif native_type is list:
+        items = cast(list[object], value)
+        if len(items) > 100000:
+            raise IncidentInputError()
+        budget[1] += max(0, len(items) - 1)
+        return [_native(item, depth + 1, budget) for item in items]
+    elif any(native_type is model for model in _MODEL_TYPES):
         model = cast(BaseModel, value)
         model_type = cast(type[BaseModel], native_type)
         fields = object.__getattribute__(model, "__dict__")
@@ -115,21 +123,13 @@ def _native(value: object, depth: int = 0, budget: list[int] | None = None) -> A
         ):
             raise IncidentInputError()
         data = {model_type.model_fields[key].alias or key: item for key, item in fields.items()}
-    elif native_type is dict:
-        data = cast(dict[object, object], value)
-    elif native_type is list:
-        items = cast(list[object], value)
-        if len(items) > 100000:
-            raise IncidentInputError()
-        budget[1] += max(0, len(items) - 1)
-        return [_native(item, depth + 1, budget) for item in items]
     else:
         raise IncidentInputError()
     if len(data) > 100000 or any(type(key) is not str for key in data):
         raise IncidentInputError()
     budget[1] += max(0, len(data) - 1)
     result: dict[str, Any] = {}
-    for key, item in data.items():
+    for key, item in cast(dict[str, Any], data).items():
         budget[0] += 1
         budget[1] += _string_size(key) + 1
         result[key] = _native(item, depth + 1, budget)
@@ -141,6 +141,10 @@ def _exact_type(value: object, annotation: object) -> bool:
         return True
     if annotation is CoverageCount:
         return type(value) is dict
+    if annotation is str or annotation is int or annotation is bool or annotation is float or annotation is datetime:
+        return type(value) is annotation
+    if annotation is type(None):
+        return value is None
     origin = get_origin(annotation)
     arguments = get_args(annotation)
     if origin is Annotated:
@@ -154,10 +158,6 @@ def _exact_type(value: object, annotation: object) -> bool:
             if type(value) is type(item) and value == item:
                 return True
         return False
-    if annotation is str or annotation is int or annotation is bool or annotation is float or annotation is datetime:
-        return type(value) is annotation
-    if annotation is type(None):
-        return value is None
     if origin is list:
         return type(value) is list and all(_exact_type(item, arguments[0]) for item in value)
     if origin is dict:

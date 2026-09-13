@@ -233,4 +233,6 @@ def parse_result_json(data: bytes) -> JsonObject:
 
 
 def result_json_bytes(value: object) -> bytes:
-    return canonical_json(checked_result_json(value), max_bytes=RESULT_BYTE_LIMIT, max_nodes=_RESULT_NODES)
+    if type(value) is not dict:
+        raise ParsingError()
+    return canonical_json(value, max_bytes=RESULT_BYTE_LIMIT, max_nodes=_RESULT_NODES)
