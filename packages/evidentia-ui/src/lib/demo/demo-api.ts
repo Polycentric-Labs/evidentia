@@ -13,6 +13,8 @@
  * resolve without a backend; nothing is persisted across a reload.
  */
 
+import { incidentDemoResponse } from "@/lib/demo/incident-clock-fixtures";
+import type { IncidentClockRequest } from "@/lib/incident-clock";
 import { registryDemoResponse } from "@/lib/demo/registry-fixtures";
 import type { RegistryRequest } from "@/lib/registry";
 import type {
@@ -1592,6 +1594,9 @@ export const demoApi = {
           : DEMO_ENTRA_M365_PARTIAL,
       ),
     ),
+  collectIncidentClock: async (body: IncidentClockRequest, scenario = "") =>
+    incidentDemoResponse(body, scenario),
+
   collectRegistry: async (body: RegistryRequest, scenario = "") =>
     registryDemoResponse(body, scenario),
   collectEnterpriseRetention: async (

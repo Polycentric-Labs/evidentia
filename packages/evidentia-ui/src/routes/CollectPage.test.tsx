@@ -11,6 +11,10 @@ import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/lib/api";
+import {
+  incidentDemoCases,
+  incidentDemoResponse,
+} from "@/lib/demo/incident-clock-fixtures";
 import type {
   GreenboneCollectResponse,
   NessusCollectResponse,
@@ -46,6 +50,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
       collectNessus: vi.fn(),
       collectGreenbone: vi.fn(),
       collectEntraM365: vi.fn(),
+      collectIncidentClock: vi.fn(),
       collectConvert: vi.fn(),
       collectorsStatus: vi.fn(),
     },
@@ -701,5 +706,58 @@ describe("Entra/M365 full result flow", () => {
       screen.getByRole("button", { name: "Collect Entra/M365" }),
     ).toBeDisabled();
     expect(collectEntraMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Incident clock collection tab", () => {
+  beforeEach(() => {
+    healthMock.mockReset();
+    healthMock.mockResolvedValue(healthValue(true));
+    vi.mocked(api.collectIncidentClock).mockReset();
+  });
+  async function openIncident() {
+    renderWithClient(<CollectPage />);
+    await userEvent.click(screen.getByRole("tab", { name: "Incident clock" }));
+    const sample = incidentDemoCases("servicenow")[0];
+    for (const [label, value] of [
+      ["Authorized profile alias", sample.request.profile_alias],
+      ["Workflow clock alias", sample.request.clock_alias],
+      ["ServiceNow record sys_id", sample.request.record_id],
+    ])
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Collect incident clock" }),
+      ).toBeEnabled(),
+    );
+    return incidentDemoResponse(sample.request, sample.name);
+  }
+  it("refreshes health before collection and keeps the result during that refresh", async () => {
+    const response = await openIncident();
+    vi.mocked(api.collectIncidentClock).mockResolvedValue(response);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect incident clock" }),
+    );
+    expect(
+      await screen.findByRole("region", { name: "Incident clock result" }),
+    ).toBeInTheDocument();
+    expect(api.collectIncidentClock).toHaveBeenCalledExactlyOnceWith(
+      response.result.request,
+      "",
+    );
+    expect(healthMock.mock.calls.length).toBeGreaterThan(1);
+  });
+  it("a fresh negative health response prevents collection", async () => {
+    await openIncident();
+    healthMock.mockResolvedValue(healthValue(false));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collect incident clock" }),
+    );
+    expect(
+      await screen.findByText(
+        "API read authentication is required before collection.",
+      ),
+    ).toBeInTheDocument();
+    expect(api.collectIncidentClock).not.toHaveBeenCalled();
   });
 });

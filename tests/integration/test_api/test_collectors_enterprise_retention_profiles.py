@@ -168,13 +168,15 @@ async def run(patch):
     return {'startup': 'accepted', 'profile_reads': phase['profile_reads'], 'absence': absent, 'denial_body_reads': 0}
 
 sys.meta_path.insert(0, Block())
-if mode == 'feature':
-    # A missing namespace returns no spec; a finder exception is a failed probe.
+if absent:
+    # Parent absence is genuine. An absent enterprise feature also excludes its dependent incident feature.
     delegates = tuple(sys.meta_path)
     class EnterpriseAbsent(importlib.abc.MetaPathFinder):
         def find_spec(self, fullname, path=None, target=None):
-            namespace = 'evidentia_collectors.enterprise_retention'
-            if fullname == namespace or fullname.startswith(namespace + '.'):
+            namespaces = ('evidentia_collectors',) if mode == 'parent' else (
+                'evidentia_collectors.enterprise_retention', 'evidentia_collectors.incident_clock',
+            )
+            if any(fullname == namespace or fullname.startswith(namespace + '.') for namespace in namespaces):
                 return None
             for finder in delegates:
                 spec = finder.find_spec(fullname, path, target)
@@ -187,6 +189,10 @@ if mode == 'feature':
                 if discover is not None:
                     yield from discover(*args, **kwargs)
     sys.meta_path[:] = [EnterpriseAbsent()]
+    namespace = 'evidentia_collectors' if mode == 'parent' else 'evidentia_collectors.enterprise_retention'
+    assert importlib.util.find_spec(namespace) is None
+    if mode == 'feature':
+        assert importlib.util.find_spec('evidentia_collectors.incident_clock') is None
     from importlib.metadata import version
     assert version('email-validator')
 with asyncio.Runner() as runner:

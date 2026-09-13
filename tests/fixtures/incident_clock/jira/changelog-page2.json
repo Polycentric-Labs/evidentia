@@ -1,0 +1,19 @@
+{
+  "startAt": 1,
+  "maxResults": 100,
+  "total": 2,
+  "isLast": true,
+  "values": [
+    {
+      "id": "H2",
+      "created": "2024-01-01T00:00:01Z",
+      "items": [
+        {
+          "fieldId": "status",
+          "from": "100",
+          "to": "200"
+        }
+      ]
+    }
+  ]
+}

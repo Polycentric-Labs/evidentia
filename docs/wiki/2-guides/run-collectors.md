@@ -4,7 +4,7 @@ Collectors retrieve source evidence through the `evidentia collect` CLI group
 and the **Collect** screen in the web console. Credentialed providers read cloud,
 identity, database and vendor-risk systems. Some collectors also accept local
 exports or reviewed packaged sources. Findings, coverage and control mappings
-depend on the collector: Entra/M365, retention and public registries return full
+depend on the collector: Entra/M365, retention, incident clocks and public registries return full
 collection results with explicit scope and limitations. Registry observations
 keep compliance status unknown.
 
@@ -445,6 +445,134 @@ execution. Elastic keeps running phase data separate from current policy configu
 not claim an atomic server snapshot. Synthetic demo scenarios cover all three result states for
 each provider. Public fixtures are authored synthetic responses; live-provider acceptance remains
 unverified.
+
+### Incident workflow clocks
+
+Use **Collect > Incident clock** or `evidentia collect incident-clock` to observe
+one authorized record in ServiceNow, Jira Cloud or PagerDuty. Source completeness
+and workflow clock state are separate. An operational event does not establish
+a human determination or a legal notification deadline.
+
+| Provider | Request identity | Selected events |
+| --- | --- | --- |
+| ServiceNow | Exact lower-case 32-character `sys_id` | Two distinct configured raw UTC date columns on `sn_si_incident`; no field-history reconstruction. |
+| Jira Cloud | Exact numeric issue ID | Configured field IDs and native `from`/`to` transitions in the visible changelog. |
+| PagerDuty | Exact incident ID plus `since` and `until` | Configured log-entry types in a timezone-aware interval of at most 366 days. |
+
+An administrator supplies a trusted profile file containing allowed records,
+clock definitions, credential references and exact API principal grants. Local
+CLI use requires a separate `allow_local_cli` grant. A profile name alone does
+not authorize a record. The API reads `EVIDENTIA_INCIDENT_CLOCK_PROFILES_FILE`
+lazily after authentication and request validation. The CLI uses `--profiles-file`
+or that same environment reference. Keep this configuration out of public source
+control and restrict local access.
+
+This synthetic Jira profile illustrates the shape. Supply your own site,
+permitted records, principal and declared workflow meaning:
+
+~~~json
+{
+  "schema_version": "1",
+  "profiles": [{
+    "alias": "jira-ops",
+    "provider": "jira",
+    "cloud_id": "11111111-1111-1111-1111-111111111111",
+    "credential_ref": "INCIDENT_CLOCK_JIRA_TOKEN",
+    "allow_local_cli": true,
+    "api_principals": ["operator"],
+    "record_ids": ["10001"],
+    "clocks": [{
+      "clock_alias": "triage",
+      "label": "Triage interval",
+      "mapping_reference": "Organization incident runbook",
+      "declared_workflow_meaning": "Entry into and completion of triage",
+      "start": {
+        "field_id": "status",
+        "from": {"state": "null", "value": null},
+        "to": {"state": "value", "value": "100"},
+        "label": "Entered triage",
+        "meaning": "Recorded workflow transition into triage"
+      },
+      "end": {
+        "field_id": "status",
+        "from": {"state": "value", "value": "100"},
+        "to": {"state": "value", "value": "200"},
+        "label": "Completed triage",
+        "meaning": "Recorded workflow transition out of triage"
+      }
+    }]
+  }]
+}
+~~~
+
+The credential reference names an existing server or shell environment value;
+it never contains the token itself. A reference ending in `_TOKEN` uses the
+companion `_EXPIRES_AT` name, for example `INCIDENT_CLOCK_JIRA_EXPIRES_AT`.
+Jira and ServiceNow require a declared, unexpired timezone-aware expiry.
+PagerDuty permits an omitted expiry and reports `expiry_unknown` explicitly.
+Tokens are checked again before each selected read. Collection does not register
+applications, exchange or refresh tokens, or verify credential identity.
+
+Save the corresponding request as `incident-request.json`:
+
+~~~json
+{
+  "provider": "jira",
+  "profile_alias": "jira-ops",
+  "record_id": "10001",
+  "clock_alias": "triage",
+  "start_occurrence": null,
+  "end_occurrence": null
+}
+~~~
+
+~~~bash
+evidentia collect incident-clock --provider jira --request-file incident-request.json --profiles-file incident-profiles.json --output incident-clock.json
+~~~
+
+Jira occurrences use `{"history_id":"H1","item_index":0}`; item indexes range
+from 0 through 255. PagerDuty occurrences use `{"event_id":"E1"}`. An explicit
+occurrence must still match the configured endpoint. Multiple unqualified
+matches remain ambiguous. Null, empty, missing or unsupported timestamps remain
+visible; reversed endpoints have no elapsed value. The console accepts timestamp
+text directly to preserve native fractional precision.
+
+| Source state | Clock meaning | CLI exit / API status |
+| --- | --- | --- |
+| `complete` | `computed`, `unresolved_events` or `reversed_order` | 0 / 200 |
+| `incomplete` or `unavailable` | `incomplete_source`; admitted candidates retained | 1 / 200 |
+
+The CLI writes the full validated JSON before returning a source-state exit code.
+Input or output failure does not replace an existing destination with a partial
+result. Invalid input returns 2; authorization/profile refusal returns 77;
+operational or broken-feature failure returns 1. Request/profile files must be
+bounded regular files, at most 16 KiB/64 KiB. Output cannot alias either input.
+Symlinks, reparse points, multiple hard links and changed identities are refused.
+
+The API is `POST /api/collectors/incident-clock`. Authentication and read RBAC
+precede body and profile reads. Invalid request JSON returns 400, oversize bodies
+413, unsupported media types 415, and profile refusal 403. Genuine package or
+incident-feature absence returns 503 before body I/O. Broken installed
+dependencies or a provider without its callable collector refuse startup.
+Unavailable credentials or sources produce a full unavailable result when the
+collection can finish safely.
+
+Results retain the selected record, admitted events, exact decimal elapsed
+seconds, read counts and hashes, diagnostics, workflow definition and manifest.
+Complete visible traversal does not establish historical retention or complete
+organization-wide incident coverage. The browser shows twenty events per page
+and bounds field previews to 4 KiB. **Download full incident clock JSON** retains
+every original validated response byte, up to 16 MiB.
+
+All providers use fixed reads and verified public destinations. There is no
+private-IP, redirect, proxy or TLS-verification override. Useful work is bounded
+to 60 seconds, 100 history pages and 10000 events. A rejected page preserves
+earlier admitted pages. The [incident clock design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/incident-clock-collector-design.md)
+defines the exact source, transport and publication bounds.
+
+Shipped tests and examples use authored synthetic source responses. They do not
+establish live permissions, ServiceNow SIR entitlement, provider plan access or
+workflow correctness. Operators must establish those prerequisites separately.
 
 ### Google Workspace
 

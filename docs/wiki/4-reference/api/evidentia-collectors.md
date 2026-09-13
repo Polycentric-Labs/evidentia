@@ -24,6 +24,7 @@ Public submodules + subpackages of `evidentia_collectors` (import directly, e.g.
 - `evidentia_collectors.github`
 - `evidentia_collectors.google_workspace`
 - `evidentia_collectors.greenbone`
+- `evidentia_collectors.incident_clock`
 - `evidentia_collectors.nessus`
 - `evidentia_collectors.ocsf`
 - `evidentia_collectors.okta`

@@ -1655,6 +1655,47 @@
         "title": "CheckResponse",
         "type": "object"
       },
+      "ClockOutcome": {
+        "additionalProperties": false,
+        "properties": {
+          "elapsed_seconds": {
+            "anyOf": [
+              {
+                "maxLength": 2024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elapsed Seconds"
+          },
+          "end": {
+            "$ref": "#/components/schemas/EventSelection"
+          },
+          "start": {
+            "$ref": "#/components/schemas/EventSelection"
+          },
+          "state": {
+            "enum": [
+              "computed",
+              "unresolved_events",
+              "reversed_order",
+              "incomplete_source"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "start",
+          "end",
+          "elapsed_seconds"
+        ],
+        "title": "ClockOutcome",
+        "type": "object"
+      },
       "CollectionContext": {
         "additionalProperties": false,
         "description": "Per-finding provenance block — who/what/when/where/how.\n\nEvery :class:`~evidentia_core.models.finding.SecurityFinding` in\nv0.7.0+ carries one of these. All six NIST AU-3 content requirements\nare expressed across the SecurityFinding + CollectionContext pair:\n\n=====================  ==========================================\nAU-3 requirement       Field(s)\n=====================  ==========================================\nType of event           ``SecurityFinding.title``, ``severity``\nWhen event occurred     ``collected_at`` (microsecond UTC)\nWhere event occurred    ``source_system_id`` + ``filter_applied``\nSource of event         ``collector_id`` + ``collector_version``\nOutcome of event        ``SecurityFinding.status``\nIdentity                ``credential_identity``\n=====================  ==========================================",
@@ -2590,6 +2631,48 @@
         "title": "DDQuestionnaireIngestResult",
         "type": "object"
       },
+      "DeclaredPagination": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "returned": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Returned",
+            "type": "integer"
+          },
+          "start": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "integer"
+          },
+          "terminal": {
+            "title": "Terminal",
+            "type": "boolean"
+          },
+          "total": {
+            "maximum": 1000000000.0,
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "limit",
+          "total",
+          "terminal",
+          "returned"
+        ],
+        "title": "DeclaredPagination",
+        "type": "object"
+      },
       "DeploymentStatus": {
         "description": "Operational lifecycle status of a registered AI system.",
         "enum": [
@@ -2601,6 +2684,96 @@
         ],
         "title": "DeploymentStatus",
         "type": "string"
+      },
+      "Diagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "profile_refused",
+              "credential_missing",
+              "credential_expired",
+              "credential_invalid",
+              "offline_refused",
+              "destination_refused",
+              "dns_failure",
+              "dns_timeout",
+              "connect_failure",
+              "tls_failure",
+              "read_timeout",
+              "deadline_exceeded",
+              "redirect_refused",
+              "http_unauthorized",
+              "http_forbidden",
+              "http_not_found",
+              "http_status_refused",
+              "body_limit",
+              "response_budget",
+              "unsupported_encoding",
+              "invalid_json",
+              "source_shape",
+              "record_mismatch",
+              "site_grant_refused",
+              "pagination_conflict",
+              "duplicate_occurrence",
+              "source_conflict",
+              "page_limit",
+              "event_limit",
+              "result_limit",
+              "timestamp_unsupported",
+              "event_missing",
+              "event_null",
+              "event_empty",
+              "event_ambiguous",
+              "occurrence_not_found",
+              "reversed_order",
+              "incomplete_source",
+              "cleanup_failure",
+              "header_limit",
+              "framing_limit",
+              "wire_budget",
+              "framing_invalid"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "read_id": {
+            "anyOf": [
+              {
+                "maxLength": 69,
+                "minLength": 69,
+                "pattern": "^read-[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read Id"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "start",
+                  "end"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          }
+        },
+        "required": [
+          "code",
+          "read_id",
+          "side"
+        ],
+        "title": "Diagnostic",
+        "type": "object"
       },
       "DiagnosticCode": {
         "enum": [
@@ -4293,6 +4466,102 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "EventSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_event_ids": {
+            "items": {
+              "maxLength": 70,
+              "minLength": 70,
+              "pattern": "^event-[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "title": "Candidate Event Ids",
+            "type": "array"
+          },
+          "explicit_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowOccurrence"
+              },
+              {
+                "$ref": "#/components/schemas/JiraOccurrence"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explicit Occurrence"
+          },
+          "selected_event_id": {
+            "anyOf": [
+              {
+                "maxLength": 70,
+                "minLength": 70,
+                "pattern": "^event-[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Event Id"
+          },
+          "source_literal": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Literal"
+          },
+          "state": {
+            "enum": [
+              "selected",
+              "missing",
+              "null",
+              "empty",
+              "unsupported_timestamp",
+              "ambiguous",
+              "occurrence_not_found",
+              "conflicting_source",
+              "incomplete"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "utc_seconds": {
+            "anyOf": [
+              {
+                "maxLength": 2024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utc Seconds"
+          }
+        },
+        "required": [
+          "state",
+          "candidate_event_ids",
+          "selected_event_id",
+          "explicit_occurrence",
+          "source_literal",
+          "utc_seconds"
+        ],
+        "title": "EventSelection",
+        "type": "object"
+      },
       "EvidenceArtifact": {
         "additionalProperties": false,
         "description": "A single piece of compliance evidence.\n\nAn artifact represents one discrete piece of proof that a control is\nimplemented and operating effectively. Artifacts are collected by\ncollectors (automated) or uploaded manually.",
@@ -5899,6 +6168,672 @@
         "title": "InCommonRequest",
         "type": "object"
       },
+      "IncidentClockContext": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collector_id": {
+            "const": "incident-clock",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "credential_identity": {
+            "const": "not-established",
+            "title": "Credential Identity",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filter_applied": {
+            "$ref": "#/components/schemas/SelectionFilter",
+            "title": "Filter Applied"
+          },
+          "pagination_context": {
+            "title": "Pagination Context",
+            "type": "null"
+          },
+          "run_id": {
+            "maxLength": 26,
+            "minLength": 26,
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_id": {
+            "maxLength": 90,
+            "minLength": 84,
+            "pattern": "^incident-clock:(servicenow|jira|pagerduty):[0-9a-f]{64}$",
+            "title": "Source System Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collector_id",
+          "collector_version",
+          "run_id",
+          "collected_at",
+          "credential_identity",
+          "source_system_id",
+          "filter_applied",
+          "pagination_context",
+          "evidentia_version"
+        ],
+        "title": "IncidentClockContext",
+        "type": "object"
+      },
+      "IncidentClockCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "collected": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Collected",
+            "type": "integer"
+          },
+          "matched_filter": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Matched Filter",
+            "type": "integer"
+          },
+          "resource_type": {
+            "const": "selected_incident_clock",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "scanned": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Scanned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resource_type",
+          "scanned",
+          "matched_filter",
+          "collected"
+        ],
+        "title": "IncidentClockCoverage",
+        "type": "object"
+      },
+      "IncidentClockFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_context": {
+            "$ref": "#/components/schemas/IncidentClockContext"
+          },
+          "compliance_status": {
+            "const": "unknown",
+            "title": "Compliance Status",
+            "type": "string"
+          },
+          "control_mappings": {
+            "items": {
+              "$ref": "#/components/schemas/ControlMapping"
+            },
+            "maxItems": 0,
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "allOf": [
+              {
+                "pattern": "^[ -~]{1,256}$"
+              }
+            ],
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Description",
+            "type": "string"
+          },
+          "first_observed": {
+            "title": "First Observed",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_observed": {
+            "title": "Last Observed",
+            "type": "string"
+          },
+          "raw_data": {
+            "$ref": "#/components/schemas/IncidentClockSummary"
+          },
+          "remediation": {
+            "title": "Remediation",
+            "type": "null"
+          },
+          "resolved_at": {
+            "title": "Resolved At",
+            "type": "null"
+          },
+          "resource_account": {
+            "title": "Resource Account",
+            "type": "null"
+          },
+          "resource_id": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            ],
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_region": {
+            "title": "Resource Region",
+            "type": "null"
+          },
+          "resource_type": {
+            "const": "selected_incident_clock",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "severity": {
+            "const": "informational",
+            "title": "Severity",
+            "type": "string"
+          },
+          "source_finding_id": {
+            "title": "Source Finding Id",
+            "type": "null"
+          },
+          "source_system": {
+            "const": "incident-clock",
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "const": "active",
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "const": "Incident clock observation",
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "severity",
+          "status",
+          "compliance_status",
+          "remediation",
+          "source_system",
+          "source_finding_id",
+          "resource_type",
+          "resource_id",
+          "resource_region",
+          "resource_account",
+          "control_mappings",
+          "collection_context",
+          "raw_data",
+          "first_observed",
+          "last_observed",
+          "resolved_at"
+        ],
+        "title": "IncidentClockFinding",
+        "type": "object"
+      },
+      "IncidentClockManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_finished_at": {
+            "title": "Collection Finished At",
+            "type": "string"
+          },
+          "collection_started_at": {
+            "title": "Collection Started At",
+            "type": "string"
+          },
+          "collector_id": {
+            "const": "incident-clock",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "coverage_counts": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentClockCoverage"
+            },
+            "title": "Coverage Counts",
+            "type": "array"
+          },
+          "empty_categories": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 0,
+            "title": "Empty Categories",
+            "type": "array"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidentia_version": {
+            "allOf": [
+              {
+                "pattern": "^[0-9][A-Za-z0-9.+_-]{0,63}$"
+              }
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filters_applied": {
+            "$ref": "#/components/schemas/SelectionFilter",
+            "title": "Filters Applied"
+          },
+          "incomplete_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "selected_source_incomplete",
+                  "selected_source_unavailable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incomplete Reason"
+          },
+          "is_complete": {
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "run_id": {
+            "maxLength": 26,
+            "minLength": 26,
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_ids": {
+            "items": {
+              "maxLength": 90,
+              "minLength": 84,
+              "pattern": "^incident-clock:(servicenow|jira|pagerduty):[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Source System Ids",
+            "type": "array"
+          },
+          "total_findings": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Total Findings",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "collector_id",
+          "collector_version",
+          "collection_started_at",
+          "collection_finished_at",
+          "source_system_ids",
+          "filters_applied",
+          "coverage_counts",
+          "total_findings",
+          "is_complete",
+          "incomplete_reason",
+          "empty_categories",
+          "warnings",
+          "errors",
+          "evidentia_version"
+        ],
+        "title": "IncidentClockManifest",
+        "type": "object"
+      },
+      "IncidentClockResult": {
+        "additionalProperties": false,
+        "properties": {
+          "clock": {
+            "$ref": "#/components/schemas/ClockOutcome"
+          },
+          "credential_validity": {
+            "enum": [
+              "expiry_checked",
+              "expiry_unknown",
+              "not_established"
+            ],
+            "title": "Credential Validity",
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/PublishedClockDefinition"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "maxItems": 64,
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SourceEvent"
+            },
+            "maxItems": 10000,
+            "title": "Events",
+            "type": "array"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentClockFinding"
+            },
+            "maxItems": 1,
+            "title": "Findings",
+            "type": "array"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/IncidentClockManifest"
+          },
+          "observation_scope": {
+            "const": "selected_incident_clock",
+            "title": "Observation Scope",
+            "type": "string"
+          },
+          "profile_binding_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Profile Binding Sha256",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "servicenow",
+              "jira",
+              "pagerduty"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SelectedRecordProjection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "request": {
+            "discriminator": {
+              "mapping": {
+                "jira": "#/components/schemas/JiraRequest",
+                "pagerduty": "#/components/schemas/PagerDutyRequest",
+                "servicenow": "#/components/schemas/ServiceNowRequest"
+              },
+              "propertyName": "provider"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowRequest"
+              },
+              {
+                "$ref": "#/components/schemas/JiraRequest"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyRequest"
+              }
+            ],
+            "title": "Request"
+          },
+          "run_id": {
+            "maxLength": 26,
+            "minLength": 26,
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_reads": {
+            "items": {
+              "$ref": "#/components/schemas/evidentia_collectors__incident_clock___contracts__SourceRead"
+            },
+            "maxItems": 102,
+            "title": "Source Reads",
+            "type": "array"
+          },
+          "source_state": {
+            "enum": [
+              "complete",
+              "incomplete",
+              "unavailable"
+            ],
+            "title": "Source State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "provider",
+          "request",
+          "run_id",
+          "observation_scope",
+          "definition",
+          "source_state",
+          "clock",
+          "events",
+          "record",
+          "source_reads",
+          "diagnostics",
+          "findings",
+          "manifest",
+          "profile_binding_sha256",
+          "credential_validity"
+        ],
+        "title": "IncidentClockResult",
+        "type": "object"
+      },
+      "IncidentClockSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "clock_state": {
+            "enum": [
+              "computed",
+              "unresolved_events",
+              "reversed_order",
+              "incomplete_source"
+            ],
+            "title": "Clock State",
+            "type": "string"
+          },
+          "definition_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Definition Sha256",
+            "type": "string"
+          },
+          "elapsed_seconds": {
+            "anyOf": [
+              {
+                "maxLength": 2024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elapsed Seconds"
+          },
+          "end_event_id": {
+            "anyOf": [
+              {
+                "maxLength": 70,
+                "minLength": 70,
+                "pattern": "^event-[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Event Id"
+          },
+          "end_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowOccurrence"
+              },
+              {
+                "$ref": "#/components/schemas/JiraOccurrence"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Occurrence"
+          },
+          "observation_scope": {
+            "const": "selected_incident_clock",
+            "title": "Observation Scope",
+            "type": "string"
+          },
+          "profile_binding_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Profile Binding Sha256",
+            "type": "string"
+          },
+          "source_state": {
+            "enum": [
+              "complete",
+              "incomplete",
+              "unavailable"
+            ],
+            "title": "Source State",
+            "type": "string"
+          },
+          "start_event_id": {
+            "anyOf": [
+              {
+                "maxLength": 70,
+                "minLength": 70,
+                "pattern": "^event-[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Event Id"
+          },
+          "start_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowOccurrence"
+              },
+              {
+                "$ref": "#/components/schemas/JiraOccurrence"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Occurrence"
+          }
+        },
+        "required": [
+          "observation_scope",
+          "source_state",
+          "clock_state",
+          "elapsed_seconds",
+          "start_event_id",
+          "end_event_id",
+          "start_occurrence",
+          "end_occurrence",
+          "definition_sha256",
+          "profile_binding_sha256"
+        ],
+        "title": "IncidentClockSummary",
+        "type": "object"
+      },
       "InitWizardCommitRequest": {
         "additionalProperties": false,
         "description": "Body of `POST /api/init/commit` — write the starter files to disk.\n\nCarries the same onboarding answers as the preview request (the server\nregenerates the files; the client never sends file content) plus an\n`overwrite` flag mirroring the CLI's `init --force`.",
@@ -6114,6 +7049,141 @@
           "recommended_frameworks"
         ],
         "title": "InitWizardResponse",
+        "type": "object"
+      },
+      "JiraMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "field_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Field Id",
+            "type": "string"
+          },
+          "from": {
+            "$ref": "#/components/schemas/NativeTextCell"
+          },
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Label",
+            "type": "string"
+          },
+          "meaning": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Meaning",
+            "type": "string"
+          },
+          "to": {
+            "$ref": "#/components/schemas/NativeTextCell"
+          }
+        },
+        "required": [
+          "label",
+          "meaning",
+          "field_id",
+          "from",
+          "to"
+        ],
+        "title": "JiraMapping",
+        "type": "object"
+      },
+      "JiraOccurrence": {
+        "additionalProperties": false,
+        "properties": {
+          "history_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "History Id",
+            "type": "string"
+          },
+          "item_index": {
+            "maximum": 255.0,
+            "minimum": 0.0,
+            "title": "Item Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "history_id",
+          "item_index"
+        ],
+        "title": "JiraOccurrence",
+        "type": "object"
+      },
+      "JiraRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "clock_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Clock Alias",
+            "type": "string"
+          },
+          "end_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JiraOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "profile_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Profile Alias",
+            "type": "string"
+          },
+          "provider": {
+            "const": "jira",
+            "title": "Provider",
+            "type": "string"
+          },
+          "record_id": {
+            "allOf": [
+              {
+                "pattern": "^[1-9][0-9]{0,31}$"
+              }
+            ],
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "start_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JiraOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "profile_alias",
+          "clock_alias",
+          "provider",
+          "record_id"
+        ],
+        "title": "JiraRequest",
         "type": "object"
       },
       "JsonObject": {
@@ -7035,6 +8105,38 @@
         "title": "NISTAIRMFFunction",
         "type": "string"
       },
+      "NativeTextCell": {
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "enum": [
+              "missing",
+              "null",
+              "empty",
+              "value"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "state",
+          "value"
+        ],
+        "title": "NativeTextCell",
+        "type": "object"
+      },
       "NessusCollectResponse": {
         "description": "Response body of ``POST /collectors/nessus/collect``.",
         "properties": {
@@ -7565,6 +8667,158 @@
         "title": "POAMState",
         "type": "string"
       },
+      "PagerDutyMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "event_type": {
+            "enum": [
+              "acknowledge_log_entry",
+              "annotate_log_entry",
+              "assign_log_entry",
+              "delegate_log_entry",
+              "escalate_log_entry",
+              "exhaust_escalation_path_log_entry",
+              "notify_log_entry",
+              "reach_ack_limit_log_entry",
+              "reach_trigger_limit_log_entry",
+              "repeat_escalation_path_log_entry",
+              "resolve_log_entry",
+              "snooze_log_entry",
+              "trigger_log_entry",
+              "unacknowledge_log_entry",
+              "urgency_change_log_entry",
+              "field_value_change_log_entry",
+              "custom_field_value_change_log_entry"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Label",
+            "type": "string"
+          },
+          "meaning": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Meaning",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "meaning",
+          "event_type"
+        ],
+        "title": "PagerDutyMapping",
+        "type": "object"
+      },
+      "PagerDutyOccurrence": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id"
+        ],
+        "title": "PagerDutyOccurrence",
+        "type": "object"
+      },
+      "PagerDutyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "clock_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Clock Alias",
+            "type": "string"
+          },
+          "end_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PagerDutyOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "profile_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Profile Alias",
+            "type": "string"
+          },
+          "provider": {
+            "const": "pagerduty",
+            "title": "Provider",
+            "type": "string"
+          },
+          "record_id": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+              }
+            ],
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "since": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Since",
+            "type": "string"
+          },
+          "start_occurrence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PagerDutyOccurrence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "until": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Until",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_alias",
+          "clock_alias",
+          "provider",
+          "record_id",
+          "since",
+          "until"
+        ],
+        "title": "PagerDutyRequest",
+        "type": "object"
+      },
       "PaginationContext": {
         "additionalProperties": false,
         "description": "Pagination state at the moment of finding retrieval.\n\nPreserving the pagination context lets an auditor prove collection\ncompleteness (checklist H10). If a collector returned 42 findings\nacross 3 pages with no continuation token, the evidence trail shows\nthe operator didn't silently stop at the first page.",
@@ -7775,6 +9029,88 @@
         ],
         "title": "Provenance",
         "type": "string"
+      },
+      "PublishedClockDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "clock_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Clock Alias",
+            "type": "string"
+          },
+          "declared_workflow_meaning": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Declared Workflow Meaning",
+            "type": "string"
+          },
+          "definition_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Definition Sha256",
+            "type": "string"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowMapping"
+              },
+              {
+                "$ref": "#/components/schemas/JiraMapping"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyMapping"
+              }
+            ],
+            "title": "End"
+          },
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Label",
+            "type": "string"
+          },
+          "mapping_reference": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Mapping Reference",
+            "type": "string"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowMapping"
+              },
+              {
+                "$ref": "#/components/schemas/JiraMapping"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyMapping"
+              }
+            ],
+            "title": "Start"
+          }
+        },
+        "required": [
+          "clock_alias",
+          "label",
+          "mapping_reference",
+          "declared_workflow_meaning",
+          "definition_sha256",
+          "start",
+          "end"
+        ],
+        "title": "PublishedClockDefinition",
+        "type": "object"
       },
       "Question": {
         "additionalProperties": false,
@@ -8540,7 +9876,7 @@
           },
           "source_reads": {
             "items": {
-              "$ref": "#/components/schemas/SourceRead"
+              "$ref": "#/components/schemas/evidentia_collectors__registries___contracts__SourceRead"
             },
             "maxItems": 24,
             "title": "Source Reads",
@@ -9568,6 +10904,105 @@
         "title": "SecurityTxtRequest",
         "type": "object"
       },
+      "SelectedRecordProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NativeTextCell"
+            },
+            "maxProperties": 3,
+            "minProperties": 2,
+            "title": "Fields",
+            "type": "object"
+          },
+          "provider": {
+            "enum": [
+              "servicenow",
+              "jira",
+              "pagerduty"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "read_id": {
+            "maxLength": 69,
+            "minLength": 69,
+            "pattern": "^read-[0-9a-f]{64}$",
+            "title": "Read Id",
+            "type": "string"
+          },
+          "record_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "record_id",
+          "read_id",
+          "fields"
+        ],
+        "title": "SelectedRecordProjection",
+        "type": "object"
+      },
+      "SelectionFilter": {
+        "additionalProperties": false,
+        "properties": {
+          "definition_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Definition Sha256",
+            "type": "string"
+          },
+          "observation_scope": {
+            "const": "selected_incident_clock",
+            "title": "Observation Scope",
+            "type": "string"
+          },
+          "profile_binding_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Profile Binding Sha256",
+            "type": "string"
+          },
+          "request": {
+            "discriminator": {
+              "mapping": {
+                "jira": "#/components/schemas/JiraRequest",
+                "pagerduty": "#/components/schemas/PagerDutyRequest",
+                "servicenow": "#/components/schemas/ServiceNowRequest"
+              },
+              "propertyName": "provider"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ServiceNowRequest"
+              },
+              {
+                "$ref": "#/components/schemas/JiraRequest"
+              },
+              {
+                "$ref": "#/components/schemas/PagerDutyRequest"
+              }
+            ],
+            "title": "Request"
+          }
+        },
+        "required": [
+          "observation_scope",
+          "request",
+          "profile_binding_sha256",
+          "definition_sha256"
+        ],
+        "title": "SelectionFilter",
+        "type": "object"
+      },
       "SeriesGap": {
         "additionalProperties": false,
         "description": "A spacing that exceeded the allowed interval.",
@@ -9735,6 +11170,111 @@
         ],
         "title": "SeriesVerdict",
         "type": "string"
+      },
+      "ServiceNowMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "allOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{0,79}$"
+              }
+            ],
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Field",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Label",
+            "type": "string"
+          },
+          "meaning": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Meaning",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "meaning",
+          "field"
+        ],
+        "title": "ServiceNowMapping",
+        "type": "object"
+      },
+      "ServiceNowOccurrence": {
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "allOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{0,79}$"
+              }
+            ],
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "ServiceNowOccurrence",
+        "type": "object"
+      },
+      "ServiceNowRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "clock_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Clock Alias",
+            "type": "string"
+          },
+          "profile_alias": {
+            "allOf": [
+              {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+              }
+            ],
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Profile Alias",
+            "type": "string"
+          },
+          "provider": {
+            "const": "servicenow",
+            "title": "Provider",
+            "type": "string"
+          },
+          "record_id": {
+            "maxLength": 32,
+            "minLength": 32,
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_alias",
+          "clock_alias",
+          "provider",
+          "record_id"
+        ],
+        "title": "ServiceNowRequest",
+        "type": "object"
       },
       "SetAcquisitionPhaseRequest": {
         "description": "Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.",
@@ -9970,137 +11510,50 @@
         "title": "SimulationResult",
         "type": "object"
       },
-      "SourceRead": {
+      "SourceEvent": {
         "additionalProperties": false,
         "properties": {
-          "accepted_pages": {
-            "maximum": 20.0,
-            "minimum": 0.0,
-            "title": "Accepted Pages",
-            "type": "integer"
-          },
-          "admitted_records": {
-            "maximum": 100.0,
-            "minimum": 0.0,
-            "title": "Admitted Records",
-            "type": "integer"
-          },
-          "attempted_pages": {
-            "maximum": 64.0,
-            "minimum": 0.0,
-            "title": "Attempted Pages",
-            "type": "integer"
-          },
-          "body_complete": {
-            "title": "Body Complete",
-            "type": "boolean"
-          },
-          "cache_state": {
-            "enum": [
-              "not_applicable",
-              "cache_only",
-              "unknown"
-            ],
-            "title": "Cache State",
+          "event_id": {
+            "maxLength": 70,
+            "minLength": 70,
+            "pattern": "^event-[0-9a-f]{64}$",
+            "title": "Event Id",
             "type": "string"
           },
-          "decoded_bytes": {
+          "matches": {
+            "items": {
+              "enum": [
+                "start",
+                "end"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Matches",
+            "type": "array"
+          },
+          "native_fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NativeTextCell"
+            },
+            "maxProperties": 4,
+            "minProperties": 2,
+            "title": "Native Fields",
+            "type": "object"
+          },
+          "occurrence": {
             "anyOf": [
               {
-                "maximum": 16777216.0,
-                "minimum": 0.0,
-                "type": "integer"
+                "$ref": "#/components/schemas/ServiceNowOccurrence"
               },
               {
-                "type": "null"
-              }
-            ],
-            "title": "Decoded Bytes"
-          },
-          "freshness": {
-            "enum": [
-              "current_observation",
-              "dated_snapshot",
-              "stale",
-              "unknown"
-            ],
-            "title": "Freshness",
-            "type": "string"
-          },
-          "http_status": {
-            "anyOf": [
-              {
-                "maximum": 599.0,
-                "minimum": 100.0,
-                "type": "integer"
+                "$ref": "#/components/schemas/JiraOccurrence"
               },
               {
-                "type": "null"
+                "$ref": "#/components/schemas/PagerDutyOccurrence"
               }
             ],
-            "title": "Http Status"
-          },
-          "method": {
-            "enum": [
-              "GET",
-              "TLS",
-              "LOCAL",
-              "DISABLED"
-            ],
-            "title": "Method",
-            "type": "string"
-          },
-          "network_attempts": {
-            "maximum": 64.0,
-            "minimum": 0.0,
-            "title": "Network Attempts",
-            "type": "integer"
-          },
-          "ordinal": {
-            "exclusiveMaximum": 24.0,
-            "minimum": 0.0,
-            "title": "Ordinal",
-            "type": "integer"
-          },
-          "publisher_date": {
-            "anyOf": [
-              {
-                "maxLength": 512,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Publisher Date"
-          },
-          "publisher_version": {
-            "anyOf": [
-              {
-                "maxLength": 128,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Publisher Version"
-          },
-          "query_scope": {
-            "$ref": "#/components/schemas/RegistryLookupRequest"
-          },
-          "raw_bytes": {
-            "anyOf": [
-              {
-                "maximum": 16777216.0,
-                "minimum": 0.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Raw Bytes"
+            "title": "Occurrence"
           },
           "read_id": {
             "maxLength": 69,
@@ -10109,135 +11562,27 @@
             "title": "Read Id",
             "type": "string"
           },
-          "registry": {
-            "enum": [
-              "tls",
-              "rdap",
-              "sam-entity",
-              "sam-exclusions",
-              "gleif",
-              "fedramp",
-              "cmvp",
-              "fcc-covered-list",
-              "incommon",
-              "ssl-labs",
-              "security-txt"
-            ],
-            "title": "Registry",
-            "type": "string"
-          },
-          "retrieved_at": {
-            "title": "Retrieved At",
-            "type": "string"
-          },
-          "snapshot_source": {
-            "anyOf": [
-              {
-                "maxLength": 128,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Snapshot Source"
-          },
-          "source_digest": {
-            "anyOf": [
-              {
-                "maxLength": 64,
-                "minLength": 64,
-                "pattern": "^[0-9a-f]{64}$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Digest"
-          },
-          "source_records": {
-            "maximum": 50000.0,
-            "minimum": 0.0,
-            "title": "Source Records",
-            "type": "integer"
-          },
-          "source_signature": {
-            "enum": [
-              "verified",
-              "unverified",
-              "not_applicable"
-            ],
-            "title": "Source Signature",
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "complete",
-              "partial",
-              "unavailable"
-            ],
-            "title": "Status",
-            "type": "string"
-          },
-          "template": {
-            "maxLength": 64,
+          "record_id": {
+            "maxLength": 128,
             "minLength": 1,
             "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
-            "title": "Template",
+            "title": "Record Id",
             "type": "string"
           },
-          "transport_kind": {
-            "enum": [
-              "https",
-              "tls",
-              "snapshot",
-              "none"
-            ],
-            "title": "Transport Kind",
-            "type": "string"
-          },
-          "transport_verified": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Transport Verified"
+          "timestamp": {
+            "$ref": "#/components/schemas/NativeTextCell"
           }
         },
         "required": [
+          "event_id",
+          "record_id",
           "read_id",
-          "registry",
-          "ordinal",
-          "method",
-          "template",
-          "query_scope",
-          "transport_kind",
-          "status",
-          "freshness",
-          "http_status",
-          "network_attempts",
-          "attempted_pages",
-          "accepted_pages",
-          "source_records",
-          "admitted_records",
-          "raw_bytes",
-          "decoded_bytes",
-          "body_complete",
-          "source_digest",
-          "retrieved_at",
-          "publisher_date",
-          "publisher_version",
-          "snapshot_source",
-          "cache_state",
-          "transport_verified",
-          "source_signature"
+          "occurrence",
+          "timestamp",
+          "native_fields",
+          "matches"
         ],
-        "title": "SourceRead",
+        "title": "SourceEvent",
         "type": "object"
       },
       "SourceTime": {
@@ -13201,6 +14546,477 @@
           }
         ]
       },
+      "evidentia_collectors__incident_clock___contracts__SourceRead": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "admitted_events": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Admitted Events",
+            "type": "integer"
+          },
+          "body_bytes": {
+            "maximum": 1048577.0,
+            "minimum": 0.0,
+            "title": "Body Bytes",
+            "type": "integer"
+          },
+          "body_complete": {
+            "title": "Body Complete",
+            "type": "boolean"
+          },
+          "body_sha256": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Sha256"
+          },
+          "diagnostic_codes": {
+            "items": {
+              "enum": [
+                "profile_refused",
+                "credential_missing",
+                "credential_expired",
+                "credential_invalid",
+                "offline_refused",
+                "destination_refused",
+                "dns_failure",
+                "dns_timeout",
+                "connect_failure",
+                "tls_failure",
+                "read_timeout",
+                "deadline_exceeded",
+                "redirect_refused",
+                "http_unauthorized",
+                "http_forbidden",
+                "http_not_found",
+                "http_status_refused",
+                "body_limit",
+                "response_budget",
+                "unsupported_encoding",
+                "invalid_json",
+                "source_shape",
+                "record_mismatch",
+                "site_grant_refused",
+                "pagination_conflict",
+                "duplicate_occurrence",
+                "source_conflict",
+                "page_limit",
+                "event_limit",
+                "result_limit",
+                "timestamp_unsupported",
+                "event_missing",
+                "event_null",
+                "event_empty",
+                "event_ambiguous",
+                "occurrence_not_found",
+                "reversed_order",
+                "incomplete_source",
+                "cleanup_failure",
+                "header_limit",
+                "framing_limit",
+                "wire_budget",
+                "framing_invalid"
+              ],
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Diagnostic Codes",
+            "type": "array"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "kind": {
+            "enum": [
+              "jira_access",
+              "record",
+              "history"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "ordinal": {
+            "maximum": 101.0,
+            "minimum": 0.0,
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "pagination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeclaredPagination"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "read_id": {
+            "maxLength": 69,
+            "minLength": 69,
+            "pattern": "^read-[0-9a-f]{64}$",
+            "title": "Read Id",
+            "type": "string"
+          },
+          "received_records": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received Records"
+          },
+          "retrieved_at": {
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "admitted",
+              "rejected",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "template": {
+            "enum": [
+              "servicenow_record",
+              "jira_accessible_resources",
+              "jira_issue",
+              "jira_changelog",
+              "pagerduty_incident",
+              "pagerduty_log_entries"
+            ],
+            "title": "Template",
+            "type": "string"
+          },
+          "wire_bytes": {
+            "maximum": 1179649.0,
+            "minimum": 0.0,
+            "title": "Wire Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "read_id",
+          "ordinal",
+          "kind",
+          "template",
+          "state",
+          "http_status",
+          "retrieved_at",
+          "body_bytes",
+          "body_complete",
+          "body_sha256",
+          "accepted",
+          "pagination",
+          "received_records",
+          "admitted_events",
+          "diagnostic_codes",
+          "wire_bytes"
+        ],
+        "title": "SourceRead",
+        "type": "object"
+      },
+      "evidentia_collectors__registries___contracts__SourceRead": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted_pages": {
+            "maximum": 20.0,
+            "minimum": 0.0,
+            "title": "Accepted Pages",
+            "type": "integer"
+          },
+          "admitted_records": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Admitted Records",
+            "type": "integer"
+          },
+          "attempted_pages": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Attempted Pages",
+            "type": "integer"
+          },
+          "body_complete": {
+            "title": "Body Complete",
+            "type": "boolean"
+          },
+          "cache_state": {
+            "enum": [
+              "not_applicable",
+              "cache_only",
+              "unknown"
+            ],
+            "title": "Cache State",
+            "type": "string"
+          },
+          "decoded_bytes": {
+            "anyOf": [
+              {
+                "maximum": 16777216.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decoded Bytes"
+          },
+          "freshness": {
+            "enum": [
+              "current_observation",
+              "dated_snapshot",
+              "stale",
+              "unknown"
+            ],
+            "title": "Freshness",
+            "type": "string"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "method": {
+            "enum": [
+              "GET",
+              "TLS",
+              "LOCAL",
+              "DISABLED"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "network_attempts": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Network Attempts",
+            "type": "integer"
+          },
+          "ordinal": {
+            "exclusiveMaximum": 24.0,
+            "minimum": 0.0,
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "publisher_date": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher Date"
+          },
+          "publisher_version": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher Version"
+          },
+          "query_scope": {
+            "$ref": "#/components/schemas/RegistryLookupRequest"
+          },
+          "raw_bytes": {
+            "anyOf": [
+              {
+                "maximum": 16777216.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Bytes"
+          },
+          "read_id": {
+            "maxLength": 69,
+            "minLength": 69,
+            "pattern": "^read-[0-9a-f]{64}$",
+            "title": "Read Id",
+            "type": "string"
+          },
+          "registry": {
+            "enum": [
+              "tls",
+              "rdap",
+              "sam-entity",
+              "sam-exclusions",
+              "gleif",
+              "fedramp",
+              "cmvp",
+              "fcc-covered-list",
+              "incommon",
+              "ssl-labs",
+              "security-txt"
+            ],
+            "title": "Registry",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "snapshot_source": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Source"
+          },
+          "source_digest": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Digest"
+          },
+          "source_records": {
+            "maximum": 50000.0,
+            "minimum": 0.0,
+            "title": "Source Records",
+            "type": "integer"
+          },
+          "source_signature": {
+            "enum": [
+              "verified",
+              "unverified",
+              "not_applicable"
+            ],
+            "title": "Source Signature",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "template": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Template",
+            "type": "string"
+          },
+          "transport_kind": {
+            "enum": [
+              "https",
+              "tls",
+              "snapshot",
+              "none"
+            ],
+            "title": "Transport Kind",
+            "type": "string"
+          },
+          "transport_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transport Verified"
+          }
+        },
+        "required": [
+          "read_id",
+          "registry",
+          "ordinal",
+          "method",
+          "template",
+          "query_scope",
+          "transport_kind",
+          "status",
+          "freshness",
+          "http_status",
+          "network_attempts",
+          "attempted_pages",
+          "accepted_pages",
+          "source_records",
+          "admitted_records",
+          "raw_bytes",
+          "decoded_bytes",
+          "body_complete",
+          "source_digest",
+          "retrieved_at",
+          "publisher_date",
+          "publisher_version",
+          "snapshot_source",
+          "cache_state",
+          "transport_verified",
+          "source_signature"
+        ],
+        "title": "SourceRead",
+        "type": "object"
+      },
       "evidentia_collectors__registries___contracts___FindingData": {
         "additionalProperties": false,
         "properties": {
@@ -15773,6 +17589,415 @@
           }
         },
         "summary": "Greenbone Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/incident-clock": {
+      "post": {
+        "description": "Return the full observation with source completeness and clock status kept separate.",
+        "operationId": "collect_incident_clock",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "clock_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Clock Alias",
+                        "type": "string"
+                      },
+                      "profile_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Profile Alias",
+                        "type": "string"
+                      },
+                      "provider": {
+                        "const": "servicenow",
+                        "title": "Provider",
+                        "type": "string"
+                      },
+                      "record_id": {
+                        "maxLength": 32,
+                        "minLength": 32,
+                        "pattern": "^[0-9a-f]{32}$",
+                        "title": "Record Id",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "profile_alias",
+                      "clock_alias",
+                      "provider",
+                      "record_id"
+                    ],
+                    "title": "ServiceNowRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "clock_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Clock Alias",
+                        "type": "string"
+                      },
+                      "end_occurrence": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "history_id": {
+                                "maxLength": 256,
+                                "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                                "title": "History Id",
+                                "type": "string"
+                              },
+                              "item_index": {
+                                "maximum": 255.0,
+                                "minimum": 0.0,
+                                "title": "Item Index",
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "history_id",
+                              "item_index"
+                            ],
+                            "title": "JiraOccurrence",
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "profile_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Profile Alias",
+                        "type": "string"
+                      },
+                      "provider": {
+                        "const": "jira",
+                        "title": "Provider",
+                        "type": "string"
+                      },
+                      "record_id": {
+                        "allOf": [
+                          {
+                            "pattern": "^[1-9][0-9]{0,31}$"
+                          }
+                        ],
+                        "maxLength": 32,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Record Id",
+                        "type": "string"
+                      },
+                      "start_occurrence": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "history_id": {
+                                "maxLength": 256,
+                                "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                                "title": "History Id",
+                                "type": "string"
+                              },
+                              "item_index": {
+                                "maximum": 255.0,
+                                "minimum": 0.0,
+                                "title": "Item Index",
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "history_id",
+                              "item_index"
+                            ],
+                            "title": "JiraOccurrence",
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "profile_alias",
+                      "clock_alias",
+                      "provider",
+                      "record_id"
+                    ],
+                    "title": "JiraRequest",
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "clock_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Clock Alias",
+                        "type": "string"
+                      },
+                      "end_occurrence": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "event_id": {
+                                "maxLength": 256,
+                                "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                                "title": "Event Id",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "event_id"
+                            ],
+                            "title": "PagerDutyOccurrence",
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "profile_alias": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+                          }
+                        ],
+                        "maxLength": 64,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Profile Alias",
+                        "type": "string"
+                      },
+                      "provider": {
+                        "const": "pagerduty",
+                        "title": "Provider",
+                        "type": "string"
+                      },
+                      "record_id": {
+                        "allOf": [
+                          {
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+                          }
+                        ],
+                        "maxLength": 128,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Record Id",
+                        "type": "string"
+                      },
+                      "since": {
+                        "maxLength": 2048,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Since",
+                        "type": "string"
+                      },
+                      "start_occurrence": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "event_id": {
+                                "maxLength": 256,
+                                "minLength": 1,
+                                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                                "title": "Event Id",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "event_id"
+                            ],
+                            "title": "PagerDutyOccurrence",
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "until": {
+                        "maxLength": 2048,
+                        "minLength": 1,
+                        "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                        "title": "Until",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "profile_alias",
+                      "clock_alias",
+                      "provider",
+                      "record_id",
+                      "since",
+                      "until"
+                    ],
+                    "title": "PagerDutyRequest",
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentClockResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid JSON or bounded request fields."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "reason",
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "API authentication required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Authentication, read permission or profile authorization is required."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The request body exceeds 16384 bytes."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Only application/json is supported."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Collection could not produce a valid result."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "The optional incident clock collector is not installed."
+          }
+        },
+        "summary": "Collect Incident Clock",
         "tags": [
           "collectors"
         ]
