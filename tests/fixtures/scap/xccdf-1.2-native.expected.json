@@ -1,0 +1,1340 @@
+{
+  "source_sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+  "native_node_count": 12,
+  "assessment": {
+    "selection": {
+      "assessment_index": 0,
+      "unit_kind": "xccdf_test_result",
+      "node_index": 0
+    },
+    "units": [
+      {
+        "assessment_index": 0,
+        "unit_kind": "xccdf_test_result",
+        "node_index": 0
+      }
+    ],
+    "outcomes": [
+      {
+        "unit_node_index": 0,
+        "node_index": 3,
+        "level": "xccdf_rule_result",
+        "value_ref": {
+          "node_index": 4,
+          "slot": "element_simple_content",
+          "attribute_index": null
+        },
+        "native_result": "pass"
+      },
+      {
+        "unit_node_index": 0,
+        "node_index": 7,
+        "level": "xccdf_rule_result",
+        "value_ref": {
+          "node_index": 8,
+          "slot": "element_simple_content",
+          "attribute_index": null
+        },
+        "native_result": "notchecked"
+      }
+    ],
+    "times": [
+      {
+        "scope_node_index": 0,
+        "scope": "selected_assessment",
+        "role": "assessment_start",
+        "value_ref": {
+          "node_index": 0,
+          "slot": "attribute_value",
+          "attribute_index": 1
+        },
+        "normalization": {
+          "state": "normalized",
+          "utc": "2024-02-29T23:50:00Z"
+        }
+      },
+      {
+        "scope_node_index": 0,
+        "scope": "selected_assessment",
+        "role": "assessment_completion",
+        "value_ref": {
+          "node_index": 0,
+          "slot": "attribute_value",
+          "attribute_index": 2
+        },
+        "normalization": {
+          "state": "normalized",
+          "utc": "2024-03-01T00:00:00Z"
+        }
+      }
+    ],
+    "coverage": {
+      "scope": "selected_assessment_native_projection",
+      "selected_node_index": 0,
+      "visible_unit_count": 1,
+      "selected_unit_count": 1,
+      "unselected_unit_count": 0,
+      "visible_outcome_count": 2,
+      "selected_outcome_count": 2,
+      "top_level_outcome_count": 2,
+      "countable_top_level_outcome_count": 1,
+      "native_export_detail": "not_applicable",
+      "collection_flags": [],
+      "status_observations": [],
+      "signature_node_indices": [],
+      "source_population_complete": "not_established",
+      "schema_validation": "bounded_core_profile_rules",
+      "complete_schema_validation": "not_performed",
+      "platform_validation": "not_performed",
+      "signature_verification": "not_performed",
+      "producer_interoperability": "not_established",
+      "cadence_evidence": "countable",
+      "oval_directives": null,
+      "core_status_defaults": [],
+      "outcome_counts": [
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "pass",
+          "count": 1
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "fail",
+          "count": 0
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "unknown",
+          "count": 0
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "notapplicable",
+          "count": 0
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "informational",
+          "count": 0
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "fixed",
+          "count": 0
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "notchecked",
+          "count": 1
+        },
+        {
+          "level": "xccdf_rule_result",
+          "native_result": "notselected",
+          "count": 0
+        }
+      ],
+      "uninterpreted_node_count": 2
+    },
+    "uninterpreted_roots": [
+      5,
+      9
+    ],
+    "finding_refs": [
+      {
+        "node_index": 0,
+        "mapping_rule_id": "scap-assessment-summary-v1",
+        "source_key_sha256": "d6a7fd645febb464ad09bccf1e2c0b80f9ebcb764680c3ddaa5b506f2bf79350",
+        "finding_id": "e1be3ec5-05dc-5752-81cb-969fea37134d"
+      }
+    ]
+  },
+  "native_document": {
+    "declaration": {
+      "version": "1.0",
+      "encoding": "UTF-8",
+      "standalone": null
+    },
+    "text": "\n",
+    "children": [
+      0
+    ],
+    "nodes": [
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "TestResult"
+        },
+        "namespace_declarations": [
+          {
+            "prefix": "",
+            "namespace_uri": "http://checklists.nist.gov/xccdf/1.2"
+          }
+        ],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "id"
+            },
+            "value": "xccdf_org.example.synthetic_testresult_one"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "start-time"
+            },
+            "value": "2024-02-29T23:50:00Z"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "end-time"
+            },
+            "value": "2024-02-29T24:00:00-00:00"
+          }
+        ],
+        "text": "\n  ",
+        "tail": "\n",
+        "children": [
+          1,
+          2,
+          3,
+          7,
+          11
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "benchmark"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "href"
+            },
+            "value": "urn:synthetic:benchmark:one"
+          }
+        ],
+        "text": null,
+        "tail": "\n  ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "target"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "synthetic-target-one",
+        "tail": "\n  ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "rule-result"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "idref"
+            },
+            "value": "xccdf_org.example.synthetic_rule_one"
+          }
+        ],
+        "text": "\n    ",
+        "tail": "\n  ",
+        "children": [
+          4,
+          6
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "result"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "pa",
+        "tail": "\n    ",
+        "children": [
+          5
+        ]
+      },
+      {
+        "kind": "comment",
+        "data": "split",
+        "tail": "ss"
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "instance"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "context"
+            },
+            "value": "component"
+          }
+        ],
+        "text": "alpha",
+        "tail": "\n  ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "rule-result"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "idref"
+            },
+            "value": "xccdf_org.example.synthetic_rule_one"
+          }
+        ],
+        "text": "\n    ",
+        "tail": "\n  ",
+        "children": [
+          8,
+          10
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "result"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "not",
+        "tail": "\n    ",
+        "children": [
+          9
+        ]
+      },
+      {
+        "kind": "processing_instruction",
+        "target": "split",
+        "data": "value",
+        "tail": "checked"
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "instance"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "context"
+            },
+            "value": "component"
+          }
+        ],
+        "text": "beta",
+        "tail": "\n  ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+          "local_name": "score"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "maximum"
+            },
+            "value": "100"
+          }
+        ],
+        "text": "50",
+        "tail": "\n",
+        "children": []
+      }
+    ]
+  },
+  "artifact_cases": [
+    {
+      "case_id": "xccdf-native-unlinked",
+      "request": {
+        "source_profile": "xccdf-1.2-results",
+        "assessment_index": 0,
+        "cadence_slug": null,
+        "completion_assertion": null
+      },
+      "actor": null,
+      "evidence_artifact": {
+        "id": "cbc9700c-2419-5951-8b62-e7aeb2629967",
+        "title": "Imported XCCDF assessment",
+        "description": "Native source observations with disclosed completion provenance; no authenticity, completeness or compliance conclusion.",
+        "evidence_type": "test_result",
+        "source_system": "scap-xccdf",
+        "collected_at": "2024-03-01T00:00:00Z",
+        "collected_by": "evidentia-scap-v1",
+        "content": {
+          "schema_version": "scap-evidence-v1",
+          "source": {
+            "sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+            "bytes": 696,
+            "profile": "xccdf-1.2-results",
+            "projection_version": "scap-native-document-v1"
+          },
+          "native_document": {
+            "declaration": {
+              "version": "1.0",
+              "encoding": "UTF-8",
+              "standalone": null
+            },
+            "text": "\n",
+            "children": [
+              0
+            ],
+            "nodes": [
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "TestResult"
+                },
+                "namespace_declarations": [
+                  {
+                    "prefix": "",
+                    "namespace_uri": "http://checklists.nist.gov/xccdf/1.2"
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "id"
+                    },
+                    "value": "xccdf_org.example.synthetic_testresult_one"
+                  },
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "start-time"
+                    },
+                    "value": "2024-02-29T23:50:00Z"
+                  },
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "end-time"
+                    },
+                    "value": "2024-02-29T24:00:00-00:00"
+                  }
+                ],
+                "text": "\n  ",
+                "tail": "\n",
+                "children": [
+                  1,
+                  2,
+                  3,
+                  7,
+                  11
+                ]
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "benchmark"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "href"
+                    },
+                    "value": "urn:synthetic:benchmark:one"
+                  }
+                ],
+                "text": null,
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "target"
+                },
+                "namespace_declarations": [],
+                "attributes": [],
+                "text": "synthetic-target-one",
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "rule-result"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "idref"
+                    },
+                    "value": "xccdf_org.example.synthetic_rule_one"
+                  }
+                ],
+                "text": "\n    ",
+                "tail": "\n  ",
+                "children": [
+                  4,
+                  6
+                ]
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "result"
+                },
+                "namespace_declarations": [],
+                "attributes": [],
+                "text": "pa",
+                "tail": "\n    ",
+                "children": [
+                  5
+                ]
+              },
+              {
+                "kind": "comment",
+                "data": "split",
+                "tail": "ss"
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "instance"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "context"
+                    },
+                    "value": "component"
+                  }
+                ],
+                "text": "alpha",
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "rule-result"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "idref"
+                    },
+                    "value": "xccdf_org.example.synthetic_rule_one"
+                  }
+                ],
+                "text": "\n    ",
+                "tail": "\n  ",
+                "children": [
+                  8,
+                  10
+                ]
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "result"
+                },
+                "namespace_declarations": [],
+                "attributes": [],
+                "text": "not",
+                "tail": "\n    ",
+                "children": [
+                  9
+                ]
+              },
+              {
+                "kind": "processing_instruction",
+                "target": "split",
+                "data": "value",
+                "tail": "checked"
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "instance"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "context"
+                    },
+                    "value": "component"
+                  }
+                ],
+                "text": "beta",
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "score"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "maximum"
+                    },
+                    "value": "100"
+                  }
+                ],
+                "text": "50",
+                "tail": "\n",
+                "children": []
+              }
+            ]
+          },
+          "assessment": {
+            "selection": {
+              "assessment_index": 0,
+              "unit_kind": "xccdf_test_result",
+              "node_index": 0
+            },
+            "units": [
+              {
+                "assessment_index": 0,
+                "unit_kind": "xccdf_test_result",
+                "node_index": 0
+              }
+            ],
+            "outcomes": [
+              {
+                "unit_node_index": 0,
+                "node_index": 3,
+                "level": "xccdf_rule_result",
+                "value_ref": {
+                  "node_index": 4,
+                  "slot": "element_simple_content",
+                  "attribute_index": null
+                },
+                "native_result": "pass"
+              },
+              {
+                "unit_node_index": 0,
+                "node_index": 7,
+                "level": "xccdf_rule_result",
+                "value_ref": {
+                  "node_index": 8,
+                  "slot": "element_simple_content",
+                  "attribute_index": null
+                },
+                "native_result": "notchecked"
+              }
+            ],
+            "times": [
+              {
+                "scope_node_index": 0,
+                "scope": "selected_assessment",
+                "role": "assessment_start",
+                "value_ref": {
+                  "node_index": 0,
+                  "slot": "attribute_value",
+                  "attribute_index": 1
+                },
+                "normalization": {
+                  "state": "normalized",
+                  "utc": "2024-02-29T23:50:00Z"
+                }
+              },
+              {
+                "scope_node_index": 0,
+                "scope": "selected_assessment",
+                "role": "assessment_completion",
+                "value_ref": {
+                  "node_index": 0,
+                  "slot": "attribute_value",
+                  "attribute_index": 2
+                },
+                "normalization": {
+                  "state": "normalized",
+                  "utc": "2024-03-01T00:00:00Z"
+                }
+              }
+            ],
+            "coverage": {
+              "scope": "selected_assessment_native_projection",
+              "selected_node_index": 0,
+              "visible_unit_count": 1,
+              "selected_unit_count": 1,
+              "unselected_unit_count": 0,
+              "visible_outcome_count": 2,
+              "selected_outcome_count": 2,
+              "top_level_outcome_count": 2,
+              "countable_top_level_outcome_count": 1,
+              "native_export_detail": "not_applicable",
+              "collection_flags": [],
+              "status_observations": [],
+              "signature_node_indices": [],
+              "source_population_complete": "not_established",
+              "schema_validation": "bounded_core_profile_rules",
+              "complete_schema_validation": "not_performed",
+              "platform_validation": "not_performed",
+              "signature_verification": "not_performed",
+              "producer_interoperability": "not_established",
+              "cadence_evidence": "countable",
+              "oval_directives": null,
+              "core_status_defaults": [],
+              "outcome_counts": [
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "pass",
+                  "count": 1
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "fail",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "error",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "unknown",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "notapplicable",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "informational",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "fixed",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "notchecked",
+                  "count": 1
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "notselected",
+                  "count": 0
+                }
+              ],
+              "uninterpreted_node_count": 2
+            },
+            "uninterpreted_roots": [
+              5,
+              9
+            ],
+            "finding_refs": [
+              {
+                "node_index": 0,
+                "mapping_rule_id": "scap-assessment-summary-v1",
+                "source_key_sha256": "d6a7fd645febb464ad09bccf1e2c0b80f9ebcb764680c3ddaa5b506f2bf79350",
+                "finding_id": "e1be3ec5-05dc-5752-81cb-969fea37134d"
+              }
+            ]
+          },
+          "completion": {
+            "basis": "native_reported",
+            "utc": "2024-03-01T00:00:00Z",
+            "native_ref": {
+              "node_index": 0,
+              "slot": "attribute_value",
+              "attribute_index": 2
+            },
+            "assertion": null
+          }
+        },
+        "content_hash": "1dcd0dce95db137fcfb2a7a3f103522e509ae567924261098bd40b84976c1f7d",
+        "content_format": "json",
+        "file_path": null,
+        "file_size_bytes": null,
+        "control_mappings": [],
+        "sufficiency": "unknown",
+        "sufficiency_rationale": null,
+        "missing_elements": [],
+        "validator_confidence": null,
+        "validated_at": null,
+        "validated_by": null,
+        "expires_at": null,
+        "tags": [
+          "scap",
+          "xccdf"
+        ],
+        "metadata": {
+          "scap_contract": "scap-evidence-v1",
+          "source_sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+          "source_profile": "xccdf-1.2-results",
+          "assessment_index": 0,
+          "time_basis": "native_reported"
+        },
+        "version": 1,
+        "lineage_id": null,
+        "predecessor_id": null
+      },
+      "identity": {
+        "namespace_name": "https://evidentiagrc.com/scap/evidence/v1",
+        "namespace": "4d0f4558-0a54-55e3-a87b-16faa9bd88a3",
+        "identity_frame_sha256": "cb7f236c6c8a64e33a97b311b6dca75f226c1fd4b646f0aff05621a85a3bed73",
+        "content_sha256": "1dcd0dce95db137fcfb2a7a3f103522e509ae567924261098bd40b84976c1f7d",
+        "artifact_id": "cbc9700c-2419-5951-8b62-e7aeb2629967"
+      },
+      "finding_identity": {
+        "frame": {
+          "schema_version": "scap-finding-identity-v1",
+          "source_sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+          "source_profile": "xccdf-1.2-results",
+          "assessment_index": 0,
+          "unit_node_index": 0,
+          "mapping_rule_id": "scap-assessment-summary-v1"
+        },
+        "frame_sha256": "d6a7fd645febb464ad09bccf1e2c0b80f9ebcb764680c3ddaa5b506f2bf79350",
+        "namespace": "c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6",
+        "source_system": "scap-xccdf",
+        "name_separator": "U+0000",
+        "finding_id": "e1be3ec5-05dc-5752-81cb-969fea37134d"
+      }
+    },
+    {
+      "case_id": "xccdf-native-ca7",
+      "request": {
+        "source_profile": "xccdf-1.2-results",
+        "assessment_index": 0,
+        "cadence_slug": "nist-800-53-rev5-ca7",
+        "completion_assertion": null
+      },
+      "actor": null,
+      "evidence_artifact": {
+        "id": "a8a37682-6abd-5556-a45e-5ee0e9a15775",
+        "title": "Imported XCCDF assessment",
+        "description": "Native source observations with disclosed completion provenance; no authenticity, completeness or compliance conclusion.",
+        "evidence_type": "test_result",
+        "source_system": "scap-xccdf",
+        "collected_at": "2024-03-01T00:00:00Z",
+        "collected_by": "evidentia-scap-v1",
+        "content": {
+          "schema_version": "scap-evidence-v1",
+          "source": {
+            "sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+            "bytes": 696,
+            "profile": "xccdf-1.2-results",
+            "projection_version": "scap-native-document-v1"
+          },
+          "native_document": {
+            "declaration": {
+              "version": "1.0",
+              "encoding": "UTF-8",
+              "standalone": null
+            },
+            "text": "\n",
+            "children": [
+              0
+            ],
+            "nodes": [
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "TestResult"
+                },
+                "namespace_declarations": [
+                  {
+                    "prefix": "",
+                    "namespace_uri": "http://checklists.nist.gov/xccdf/1.2"
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "id"
+                    },
+                    "value": "xccdf_org.example.synthetic_testresult_one"
+                  },
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "start-time"
+                    },
+                    "value": "2024-02-29T23:50:00Z"
+                  },
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "end-time"
+                    },
+                    "value": "2024-02-29T24:00:00-00:00"
+                  }
+                ],
+                "text": "\n  ",
+                "tail": "\n",
+                "children": [
+                  1,
+                  2,
+                  3,
+                  7,
+                  11
+                ]
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "benchmark"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "href"
+                    },
+                    "value": "urn:synthetic:benchmark:one"
+                  }
+                ],
+                "text": null,
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "target"
+                },
+                "namespace_declarations": [],
+                "attributes": [],
+                "text": "synthetic-target-one",
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "rule-result"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "idref"
+                    },
+                    "value": "xccdf_org.example.synthetic_rule_one"
+                  }
+                ],
+                "text": "\n    ",
+                "tail": "\n  ",
+                "children": [
+                  4,
+                  6
+                ]
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "result"
+                },
+                "namespace_declarations": [],
+                "attributes": [],
+                "text": "pa",
+                "tail": "\n    ",
+                "children": [
+                  5
+                ]
+              },
+              {
+                "kind": "comment",
+                "data": "split",
+                "tail": "ss"
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "instance"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "context"
+                    },
+                    "value": "component"
+                  }
+                ],
+                "text": "alpha",
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "rule-result"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "idref"
+                    },
+                    "value": "xccdf_org.example.synthetic_rule_one"
+                  }
+                ],
+                "text": "\n    ",
+                "tail": "\n  ",
+                "children": [
+                  8,
+                  10
+                ]
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "result"
+                },
+                "namespace_declarations": [],
+                "attributes": [],
+                "text": "not",
+                "tail": "\n    ",
+                "children": [
+                  9
+                ]
+              },
+              {
+                "kind": "processing_instruction",
+                "target": "split",
+                "data": "value",
+                "tail": "checked"
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "instance"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "context"
+                    },
+                    "value": "component"
+                  }
+                ],
+                "text": "beta",
+                "tail": "\n  ",
+                "children": []
+              },
+              {
+                "kind": "element",
+                "name": {
+                  "namespace_uri": "http://checklists.nist.gov/xccdf/1.2",
+                  "local_name": "score"
+                },
+                "namespace_declarations": [],
+                "attributes": [
+                  {
+                    "name": {
+                      "namespace_uri": "",
+                      "local_name": "maximum"
+                    },
+                    "value": "100"
+                  }
+                ],
+                "text": "50",
+                "tail": "\n",
+                "children": []
+              }
+            ]
+          },
+          "assessment": {
+            "selection": {
+              "assessment_index": 0,
+              "unit_kind": "xccdf_test_result",
+              "node_index": 0
+            },
+            "units": [
+              {
+                "assessment_index": 0,
+                "unit_kind": "xccdf_test_result",
+                "node_index": 0
+              }
+            ],
+            "outcomes": [
+              {
+                "unit_node_index": 0,
+                "node_index": 3,
+                "level": "xccdf_rule_result",
+                "value_ref": {
+                  "node_index": 4,
+                  "slot": "element_simple_content",
+                  "attribute_index": null
+                },
+                "native_result": "pass"
+              },
+              {
+                "unit_node_index": 0,
+                "node_index": 7,
+                "level": "xccdf_rule_result",
+                "value_ref": {
+                  "node_index": 8,
+                  "slot": "element_simple_content",
+                  "attribute_index": null
+                },
+                "native_result": "notchecked"
+              }
+            ],
+            "times": [
+              {
+                "scope_node_index": 0,
+                "scope": "selected_assessment",
+                "role": "assessment_start",
+                "value_ref": {
+                  "node_index": 0,
+                  "slot": "attribute_value",
+                  "attribute_index": 1
+                },
+                "normalization": {
+                  "state": "normalized",
+                  "utc": "2024-02-29T23:50:00Z"
+                }
+              },
+              {
+                "scope_node_index": 0,
+                "scope": "selected_assessment",
+                "role": "assessment_completion",
+                "value_ref": {
+                  "node_index": 0,
+                  "slot": "attribute_value",
+                  "attribute_index": 2
+                },
+                "normalization": {
+                  "state": "normalized",
+                  "utc": "2024-03-01T00:00:00Z"
+                }
+              }
+            ],
+            "coverage": {
+              "scope": "selected_assessment_native_projection",
+              "selected_node_index": 0,
+              "visible_unit_count": 1,
+              "selected_unit_count": 1,
+              "unselected_unit_count": 0,
+              "visible_outcome_count": 2,
+              "selected_outcome_count": 2,
+              "top_level_outcome_count": 2,
+              "countable_top_level_outcome_count": 1,
+              "native_export_detail": "not_applicable",
+              "collection_flags": [],
+              "status_observations": [],
+              "signature_node_indices": [],
+              "source_population_complete": "not_established",
+              "schema_validation": "bounded_core_profile_rules",
+              "complete_schema_validation": "not_performed",
+              "platform_validation": "not_performed",
+              "signature_verification": "not_performed",
+              "producer_interoperability": "not_established",
+              "cadence_evidence": "countable",
+              "oval_directives": null,
+              "core_status_defaults": [],
+              "outcome_counts": [
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "pass",
+                  "count": 1
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "fail",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "error",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "unknown",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "notapplicable",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "informational",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "fixed",
+                  "count": 0
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "notchecked",
+                  "count": 1
+                },
+                {
+                  "level": "xccdf_rule_result",
+                  "native_result": "notselected",
+                  "count": 0
+                }
+              ],
+              "uninterpreted_node_count": 2
+            },
+            "uninterpreted_roots": [
+              5,
+              9
+            ],
+            "finding_refs": [
+              {
+                "node_index": 0,
+                "mapping_rule_id": "scap-assessment-summary-v1",
+                "source_key_sha256": "d6a7fd645febb464ad09bccf1e2c0b80f9ebcb764680c3ddaa5b506f2bf79350",
+                "finding_id": "e1be3ec5-05dc-5752-81cb-969fea37134d"
+              }
+            ]
+          },
+          "completion": {
+            "basis": "native_reported",
+            "utc": "2024-03-01T00:00:00Z",
+            "native_ref": {
+              "node_index": 0,
+              "slot": "attribute_value",
+              "attribute_index": 2
+            },
+            "assertion": null
+          }
+        },
+        "content_hash": "1dcd0dce95db137fcfb2a7a3f103522e509ae567924261098bd40b84976c1f7d",
+        "content_format": "json",
+        "file_path": null,
+        "file_size_bytes": null,
+        "control_mappings": [],
+        "sufficiency": "unknown",
+        "sufficiency_rationale": null,
+        "missing_elements": [],
+        "validator_confidence": null,
+        "validated_at": null,
+        "validated_by": null,
+        "expires_at": null,
+        "tags": [
+          "scap",
+          "xccdf"
+        ],
+        "metadata": {
+          "scap_contract": "scap-evidence-v1",
+          "source_sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+          "source_profile": "xccdf-1.2-results",
+          "assessment_index": 0,
+          "time_basis": "native_reported",
+          "cadence_slug": "nist-800-53-rev5-ca7"
+        },
+        "version": 1,
+        "lineage_id": null,
+        "predecessor_id": null
+      },
+      "identity": {
+        "namespace_name": "https://evidentiagrc.com/scap/evidence/v1",
+        "namespace": "4d0f4558-0a54-55e3-a87b-16faa9bd88a3",
+        "identity_frame_sha256": "f66cc6363f3f1de043098472143cc0a66363ffb06c1d568cf1cd4f1ef06a0f39",
+        "content_sha256": "1dcd0dce95db137fcfb2a7a3f103522e509ae567924261098bd40b84976c1f7d",
+        "artifact_id": "a8a37682-6abd-5556-a45e-5ee0e9a15775"
+      },
+      "finding_identity": {
+        "frame": {
+          "schema_version": "scap-finding-identity-v1",
+          "source_sha256": "10b746c35ee0f3d7059436d51223f122f1ed3e976565bea36b67c5775397c8e2",
+          "source_profile": "xccdf-1.2-results",
+          "assessment_index": 0,
+          "unit_node_index": 0,
+          "mapping_rule_id": "scap-assessment-summary-v1"
+        },
+        "frame_sha256": "d6a7fd645febb464ad09bccf1e2c0b80f9ebcb764680c3ddaa5b506f2bf79350",
+        "namespace": "c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6",
+        "source_system": "scap-xccdf",
+        "name_separator": "U+0000",
+        "finding_id": "e1be3ec5-05dc-5752-81cb-969fea37134d"
+      }
+    }
+  ]
+}
