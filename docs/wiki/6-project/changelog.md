@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Incident workflow clocks (V13-06).** `collect incident-clock`, its API
+  operation and console tab observe one selected ServiceNow, Jira Cloud or
+  PagerDuty record under an explicit profile grant. Full results preserve native
+  timestamps, exact elapsed seconds, event occurrences, read receipts, source
+  completeness and unresolved clock states. Owned bounded transport and
+  whole-page admission keep rejected data out of the admitted projection.
+  CLI output is atomic; downloads retain the full validated JSON. Authored
+  synthetic fixtures establish offline behavior. Live access, workflow correctness
+  and legal notification determinations remain unassessed. See the
+  [incident clock design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/incident-clock-collector-design.md).
 - **Public registry evidence (V13-07 and V13-27).** `collect registry`, its API
   endpoint, Python collector and console screen select one identity across eleven
   registry contracts. Full results retain native values, source reads, traversal

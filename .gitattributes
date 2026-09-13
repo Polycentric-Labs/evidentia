@@ -74,3 +74,15 @@ tests/fixtures/registries/ssl_labs/endpoint-ready.json text eol=lf
 tests/fixtures/registries/ssl_labs/endpoint-error.json text eol=lf
 tests/fixtures/registries/ssl_labs/endpoint-cache-miss.json text eol=lf
 tests/fixtures/registries/ssl_labs/endpoint-identity-mismatch.json text eol=lf
+
+# Incident clock fixture hashes bind exact LF bytes on every checkout.
+tests/fixtures/incident_clock/jira/accessible-resources.json text eol=lf
+tests/fixtures/incident_clock/jira/changelog-page1.json text eol=lf
+tests/fixtures/incident_clock/jira/changelog-page2.json text eol=lf
+tests/fixtures/incident_clock/jira/issue.json text eol=lf
+tests/fixtures/incident_clock/pagerduty/incident.json text eol=lf
+tests/fixtures/incident_clock/pagerduty/logs-page1.json text eol=lf
+tests/fixtures/incident_clock/pagerduty/logs-page2.json text eol=lf
+tests/fixtures/incident_clock/servicenow/missing-fields.json text eol=lf
+tests/fixtures/incident_clock/servicenow/record.json text eol=lf
+tests/fixtures/incident_clock/source-index.json text eol=lf

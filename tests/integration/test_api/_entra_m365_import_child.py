@@ -7,7 +7,7 @@ import importlib.abc
 import importlib.util
 import json
 import sys
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from importlib.machinery import ModuleSpec
 from pathlib import Path
 from types import ModuleType
@@ -52,6 +52,30 @@ class Block(importlib.abc.MetaPathFinder):
         return None
 
 
+class ParentAbsent(importlib.abc.MetaPathFinder):
+    """Model actual package absence for both imports and existence probes."""
+
+    def __init__(self) -> None:
+        self.delegates = tuple(sys.meta_path)
+
+    def find_spec(
+        self, fullname: str, path: Sequence[str] | None = None, target: ModuleType | None = None
+    ) -> ModuleSpec | None:
+        if fullname == "evidentia_collectors" or fullname.startswith("evidentia_collectors."):
+            return None
+        for finder in self.delegates:
+            found = finder.find_spec(fullname, path, target)
+            if found is not None:
+                return found
+        return None
+
+    def find_distributions(self, *args: object, **kwargs: object) -> Iterator[object]:
+        for finder in self.delegates:
+            discover = getattr(finder, "find_distributions", None)
+            if discover is not None:
+                yield from discover(*args, **kwargs)
+
+
 async def check_absence(application: FastAPI) -> None:
     operation = application.openapi()["paths"]["/api/collectors/entra-m365/collect"]["post"]
     assert "200" not in operation["responses"]
@@ -74,6 +98,8 @@ async def check_absence(application: FastAPI) -> None:
 with pytest.MonkeyPatch.context() as patch:
     isolate(patch, DIRECTORY)
     sys.meta_path.insert(0, Block())
+    if MODE == "parent":
+        sys.meta_path[:] = [ParentAbsent()]
     try:
         application = app()
     except (ModuleNotFoundError, ImportError, SyntaxError) as error:

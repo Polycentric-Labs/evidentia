@@ -190,6 +190,11 @@ commands:
     api: "POST /api/collectors/retention/collect"
     gui: "/collect"
     status: full
+  - cli: "collect incident-clock"
+    api: "POST /api/collectors/incident-clock"
+    gui: "/collect"
+    status: full
+    reason: "One authorized record and workflow clock retain full native evidence, exact elapsed seconds and separate source/clock states across all three providers."
   - cli: "collect registry"
     api: "POST /api/collectors/registry"
     gui: "/collect"

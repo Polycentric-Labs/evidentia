@@ -382,6 +382,17 @@ Ingest a Greenbone Community Edition GMP report XML export (v0.13 V13-05).
 | `--description-max-chars` | Cap on each finding's description length. Default 4000. |
 | `--output, -o` | Where to write the converted SecurityFinding JSON. Default: stdout. |
 
+### `evidentia collect incident-clock`
+
+Observe one authorized incident workflow and its exact elapsed time.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--provider` | Provider selector; must match the request file. |
+| `--request-file` | Named regular JSON request file, at most 16384 bytes; stdin is not accepted. |
+| `--profiles-file` | Trusted local profile store; otherwise use EVIDENTIA_INCIDENT_CLOCK_PROFILES_FILE. |
+| `--output` | Atomically write full result JSON; omitted means stdout. |
+
 ### `evidentia collect nessus`
 
 Ingest a Nessus v2 (.nessus) XML scan export (v0.13 V13-05).

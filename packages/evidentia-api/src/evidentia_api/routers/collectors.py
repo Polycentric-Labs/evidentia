@@ -30,13 +30,14 @@ from starlette.requests import ClientDisconnect
 
 from evidentia_api.errors import ErrorEnvelope, api_error, error_responses
 from evidentia_api.rbac_dependency import require_role
-from evidentia_api.routers import enterprise_retention, registry, storage_retention
+from evidentia_api.routers import enterprise_retention, incident_clock, registry, storage_retention
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 router.include_router(storage_retention.router)
 router.include_router(enterprise_retention.router)
 router.include_router(registry.router)
+router.include_router(incident_clock.router)
 
 
 try:
@@ -2372,6 +2373,7 @@ async def collectors_status() -> dict[str, Any]:
         "retention": storage_retention.configuration_status(),
         "enterprise_retention": enterprise_retention.configuration_status(),
         "registry": registry.configuration_status(),
+        "incident_clock": incident_clock.configuration_status(),
         "google-workspace": {
             "installed": google_workspace_installed,
             "credentials_hint": (

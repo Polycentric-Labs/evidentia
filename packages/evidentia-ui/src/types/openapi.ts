@@ -787,6 +787,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collectors/incident-clock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Collect Incident Clock
+         * @description Return the full observation with source completeness and clock status kept separate.
+         */
+        post: operations["collect_incident_clock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/nessus/collect": {
         parameters: {
             query?: never;
@@ -4272,6 +4292,18 @@ export interface components {
             /** Window Days */
             window_days: number;
         };
+        /** ClockOutcome */
+        ClockOutcome: {
+            /** Elapsed Seconds */
+            elapsed_seconds: string | null;
+            end: components["schemas"]["EventSelection"];
+            start: components["schemas"]["EventSelection"];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "computed" | "unresolved_events" | "reversed_order" | "incomplete_source";
+        };
         /**
          * CollectionContext
          * @description Per-finding provenance block — who/what/when/where/how.
@@ -4881,12 +4913,37 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** DeclaredPagination */
+        DeclaredPagination: {
+            /** Limit */
+            limit: number;
+            /** Returned */
+            returned: number;
+            /** Start */
+            start: number;
+            /** Terminal */
+            terminal: boolean;
+            /** Total */
+            total: number;
+        };
         /**
          * DeploymentStatus
          * @description Operational lifecycle status of a registered AI system.
          * @enum {string}
          */
         DeploymentStatus: "proposed" | "in_development" | "pilot" | "production" | "retired";
+        /** Diagnostic */
+        Diagnostic: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "profile_refused" | "credential_missing" | "credential_expired" | "credential_invalid" | "offline_refused" | "destination_refused" | "dns_failure" | "dns_timeout" | "connect_failure" | "tls_failure" | "read_timeout" | "deadline_exceeded" | "redirect_refused" | "http_unauthorized" | "http_forbidden" | "http_not_found" | "http_status_refused" | "body_limit" | "response_budget" | "unsupported_encoding" | "invalid_json" | "source_shape" | "record_mismatch" | "site_grant_refused" | "pagination_conflict" | "duplicate_occurrence" | "source_conflict" | "page_limit" | "event_limit" | "result_limit" | "timestamp_unsupported" | "event_missing" | "event_null" | "event_empty" | "event_ambiguous" | "occurrence_not_found" | "reversed_order" | "incomplete_source" | "cleanup_failure" | "header_limit" | "framing_limit" | "wire_budget" | "framing_invalid";
+            /** Read Id */
+            read_id: string | null;
+            /** Side */
+            side: ("start" | "end") | null;
+        };
         /** @enum {string} */
         DiagnosticCode: "input_missing" | "credentials_missing" | "configuration_invalid" | "authentication_failed" | "permission_denied" | "connection_failed" | "upstream_error" | "retry_exhausted" | "retry_after_invalid" | "retry_after_budget" | "redirect_refused" | "unsafe_destination" | "invalid_envelope" | "invalid_record" | "invalid_timestamp" | "response_limit" | "page_limit" | "item_limit" | "byte_limit" | "capability_budget" | "run_budget" | "continuation_invalid" | "continuation_loop" | "conflicting_duplicate" | "conditional_access_detail_unavailable" | "unresolved_parent" | "conflicting_state" | "source_validity_unknown" | "future_timestamp" | "timestamp_precision_unrepresentable" | "source_retention_limited" | "internal_error";
         /**
@@ -5455,6 +5512,24 @@ export interface components {
          */
         ErrorEnvelope: {
             detail: components["schemas"]["ErrorDetail"];
+        };
+        /** EventSelection */
+        EventSelection: {
+            /** Candidate Event Ids */
+            candidate_event_ids: string[];
+            /** Explicit Occurrence */
+            explicit_occurrence: components["schemas"]["ServiceNowOccurrence"] | components["schemas"]["JiraOccurrence"] | components["schemas"]["PagerDutyOccurrence"] | null;
+            /** Selected Event Id */
+            selected_event_id: string | null;
+            /** Source Literal */
+            source_literal: string | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "selected" | "missing" | "null" | "empty" | "unsupported_timestamp" | "ambiguous" | "occurrence_not_found" | "conflicting_source" | "incomplete";
+            /** Utc Seconds */
+            utc_seconds: string | null;
         };
         /**
          * EvidenceArtifact
@@ -6334,6 +6409,218 @@ export interface components {
             scope_label?: string | null;
             target: components["schemas"]["EntityTarget"];
         };
+        /** IncidentClockContext */
+        IncidentClockContext: {
+            /** Collected At */
+            collected_at: string;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "incident-clock";
+            /** Collector Version */
+            collector_version: string & unknown;
+            /**
+             * Credential Identity
+             * @constant
+             */
+            credential_identity: "not-established";
+            /** Evidentia Version */
+            evidentia_version: string & unknown;
+            /** Filter Applied */
+            filter_applied: components["schemas"]["SelectionFilter"];
+            /** Pagination Context */
+            pagination_context: null;
+            /** Run Id */
+            run_id: string;
+            /** Source System Id */
+            source_system_id: string;
+        };
+        /** IncidentClockCoverage */
+        IncidentClockCoverage: {
+            /** Collected */
+            collected: number;
+            /** Matched Filter */
+            matched_filter: number;
+            /**
+             * Resource Type
+             * @constant
+             */
+            resource_type: "selected_incident_clock";
+            /** Scanned */
+            scanned: number;
+        };
+        /** IncidentClockFinding */
+        IncidentClockFinding: {
+            collection_context: components["schemas"]["IncidentClockContext"];
+            /**
+             * Compliance Status
+             * @constant
+             */
+            compliance_status: "unknown";
+            /** Control Mappings */
+            control_mappings: components["schemas"]["ControlMapping"][];
+            /** Description */
+            description: string & unknown;
+            /** First Observed */
+            first_observed: string;
+            /** Id */
+            id: string;
+            /** Last Observed */
+            last_observed: string;
+            raw_data: components["schemas"]["IncidentClockSummary"];
+            /** Remediation */
+            remediation: null;
+            /** Resolved At */
+            resolved_at: null;
+            /** Resource Account */
+            resource_account: null;
+            /** Resource Id */
+            resource_id: string & unknown;
+            /** Resource Region */
+            resource_region: null;
+            /**
+             * Resource Type
+             * @constant
+             */
+            resource_type: "selected_incident_clock";
+            /**
+             * Severity
+             * @constant
+             */
+            severity: "informational";
+            /** Source Finding Id */
+            source_finding_id: null;
+            /**
+             * Source System
+             * @constant
+             */
+            source_system: "incident-clock";
+            /**
+             * Status
+             * @constant
+             */
+            status: "active";
+            /**
+             * Title
+             * @constant
+             */
+            title: "Incident clock observation";
+        };
+        /** IncidentClockManifest */
+        IncidentClockManifest: {
+            /** Collection Finished At */
+            collection_finished_at: string;
+            /** Collection Started At */
+            collection_started_at: string;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "incident-clock";
+            /** Collector Version */
+            collector_version: string & unknown;
+            /** Coverage Counts */
+            coverage_counts: components["schemas"]["IncidentClockCoverage"][];
+            /** Empty Categories */
+            empty_categories: string[];
+            /** Errors */
+            errors: string[];
+            /** Evidentia Version */
+            evidentia_version: string & unknown;
+            /** Filters Applied */
+            filters_applied: components["schemas"]["SelectionFilter"];
+            /** Incomplete Reason */
+            incomplete_reason: ("selected_source_incomplete" | "selected_source_unavailable") | null;
+            /** Is Complete */
+            is_complete: boolean;
+            /** Run Id */
+            run_id: string;
+            /** Source System Ids */
+            source_system_ids: string[];
+            /** Total Findings */
+            total_findings: number;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** IncidentClockResult */
+        IncidentClockResult: {
+            clock: components["schemas"]["ClockOutcome"];
+            /**
+             * Credential Validity
+             * @enum {string}
+             */
+            credential_validity: "expiry_checked" | "expiry_unknown" | "not_established";
+            definition: components["schemas"]["PublishedClockDefinition"];
+            /** Diagnostics */
+            diagnostics: components["schemas"]["Diagnostic"][];
+            /** Events */
+            events: components["schemas"]["SourceEvent"][];
+            /** Findings */
+            findings: components["schemas"]["IncidentClockFinding"][];
+            manifest: components["schemas"]["IncidentClockManifest"];
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "selected_incident_clock";
+            /** Profile Binding Sha256 */
+            profile_binding_sha256: string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "servicenow" | "jira" | "pagerduty";
+            record: components["schemas"]["SelectedRecordProjection"] | null;
+            /** Request */
+            request: components["schemas"]["ServiceNowRequest"] | components["schemas"]["JiraRequest"] | components["schemas"]["PagerDutyRequest"];
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "1";
+            /** Source Reads */
+            source_reads: components["schemas"]["evidentia_collectors__incident_clock___contracts__SourceRead"][];
+            /**
+             * Source State
+             * @enum {string}
+             */
+            source_state: "complete" | "incomplete" | "unavailable";
+        };
+        /** IncidentClockSummary */
+        IncidentClockSummary: {
+            /**
+             * Clock State
+             * @enum {string}
+             */
+            clock_state: "computed" | "unresolved_events" | "reversed_order" | "incomplete_source";
+            /** Definition Sha256 */
+            definition_sha256: string;
+            /** Elapsed Seconds */
+            elapsed_seconds: string | null;
+            /** End Event Id */
+            end_event_id: string | null;
+            /** End Occurrence */
+            end_occurrence: components["schemas"]["ServiceNowOccurrence"] | components["schemas"]["JiraOccurrence"] | components["schemas"]["PagerDutyOccurrence"] | null;
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "selected_incident_clock";
+            /** Profile Binding Sha256 */
+            profile_binding_sha256: string;
+            /**
+             * Source State
+             * @enum {string}
+             */
+            source_state: "complete" | "incomplete" | "unavailable";
+            /** Start Event Id */
+            start_event_id: string | null;
+            /** Start Occurrence */
+            start_occurrence: components["schemas"]["ServiceNowOccurrence"] | components["schemas"]["JiraOccurrence"] | components["schemas"]["PagerDutyOccurrence"] | null;
+        };
         /**
          * InitWizardCommitRequest
          * @description Body of `POST /api/init/commit` — write the starter files to disk.
@@ -6450,6 +6737,40 @@ export interface components {
             recommended_frameworks: string[];
             /** System Context Yaml */
             system_context_yaml: string;
+        };
+        /** JiraMapping */
+        JiraMapping: {
+            /** Field Id */
+            field_id: string;
+            from: components["schemas"]["NativeTextCell"];
+            /** Label */
+            label: string;
+            /** Meaning */
+            meaning: string;
+            to: components["schemas"]["NativeTextCell"];
+        };
+        /** JiraOccurrence */
+        JiraOccurrence: {
+            /** History Id */
+            history_id: string;
+            /** Item Index */
+            item_index: number;
+        };
+        /** JiraRequest */
+        JiraRequest: {
+            /** Clock Alias */
+            clock_alias: string & unknown;
+            end_occurrence?: components["schemas"]["JiraOccurrence"] | null;
+            /** Profile Alias */
+            profile_alias: string & unknown;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "jira";
+            /** Record Id */
+            record_id: string & unknown;
+            start_occurrence?: components["schemas"]["JiraOccurrence"] | null;
         };
         JsonObject: {
             [key: string]: components["schemas"]["evidentia_collectors__entra_m365___contracts__JsonValue"];
@@ -7003,6 +7324,16 @@ export interface components {
          * @enum {string}
          */
         NISTAIRMFFunction: "govern" | "map" | "measure" | "manage";
+        /** NativeTextCell */
+        NativeTextCell: {
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "missing" | "null" | "empty" | "value";
+            /** Value */
+            value: string | null;
+        };
         /**
          * NessusCollectResponse
          * @description Response body of ``POST /collectors/nessus/collect``.
@@ -7380,6 +7711,43 @@ export interface components {
          * @enum {string}
          */
         POAMState: "planned" | "in_progress" | "overdue" | "completed" | "verified";
+        /** PagerDutyMapping */
+        PagerDutyMapping: {
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "acknowledge_log_entry" | "annotate_log_entry" | "assign_log_entry" | "delegate_log_entry" | "escalate_log_entry" | "exhaust_escalation_path_log_entry" | "notify_log_entry" | "reach_ack_limit_log_entry" | "reach_trigger_limit_log_entry" | "repeat_escalation_path_log_entry" | "resolve_log_entry" | "snooze_log_entry" | "trigger_log_entry" | "unacknowledge_log_entry" | "urgency_change_log_entry" | "field_value_change_log_entry" | "custom_field_value_change_log_entry";
+            /** Label */
+            label: string;
+            /** Meaning */
+            meaning: string;
+        };
+        /** PagerDutyOccurrence */
+        PagerDutyOccurrence: {
+            /** Event Id */
+            event_id: string;
+        };
+        /** PagerDutyRequest */
+        PagerDutyRequest: {
+            /** Clock Alias */
+            clock_alias: string & unknown;
+            end_occurrence?: components["schemas"]["PagerDutyOccurrence"] | null;
+            /** Profile Alias */
+            profile_alias: string & unknown;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "pagerduty";
+            /** Record Id */
+            record_id: string & unknown;
+            /** Since */
+            since: string;
+            start_occurrence?: components["schemas"]["PagerDutyOccurrence"] | null;
+            /** Until */
+            until: string;
+        };
         /**
          * PaginationContext
          * @description Pagination state at the moment of finding retrieval.
@@ -7535,6 +7903,23 @@ export interface components {
          * @enum {string}
          */
         Provenance: "internal" | "vendor";
+        /** PublishedClockDefinition */
+        PublishedClockDefinition: {
+            /** Clock Alias */
+            clock_alias: string & unknown;
+            /** Declared Workflow Meaning */
+            declared_workflow_meaning: string;
+            /** Definition Sha256 */
+            definition_sha256: string;
+            /** End */
+            end: components["schemas"]["ServiceNowMapping"] | components["schemas"]["JiraMapping"] | components["schemas"]["PagerDutyMapping"];
+            /** Label */
+            label: string;
+            /** Mapping Reference */
+            mapping_reference: string;
+            /** Start */
+            start: components["schemas"]["ServiceNowMapping"] | components["schemas"]["JiraMapping"] | components["schemas"]["PagerDutyMapping"];
+        };
         /**
          * Question
          * @description One control question in a vendor due-diligence questionnaire.
@@ -7832,7 +8217,7 @@ export interface components {
              */
             schema_version: "1";
             /** Source Reads */
-            source_reads: components["schemas"]["SourceRead"][];
+            source_reads: components["schemas"]["evidentia_collectors__registries___contracts__SourceRead"][];
         };
         /** RegistryManifest */
         RegistryManifest: {
@@ -8281,6 +8666,36 @@ export interface components {
             scope_label?: string | null;
             target: components["schemas"]["HostnameTarget"];
         };
+        /** SelectedRecordProjection */
+        SelectedRecordProjection: {
+            /** Fields */
+            fields: {
+                [key: string]: components["schemas"]["NativeTextCell"];
+            };
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "servicenow" | "jira" | "pagerduty";
+            /** Read Id */
+            read_id: string;
+            /** Record Id */
+            record_id: string;
+        };
+        /** SelectionFilter */
+        SelectionFilter: {
+            /** Definition Sha256 */
+            definition_sha256: string;
+            /**
+             * Observation Scope
+             * @constant
+             */
+            observation_scope: "selected_incident_clock";
+            /** Profile Binding Sha256 */
+            profile_binding_sha256: string;
+            /** Request */
+            request: components["schemas"]["ServiceNowRequest"] | components["schemas"]["JiraRequest"] | components["schemas"]["PagerDutyRequest"];
+        };
         /**
          * SeriesGap
          * @description A spacing that exceeded the allowed interval.
@@ -8373,6 +8788,34 @@ export interface components {
          * @enum {string}
          */
         SeriesVerdict: "continuous" | "gapped" | "insufficient" | "unknown";
+        /** ServiceNowMapping */
+        ServiceNowMapping: {
+            /** Field */
+            field: string & unknown;
+            /** Label */
+            label: string;
+            /** Meaning */
+            meaning: string;
+        };
+        /** ServiceNowOccurrence */
+        ServiceNowOccurrence: {
+            /** Field */
+            field: string & unknown;
+        };
+        /** ServiceNowRequest */
+        ServiceNowRequest: {
+            /** Clock Alias */
+            clock_alias: string & unknown;
+            /** Profile Alias */
+            profile_alias: string & unknown;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "servicenow";
+            /** Record Id */
+            record_id: string;
+        };
         /**
          * SetAcquisitionPhaseRequest
          * @description Body for ``POST /ai-gov/acquisitions/{acquisition_id}/set-phase``.
@@ -8511,80 +8954,23 @@ export interface components {
              */
             stddev: number;
         };
-        /** SourceRead */
-        SourceRead: {
-            /** Accepted Pages */
-            accepted_pages: number;
-            /** Admitted Records */
-            admitted_records: number;
-            /** Attempted Pages */
-            attempted_pages: number;
-            /** Body Complete */
-            body_complete: boolean;
-            /**
-             * Cache State
-             * @enum {string}
-             */
-            cache_state: "not_applicable" | "cache_only" | "unknown";
-            /** Decoded Bytes */
-            decoded_bytes: number | null;
-            /**
-             * Freshness
-             * @enum {string}
-             */
-            freshness: "current_observation" | "dated_snapshot" | "stale" | "unknown";
-            /** Http Status */
-            http_status: number | null;
-            /**
-             * Method
-             * @enum {string}
-             */
-            method: "GET" | "TLS" | "LOCAL" | "DISABLED";
-            /** Network Attempts */
-            network_attempts: number;
-            /** Ordinal */
-            ordinal: number;
-            /** Publisher Date */
-            publisher_date: string | null;
-            /** Publisher Version */
-            publisher_version: string | null;
-            query_scope: components["schemas"]["RegistryLookupRequest"];
-            /** Raw Bytes */
-            raw_bytes: number | null;
+        /** SourceEvent */
+        SourceEvent: {
+            /** Event Id */
+            event_id: string;
+            /** Matches */
+            matches: ("start" | "end")[];
+            /** Native Fields */
+            native_fields: {
+                [key: string]: components["schemas"]["NativeTextCell"];
+            };
+            /** Occurrence */
+            occurrence: components["schemas"]["ServiceNowOccurrence"] | components["schemas"]["JiraOccurrence"] | components["schemas"]["PagerDutyOccurrence"];
             /** Read Id */
             read_id: string;
-            /**
-             * Registry
-             * @enum {string}
-             */
-            registry: "tls" | "rdap" | "sam-entity" | "sam-exclusions" | "gleif" | "fedramp" | "cmvp" | "fcc-covered-list" | "incommon" | "ssl-labs" | "security-txt";
-            /** Retrieved At */
-            retrieved_at: string;
-            /** Snapshot Source */
-            snapshot_source: string | null;
-            /** Source Digest */
-            source_digest: string | null;
-            /** Source Records */
-            source_records: number;
-            /**
-             * Source Signature
-             * @enum {string}
-             */
-            source_signature: "verified" | "unverified" | "not_applicable";
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "complete" | "partial" | "unavailable";
-            /** Template */
-            template: string;
-            /**
-             * Transport Kind
-             * @enum {string}
-             */
-            transport_kind: "https" | "tls" | "snapshot" | "none";
-            /** Transport Verified */
-            transport_verified: boolean | null;
+            /** Record Id */
+            record_id: string;
+            timestamp: components["schemas"]["NativeTextCell"];
         };
         /** SourceTime */
         SourceTime: {
@@ -9881,6 +10267,124 @@ export interface components {
             target: components["schemas"]["VaultMatterTarget"] | components["schemas"]["SplunkIndexTarget"] | components["schemas"]["ElasticIndexTarget"];
         };
         evidentia_collectors__entra_m365___contracts__JsonValue: evidentia_collectors__entra_m365___contracts__JsonValue;
+        /** SourceRead */
+        evidentia_collectors__incident_clock___contracts__SourceRead: {
+            /** Accepted */
+            accepted: boolean;
+            /** Admitted Events */
+            admitted_events: number;
+            /** Body Bytes */
+            body_bytes: number;
+            /** Body Complete */
+            body_complete: boolean;
+            /** Body Sha256 */
+            body_sha256: string | null;
+            /** Diagnostic Codes */
+            diagnostic_codes: ("profile_refused" | "credential_missing" | "credential_expired" | "credential_invalid" | "offline_refused" | "destination_refused" | "dns_failure" | "dns_timeout" | "connect_failure" | "tls_failure" | "read_timeout" | "deadline_exceeded" | "redirect_refused" | "http_unauthorized" | "http_forbidden" | "http_not_found" | "http_status_refused" | "body_limit" | "response_budget" | "unsupported_encoding" | "invalid_json" | "source_shape" | "record_mismatch" | "site_grant_refused" | "pagination_conflict" | "duplicate_occurrence" | "source_conflict" | "page_limit" | "event_limit" | "result_limit" | "timestamp_unsupported" | "event_missing" | "event_null" | "event_empty" | "event_ambiguous" | "occurrence_not_found" | "reversed_order" | "incomplete_source" | "cleanup_failure" | "header_limit" | "framing_limit" | "wire_budget" | "framing_invalid")[];
+            /** Http Status */
+            http_status: number | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "jira_access" | "record" | "history";
+            /** Ordinal */
+            ordinal: number;
+            pagination: components["schemas"]["DeclaredPagination"] | null;
+            /** Read Id */
+            read_id: string;
+            /** Received Records */
+            received_records: number | null;
+            /** Retrieved At */
+            retrieved_at: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "admitted" | "rejected" | "unavailable";
+            /**
+             * Template
+             * @enum {string}
+             */
+            template: "servicenow_record" | "jira_accessible_resources" | "jira_issue" | "jira_changelog" | "pagerduty_incident" | "pagerduty_log_entries";
+            /** Wire Bytes */
+            wire_bytes: number;
+        };
+        /** SourceRead */
+        evidentia_collectors__registries___contracts__SourceRead: {
+            /** Accepted Pages */
+            accepted_pages: number;
+            /** Admitted Records */
+            admitted_records: number;
+            /** Attempted Pages */
+            attempted_pages: number;
+            /** Body Complete */
+            body_complete: boolean;
+            /**
+             * Cache State
+             * @enum {string}
+             */
+            cache_state: "not_applicable" | "cache_only" | "unknown";
+            /** Decoded Bytes */
+            decoded_bytes: number | null;
+            /**
+             * Freshness
+             * @enum {string}
+             */
+            freshness: "current_observation" | "dated_snapshot" | "stale" | "unknown";
+            /** Http Status */
+            http_status: number | null;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "GET" | "TLS" | "LOCAL" | "DISABLED";
+            /** Network Attempts */
+            network_attempts: number;
+            /** Ordinal */
+            ordinal: number;
+            /** Publisher Date */
+            publisher_date: string | null;
+            /** Publisher Version */
+            publisher_version: string | null;
+            query_scope: components["schemas"]["RegistryLookupRequest"];
+            /** Raw Bytes */
+            raw_bytes: number | null;
+            /** Read Id */
+            read_id: string;
+            /**
+             * Registry
+             * @enum {string}
+             */
+            registry: "tls" | "rdap" | "sam-entity" | "sam-exclusions" | "gleif" | "fedramp" | "cmvp" | "fcc-covered-list" | "incommon" | "ssl-labs" | "security-txt";
+            /** Retrieved At */
+            retrieved_at: string;
+            /** Snapshot Source */
+            snapshot_source: string | null;
+            /** Source Digest */
+            source_digest: string | null;
+            /** Source Records */
+            source_records: number;
+            /**
+             * Source Signature
+             * @enum {string}
+             */
+            source_signature: "verified" | "unverified" | "not_applicable";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "partial" | "unavailable";
+            /** Template */
+            template: string;
+            /**
+             * Transport Kind
+             * @enum {string}
+             */
+            transport_kind: "https" | "tls" | "snapshot" | "none";
+            /** Transport Verified */
+            transport_verified: boolean | null;
+        };
         /** _FindingData */
         evidentia_collectors__registries___contracts___FindingData: {
             observation: components["schemas"]["RegistryObservation"];
@@ -11640,6 +12144,157 @@ export interface operations {
                 };
             };
             /** @description Optional ``scan`` extra not installed (``error: feature_unavailable``). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    collect_incident_clock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Clock Alias */
+                    clock_alias: string & unknown;
+                    /** Profile Alias */
+                    profile_alias: string & unknown;
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "servicenow";
+                    /** Record Id */
+                    record_id: string;
+                } | {
+                    /** Clock Alias */
+                    clock_alias: string & unknown;
+                    end_occurrence?: {
+                        /** History Id */
+                        history_id: string;
+                        /** Item Index */
+                        item_index: number;
+                    } | null;
+                    /** Profile Alias */
+                    profile_alias: string & unknown;
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "jira";
+                    /** Record Id */
+                    record_id: string & unknown;
+                    start_occurrence?: {
+                        /** History Id */
+                        history_id: string;
+                        /** Item Index */
+                        item_index: number;
+                    } | null;
+                } | {
+                    /** Clock Alias */
+                    clock_alias: string & unknown;
+                    end_occurrence?: {
+                        /** Event Id */
+                        event_id: string;
+                    } | null;
+                    /** Profile Alias */
+                    profile_alias: string & unknown;
+                    /**
+                     * Provider
+                     * @constant
+                     */
+                    provider: "pagerduty";
+                    /** Record Id */
+                    record_id: string & unknown;
+                    /** Since */
+                    since: string;
+                    start_occurrence?: {
+                        /** Event Id */
+                        event_id: string;
+                    } | null;
+                    /** Until */
+                    until: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentClockResult"];
+                };
+            };
+            /** @description Invalid JSON or bounded request fields. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description API authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                        provider: string;
+                        reason: string | null;
+                    };
+                };
+            };
+            /** @description Authentication, read permission or profile authorization is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The request body exceeds 16384 bytes. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Only application/json is supported. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Collection could not produce a valid result. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description The optional incident clock collector is not installed. */
             503: {
                 headers: {
                     [name: string]: unknown;
