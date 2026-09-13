@@ -795,3 +795,68 @@ UTF-8 bytes. Native integer/float tokens and source timestamp precision are
 rendered from their original JSON spans. The [registry design](designs/registry-collector-design.md)
 defines source scope, dated snapshots, signature policy and the exact approved
 FedRAMP publisher-data exception.
+
+### Incident clock collection contract (v0.13)
+
+The public exports in `evidentia_collectors.incident_clock` are
+`IncidentClockCollector`, `IncidentClockRequest`, `IncidentClockResult` and
+`IncidentInputError`. The collector requires an issued authorization for the
+selected request. `collect_v2(request)` returns the complete result;
+`collect(request)` returns its informational finding view. Underscore modules,
+provider adapters, profile bootstrap helpers and in-process authority objects
+remain internal.
+
+One request selects a provider, profile alias, exact record ID and clock alias.
+Jira and PagerDuty permit explicit native occurrences; PagerDuty requires a
+nonempty, timezone-aware interval of at most 366 days. Requests cannot supply
+credentials, origins, headers, source queries, workflow definitions or trust
+overrides. Trusted profiles grant exact records and clocks to named API
+principals; `allow_local_cli` separately grants local command use.
+
+Full results retain source state, clock state, native timestamp cells, exact
+decimal seconds, admitted events, read receipts, definition and profile-binding
+hashes, diagnostics, a summary finding and a manifest. Source completeness applies
+only to the selected visible scope. A missing or ambiguous event, invalid
+instant, reversed order or incomplete traversal cannot produce an elapsed value.
+Workflow labels do not establish human determinations or legal deadlines.
+
+`collect incident-clock --provider SELECTOR --request-file PATH [--profiles-file PATH] [--output PATH]`
+applies read authorization before file metadata access. Input is at most 16 KiB;
+the trusted profile file is at most 64 KiB. Output is reserved before collection
+and published atomically with original input/output identity checks. Full JSON
+is at most 16 MiB. Complete sources exit 0, including unresolved or reversed
+clocks. Incomplete/unavailable sources publish the full result and exit 1.
+Invalid input exits 2; authorization/profile refusal exits 77; operational and
+broken-feature failures exit 1. Failed output never replaces an existing file
+with a partial result.
+
+`POST /api/collectors/incident-clock` has operation ID `collect_incident_clock`.
+Real API authentication and read RBAC precede actual-byte streaming, then profile
+authorization, then credential resolution. `EVIDENTIA_INCIDENT_CLOCK_PROFILES_FILE`
+is loaded lazily per admitted request unless an immutable store was injected.
+Bad requests return 400, bodies above 16384 bytes 413, wrong media types 415,
+profile refusal 403 and internal/publication failure 500. Valid source results
+return 200 regardless of source or clock state. Messages do not expose profile,
+credential, source-body or internal exception details.
+
+Only genuine collectors-root or incident-feature absence makes this operation
+unavailable with 503 before body/profile I/O. Failed existence probes, missing
+transitive dependencies, broken modules and missing/non-callable provider exports
+refuse API startup or the CLI before request/profile/provider work. Thus a
+missing enterprise-retention parser dependency can leave the registry router
+unavailable while the installed incident feature refuses full application
+startup. This preserves each feature's dependency contract.
+
+The console refreshes read authentication immediately before POST, binds results
+to the original request, discards stale completions and validates native source
+and exact clock correspondence. It reads at most 16 MiB of actual UTF-8 response
+bytes, independently of Content-Length. Twenty events are shown per page, with
+4 KiB field previews. Full downloads preserve the original validated JSON. Hash
+fields retain their evidence identity; the browser does not independently verify
+raw publisher bodies that are not included in its response.
+
+All observed providers use owned verified transport with fixed templates and
+finite traversal/publication bounds. Tests and demo cases are synthetic. Live
+provider access, entitlement and workflow correctness remain unverified. See the
+[incident clock design](designs/incident-clock-collector-design.md) and
+[operator guide](wiki/2-guides/run-collectors.md#incident-workflow-clocks).

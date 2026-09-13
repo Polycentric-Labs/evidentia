@@ -73,12 +73,13 @@ class Block(importlib.abc.MetaPathFinder):
                 raise ModuleNotFoundError("synthetic-verifier-detail", name="lxml" if mode == "broken-signxml" else selected)
 
 sys.meta_path.insert(0, Block())
-if mode == "enterprise":
-    # Every finder sees the same absent namespace; import itself raises the error.
+if mode in {"parent", "enterprise"}:
+    # Every finder sees genuine namespace absence, including the existence probe.
+    absent_namespace = "evidentia_collectors" if mode == "parent" else enterprise
     delegates = tuple(sys.meta_path)
-    class EnterpriseAbsent(importlib.abc.MetaPathFinder):
+    class NamespaceAbsent(importlib.abc.MetaPathFinder):
         def find_spec(self, fullname, path=None, target=None):
-            if fullname == enterprise or fullname.startswith(enterprise + "."):
+            if fullname == absent_namespace or fullname.startswith(absent_namespace + "."):
                 return None
             for finder in delegates:
                 spec = finder.find_spec(fullname, path, target)
@@ -90,7 +91,7 @@ if mode == "enterprise":
                 discover = getattr(finder, "find_distributions", None)
                 if discover is not None:
                     yield from discover(*args, **kwargs)
-    sys.meta_path[:] = [EnterpriseAbsent()]
+    sys.meta_path[:] = [NamespaceAbsent()]
     from importlib.metadata import version
     assert version("email-validator")
 
@@ -123,7 +124,30 @@ try:
     if mode in new_rejected_modes:
         # Isolate the registry refusal before another optional router can fail first.
         from evidentia_api.routers import registry
-    from evidentia_api.app import create_app
+    if mode == "enterprise":
+        from evidentia_api.routers import registry
+        assert registry.REGISTRY_AVAILABLE is False
+        try:
+            from evidentia_api.app import create_app
+        except RuntimeError as error:
+            assert str(error) == "Incident clock collection could not be loaded."
+            assert error.__suppress_context__ and dns_calls == 0
+        else:
+            raise AssertionError("Installed incident feature accepted a missing transitive dependency")
+        from fastapi import FastAPI
+        from evidentia_api.auth_middleware import AuthProviderMiddleware
+        from evidentia_core.rbac import RBACPolicy, Role
+        def create_app(*, auth_provider=None, trust_proxy_headers=False):
+            # Preserve the original registry route assertions independently of full-app refusal.
+            assert trust_proxy_headers is False
+            application = FastAPI()
+            application.state.auth_provider = auth_provider
+            application.state.rbac_policy = RBACPolicy(default_role=Role.READER)
+            application.add_middleware(AuthProviderMiddleware)
+            application.include_router(registry.router, prefix="/api")
+            return application
+    else:
+        from evidentia_api.app import create_app
 except RuntimeError as error:
     assert mode in rejected_modes
     assert str(error) == "Registry collection could not be loaded."

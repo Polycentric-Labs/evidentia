@@ -12,6 +12,11 @@
 import { demoApi, demoExportGapReport } from "@/lib/demo/demo-api";
 import { IS_DEMO } from "@/lib/demo";
 import {
+  readIncidentResponse,
+  snapshotIncidentRequest,
+  type IncidentClockRequest,
+} from "@/lib/incident-clock";
+import {
   readRegistryResponse,
   snapshotRegistryRequest,
   type RegistryRequest,
@@ -1374,6 +1379,31 @@ const realApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  collectIncidentClock: async (body: IncidentClockRequest, _scenario = "") => {
+    const expected = snapshotIncidentRequest(body);
+    const response = await fetch("/api/collectors/incident-clock", {
+      method: "POST",
+      body: JSON.stringify(expected),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        /* Keep the fixed status error. */
+      }
+      throw new ApiError(
+        "Incident clock collection failed",
+        response.status,
+        null,
+      );
+    }
+    return readIncidentResponse(response, expected);
+  },
+
   collectRegistry: async (body: RegistryRequest, _scenario = "") => {
     const expected = snapshotRegistryRequest(body);
     if (expected.registry === "ssl-labs")

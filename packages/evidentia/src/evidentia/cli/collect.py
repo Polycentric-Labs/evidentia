@@ -2190,3 +2190,119 @@ def collect_registry(
     ):
         typer.echo("Inspect the result's outcome, collection scope, freshness and diagnostics.", err=True)
         raise typer.Exit(1)
+
+
+@app.command("incident-clock")
+@require_role_cli("read")
+def collect_incident_clock(
+    provider: str = typer.Option(
+        ..., "--provider", metavar="SELECTOR", help="Provider selector; must match the request file."
+    ),
+    request_file: str = typer.Option(
+        ...,
+        "--request-file",
+        metavar="PATH",
+        help="Named regular JSON request file, at most 16384 bytes; stdin is not accepted.",
+    ),
+    profiles_file: str | None = typer.Option(
+        None,
+        "--profiles-file",
+        metavar="PATH",
+        help="Trusted local profile store; otherwise use EVIDENTIA_INCIDENT_CLOCK_PROFILES_FILE.",
+    ),
+    output: str | None = typer.Option(
+        None, "--output", metavar="PATH", help="Atomically write full result JSON; omitted means stdout."
+    ),
+) -> None:
+    """Observe one authorized incident workflow and its exact elapsed time.
+
+    The request selects a profile, clock and record. A trusted profile defines
+    event meaning and provider scope. Complete observations may contain an
+    unresolved or reversed clock; source limitations remain in the full result.
+    """
+    try:
+        from importlib import import_module
+        from importlib.util import find_spec
+
+        from evidentia_collectors.incident_clock import IncidentClockCollector, IncidentClockResult, IncidentInputError
+        from evidentia_collectors.incident_clock._contracts import parse_request, request_identity, result_bytes
+        from evidentia_collectors.incident_clock._parsing import PROFILE_BYTE_LIMIT, parse_strict_json
+        from evidentia_collectors.incident_clock._profiles import (
+            ProfileStore,
+            ProfileUnavailable,
+            authorize_cli_selection,
+        )
+
+        from ._incident_clock_io import (
+            InputFailure,
+            OutputFailure,
+            ReservedOutput,
+            read_profile_file,
+            read_request_file,
+        )
+
+        for installed_provider in ("jira", "servicenow", "pagerduty"):
+            adapter = import_module("evidentia_collectors.incident_clock." + installed_provider)
+            if not callable(getattr(adapter, "collect", None)):
+                raise ImportError("invalid_provider_export")
+    except ModuleNotFoundError as error:
+        missing = False
+        if error.name in {"evidentia_collectors", "evidentia_collectors.incident_clock"}:
+            try:
+                missing = find_spec(error.name) is None
+            except Exception:
+                missing = False
+        typer.echo(
+            "Incident clock collection is not installed."
+            if missing
+            else "Incident clock collection could not be loaded.",
+            err=True,
+        )
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Incident clock collection could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        source = read_request_file(Path(request_file))
+        selected = parse_request(source.content)
+        if selected.provider != provider:
+            raise IncidentInputError()
+        expected = request_identity(selected)
+    except Exception:
+        typer.echo("Invalid incident clock request or selector disagreement.", err=True)
+        raise typer.Exit(2) from None
+    try:
+        location = (
+            profiles_file if profiles_file is not None else os.environ.get("EVIDENTIA_INCIDENT_CLOCK_PROFILES_FILE")
+        )
+        if not location:
+            raise ProfileUnavailable()
+        profile_source = read_profile_file(Path(location))
+        store = ProfileStore(parse_strict_json(profile_source.content, max_bytes=PROFILE_BYTE_LIMIT))
+        selection = authorize_cli_selection(store, selected)
+    except Exception:
+        typer.echo("The selected collection profile is unavailable.", err=True)
+        raise typer.Exit(77) from None
+    try:
+        with ReservedOutput(
+            source, Path(output) if output is not None else None, protected_inputs=(profile_source,)
+        ) as destination:
+            with IncidentClockCollector(selection) as collector:
+                observed = collector.collect_v2(selected)
+            if type(observed) is not IncidentClockResult or request_identity(observed.request) != expected:
+                raise ValueError("invalid_result")
+            content = result_bytes(observed)
+            complete = observed.source_state == "complete"
+            destination.publish(content)
+    except InputFailure:
+        typer.echo("Invalid incident clock input or output alias.", err=True)
+        raise typer.Exit(2) from None
+    except OutputFailure:
+        typer.echo("Incident clock output failed.", err=True)
+        raise typer.Exit(1) from None
+    except Exception:
+        typer.echo("Incident clock collection or result output failed.", err=True)
+        raise typer.Exit(1) from None
+    if not complete:
+        typer.echo("Inspect the result's source completeness and diagnostics.", err=True)
+        raise typer.Exit(1)

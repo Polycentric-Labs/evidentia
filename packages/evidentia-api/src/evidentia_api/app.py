@@ -44,6 +44,7 @@ from evidentia_api.errors import body_parse_error_handler
 
 if TYPE_CHECKING:
     from evidentia_collectors.enterprise_retention._profiles import ProfileRegistry
+    from evidentia_collectors.incident_clock._profiles import ProfileStore
     from evidentia_core.plugins.auth import AuthProvider
 
 logger = logging.getLogger(__name__)
@@ -131,6 +132,7 @@ def create_app(
     security_headers: bool | None = None,
     auth_provider: AuthProvider | None = None,
     enterprise_retention_profiles: ProfileRegistry | None = None,
+    incident_clock_profiles: ProfileStore | None = None,
     trust_proxy_headers: bool | None = None,
 ) -> FastAPI:
     """Build and return a FastAPI application.
@@ -168,6 +170,10 @@ def create_app(
         Optional trusted registry injection, validated and detached at startup.
         When omitted, startup loads EVIDENTIA_ENTERPRISE_RETENTION_PROFILES_FILE
         or an empty registry. An absent collector never consumes this value.
+    incident_clock_profiles
+        Optional trusted incident clock profiles. The route validates this value
+        after authentication, read permission and bounded request validation.
+        When omitted, the route reads EVIDENTIA_INCIDENT_CLOCK_PROFILES_FILE.
     trust_proxy_headers
         v0.9.5 P1.6: when True, auto-wires uvicorn's
         :class:`ProxyHeadersMiddleware` so ``X-Forwarded-For`` is
@@ -267,6 +273,7 @@ def create_app(
     app.state.auth_provider = auth_provider
     app.state._enterprise_retention_profiles_input = enterprise_retention_profiles
     app.state.enterprise_retention_profiles = None
+    app.state.incident_clock_profiles = incident_clock_profiles
 
     # CORS: dev_mode is permissive for Vite HMR; prod is localhost-only.
     if cors_origins is None:
