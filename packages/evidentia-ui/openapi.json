@@ -621,6 +621,218 @@
         "title": "AnnexIIIDomain",
         "type": "string"
       },
+      "ArtifactAvailability": {
+        "additionalProperties": false,
+        "properties": {
+          "reasons": {
+            "items": {
+              "enum": [
+                "native_completion_absent",
+                "native_completion_timezone_missing",
+                "native_completion_precision_unsupported",
+                "native_completion_range_unsupported",
+                "native_completion_normalization_unsupported",
+                "native_completion_future",
+                "native_start_unresolved",
+                "native_completion_before_start"
+              ],
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 0,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "available",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "reasons"
+        ],
+        "title": "ArtifactAvailability",
+        "type": "object"
+      },
+      "AssertionActor": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "enum": [
+              "caller_declared",
+              "api_authenticated"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "subject": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "basis",
+          "subject",
+          "provider"
+        ],
+        "title": "AssertionActor",
+        "type": "object"
+      },
+      "AssessmentProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "coverage": {
+            "$ref": "#/components/schemas/CoverageProjection"
+          },
+          "finding_refs": {
+            "items": {
+              "$ref": "#/components/schemas/FindingReference"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Finding Refs",
+            "type": "array"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeOccurrence"
+            },
+            "maxItems": 10000,
+            "minItems": 0,
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/AssessmentSelection"
+          },
+          "times": {
+            "items": {
+              "$ref": "#/components/schemas/SourceTimeObservation"
+            },
+            "maxItems": 10000,
+            "minItems": 0,
+            "title": "Times",
+            "type": "array"
+          },
+          "uninterpreted_roots": {
+            "items": {
+              "ge": 0,
+              "le": 32767,
+              "type": "integer"
+            },
+            "maxItems": 32768,
+            "minItems": 0,
+            "title": "Uninterpreted Roots",
+            "type": "array"
+          },
+          "units": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentUnit"
+            },
+            "maxItems": 256,
+            "minItems": 1,
+            "title": "Units",
+            "type": "array"
+          }
+        },
+        "required": [
+          "selection",
+          "units",
+          "outcomes",
+          "times",
+          "coverage",
+          "uninterpreted_roots",
+          "finding_refs"
+        ],
+        "title": "AssessmentProjection",
+        "type": "object"
+      },
+      "AssessmentSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment_index": {
+            "ge": 0,
+            "le": 255,
+            "title": "Assessment Index",
+            "type": "integer"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "unit_kind": {
+            "enum": [
+              "xccdf_test_result",
+              "oval_system"
+            ],
+            "title": "Unit Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assessment_index",
+          "unit_kind",
+          "node_index"
+        ],
+        "title": "AssessmentSelection",
+        "type": "object"
+      },
+      "AssessmentUnit": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment_index": {
+            "ge": 0,
+            "le": 255,
+            "title": "Assessment Index",
+            "type": "integer"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "unit_kind": {
+            "enum": [
+              "xccdf_test_result",
+              "oval_system"
+            ],
+            "title": "Unit Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assessment_index",
+          "unit_kind",
+          "node_index"
+        ],
+        "title": "AssessmentUnit",
+        "type": "object"
+      },
       "AuthMode": {
         "enum": [
           "application",
@@ -720,6 +932,86 @@
           "target"
         ],
         "title": "CMVPRequest",
+        "type": "object"
+      },
+      "CadenceProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "linked_slug": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Slug"
+          },
+          "reasons": {
+            "items": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "native_completion_absent",
+                    "native_completion_timezone_missing",
+                    "native_completion_precision_unsupported",
+                    "native_completion_range_unsupported",
+                    "native_completion_normalization_unsupported",
+                    "native_completion_future",
+                    "native_start_unresolved",
+                    "native_completion_before_start"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "enum": [
+                    "no_selected_outcome_evidence",
+                    "selected_outcomes_not_evaluated"
+                  ],
+                  "type": "string"
+                }
+              ]
+            },
+            "maxItems": 10,
+            "minItems": 0,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "requested_slug": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Slug"
+          },
+          "state": {
+            "enum": [
+              "not_requested",
+              "linked",
+              "ineligible"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "requested_slug",
+          "linked_slug",
+          "reasons"
+        ],
+        "title": "CadenceProjection",
         "type": "object"
       },
       "CadenceSeries": {
@@ -1655,6 +1947,48 @@
         "title": "CheckResponse",
         "type": "object"
       },
+      "ClassDirectives": {
+        "additionalProperties": false,
+        "properties": {
+          "class_ref": {
+            "$ref": "#/components/schemas/NativeValueRef"
+          },
+          "definition_class": {
+            "enum": [
+              "compliance",
+              "inventory",
+              "miscellaneous",
+              "patch",
+              "vulnerability"
+            ],
+            "title": "Definition Class",
+            "type": "string"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/DirectiveRule"
+            },
+            "maxItems": 6,
+            "minItems": 6,
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "node_index",
+          "class_ref",
+          "definition_class",
+          "rules"
+        ],
+        "title": "ClassDirectives",
+        "type": "object"
+      },
       "ClockOutcome": {
         "additionalProperties": false,
         "properties": {
@@ -1884,6 +2218,90 @@
           "collection_started_at"
         ],
         "title": "CollectionManifest",
+        "type": "object"
+      },
+      "CompletionProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "assertion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StableCompletionAssertion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "basis": {
+            "enum": [
+              "native_reported",
+              "operator_asserted",
+              "none"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "native_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NativeValueRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "qualification_reasons": {
+            "items": {
+              "enum": [
+                "native_completion_absent",
+                "native_completion_timezone_missing",
+                "native_completion_precision_unsupported",
+                "native_completion_range_unsupported",
+                "native_completion_normalization_unsupported",
+                "native_completion_future",
+                "native_start_unresolved",
+                "native_completion_before_start"
+              ],
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 0,
+            "title": "Qualification Reasons",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "native_qualified",
+              "operator_qualified",
+              "unqualified"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "utc": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utc"
+          }
+        },
+        "required": [
+          "state",
+          "basis",
+          "utc",
+          "native_ref",
+          "assertion",
+          "qualification_reasons"
+        ],
+        "title": "CompletionProjection",
         "type": "object"
       },
       "ComplianceStatus": {
@@ -2481,6 +2899,55 @@
         "title": "ControlThreatMapping",
         "type": "object"
       },
+      "CoreStatusDefault": {
+        "additionalProperties": false,
+        "properties": {
+          "effective_status": {
+            "enum": [
+              "error",
+              "exists",
+              "does not exist",
+              "not collected"
+            ],
+            "title": "Effective Status",
+            "type": "string"
+          },
+          "interpretation": {
+            "const": "reviewed_5_8_core_ip_address_status",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "present": {
+            "title": "Present",
+            "type": "boolean"
+          },
+          "value_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NativeValueRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "node_index",
+          "present",
+          "value_ref",
+          "effective_status",
+          "interpretation"
+        ],
+        "title": "CoreStatusDefault",
+        "type": "object"
+      },
       "CoverageCount": {
         "additionalProperties": false,
         "description": "One resource-type's scan/match/collect counts within a run.",
@@ -2553,6 +3020,204 @@
           "unknown"
         ],
         "title": "CoverageCounts",
+        "type": "object"
+      },
+      "CoverageProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "cadence_evidence": {
+            "enum": [
+              "countable",
+              "empty",
+              "not_evaluated"
+            ],
+            "title": "Cadence Evidence",
+            "type": "string"
+          },
+          "collection_flags": {
+            "items": {
+              "$ref": "#/components/schemas/NativeCollectionFlag"
+            },
+            "maxItems": 32768,
+            "minItems": 0,
+            "title": "Collection Flags",
+            "type": "array"
+          },
+          "complete_schema_validation": {
+            "const": "not_performed",
+            "title": "Complete Schema Validation",
+            "type": "string"
+          },
+          "core_status_defaults": {
+            "items": {
+              "$ref": "#/components/schemas/CoreStatusDefault"
+            },
+            "maxItems": 32768,
+            "minItems": 0,
+            "title": "Core Status Defaults",
+            "type": "array"
+          },
+          "countable_top_level_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Countable Top Level Outcome Count",
+            "type": "integer"
+          },
+          "native_export_detail": {
+            "enum": [
+              "not_applicable",
+              "full",
+              "thin",
+              "mixed",
+              "no_reported_rules"
+            ],
+            "title": "Native Export Detail",
+            "type": "string"
+          },
+          "outcome_counts": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeCountRow"
+            },
+            "maxItems": 36,
+            "minItems": 9,
+            "title": "Outcome Counts",
+            "type": "array"
+          },
+          "oval_directives": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OvalDirectiveProjection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "platform_validation": {
+            "const": "not_performed",
+            "title": "Platform Validation",
+            "type": "string"
+          },
+          "producer_interoperability": {
+            "const": "not_established",
+            "title": "Producer Interoperability",
+            "type": "string"
+          },
+          "schema_validation": {
+            "const": "bounded_core_profile_rules",
+            "title": "Schema Validation",
+            "type": "string"
+          },
+          "scope": {
+            "const": "selected_assessment_native_projection",
+            "title": "Scope",
+            "type": "string"
+          },
+          "selected_node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Selected Node Index",
+            "type": "integer"
+          },
+          "selected_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Selected Outcome Count",
+            "type": "integer"
+          },
+          "selected_unit_count": {
+            "const": 1,
+            "title": "Selected Unit Count",
+            "type": "integer"
+          },
+          "signature_node_indices": {
+            "items": {
+              "ge": 0,
+              "le": 32767,
+              "type": "integer"
+            },
+            "maxItems": 32768,
+            "minItems": 0,
+            "title": "Signature Node Indices",
+            "type": "array"
+          },
+          "signature_verification": {
+            "const": "not_performed",
+            "title": "Signature Verification",
+            "type": "string"
+          },
+          "source_population_complete": {
+            "const": "not_established",
+            "title": "Source Population Complete",
+            "type": "string"
+          },
+          "status_observations": {
+            "items": {
+              "$ref": "#/components/schemas/UnverifiedPlatformStatus"
+            },
+            "maxItems": 32768,
+            "minItems": 0,
+            "title": "Status Observations",
+            "type": "array"
+          },
+          "top_level_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Top Level Outcome Count",
+            "type": "integer"
+          },
+          "uninterpreted_node_count": {
+            "ge": 0,
+            "le": 32768,
+            "title": "Uninterpreted Node Count",
+            "type": "integer"
+          },
+          "unselected_unit_count": {
+            "ge": 0,
+            "le": 256,
+            "title": "Unselected Unit Count",
+            "type": "integer"
+          },
+          "visible_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Visible Outcome Count",
+            "type": "integer"
+          },
+          "visible_unit_count": {
+            "ge": 0,
+            "le": 256,
+            "title": "Visible Unit Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "selected_node_index",
+          "visible_unit_count",
+          "selected_unit_count",
+          "unselected_unit_count",
+          "visible_outcome_count",
+          "selected_outcome_count",
+          "top_level_outcome_count",
+          "countable_top_level_outcome_count",
+          "outcome_counts",
+          "native_export_detail",
+          "oval_directives",
+          "collection_flags",
+          "uninterpreted_node_count",
+          "signature_node_indices",
+          "source_population_complete",
+          "schema_validation",
+          "complete_schema_validation",
+          "platform_validation",
+          "signature_verification",
+          "producer_interoperability",
+          "cadence_evidence",
+          "status_observations",
+          "core_status_defaults"
+        ],
+        "title": "CoverageProjection",
         "type": "object"
       },
       "CredentialBasis": {
@@ -2671,6 +3336,70 @@
           "returned"
         ],
         "title": "DeclaredPagination",
+        "type": "object"
+      },
+      "DefaultedBoolean": {
+        "additionalProperties": false,
+        "properties": {
+          "effective_value": {
+            "title": "Effective Value",
+            "type": "boolean"
+          },
+          "present": {
+            "title": "Present",
+            "type": "boolean"
+          },
+          "value_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NativeValueRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "present",
+          "value_ref",
+          "effective_value"
+        ],
+        "title": "DefaultedBoolean",
+        "type": "object"
+      },
+      "DefaultedContent": {
+        "additionalProperties": false,
+        "properties": {
+          "effective_value": {
+            "enum": [
+              "full",
+              "thin"
+            ],
+            "title": "Effective Value",
+            "type": "string"
+          },
+          "present": {
+            "title": "Present",
+            "type": "boolean"
+          },
+          "value_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NativeValueRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "present",
+          "value_ref",
+          "effective_value"
+        ],
+        "title": "DefaultedContent",
         "type": "object"
       },
       "DeploymentStatus": {
@@ -2848,6 +3577,43 @@
           "vendors_with_value"
         ],
         "title": "DimensionAnalysis",
+        "type": "object"
+      },
+      "DirectiveRule": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/DefaultedContent"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "outcome": {
+            "enum": [
+              "true",
+              "false",
+              "unknown",
+              "error",
+              "not evaluated",
+              "not applicable"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reported": {
+            "$ref": "#/components/schemas/DefaultedBoolean"
+          }
+        },
+        "required": [
+          "node_index",
+          "outcome",
+          "reported",
+          "content"
+        ],
+        "title": "DirectiveRule",
         "type": "object"
       },
       "DomainTarget": {
@@ -5055,6 +5821,29 @@
         "title": "EvidentiaConfig",
         "type": "object"
       },
+      "ExpandedName": {
+        "additionalProperties": false,
+        "properties": {
+          "local_name": {
+            "maxLength": 256,
+            "pattern": "^[\\s\\S]+$",
+            "title": "Local Name",
+            "type": "string"
+          },
+          "namespace_uri": {
+            "maxLength": 2048,
+            "minLength": 0,
+            "title": "Namespace Uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace_uri",
+          "local_name"
+        ],
+        "title": "ExpandedName",
+        "type": "object"
+      },
       "FCCOrganizationTarget": {
         "additionalProperties": false,
         "properties": {
@@ -5277,6 +6066,40 @@
           "target"
         ],
         "title": "FedRAMPRequest",
+        "type": "object"
+      },
+      "FindingReference": {
+        "additionalProperties": false,
+        "properties": {
+          "finding_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Finding Id",
+            "type": "string"
+          },
+          "mapping_rule_id": {
+            "const": "scap-assessment-summary-v1",
+            "title": "Mapping Rule Id",
+            "type": "string"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "source_key_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Key Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_index",
+          "mapping_rule_id",
+          "source_key_sha256",
+          "finding_id"
+        ],
+        "title": "FindingReference",
         "type": "object"
       },
       "FindingStatus": {
@@ -7253,6 +8076,62 @@
         "title": "LineOfDefense",
         "type": "string"
       },
+      "LinkedArtifactMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment_index": {
+            "ge": 0,
+            "le": 255,
+            "title": "Assessment Index",
+            "type": "integer"
+          },
+          "cadence_slug": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Cadence Slug",
+            "type": "string"
+          },
+          "scap_contract": {
+            "const": "scap-evidence-v1",
+            "title": "Scap Contract",
+            "type": "string"
+          },
+          "source_profile": {
+            "enum": [
+              "xccdf-1.2-results",
+              "oval-5.8-core-results",
+              "oval-5.11.2-core-results",
+              "oval-5.12.3-core-results"
+            ],
+            "title": "Source Profile",
+            "type": "string"
+          },
+          "source_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Sha256",
+            "type": "string"
+          },
+          "time_basis": {
+            "enum": [
+              "native_reported",
+              "operator_asserted"
+            ],
+            "title": "Time Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scap_contract",
+          "source_sha256",
+          "source_profile",
+          "assessment_index",
+          "time_basis",
+          "cadence_slug"
+        ],
+        "title": "LinkedArtifactMetadata",
+        "type": "object"
+      },
       "ListAcquisitionsResponse": {
         "description": "200 body for ``GET /ai-gov/acquisitions``.",
         "properties": {
@@ -8105,6 +8984,136 @@
         "title": "NISTAIRMFFunction",
         "type": "string"
       },
+      "NamespaceDeclaration": {
+        "additionalProperties": false,
+        "properties": {
+          "namespace_uri": {
+            "maxLength": 2048,
+            "minLength": 0,
+            "title": "Namespace Uri",
+            "type": "string"
+          },
+          "prefix": {
+            "maxLength": 128,
+            "minLength": 0,
+            "title": "Prefix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prefix",
+          "namespace_uri"
+        ],
+        "title": "NamespaceDeclaration",
+        "type": "object"
+      },
+      "NativeCollectionFlag": {
+        "additionalProperties": false,
+        "properties": {
+          "native_flag": {
+            "enum": [
+              "error",
+              "complete",
+              "incomplete",
+              "does not exist",
+              "not collected",
+              "not applicable"
+            ],
+            "title": "Native Flag",
+            "type": "string"
+          },
+          "object_node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Object Node Index",
+            "type": "integer"
+          },
+          "value_ref": {
+            "$ref": "#/components/schemas/NativeValueRef"
+          }
+        },
+        "required": [
+          "object_node_index",
+          "value_ref",
+          "native_flag"
+        ],
+        "title": "NativeCollectionFlag",
+        "type": "object"
+      },
+      "NativeDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "children": {
+            "items": {
+              "ge": 0,
+              "le": 32767,
+              "type": "integer"
+            },
+            "maxItems": 32768,
+            "minItems": 1,
+            "title": "Children",
+            "type": "array"
+          },
+          "declaration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/XmlDeclaration"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nodes": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "comment": "#/components/schemas/XmlComment",
+                  "element": "#/components/schemas/XmlElement",
+                  "processing_instruction": "#/components/schemas/XmlPI"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/XmlElement"
+                },
+                {
+                  "$ref": "#/components/schemas/XmlComment"
+                },
+                {
+                  "$ref": "#/components/schemas/XmlPI"
+                }
+              ]
+            },
+            "maxItems": 32768,
+            "minItems": 1,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 262144,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "declaration",
+          "text",
+          "children",
+          "nodes"
+        ],
+        "title": "NativeDocument",
+        "type": "object"
+      },
       "NativeTextCell": {
         "additionalProperties": false,
         "properties": {
@@ -8135,6 +9144,46 @@
           "value"
         ],
         "title": "NativeTextCell",
+        "type": "object"
+      },
+      "NativeValueRef": {
+        "additionalProperties": false,
+        "properties": {
+          "attribute_index": {
+            "anyOf": [
+              {
+                "ge": 0,
+                "le": 63,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribute Index"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "slot": {
+            "enum": [
+              "text",
+              "attribute_value",
+              "element_simple_content"
+            ],
+            "title": "Slot",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node_index",
+          "slot",
+          "attribute_index"
+        ],
+        "title": "NativeValueRef",
         "type": "object"
       },
       "NessusCollectResponse": {
@@ -8253,6 +9302,40 @@
       "Nonnegative": {
         "minimum": 0.0,
         "type": "integer"
+      },
+      "NormalizedSourceTime": {
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "enum": [
+              "normalized",
+              "timezone_missing",
+              "precision_unsupported",
+              "range_unsupported",
+              "normalization_unsupported"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "utc": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utc"
+          }
+        },
+        "required": [
+          "state",
+          "utc"
+        ],
+        "title": "NormalizedSourceTime",
+        "type": "object"
       },
       "OLIRRelationship": {
         "description": "NIST OLIR (Online Informative References) relationship types.\n\nAdded in v0.7.0 to support enterprise-grade mapping claims. Rather\nthan bare ``framework+control_id`` pairs, every :class:`ControlMapping`\nnow declares the strength and direction of the relationship between\nthe mapped evidence and the named control.\n\nValues match the NIST OLIR Derived Relationship Mapping (DRM)\nvocabulary at https://csrc.nist.gov/projects/olir/derived-relationship-mapping.\nAn auditor reading evidence can tell the difference between\n\"this finding fully evidences AC-6\" (``SUBSET_OF``) and\n\"this finding is loosely related to AC-6\" (``RELATED_TO``).",
@@ -8577,6 +9660,171 @@
           "risk_category"
         ],
         "title": "OpenFairScenarioResult",
+        "type": "object"
+      },
+      "OutcomeCountRow": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Count",
+            "type": "integer"
+          },
+          "level": {
+            "enum": [
+              "xccdf_rule_result",
+              "oval_definition",
+              "oval_criteria",
+              "oval_criterion",
+              "oval_extend_definition",
+              "oval_test",
+              "oval_tested_item"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "native_result": {
+            "enum": [
+              "pass",
+              "fail",
+              "error",
+              "unknown",
+              "notapplicable",
+              "informational",
+              "fixed",
+              "notchecked",
+              "notselected",
+              "true",
+              "false",
+              "not evaluated",
+              "not applicable"
+            ],
+            "title": "Native Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "native_result",
+          "count"
+        ],
+        "title": "OutcomeCountRow",
+        "type": "object"
+      },
+      "OutcomeOccurrence": {
+        "additionalProperties": false,
+        "properties": {
+          "level": {
+            "enum": [
+              "xccdf_rule_result",
+              "oval_definition",
+              "oval_criteria",
+              "oval_criterion",
+              "oval_extend_definition",
+              "oval_test",
+              "oval_tested_item"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "native_result": {
+            "enum": [
+              "pass",
+              "fail",
+              "error",
+              "unknown",
+              "notapplicable",
+              "informational",
+              "fixed",
+              "notchecked",
+              "notselected",
+              "true",
+              "false",
+              "not evaluated",
+              "not applicable"
+            ],
+            "title": "Native Result",
+            "type": "string"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "unit_node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Unit Node Index",
+            "type": "integer"
+          },
+          "value_ref": {
+            "$ref": "#/components/schemas/NativeValueRef"
+          }
+        },
+        "required": [
+          "unit_node_index",
+          "node_index",
+          "level",
+          "value_ref",
+          "native_result"
+        ],
+        "title": "OutcomeOccurrence",
+        "type": "object"
+      },
+      "OvalDirectiveProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "class_rules": {
+            "items": {
+              "$ref": "#/components/schemas/ClassDirectives"
+            },
+            "maxItems": 5,
+            "minItems": 0,
+            "title": "Class Rules",
+            "type": "array"
+          },
+          "default_rules": {
+            "items": {
+              "$ref": "#/components/schemas/DirectiveRule"
+            },
+            "maxItems": 6,
+            "minItems": 6,
+            "title": "Default Rules",
+            "type": "array"
+          },
+          "embedded_definitions_node_index": {
+            "anyOf": [
+              {
+                "ge": 0,
+                "le": 32767,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedded Definitions Node Index"
+          },
+          "include_source_definitions": {
+            "$ref": "#/components/schemas/DefaultedBoolean"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "node_index",
+          "include_source_definitions",
+          "embedded_definitions_node_index",
+          "default_rules",
+          "class_rules"
+        ],
+        "title": "OvalDirectiveProjection",
         "type": "object"
       },
       "Owner": {
@@ -10714,6 +11962,921 @@
         "title": "SSLLabsRequest",
         "type": "object"
       },
+      "ScapAssessmentSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "countable_top_level_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Countable Top Level Outcome Count",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "scap-assessment-summary-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "selected_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Selected Outcome Count",
+            "type": "integer"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/AssessmentSelection"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceBinding"
+          },
+          "source_key_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Key Sha256",
+            "type": "string"
+          },
+          "summary_only": {
+            "const": true,
+            "title": "Summary Only",
+            "type": "boolean"
+          },
+          "top_level_outcome_count": {
+            "ge": 0,
+            "le": 10000,
+            "title": "Top Level Outcome Count",
+            "type": "integer"
+          },
+          "visible_unit_count": {
+            "ge": 0,
+            "le": 256,
+            "title": "Visible Unit Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source",
+          "selection",
+          "visible_unit_count",
+          "selected_outcome_count",
+          "top_level_outcome_count",
+          "countable_top_level_outcome_count",
+          "summary_only",
+          "source_key_sha256"
+        ],
+        "title": "ScapAssessmentSummary",
+        "type": "object"
+      },
+      "ScapCollectionContext": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collector_id": {
+            "const": "scap",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "credential_identity": {
+            "const": "not-established",
+            "title": "Credential Identity",
+            "type": "string"
+          },
+          "evidentia_version": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filter_applied": {
+            "$ref": "#/components/schemas/ScapImportFilter"
+          },
+          "pagination_context": {
+            "title": "Pagination Context",
+            "type": "null"
+          },
+          "run_id": {
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_id": {
+            "pattern": "^scap-source:[0-9a-f]{64}$",
+            "title": "Source System Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collector_id",
+          "collector_version",
+          "run_id",
+          "collected_at",
+          "credential_identity",
+          "source_system_id",
+          "filter_applied",
+          "pagination_context",
+          "evidentia_version"
+        ],
+        "title": "ScapCollectionContext",
+        "type": "object"
+      },
+      "ScapCollectionManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_finished_at": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Collection Finished At",
+            "type": "string"
+          },
+          "collection_started_at": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Collection Started At",
+            "type": "string"
+          },
+          "collector_id": {
+            "const": "scap",
+            "title": "Collector Id",
+            "type": "string"
+          },
+          "collector_version": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "coverage_counts": {
+            "items": {
+              "$ref": "#/components/schemas/ScapCoverageCount"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Coverage Counts",
+            "type": "array"
+          },
+          "empty_categories": {
+            "items": {
+              "type": "null"
+            },
+            "maxItems": 0,
+            "minItems": 0,
+            "title": "Empty Categories",
+            "type": "array"
+          },
+          "errors": {
+            "items": {
+              "type": "null"
+            },
+            "maxItems": 0,
+            "minItems": 0,
+            "title": "Errors",
+            "type": "array"
+          },
+          "evidentia_version": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Evidentia Version",
+            "type": "string"
+          },
+          "filters_applied": {
+            "$ref": "#/components/schemas/ScapImportFilter"
+          },
+          "incomplete_reason": {
+            "title": "Incomplete Reason",
+            "type": "null"
+          },
+          "is_complete": {
+            "const": true,
+            "title": "Is Complete",
+            "type": "boolean"
+          },
+          "run_id": {
+            "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_system_ids": {
+            "items": {
+              "pattern": "^scap-source:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Source System Ids",
+            "type": "array"
+          },
+          "total_findings": {
+            "const": 1,
+            "title": "Total Findings",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "enum": [
+                "Source authenticity was not verified.",
+                "The source does not establish complete scanner population coverage.",
+                "Complete schema validation was not performed.",
+                "OVAL platform validation was not performed.",
+                "The finding summarizes one selected assessment; native outcomes are retained separately.",
+                "A source signature is present and was not verified.",
+                "The declared OVAL export detail includes thin output.",
+                "Native content outside the interpreted core is preserved.",
+                "Assessment completion is an explicit operator assertion.",
+                "No native assessment completion time is available.",
+                "The native completion time has no timezone.",
+                "The native completion precision cannot be represented exactly.",
+                "The native completion time is outside the supported range.",
+                "The native completion time cannot be normalized under the admitted policy.",
+                "The native completion is later than the import start.",
+                "The native assessment start cannot be compared exactly.",
+                "The native completion precedes the native assessment start.",
+                "The selected assessment contains no top-level outcome evidence.",
+                "The selected assessment contains only unevaluated top-level outcomes."
+              ],
+              "type": "string"
+            },
+            "maxItems": 19,
+            "minItems": 0,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "collector_id",
+          "collector_version",
+          "collection_started_at",
+          "collection_finished_at",
+          "source_system_ids",
+          "filters_applied",
+          "coverage_counts",
+          "total_findings",
+          "is_complete",
+          "incomplete_reason",
+          "empty_categories",
+          "warnings",
+          "errors",
+          "evidentia_version"
+        ],
+        "title": "ScapCollectionManifest",
+        "type": "object"
+      },
+      "ScapCollectionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_availability": {
+            "$ref": "#/components/schemas/ArtifactAvailability"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentProjection"
+          },
+          "cadence": {
+            "$ref": "#/components/schemas/CadenceProjection"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/CompletionProjection"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/ScapDiagnostic"
+            },
+            "maxItems": 19,
+            "minItems": 0,
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "evidence_artifact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScapEvidenceArtifact"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ScapSecurityFinding"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Findings",
+            "type": "array"
+          },
+          "imported_at": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Imported At",
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/ScapCollectionManifest"
+          },
+          "native_document": {
+            "$ref": "#/components/schemas/NativeDocument"
+          },
+          "schema_version": {
+            "const": "scap-collection-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceBinding"
+          },
+          "status": {
+            "const": "imported",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "status",
+          "source",
+          "imported_at",
+          "native_document",
+          "assessment",
+          "findings",
+          "manifest",
+          "completion",
+          "evidence_artifact",
+          "artifact_availability",
+          "cadence",
+          "diagnostics"
+        ],
+        "title": "ScapCollectionResult",
+        "type": "object"
+      },
+      "ScapCoverageCount": {
+        "additionalProperties": false,
+        "properties": {
+          "collected": {
+            "const": 1,
+            "title": "Collected",
+            "type": "integer"
+          },
+          "matched_filter": {
+            "const": 1,
+            "title": "Matched Filter",
+            "type": "integer"
+          },
+          "resource_type": {
+            "const": "scap-assessment-occurrence",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "scanned": {
+            "ge": 0,
+            "le": 256,
+            "title": "Scanned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resource_type",
+          "scanned",
+          "matched_filter",
+          "collected"
+        ],
+        "title": "ScapCoverageCount",
+        "type": "object"
+      },
+      "ScapDiagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "source_authenticity_unverified",
+              "source_population_not_established",
+              "complete_schema_validation_not_performed",
+              "platform_validation_not_performed",
+              "findings_are_summary_only",
+              "signature_unverified",
+              "partial_export_detail",
+              "uninterpreted_content_preserved",
+              "operator_completion_asserted",
+              "native_completion_absent",
+              "native_completion_timezone_missing",
+              "native_completion_precision_unsupported",
+              "native_completion_range_unsupported",
+              "native_completion_normalization_unsupported",
+              "native_completion_future",
+              "native_start_unresolved",
+              "native_completion_before_start",
+              "no_selected_outcome_evidence",
+              "selected_outcomes_not_evaluated"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "enum": [
+              "Source authenticity was not verified.",
+              "The source does not establish complete scanner population coverage.",
+              "Complete schema validation was not performed.",
+              "OVAL platform validation was not performed.",
+              "The finding summarizes one selected assessment; native outcomes are retained separately.",
+              "A source signature is present and was not verified.",
+              "The declared OVAL export detail includes thin output.",
+              "Native content outside the interpreted core is preserved.",
+              "Assessment completion is an explicit operator assertion.",
+              "No native assessment completion time is available.",
+              "The native completion time has no timezone.",
+              "The native completion precision cannot be represented exactly.",
+              "The native completion time is outside the supported range.",
+              "The native completion time cannot be normalized under the admitted policy.",
+              "The native completion is later than the import start.",
+              "The native assessment start cannot be compared exactly.",
+              "The native completion precedes the native assessment start.",
+              "The selected assessment contains no top-level outcome evidence.",
+              "The selected assessment contains only unevaluated top-level outcomes."
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "node_index": {
+            "title": "Node Index",
+            "type": "null"
+          },
+          "severity": {
+            "const": "advisory",
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "message",
+          "node_index"
+        ],
+        "title": "ScapDiagnostic",
+        "type": "object"
+      },
+      "ScapError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "invalid_request",
+              "unsupported_profile",
+              "assessment_not_found",
+              "completion_assertion_invalid",
+              "completion_assertion_binding_mismatch",
+              "completion_assertion_not_permitted",
+              "completion_assertion_time_ineligible",
+              "unsafe_xml",
+              "malformed_xml",
+              "source_contract_invalid",
+              "source_read_failed",
+              "source_limit_exceeded",
+              "result_limit_exceeded",
+              "unsupported_media",
+              "collector_unavailable",
+              "scan_extra_unavailable",
+              "internal_dependency_failure",
+              "invalid_internal_result",
+              "processing_deadline_exceeded",
+              "publication_failed",
+              "artifact_unavailable"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "enum": [
+              "Invalid SCAP import options.",
+              "Unsupported SCAP source profile.",
+              "The selected assessment occurrence is unavailable.",
+              "Invalid SCAP completion assertion.",
+              "The completion assertion does not match the selected source.",
+              "A completion assertion is not permitted for this source.",
+              "The asserted completion time is not eligible.",
+              "The XML input is not permitted.",
+              "The XML input is malformed.",
+              "The input does not satisfy the selected SCAP source contract.",
+              "The complete source could not be read.",
+              "The source exceeds a SCAP import limit.",
+              "The complete result exceeds a SCAP publication limit.",
+              "The source media type or encoding is not supported.",
+              "The SCAP collector is unavailable.",
+              "The optional SCAP XML support is unavailable.",
+              "SCAP import support failed.",
+              "The SCAP result could not be validated.",
+              "The SCAP import deadline was exceeded.",
+              "The complete SCAP result could not be published.",
+              "No eligible evidence artifact is available for this import."
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "scap-error-v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "code",
+          "message"
+        ],
+        "title": "ScapError",
+        "type": "object"
+      },
+      "ScapEvidenceArtifact": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "collected_by": {
+            "const": "evidentia-scap-v1",
+            "title": "Collected By",
+            "type": "string"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ScapEvidenceContent"
+          },
+          "content_format": {
+            "const": "json",
+            "title": "Content Format",
+            "type": "string"
+          },
+          "content_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "control_mappings": {
+            "items": {
+              "type": "null"
+            },
+            "maxItems": 0,
+            "minItems": 0,
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "const": "Native source observations with disclosed completion provenance; no authenticity, completeness or compliance conclusion.",
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence_type": {
+            "const": "test_result",
+            "title": "Evidence Type",
+            "type": "string"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "null"
+          },
+          "file_path": {
+            "title": "File Path",
+            "type": "null"
+          },
+          "file_size_bytes": {
+            "title": "File Size Bytes",
+            "type": "null"
+          },
+          "id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "lineage_id": {
+            "title": "Lineage Id",
+            "type": "null"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnlinkedArtifactMetadata"
+              },
+              {
+                "$ref": "#/components/schemas/LinkedArtifactMetadata"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "missing_elements": {
+            "items": {
+              "type": "null"
+            },
+            "maxItems": 0,
+            "minItems": 0,
+            "title": "Missing Elements",
+            "type": "array"
+          },
+          "predecessor_id": {
+            "title": "Predecessor Id",
+            "type": "null"
+          },
+          "source_system": {
+            "enum": [
+              "scap-xccdf",
+              "scap-oval"
+            ],
+            "title": "Source System",
+            "type": "string"
+          },
+          "sufficiency": {
+            "const": "unknown",
+            "title": "Sufficiency",
+            "type": "string"
+          },
+          "sufficiency_rationale": {
+            "title": "Sufficiency Rationale",
+            "type": "null"
+          },
+          "tags": {
+            "items": {
+              "enum": [
+                "scap",
+                "xccdf",
+                "oval"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "enum": [
+              "Imported XCCDF assessment",
+              "Imported OVAL assessment"
+            ],
+            "title": "Title",
+            "type": "string"
+          },
+          "validated_at": {
+            "title": "Validated At",
+            "type": "null"
+          },
+          "validated_by": {
+            "title": "Validated By",
+            "type": "null"
+          },
+          "validator_confidence": {
+            "title": "Validator Confidence",
+            "type": "null"
+          },
+          "version": {
+            "const": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "evidence_type",
+          "source_system",
+          "collected_at",
+          "collected_by",
+          "content",
+          "content_hash",
+          "content_format",
+          "file_path",
+          "file_size_bytes",
+          "control_mappings",
+          "sufficiency",
+          "sufficiency_rationale",
+          "missing_elements",
+          "validator_confidence",
+          "validated_at",
+          "validated_by",
+          "expires_at",
+          "tags",
+          "metadata",
+          "version",
+          "lineage_id",
+          "predecessor_id"
+        ],
+        "title": "ScapEvidenceArtifact",
+        "type": "object"
+      },
+      "ScapEvidenceContent": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentProjection"
+          },
+          "completion": {
+            "$ref": "#/components/schemas/StableArtifactCompletion"
+          },
+          "native_document": {
+            "$ref": "#/components/schemas/NativeDocument"
+          },
+          "schema_version": {
+            "const": "scap-evidence-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceBinding"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source",
+          "native_document",
+          "assessment",
+          "completion"
+        ],
+        "title": "ScapEvidenceContent",
+        "type": "object"
+      },
+      "ScapImportFilter": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment_index": {
+            "ge": 0,
+            "le": 255,
+            "title": "Assessment Index",
+            "type": "integer"
+          },
+          "scope": {
+            "const": "selected_assessment_native_projection",
+            "title": "Scope",
+            "type": "string"
+          },
+          "selected_node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Selected Node Index",
+            "type": "integer"
+          },
+          "source_profile": {
+            "enum": [
+              "xccdf-1.2-results",
+              "oval-5.8-core-results",
+              "oval-5.11.2-core-results",
+              "oval-5.12.3-core-results"
+            ],
+            "title": "Source Profile",
+            "type": "string"
+          },
+          "source_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Sha256",
+            "type": "string"
+          },
+          "time_basis": {
+            "const": "file_import_observation",
+            "title": "Time Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_profile",
+          "source_sha256",
+          "assessment_index",
+          "selected_node_index",
+          "scope",
+          "time_basis"
+        ],
+        "title": "ScapImportFilter",
+        "type": "object"
+      },
+      "ScapSecurityFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_context": {
+            "$ref": "#/components/schemas/ScapCollectionContext"
+          },
+          "compliance_status": {
+            "const": "unknown",
+            "title": "Compliance Status",
+            "type": "string"
+          },
+          "control_mappings": {
+            "items": {
+              "type": "null"
+            },
+            "maxItems": 0,
+            "minItems": 0,
+            "title": "Control Mappings",
+            "type": "array"
+          },
+          "description": {
+            "const": "One selected assessment was imported. Native outcomes remain in the full SCAP result and any evidence artifact; this summary makes no vulnerability or compliance conclusion.",
+            "title": "Description",
+            "type": "string"
+          },
+          "first_observed": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "First Observed",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_observed": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Last Observed",
+            "type": "string"
+          },
+          "raw_data": {
+            "$ref": "#/components/schemas/ScapAssessmentSummary"
+          },
+          "remediation": {
+            "title": "Remediation",
+            "type": "null"
+          },
+          "resolved_at": {
+            "title": "Resolved At",
+            "type": "null"
+          },
+          "resource_account": {
+            "title": "Resource Account",
+            "type": "null"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "null"
+          },
+          "resource_region": {
+            "title": "Resource Region",
+            "type": "null"
+          },
+          "resource_type": {
+            "const": "scap-assessment-occurrence",
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "severity": {
+            "const": "informational",
+            "title": "Severity",
+            "type": "string"
+          },
+          "source_finding_id": {
+            "title": "Source Finding Id",
+            "type": "null"
+          },
+          "source_system": {
+            "enum": [
+              "scap-xccdf",
+              "scap-oval"
+            ],
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "const": "active",
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "enum": [
+              "Imported XCCDF assessment",
+              "Imported OVAL assessment"
+            ],
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "severity",
+          "status",
+          "compliance_status",
+          "remediation",
+          "source_system",
+          "source_finding_id",
+          "resource_type",
+          "resource_id",
+          "resource_region",
+          "resource_account",
+          "control_mappings",
+          "collection_context",
+          "raw_data",
+          "first_observed",
+          "last_observed",
+          "resolved_at"
+        ],
+        "title": "ScapSecurityFinding",
+        "type": "object"
+      },
       "SecurityFinding": {
         "additionalProperties": false,
         "description": "A security finding from an evidence collector.\n\nFindings are the raw output of collectors — they represent a single\nobservation about a system's security posture.\n\nv0.7.0 schema (see module docstring for migration notes):\n\n- ``control_mappings`` replaces ``control_ids`` (backward-compat\n  via :meth:`_migrate_control_ids_kwarg`).\n- ``collection_context`` required but defaults to a synthetic\n  placeholder for pre-v0.7.0 construction sites.",
@@ -11510,6 +13673,45 @@
         "title": "SimulationResult",
         "type": "object"
       },
+      "SourceBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "ge": 1,
+            "le": 8388608,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "profile": {
+            "enum": [
+              "xccdf-1.2-results",
+              "oval-5.8-core-results",
+              "oval-5.11.2-core-results",
+              "oval-5.12.3-core-results"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "projection_version": {
+            "const": "scap-native-document-v1",
+            "title": "Projection Version",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "bytes",
+          "profile",
+          "projection_version"
+        ],
+        "title": "SourceBinding",
+        "type": "object"
+      },
       "SourceEvent": {
         "additionalProperties": false,
         "properties": {
@@ -11640,6 +13842,54 @@
           "normalized_utc"
         ],
         "title": "SourceTime",
+        "type": "object"
+      },
+      "SourceTimeObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "normalization": {
+            "$ref": "#/components/schemas/NormalizedSourceTime"
+          },
+          "role": {
+            "enum": [
+              "document_compilation",
+              "assessment_start",
+              "assessment_completion",
+              "rule_completion",
+              "override_time",
+              "tailoring_version_time"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "document",
+              "embedded_definitions",
+              "selected_assessment",
+              "system_characteristics"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "scope_node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Scope Node Index",
+            "type": "integer"
+          },
+          "value_ref": {
+            "$ref": "#/components/schemas/NativeValueRef"
+          }
+        },
+        "required": [
+          "scope_node_index",
+          "scope",
+          "role",
+          "value_ref",
+          "normalization"
+        ],
+        "title": "SourceTimeObservation",
         "type": "object"
       },
       "SplunkCollectResult": {
@@ -11855,6 +14105,120 @@
           "index"
         ],
         "title": "SplunkIndexTarget",
+        "type": "object"
+      },
+      "StableArtifactCompletion": {
+        "additionalProperties": false,
+        "properties": {
+          "assertion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StableCompletionAssertion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "basis": {
+            "enum": [
+              "native_reported",
+              "operator_asserted"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "native_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NativeValueRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "utc": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "basis",
+          "utc",
+          "native_ref",
+          "assertion"
+        ],
+        "title": "StableArtifactCompletion",
+        "type": "object"
+      },
+      "StableCompletionAssertion": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/AssertionActor"
+          },
+          "assessment_index": {
+            "ge": 0,
+            "le": 255,
+            "title": "Assessment Index",
+            "type": "integer"
+          },
+          "basis": {
+            "const": "operator_asserted",
+            "title": "Basis",
+            "type": "string"
+          },
+          "completed_at": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Completed At",
+            "type": "string"
+          },
+          "normalized_utc": {
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?Z$",
+            "title": "Normalized Utc",
+            "type": "string"
+          },
+          "reference": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "title": "Reference",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "scap-completion-assertion-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_profile": {
+            "enum": [
+              "oval-5.8-core-results",
+              "oval-5.11.2-core-results",
+              "oval-5.12.3-core-results"
+            ],
+            "title": "Source Profile",
+            "type": "string"
+          },
+          "source_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source_sha256",
+          "source_profile",
+          "assessment_index",
+          "completed_at",
+          "reference",
+          "normalized_utc",
+          "basis",
+          "actor"
+        ],
+        "title": "StableCompletionAssertion",
         "type": "object"
       },
       "StorageRetentionCollectResult": {
@@ -12368,6 +14732,94 @@
           "uei"
         ],
         "title": "UEITarget",
+        "type": "object"
+      },
+      "UnlinkedArtifactMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment_index": {
+            "ge": 0,
+            "le": 255,
+            "title": "Assessment Index",
+            "type": "integer"
+          },
+          "scap_contract": {
+            "const": "scap-evidence-v1",
+            "title": "Scap Contract",
+            "type": "string"
+          },
+          "source_profile": {
+            "enum": [
+              "xccdf-1.2-results",
+              "oval-5.8-core-results",
+              "oval-5.11.2-core-results",
+              "oval-5.12.3-core-results"
+            ],
+            "title": "Source Profile",
+            "type": "string"
+          },
+          "source_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Sha256",
+            "type": "string"
+          },
+          "time_basis": {
+            "enum": [
+              "native_reported",
+              "operator_asserted"
+            ],
+            "title": "Time Basis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scap_contract",
+          "source_sha256",
+          "source_profile",
+          "assessment_index",
+          "time_basis"
+        ],
+        "title": "UnlinkedArtifactMetadata",
+        "type": "object"
+      },
+      "UnverifiedPlatformStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "effective_status": {
+            "title": "Effective Status",
+            "type": "null"
+          },
+          "interpretation": {
+            "const": "unverified_platform_status",
+            "title": "Interpretation",
+            "type": "string"
+          },
+          "node_index": {
+            "ge": 0,
+            "le": 32767,
+            "title": "Node Index",
+            "type": "integer"
+          },
+          "scope": {
+            "enum": [
+              "direct_system_data_child",
+              "nested_platform_position"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "value_ref": {
+            "$ref": "#/components/schemas/NativeValueRef"
+          }
+        },
+        "required": [
+          "node_index",
+          "scope",
+          "value_ref",
+          "interpretation",
+          "effective_status"
+        ],
+        "title": "UnverifiedPlatformStatus",
         "type": "object"
       },
       "UpdateSystemRequest": {
@@ -13477,6 +15929,228 @@
         ],
         "title": "WorkflowStepStatus",
         "type": "string"
+      },
+      "XmlAttribute": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/ExpandedName"
+          },
+          "value": {
+            "maxLength": 262144,
+            "minLength": 0,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "XmlAttribute",
+        "type": "object"
+      },
+      "XmlComment": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "maxLength": 262144,
+            "minLength": 0,
+            "title": "Data",
+            "type": "string"
+          },
+          "kind": {
+            "const": "comment",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tail": {
+            "anyOf": [
+              {
+                "maxLength": 262144,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tail"
+          }
+        },
+        "required": [
+          "kind",
+          "data",
+          "tail"
+        ],
+        "title": "XmlComment",
+        "type": "object"
+      },
+      "XmlDeclaration": {
+        "additionalProperties": false,
+        "properties": {
+          "encoding": {
+            "anyOf": [
+              {
+                "pattern": "^[Uu][Tt][Ff]-8$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Encoding"
+          },
+          "standalone": {
+            "anyOf": [
+              {
+                "enum": [
+                  "yes",
+                  "no"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standalone"
+          },
+          "version": {
+            "const": "1.0",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "encoding",
+          "standalone"
+        ],
+        "title": "XmlDeclaration",
+        "type": "object"
+      },
+      "XmlElement": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/XmlAttribute"
+            },
+            "maxItems": 64,
+            "minItems": 0,
+            "title": "Attributes",
+            "type": "array"
+          },
+          "children": {
+            "items": {
+              "ge": 0,
+              "le": 32767,
+              "type": "integer"
+            },
+            "maxItems": 32768,
+            "minItems": 0,
+            "title": "Children",
+            "type": "array"
+          },
+          "kind": {
+            "const": "element",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/ExpandedName"
+          },
+          "namespace_declarations": {
+            "items": {
+              "$ref": "#/components/schemas/NamespaceDeclaration"
+            },
+            "maxItems": 64,
+            "minItems": 0,
+            "title": "Namespace Declarations",
+            "type": "array"
+          },
+          "tail": {
+            "anyOf": [
+              {
+                "maxLength": 262144,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tail"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 262144,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "namespace_declarations",
+          "attributes",
+          "text",
+          "tail",
+          "children"
+        ],
+        "title": "XmlElement",
+        "type": "object"
+      },
+      "XmlPI": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "maxLength": 262144,
+            "minLength": 0,
+            "title": "Data",
+            "type": "string"
+          },
+          "kind": {
+            "const": "processing_instruction",
+            "title": "Kind",
+            "type": "string"
+          },
+          "tail": {
+            "anyOf": [
+              {
+                "maxLength": 262144,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tail"
+          },
+          "target": {
+            "maxLength": 256,
+            "pattern": "^[\\s\\S]+$",
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "target",
+          "data",
+          "tail"
+        ],
+        "title": "XmlPI",
+        "type": "object"
       },
       "_DecisionRole": {
         "description": "How the AI's output is used in human decision-making.",
@@ -19278,6 +21952,186 @@
           }
         },
         "summary": "Storage Retention Collect",
+        "tags": [
+          "collectors"
+        ]
+      }
+    },
+    "/api/collectors/scap/collect": {
+      "post": {
+        "description": "Return every validated field, including a required nullable artifact.",
+        "operationId": "collect_scap",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source_profile",
+            "required": true,
+            "schema": {
+              "enum": [
+                "xccdf-1.2-results",
+                "oval-5.8-core-results",
+                "oval-5.11.2-core-results",
+                "oval-5.12.3-core-results"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Zero-based occurrence in canonical decimal form. The entire query is at most 1024 bytes.",
+            "in": "query",
+            "name": "assessment_index",
+            "required": true,
+            "schema": {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cadence_slug",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "One ASCII JSON value with the six completion-assertion fields. Actor identity comes from authentication.",
+            "in": "header",
+            "name": "X-Evidentia-SCAP-Completion-Assertion",
+            "required": false,
+            "schema": {
+              "maxLength": 2048,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapCollectionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapError"
+                }
+              }
+            },
+            "description": "The complete raw source is unreadable, unsafe or invalid."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "reason",
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "API authentication required."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Configured authentication and read permission are required."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapError"
+                }
+              }
+            },
+            "description": "A finite source or full-result limit was exceeded."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapError"
+                }
+              }
+            },
+            "description": "Only UTF-8 application/xml and identity encoding are supported."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapError"
+                }
+              }
+            },
+            "description": "The explicit options, selection or completion assertion are invalid."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapError"
+                }
+              }
+            },
+            "description": "A fixed internal validation or publication failure occurred."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScapError"
+                }
+              }
+            },
+            "description": "Support is unavailable or the original deadline was exceeded."
+          }
+        },
+        "summary": "Collect Scap",
         "tags": [
           "collectors"
         ]

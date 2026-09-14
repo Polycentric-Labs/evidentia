@@ -16,7 +16,7 @@ v0.8.2 F-V81-S2 additions (TestAuthLifespan):
 6. The FastAPI lifespan reads `EVIDENTIA_API_AUTH_TOKEN_FILE`
    at app STARTUP (not module import) and populates
    `app.state.auth_provider` accordingly.
-7. Missing env var leaves `app.state.auth_provider = None` —
+7. Missing env var leaves `app.state.auth_provider = None` -
    no auth gating, matching v0.8.0 behavior.
 """
 
@@ -29,6 +29,7 @@ from unittest import mock
 import pytest
 from evidentia_api.app import create_app
 from evidentia_core.plugins.auth.local_token import LocalTokenAuthProvider
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 
@@ -46,7 +47,7 @@ class TestAuthMiddleware:
         """
         app = create_app(dev_mode=False, auth_provider=None)
         client = TestClient(app)
-        # /api/metrics is the v0.8.0 P1 G3 endpoint — no auth
+        # /api/metrics is the v0.8.0 P1 G3 endpoint - no auth
         # gating in v0.8.0. With auth_provider=None we keep that
         # behavior.
         response = client.get("/api/metrics")
@@ -101,7 +102,7 @@ class TestAuthMiddleware:
         assert response.status_code == 200
 
     def test_version_probe_bypasses_auth(self, tmp_path: Path) -> None:
-        """/api/version is allowlisted alongside /api/health —
+        """/api/version is allowlisted alongside /api/health -
         operator's CI gates often check the running version
         without a service-account credential.
         """
@@ -137,7 +138,7 @@ class TestAuthMiddleware:
         app = create_app(dev_mode=False, auth_provider=provider)
         client = TestClient(app)
 
-        # The SPA root path — without auth, returns either the
+        # The SPA root path - without auth, returns either the
         # SPA index.html or the placeholder JSON (depending on
         # whether the static mount is populated). Either way,
         # NOT a 401.
@@ -163,7 +164,7 @@ class TestAuthLifespan:
         """
         token_file = _make_token_file(tmp_path, value="lifespan-token")
 
-        # Build the app with NO explicit auth_provider — the
+        # Build the app with NO explicit auth_provider - the
         # lifespan should pick up the env var at startup.
         app = create_app(dev_mode=False, auth_provider=None)
         # Pre-startup: app.state.auth_provider is None (matches
@@ -196,7 +197,7 @@ class TestAuthLifespan:
 
     def test_no_env_var_leaves_provider_none(self) -> None:
         """When EVIDENTIA_API_AUTH_TOKEN_FILE is unset (or empty),
-        the lifespan does not construct a provider —
+        the lifespan does not construct a provider -
         app.state.auth_provider stays None and /api/metrics is
         reachable without a token (v0.8.0 backward-compat).
         """
@@ -215,7 +216,7 @@ class TestAuthLifespan:
         """If EVIDENTIA_API_AUTH_TOKEN_FILE points at a missing
         file, the lifespan raises during startup so the app
         fails loudly. This preserves the v0.8.1 fail-loud
-        contract — operators don't get a silent fall-through to
+        contract - operators don't get a silent fall-through to
         no-auth.
         """
         nonexistent = tmp_path / "no-such-file.txt"
@@ -230,7 +231,7 @@ class TestAuthLifespan:
             pytest.raises((FileNotFoundError, ValueError)),
             TestClient(app),
         ):
-            pass  # pragma: no cover — lifespan raises first
+            pass  # pragma: no cover - lifespan raises first
 
     def test_explicit_injection_takes_precedence_over_env(self, tmp_path: Path) -> None:
         """v0.8.2 F-V81-S2: explicit ``auth_provider=...`` passed
@@ -241,12 +242,8 @@ class TestAuthLifespan:
         explicit_token_file = _make_token_file(tmp_path, value="explicit-token")
         explicit_provider = LocalTokenAuthProvider(token_file=explicit_token_file)
 
-        # Different token file in the env — should be IGNORED
+        # Different token file in the env - should be IGNORED
         # because explicit injection wins.
-        env_token_file = _make_token_file(
-            tmp_path / "env" if False else tmp_path,
-            value="env-token-IGNORED",
-        )
         # Use a different filename so they don't collide.
         env_token_file = tmp_path / "env-token.txt"
         env_token_file.write_text("env-token-IGNORED", encoding="utf-8")
@@ -275,3 +272,48 @@ class TestAuthLifespan:
                 },
             )
             assert response.status_code == 401
+
+
+def test_success_retains_actual_provider_without_extra_name_callback():
+    from evidentia_api.auth_middleware import AuthProviderMiddleware
+    from evidentia_core.plugins.auth import AuthProvider, AuthResult
+
+    names = []
+    app = FastAPI()
+
+    class Provider(AuthProvider):
+        def __init__(self, label, rotate_to=None):
+            self.label = label
+            self.rotate_to = rotate_to
+
+        def authenticate(self, *, authorization_header):
+            if self.rotate_to is not None:
+                app.state.auth_provider = self.rotate_to
+            return AuthResult(True, "Synthetic bound principal", None)
+
+        def name(self):
+            names.append(self.label)
+            return self.label
+
+    second = Provider("synthetic-second")
+    first = Provider("synthetic-first", second)
+    app.state.auth_provider = first
+    app.add_middleware(AuthProviderMiddleware)
+
+    @app.get("/api/provenance")
+    async def provenance(request: Request):
+        return {
+            "actual_provider_retained": request.state.auth_provider is first,
+            "current_provider_rotated": request.app.state.auth_provider is second,
+            "principal": request.state.auth_principal,
+        }
+
+    with TestClient(app) as client:
+        response = client.get("/api/provenance")
+    assert response.status_code == 200
+    assert response.json() == {
+        "actual_provider_retained": True,
+        "current_provider_rotated": True,
+        "principal": "Synthetic bound principal",
+    }
+    assert names == []

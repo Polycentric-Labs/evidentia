@@ -15,6 +15,20 @@ which wires the GitHub collector start-to-finish; this guide assumes you already
 understand that shape and focuses on the breadth of providers, the credential
 model, and the network/SSRF guards.
 
+## Import local SCAP results
+
+The **Collect > SCAP** tab and `collect scap` accept XCCDF 1.2 Benchmark
+results, standalone TestResult documents with their required inert benchmark
+reference, and OVAL 5.8, 5.11.2 or 5.12.3 core results. Select the exact profile,
+assessment occurrence and local XML file. These imports preserve native outcomes
+and completion provenance; they do not run scanners or establish compliance.
+
+A full result can succeed with no evidence artifact. OVAL completion requires a
+separate, source-bound assertion rather than an inference from its generator
+timestamp. Saving is a separate action, and source references remain inert.
+The [SCAP operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/scap-collectors.md)
+explains assertions, CLI flags, API authentication, downloads and finite limits.
+
 ## What this surface is for
 
 - **Pull live posture** from a source system and turn it into control-mapped

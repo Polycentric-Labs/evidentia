@@ -15,7 +15,7 @@ not auth-gated). Once wired, ``/api/metrics`` + ``/api/risks``
 
 The middleware honors a small ``UNAUTHENTICATED_PATHS``
 allowlist for liveness probes (``/api/health``,
-``/api/version``) — these surfaces are public-by-design + must
+``/api/version``) - these surfaces are public-by-design + must
 remain reachable without a token for Kubernetes / load-balancer
 readiness checks.
 
@@ -35,7 +35,7 @@ EVERY request including non-router paths (``/api/openapi.json``,
 ``/api/docs``, the SPA static mount). The allowlist gates
 which surfaces are public.
 
-Operator wiring (explicit-injection path — v0.8.1):
+Operator wiring (explicit-injection path - v0.8.1):
 
     from evidentia_api.app import create_app
     from evidentia_core.plugins.auth.local_token import (
@@ -48,15 +48,15 @@ Operator wiring (explicit-injection path — v0.8.1):
         ),
     )
 
-Operator wiring (env-driven path — v0.8.1 + v0.8.2 F-V81-S2):
+Operator wiring (env-driven path - v0.8.1 + v0.8.2 F-V81-S2):
 
     EVIDENTIA_API_AUTH_TOKEN_FILE=/etc/evidentia/api-token \\
         uvicorn evidentia_api.app:app
 
 The env-driven path now constructs the provider in the FastAPI
 lifespan at startup (not at module import time). Operators get
-the same end-state — ``app.state.auth_provider`` populated +
-``/api/metrics`` gated — but module imports remain side-effect-
+the same end-state - ``app.state.auth_provider`` populated +
+``/api/metrics`` gated - but module imports remain side-effect-
 free, which is critical for tooling that imports the module
 without intending to start the server (e.g., OpenAPI schema
 generation, mypy plugin discovery).
@@ -80,7 +80,7 @@ if TYPE_CHECKING:
 # the auth scheme) are public-by-convention. Static SPA assets
 # fall through to the FastAPI static mount which is also public
 # (the SPA itself enforces auth in the browser via Clerk or
-# equivalent — the API gates the data-bearing routes).
+# equivalent - the API gates the data-bearing routes).
 UNAUTHENTICATED_PATHS: frozenset[str] = frozenset(
     {
         "/api/health",
@@ -111,7 +111,7 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
     6. On ``AuthResult(authenticated=False)``: return 401 with
        a JSON body carrying the provider's ``reason``.
 
-    The middleware never blocks on the AuthProvider's I/O —
+    The middleware never blocks on the AuthProvider's I/O -
     LocalTokenAuthProvider reads its token at construction
     time, so the per-request cost is a constant-time hmac
     comparison. Custom AuthProviders that hit a remote service
@@ -145,7 +145,7 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         # Static SPA mount: any path that doesn't start with /api/
         # falls through to the static assets. These are public-by-
-        # design — the SPA itself enforces auth in the browser.
+        # design - the SPA itself enforces auth in the browser.
         if not request.url.path.startswith("/api/"):
             return await call_next(request)
 
@@ -167,12 +167,13 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
                 },
                 headers={
                     # Hint the client which scheme to use. RFC 7235
-                    # §4.1 — WWW-Authenticate on 401 responses.
+                    # §4.1 - WWW-Authenticate on 401 responses.
                     "WWW-Authenticate": 'Bearer realm="evidentia"',
                 },
             )
-        # Attach the authenticated principal to request state so
+        # Attach the successful provider and principal to request state so
         # downstream handlers can introspect it (e.g., for per-
         # principal audit events). Standard FastAPI pattern.
         request.state.auth_principal = result.principal
+        request.state.auth_provider = provider
         return await call_next(request)

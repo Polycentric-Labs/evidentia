@@ -20,7 +20,7 @@ Evidence collectors for [Evidentia](https://github.com/Polycentric-Labs/evidenti
 | Snowflake | `collect snowflake` | Login history, users and MFA, grants, network and masking policies | `[snowflake]` |
 | Vanta, Drata, BitSight, SecurityScorecard | `collect vanta`, `collect drata`, `collect bitsight`, `collect securityscorecard` | Vendor inventory and security ratings | none |
 
-Three importers read exports or feeds instead of calling a credentialed API: `collect ocsf` for OCSF Compliance and Detection Findings (`[ocsf]`), and `collect nessus` and `collect greenbone` for vulnerability-scan exports (`[scan]`).
+Four importers read exports or feeds: `collect ocsf` for OCSF Compliance and Detection Findings (`[ocsf]`), `collect nessus` and `collect greenbone` for vulnerability-scan exports, and `collect scap` for selected XCCDF 1.2 or OVAL 5.8, 5.11.2 and 5.12.3 core results (`[scan]` for XML importers).
 
 ## Install
 
@@ -43,5 +43,7 @@ Enterprise retention requires an administrator-configured profile and a separate
 Public registry requests select one typed target and an optional scope label. `RegistryCollector.collect_v2(request)` preserves the complete result; `collect(request)` returns findings only. TLS, RDAP, GLEIF and security.txt use fixed verified transport policies. SAM reads `EVIDENTIA_REGISTRY_SAM_API_KEY` on the server. FedRAMP, CMVP and FCC use packaged reviewed snapshots. InCommon requires `pip install 'evidentia-collectors[registries]'`; the GUI extra alone does not install its verifier. SSL Labs live access is disabled before all I/O. Source evidence does not establish eligibility, ownership, applicability or compliance. See the [registry design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/registry-collector-design.md) for exact source, timestamp, trust and approved publisher-data preservation rules.
 
 Incident clocks require a trusted profile with exact record, workflow and principal grants; local CLI permission is separate. `IncidentClockCollector.collect_v2(request)` uses an issued selection and returns the full source/clock result. Current ServiceNow date columns, Jira changelog transitions and PagerDuty log entries retain their native operational meanings. Complete, incomplete and unavailable sources remain distinct from computed, unresolved and reversed clocks. Tests and console examples are synthetic; live permissions, entitlement and workflow correctness require operator validation. See the [incident clock design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/incident-clock-collector-design.md) and operator guide.
+
+SCAP imports preserve the complete native graph, exact source hash, selected assessment and completion provenance. An artifact can be unavailable even when the full import succeeds. The CLI and console require explicit profile and assessment selection; import does not run a scanner or save evidence. Source URLs and embedded instructions remain inert. See the [SCAP operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/scap-collectors.md) for completion assertions, finite limits, downloads and separate persistence.
 
 License: Apache 2.0

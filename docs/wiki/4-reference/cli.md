@@ -449,6 +449,21 @@ Read retention configuration for explicitly selected storage resources.
 | `--request-file` | Named regular JSON request file, at most 65536 bytes; stdin is not accepted. |
 | `--output` | Atomically write full result JSON; omitted means stdout. |
 
+### `evidentia collect scap`
+
+Import one local SCAP results document with explicit profile selection.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--file` | Local SCAP XML results file. |
+| `--source-profile` | Explicit XCCDF or OVAL source profile. |
+| `--assessment-index` | Zero-based source assessment occurrence. |
+| `--cadence-slug` | Optional existing cadence identifier. |
+| `--completion-assertion` | Optional bounded OVAL completion assertion JSON file. |
+| `--asserted-by` | Caller label required with a completion assertion. |
+| `--output` | Write prepared JSON to a local file; omitted means stdout. |
+| `--output-view` | Output result or artifact JSON. |
+
 ### `evidentia collect securityscorecard`
 
 Collect compliance evidence from a SecurityScorecard portfolio (read-only).

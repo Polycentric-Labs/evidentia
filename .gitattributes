@@ -86,3 +86,14 @@ tests/fixtures/incident_clock/pagerduty/logs-page2.json text eol=lf
 tests/fixtures/incident_clock/servicenow/missing-fields.json text eol=lf
 tests/fixtures/incident_clock/servicenow/record.json text eol=lf
 tests/fixtures/incident_clock/source-index.json text eol=lf
+
+# SCAP source and expected graph hashes bind exact LF bytes on every checkout.
+tests/fixtures/scap/oval-5.11.2-native.expected.json text eol=lf
+tests/fixtures/scap/oval-5.11.2-native.xml text eol=lf
+tests/fixtures/scap/oval-5.12.3-native.expected.json text eol=lf
+tests/fixtures/scap/oval-5.12.3-native.xml text eol=lf
+tests/fixtures/scap/oval-5.8-native.expected.json text eol=lf
+tests/fixtures/scap/oval-5.8-native.xml text eol=lf
+tests/fixtures/scap/source-index.json text eol=lf
+tests/fixtures/scap/xccdf-1.2-native.expected.json text eol=lf
+tests/fixtures/scap/xccdf-1.2-native.xml text eol=lf

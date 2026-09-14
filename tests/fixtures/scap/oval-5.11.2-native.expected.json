@@ -1,0 +1,1078 @@
+{
+  "source_sha256": "990ab5382e167f0797283dc4afdbe062b86a0a316153e296da0d5972659e29c4",
+  "native_node_count": 35,
+  "assessment": {
+    "selection": {
+      "assessment_index": 0,
+      "unit_kind": "oval_system",
+      "node_index": 13
+    },
+    "units": [
+      {
+        "assessment_index": 0,
+        "unit_kind": "oval_system",
+        "node_index": 13
+      }
+    ],
+    "outcomes": [
+      {
+        "unit_node_index": 13,
+        "node_index": 15,
+        "level": "oval_definition",
+        "value_ref": {
+          "node_index": 15,
+          "slot": "attribute_value",
+          "attribute_index": 2
+        },
+        "native_result": "unknown"
+      },
+      {
+        "unit_node_index": 13,
+        "node_index": 16,
+        "level": "oval_criteria",
+        "value_ref": {
+          "node_index": 16,
+          "slot": "attribute_value",
+          "attribute_index": 1
+        },
+        "native_result": "unknown"
+      },
+      {
+        "unit_node_index": 13,
+        "node_index": 17,
+        "level": "oval_criterion",
+        "value_ref": {
+          "node_index": 17,
+          "slot": "attribute_value",
+          "attribute_index": 3
+        },
+        "native_result": "unknown"
+      },
+      {
+        "unit_node_index": 13,
+        "node_index": 19,
+        "level": "oval_test",
+        "value_ref": {
+          "node_index": 19,
+          "slot": "attribute_value",
+          "attribute_index": 3
+        },
+        "native_result": "unknown"
+      }
+    ],
+    "times": [
+      {
+        "scope_node_index": 0,
+        "scope": "document",
+        "role": "document_compilation",
+        "value_ref": {
+          "node_index": 4,
+          "slot": "element_simple_content",
+          "attribute_index": null
+        },
+        "normalization": {
+          "state": "normalized",
+          "utc": "2024-03-01T00:15:00Z"
+        }
+      },
+      {
+        "scope_node_index": 20,
+        "scope": "system_characteristics",
+        "role": "document_compilation",
+        "value_ref": {
+          "node_index": 23,
+          "slot": "element_simple_content",
+          "attribute_index": null
+        },
+        "normalization": {
+          "state": "normalized",
+          "utc": "2024-02-29T23:59:59Z"
+        }
+      }
+    ],
+    "coverage": {
+      "scope": "selected_assessment_native_projection",
+      "selected_node_index": 13,
+      "visible_unit_count": 1,
+      "selected_unit_count": 1,
+      "unselected_unit_count": 0,
+      "visible_outcome_count": 4,
+      "selected_outcome_count": 4,
+      "top_level_outcome_count": 2,
+      "countable_top_level_outcome_count": 2,
+      "native_export_detail": "full",
+      "collection_flags": [],
+      "status_observations": [],
+      "signature_node_indices": [],
+      "source_population_complete": "not_established",
+      "schema_validation": "bounded_core_profile_rules",
+      "complete_schema_validation": "not_performed",
+      "platform_validation": "not_performed",
+      "signature_verification": "not_performed",
+      "producer_interoperability": "not_established",
+      "cadence_evidence": "countable",
+      "outcome_counts": [
+        {
+          "level": "oval_definition",
+          "native_result": "true",
+          "count": 0
+        },
+        {
+          "level": "oval_definition",
+          "native_result": "false",
+          "count": 0
+        },
+        {
+          "level": "oval_definition",
+          "native_result": "unknown",
+          "count": 1
+        },
+        {
+          "level": "oval_definition",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "oval_definition",
+          "native_result": "not evaluated",
+          "count": 0
+        },
+        {
+          "level": "oval_definition",
+          "native_result": "not applicable",
+          "count": 0
+        },
+        {
+          "level": "oval_criteria",
+          "native_result": "true",
+          "count": 0
+        },
+        {
+          "level": "oval_criteria",
+          "native_result": "false",
+          "count": 0
+        },
+        {
+          "level": "oval_criteria",
+          "native_result": "unknown",
+          "count": 1
+        },
+        {
+          "level": "oval_criteria",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "oval_criteria",
+          "native_result": "not evaluated",
+          "count": 0
+        },
+        {
+          "level": "oval_criteria",
+          "native_result": "not applicable",
+          "count": 0
+        },
+        {
+          "level": "oval_criterion",
+          "native_result": "true",
+          "count": 0
+        },
+        {
+          "level": "oval_criterion",
+          "native_result": "false",
+          "count": 0
+        },
+        {
+          "level": "oval_criterion",
+          "native_result": "unknown",
+          "count": 1
+        },
+        {
+          "level": "oval_criterion",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "oval_criterion",
+          "native_result": "not evaluated",
+          "count": 0
+        },
+        {
+          "level": "oval_criterion",
+          "native_result": "not applicable",
+          "count": 0
+        },
+        {
+          "level": "oval_extend_definition",
+          "native_result": "true",
+          "count": 0
+        },
+        {
+          "level": "oval_extend_definition",
+          "native_result": "false",
+          "count": 0
+        },
+        {
+          "level": "oval_extend_definition",
+          "native_result": "unknown",
+          "count": 0
+        },
+        {
+          "level": "oval_extend_definition",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "oval_extend_definition",
+          "native_result": "not evaluated",
+          "count": 0
+        },
+        {
+          "level": "oval_extend_definition",
+          "native_result": "not applicable",
+          "count": 0
+        },
+        {
+          "level": "oval_test",
+          "native_result": "true",
+          "count": 0
+        },
+        {
+          "level": "oval_test",
+          "native_result": "false",
+          "count": 0
+        },
+        {
+          "level": "oval_test",
+          "native_result": "unknown",
+          "count": 1
+        },
+        {
+          "level": "oval_test",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "oval_test",
+          "native_result": "not evaluated",
+          "count": 0
+        },
+        {
+          "level": "oval_test",
+          "native_result": "not applicable",
+          "count": 0
+        },
+        {
+          "level": "oval_tested_item",
+          "native_result": "true",
+          "count": 0
+        },
+        {
+          "level": "oval_tested_item",
+          "native_result": "false",
+          "count": 0
+        },
+        {
+          "level": "oval_tested_item",
+          "native_result": "unknown",
+          "count": 0
+        },
+        {
+          "level": "oval_tested_item",
+          "native_result": "error",
+          "count": 0
+        },
+        {
+          "level": "oval_tested_item",
+          "native_result": "not evaluated",
+          "count": 0
+        },
+        {
+          "level": "oval_tested_item",
+          "native_result": "not applicable",
+          "count": 0
+        }
+      ],
+      "oval_directives": {
+        "node_index": 5,
+        "include_source_definitions": {
+          "present": true,
+          "value_ref": {
+            "node_index": 5,
+            "slot": "attribute_value",
+            "attribute_index": 0
+          },
+          "effective_value": false
+        },
+        "embedded_definitions_node_index": null,
+        "default_rules": [
+          {
+            "node_index": 6,
+            "outcome": "true",
+            "reported": {
+              "present": true,
+              "value_ref": {
+                "node_index": 6,
+                "slot": "attribute_value",
+                "attribute_index": 0
+              },
+              "effective_value": false
+            },
+            "content": {
+              "present": false,
+              "value_ref": null,
+              "effective_value": "full"
+            }
+          },
+          {
+            "node_index": 7,
+            "outcome": "false",
+            "reported": {
+              "present": true,
+              "value_ref": {
+                "node_index": 7,
+                "slot": "attribute_value",
+                "attribute_index": 0
+              },
+              "effective_value": false
+            },
+            "content": {
+              "present": false,
+              "value_ref": null,
+              "effective_value": "full"
+            }
+          },
+          {
+            "node_index": 8,
+            "outcome": "unknown",
+            "reported": {
+              "present": true,
+              "value_ref": {
+                "node_index": 8,
+                "slot": "attribute_value",
+                "attribute_index": 0
+              },
+              "effective_value": true
+            },
+            "content": {
+              "present": false,
+              "value_ref": null,
+              "effective_value": "full"
+            }
+          },
+          {
+            "node_index": 9,
+            "outcome": "error",
+            "reported": {
+              "present": true,
+              "value_ref": {
+                "node_index": 9,
+                "slot": "attribute_value",
+                "attribute_index": 0
+              },
+              "effective_value": false
+            },
+            "content": {
+              "present": false,
+              "value_ref": null,
+              "effective_value": "full"
+            }
+          },
+          {
+            "node_index": 10,
+            "outcome": "not evaluated",
+            "reported": {
+              "present": true,
+              "value_ref": {
+                "node_index": 10,
+                "slot": "attribute_value",
+                "attribute_index": 0
+              },
+              "effective_value": false
+            },
+            "content": {
+              "present": false,
+              "value_ref": null,
+              "effective_value": "full"
+            }
+          },
+          {
+            "node_index": 11,
+            "outcome": "not applicable",
+            "reported": {
+              "present": true,
+              "value_ref": {
+                "node_index": 11,
+                "slot": "attribute_value",
+                "attribute_index": 0
+              },
+              "effective_value": false
+            },
+            "content": {
+              "present": false,
+              "value_ref": null,
+              "effective_value": "full"
+            }
+          }
+        ],
+        "class_rules": []
+      },
+      "core_status_defaults": [],
+      "uninterpreted_node_count": 2
+    },
+    "uninterpreted_roots": [
+      3,
+      24
+    ],
+    "finding_refs": [
+      {
+        "node_index": 13,
+        "mapping_rule_id": "scap-assessment-summary-v1",
+        "source_key_sha256": "c67b865a8b5f572f92a2ce0d3edb9cf4a57245da06a898654796523cfb5e4375",
+        "finding_id": "b8f94e45-7c78-5ae0-a380-01cea6979a04"
+      }
+    ]
+  },
+  "native_document": {
+    "declaration": {
+      "version": "1.0",
+      "encoding": "UTF-8",
+      "standalone": null
+    },
+    "text": "\n",
+    "children": [
+      0
+    ],
+    "nodes": [
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "oval_results"
+        },
+        "namespace_declarations": [
+          {
+            "prefix": "",
+            "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5"
+          },
+          {
+            "prefix": "oval",
+            "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-common-5"
+          },
+          {
+            "prefix": "sc",
+            "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5"
+          }
+        ],
+        "attributes": [],
+        "text": "\n  ",
+        "tail": "\n",
+        "children": [
+          1,
+          5,
+          12
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "generator"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n    ",
+        "tail": "\n  ",
+        "children": [
+          2,
+          4
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-common-5",
+          "local_name": "schema_version"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "5.11.",
+        "tail": "\n    ",
+        "children": [
+          3
+        ]
+      },
+      {
+        "kind": "processing_instruction",
+        "target": "split",
+        "data": "value",
+        "tail": "2"
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-common-5",
+          "local_name": "timestamp"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "2024-03-01T00:15:00Z",
+        "tail": "\n  ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "directives"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "include_source_definitions"
+            },
+            "value": "false"
+          }
+        ],
+        "text": "\n    ",
+        "tail": "\n  ",
+        "children": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition_true"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "reported"
+            },
+            "value": "false"
+          }
+        ],
+        "text": null,
+        "tail": "\n    ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition_false"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "reported"
+            },
+            "value": "false"
+          }
+        ],
+        "text": null,
+        "tail": "\n    ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition_unknown"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "reported"
+            },
+            "value": "1"
+          }
+        ],
+        "text": null,
+        "tail": "\n    ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition_error"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "reported"
+            },
+            "value": "false"
+          }
+        ],
+        "text": null,
+        "tail": "\n    ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition_not_evaluated"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "reported"
+            },
+            "value": "false"
+          }
+        ],
+        "text": null,
+        "tail": "\n    ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition_not_applicable"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "reported"
+            },
+            "value": "false"
+          }
+        ],
+        "text": null,
+        "tail": "\n  ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "results"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n    ",
+        "tail": "\n",
+        "children": [
+          13
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "system"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n      ",
+        "tail": "\n  ",
+        "children": [
+          14,
+          18,
+          20
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definitions"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n        ",
+        "tail": "\n      ",
+        "children": [
+          15
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "definition"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "definition_id"
+            },
+            "value": "oval:org.example.synthetic:def:5112"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "version"
+            },
+            "value": "0"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "result"
+            },
+            "value": "unknown"
+          }
+        ],
+        "text": "\n          ",
+        "tail": "\n      ",
+        "children": [
+          16
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "criteria"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "operator"
+            },
+            "value": "AND"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "result"
+            },
+            "value": "unknown"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "applicability_check"
+            },
+            "value": "false"
+          }
+        ],
+        "text": "\n            ",
+        "tail": "\n        ",
+        "children": [
+          17
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "criterion"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "test_ref"
+            },
+            "value": "oval:org.example.synthetic:tst:5112"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "version"
+            },
+            "value": "00"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "variable_instance"
+            },
+            "value": "01"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "result"
+            },
+            "value": "unknown"
+          }
+        ],
+        "text": null,
+        "tail": "\n          ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "tests"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n        ",
+        "tail": "\n      ",
+        "children": [
+          19
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-results-5",
+          "local_name": "test"
+        },
+        "namespace_declarations": [],
+        "attributes": [
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "test_id"
+            },
+            "value": "oval:org.example.synthetic:tst:5112"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "version"
+            },
+            "value": "0"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "check"
+            },
+            "value": "all"
+          },
+          {
+            "name": {
+              "namespace_uri": "",
+              "local_name": "result"
+            },
+            "value": "unknown"
+          }
+        ],
+        "text": null,
+        "tail": "\n      ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "oval_system_characteristics"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n        ",
+        "tail": "\n    ",
+        "children": [
+          21,
+          25
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "generator"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n          ",
+        "tail": "\n        ",
+        "children": [
+          22,
+          23
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-common-5",
+          "local_name": "schema_version"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "5.11.2",
+        "tail": "\n          ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-common-5",
+          "local_name": "timestamp"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "2024-02-29T23:59:59.",
+        "tail": "\n        ",
+        "children": [
+          24
+        ]
+      },
+      {
+        "kind": "processing_instruction",
+        "target": "split",
+        "data": "value",
+        "tail": "0000000Z"
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "system_info"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n          ",
+        "tail": "\n      ",
+        "children": [
+          26,
+          27,
+          28,
+          29,
+          30
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "os_name"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "SyntheticOS",
+        "tail": "\n          ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "os_version"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "0",
+        "tail": "\n          ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "architecture"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "synthetic",
+        "tail": "\n          ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "primary_host_name"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "synthetic-system-5112",
+        "tail": "\n          ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "interfaces"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n            ",
+        "tail": "\n        ",
+        "children": [
+          31
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "interface"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "\n              ",
+        "tail": "\n          ",
+        "children": [
+          32,
+          33,
+          34
+        ]
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "interface_name"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "synthetic0",
+        "tail": "\n            ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "ip_address"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "198.51.100.12",
+        "tail": "\n            ",
+        "children": []
+      },
+      {
+        "kind": "element",
+        "name": {
+          "namespace_uri": "http://oval.mitre.org/XMLSchema/oval-system-characteristics-5",
+          "local_name": "mac_address"
+        },
+        "namespace_declarations": [],
+        "attributes": [],
+        "text": "02-00-00-00-11-02",
+        "tail": "\n            ",
+        "children": []
+      }
+    ]
+  }
+}

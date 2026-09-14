@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oval_results xmlns="http://oval.mitre.org/XMLSchema/oval-results-5" xmlns:oval="http://oval.mitre.org/XMLSchema/oval-common-5" xmlns:sc="http://oval.mitre.org/XMLSchema/oval-system-characteristics-5">
+  <generator>
+    <oval:schema_version>5.11.<?split value?>2</oval:schema_version>
+    <oval:timestamp>2024-03-01T00:15:00Z</oval:timestamp>
+  </generator>
+  <directives include_source_definitions="false">
+    <definition_true reported="false"/>
+    <definition_false reported="false"/>
+    <definition_unknown reported="1"/>
+    <definition_error reported="false"/>
+    <definition_not_evaluated reported="false"/>
+    <definition_not_applicable reported="false"/>
+  </directives>
+  <results>
+    <system>
+      <definitions>
+        <definition definition_id="oval:org.example.synthetic:def:5112" version="0" result="unknown">
+          <criteria operator="AND" result="unknown" applicability_check="false">
+            <criterion test_ref="oval:org.example.synthetic:tst:5112" version="00" variable_instance="01" result="unknown"/>
+          </criteria>
+        </definition>
+      </definitions>
+      <tests>
+        <test test_id="oval:org.example.synthetic:tst:5112" version="0" check="all" result="unknown"/>
+      </tests>
+      <sc:oval_system_characteristics>
+        <sc:generator>
+          <oval:schema_version>5.11.2</oval:schema_version>
+          <oval:timestamp>2024-02-29T23:59:59.<?split value?>0000000Z</oval:timestamp>
+        </sc:generator>
+        <sc:system_info>
+          <sc:os_name>SyntheticOS</sc:os_name>
+          <sc:os_version>0</sc:os_version>
+          <sc:architecture>synthetic</sc:architecture>
+          <sc:primary_host_name>synthetic-system-5112</sc:primary_host_name>
+          <sc:interfaces>
+            <sc:interface>
+              <sc:interface_name>synthetic0</sc:interface_name>
+            <sc:ip_address>198.51.100.12</sc:ip_address>
+            <sc:mac_address>02-00-00-00-11-02</sc:mac_address>
+            </sc:interface>
+          </sc:interfaces>
+        </sc:system_info>
+      </sc:oval_system_characteristics>
+    </system>
+  </results>
+</oval_results>

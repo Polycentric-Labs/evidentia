@@ -46,7 +46,7 @@ Evidentia ingests NIST OSCAL catalogs and analyzes gaps against your evidence. I
 Built for compliance engineers, GRC teams, and CISOs who want to:
 
 - Ship audit-grade evidence with cryptographic provenance (Sigstore + PEP 740 + SLSA Provenance v1).
-- Map controls across frameworks via **106 bundled catalogs** (NIST 800-53 Rev 5, FedRAMP + FedRAMP CR26 KSIs and provider-facing Requirements, CMMC 2.0, ISO 27001, CSF 2.0, EU AI Act, DORA, NIS2, GDPR, OpenSSF OSPS Baseline, FFIEC handbook booklets, and all 15 comprehensive US state privacy laws).
+- Map controls across **106 bundled catalogs**.
 - Drive AI agents (Claude Desktop, Claude Code, Copilot CLI) deterministically via MCP tools with signed output envelopes.
 
 ## Install
@@ -67,7 +67,7 @@ See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evide
 
 ## Quickstart (60 Seconds)
 
-`evidentia gap analyze` is inventory-driven: `--inventory` is the file of controls you *have*; `--frameworks` is the catalogs to measure *against*. A ready-to-run sample inventory ships inside the wheel.
+For `evidentia gap analyze`, `--inventory` supplies the controls you have and `--frameworks` selects catalogs to measure against. The wheel includes a sample inventory.
 
 ```bash
 # 1. List bundled framework catalogs
@@ -100,8 +100,9 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - **OSCAL-native end-to-end** — Ingest NIST OSCAL catalogs (Catalog 1.2.1); emit OSCAL Assessment Results + Plan-of-Action-and-Milestones (POA&M) on the established FedRAMP Rev 5 package rail.
 - **FedRAMP CR26 machine-readable SDR emission** — `evidentia conmon ksi` emits the CR26 Security Decision Record `keySecurityIndicators` block (10 families / 46 KSIs) conformant to FedRAMP's official 2026-06-24 schemas (vendored at pinned upstream SHAs, drift-watched weekly) — the first production-grade open-source emitter of the CR26 SDR format.
 - **Cryptographic evidence chain** — Sigstore keyless signing on Assessment Results; PEP 740 attestations on every published wheel; SLSA Provenance v1 on the container; CycloneDX 1.7 SBOM on every GitHub Release.
-- **106 framework catalogs + 16 crosswalks**: 34 catalogs carry statement text for every non-withdrawn entry; 72 carry headings only. Coverage includes NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP (Rev 5 baselines + CR26 Key Security Indicators + the 180 provider-facing CR26 Requirements), CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, 15 US state privacy laws, FFIEC IT Examination Handbook booklets, CMS ARS 5.2 and the CJIS 6.1 requirements companion, OCC Bulletin 2026-13 / FRB SR 26-2. Plus 16 inter-framework crosswalks.
-- **19 credentialed evidence collectors**: AWS, GitHub (OSPS conformance helpers), Postgres, MySQL, Oracle, SQLite, MS-SQL, Snowflake, Databricks, Okta, Google Workspace, Entra ID / Microsoft 365, storage retention (S3, Azure Blob, GCS), enterprise retention (Google Vault, Splunk Enterprise, Elasticsearch ILM), incident clocks (ServiceNow, Jira Cloud, PagerDuty), Vanta, Drata, BitSight and SecurityScorecard. Findings are OCSF-aligned; Entra/M365 and retention retain source coverage. Public registries add 11 selectors with explicit outcome, traversal and freshness. Registry compliance stays unknown; SSL Labs live access is disabled. Incident clocks preserve native events and exact elapsed seconds under explicit profile grants; they do not determine legal notification deadlines.
+- **106 framework catalogs + 16 crosswalks**: 34 catalogs carry statement text for every non-withdrawn entry; 72 carry headings only. Coverage includes NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP (Rev 5 baselines + CR26 Key Security Indicators + the 180 provider-facing CR26 Requirements), CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 comprehensive US state privacy laws, FFIEC IT Examination Handbook booklets, CMS ARS 5.2 and the CJIS 6.1 requirements companion, OCC Bulletin 2026-13 / FRB SR 26-2.
+- **19 credentialed evidence collectors**: AWS; GitHub (OSPS conformance helpers); Postgres, MySQL, Oracle, SQLite, MS-SQL; Snowflake; Databricks; Okta; Google Workspace; Entra ID / Microsoft 365; storage retention (S3, Azure Blob, GCS); enterprise retention (Google Vault, Splunk Enterprise, Elasticsearch ILM); incident clocks (ServiceNow, Jira Cloud, PagerDuty); Vanta, Drata, BitSight and SecurityScorecard. Findings align with OCSF. Entra/M365 and retention preserve source coverage. Public registries offer 11 selectors with outcome, traversal and freshness; compliance stays unknown and SSL Labs live access is disabled. Incident clocks preserve native events and exact elapsed seconds under profile grants, without determining legal notification deadlines.
+- **SCAP imports**: [CLI, API and console](docs/scap-collectors.md) preserve XCCDF/OVAL native results, source hashes, completion provenance and explicit artifact eligibility.
 - **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX 1.6 VEX via `--format cyclonedx-vex`.
 - **14 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
 - **OSPS Baseline conformance** — First public open-source project to ship a machine-readable per-control OSPS Baseline conformance attestation ([`OSPS-CONFORMANCE.md`](docs/OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
@@ -113,7 +114,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 | Workspace packages | 9 (8 Python on PyPI + 1 TypeScript/Vite frontend) |
 | Framework catalogs | 106 |
 | Inter-framework crosswalks | 16 |
-| Credentialed evidence collectors | 18 |
+| Credentialed evidence collectors | 19 |
 | MCP tools | 14 |
 | OSCAL serializations | 1 (OpenSSF OSPS Baseline; more on the roadmap) |
 | Test suite | 5,000+ tests; mypy strict; ruff clean |

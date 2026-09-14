@@ -83,7 +83,7 @@ async def _auth_lifespan(app: FastAPI) -> AsyncIterator[None]:
     ``EVIDENTIA_API_AUTH_TOKEN_FILE`` at import time) with a
     startup-time read. Explicit injection via
     :func:`create_app(auth_provider=...)` continues to take
-    precedence — this lifespan only constructs a provider when
+    precedence - this lifespan only constructs a provider when
     ``app.state.auth_provider`` is ``None`` at startup.
 
     Importing this module no longer has filesystem side effects;
@@ -107,7 +107,7 @@ async def _auth_lifespan(app: FastAPI) -> AsyncIterator[None]:
             try:
                 app.state.auth_provider = LocalTokenAuthProvider(token_file=env_token_file)
             except (FileNotFoundError, ValueError):
-                # Fail loud at startup — operator passed
+                # Fail loud at startup - operator passed
                 # --auth-token-file but the file is missing /
                 # empty / symlinked. Don't silently fall back to
                 # no-auth.
@@ -257,7 +257,7 @@ def create_app(
     # shape every deliberate api_error(...) 400 in this API carries. See
     # evidentia_api.errors.body_parse_error_handler's docstring for the
     # full mechanism. MUST register under starlette.exceptions.
-    # HTTPException (not fastapi.HTTPException) — that generic-Exception
+    # HTTPException (not fastapi.HTTPException) - that generic-Exception
     # catch-all in fastapi/routing.py raises the STARLETTE base class
     # directly, and FastAPI's own default handler is itself registered
     # under that same base-class key (fastapi/applications.py imports
@@ -304,7 +304,7 @@ def create_app(
         app.add_middleware(SecurityHeadersMiddleware)
 
     # v0.8.1 P3.3 + v0.8.2 F-V81-S2: AuthProvider middleware.
-    # Always attaches now — the middleware reads
+    # Always attaches now - the middleware reads
     # ``request.app.state.auth_provider`` at dispatch and is a
     # no-op when None. This decouples middleware attachment
     # (must happen at app build time per Starlette) from
@@ -312,7 +312,7 @@ def create_app(
     # event for the env-var-driven path). Attaches BEFORE the
     # security-headers middleware in the FastAPI middleware
     # stack (Starlette runs middleware in reverse-add order, so
-    # this becomes the OUTER ring — auth check fires before
+    # this becomes the OUTER ring - auth check fires before
     # any security-header logic).
     from evidentia_api.auth_middleware import (
         AuthProviderMiddleware,
@@ -324,7 +324,7 @@ def create_app(
     # AI gov mutating endpoints (POST /classify + POST /register).
     # Closes v0.9.3 F-V93-S10 LOW (no rate limit + unbounded
     # registry growth from a single authenticated client). Default
-    # 60 req/min/client + burst of 10 — comfortably above any
+    # 60 req/min/client + burst of 10 - comfortably above any
     # legitimate interactive UI pattern, restrictive enough to
     # blunt a register-flood. Process-local; multi-worker
     # deployments share-nothing (acceptable for v0.9.4 OSS).
@@ -337,7 +337,7 @@ def create_app(
     # when behind a reverse proxy. MUST be added AFTER the rate-
     # limit middleware (Starlette runs middleware in reverse-add
     # order, so this becomes the OUTER ring and runs FIRST on the
-    # request path — replacing scope["client"] with the forwarded
+    # request path - replacing scope["client"] with the forwarded
     # IP before any downstream middleware reads it).
     #
     # Default off because honoring X-Forwarded-For without a proxy
@@ -349,7 +349,7 @@ def create_app(
     # ``rate_limit.py`` module docstring. Reference: uvicorn
     # implementation honors X-Forwarded-For + X-Forwarded-Proto +
     # X-Forwarded-Host. `forwarded_allow_ips="*"` trusts ANY
-    # upstream — operators wanting tighter control should
+    # upstream - operators wanting tighter control should
     # configure their proxy to strip + re-add the headers so the
     # Evidentia process only sees trusted values, or set the env
     # var only in proxy-fronted deployments.
@@ -369,7 +369,7 @@ def create_app(
     app.state.trust_proxy_headers = trust_proxy_headers
     app.state.rbac_policy = rbac_policy
 
-    # Register routers. Each router is a focused module — see routers/*.py.
+    # Register routers. Each router is a focused module - see routers/*.py.
     # Imports are deferred so module-load errors in one router don't take
     # down the whole server.
     from evidentia_api.routers import (
@@ -436,6 +436,9 @@ def create_app(
         risks as risks_router,
     )
     from evidentia_api.routers import (
+        scap as scap_router,
+    )
+    from evidentia_api.routers import (
         tprm as tprm_router,
     )
     from evidentia_api.routers import (
@@ -454,28 +457,29 @@ def create_app(
     app.include_router(init_wizard_router.router, prefix="/api", tags=["init"])
     app.include_router(integrations_router.router, prefix="/api", tags=["integrations"])
     app.include_router(collectors_router.router, prefix="/api", tags=["collectors"])
+    app.include_router(scap_router.router, prefix="/api", tags=["collectors"])
     app.include_router(tprm_router.router, prefix="/api", tags=["tprm"])
     app.include_router(model_risk_router.router, prefix="/api", tags=["model-risk"])
     app.include_router(poam_router.router, prefix="/api", tags=["poam"])
     app.include_router(conmon_router.router, prefix="/api", tags=["conmon"])
     app.include_router(ai_gov_router.router, prefix="/api", tags=["ai-gov"])
-    # v0.10.12 Wave 1 — local-store CRUD areas (governance / retention /
+    # v0.10.12 Wave 1 - local-store CRUD areas (governance / retention /
     # evidence). Evidence is the first router to adopt per-route RBAC
     # (require_role), mirroring its CLI @require_role_cli gates; governance +
     # retention gate mutations write/admin per the v0.10.12 threat-model.
     app.include_router(governance_router.router, prefix="/api", tags=["governance"])
     app.include_router(retention_router.router, prefix="/api", tags=["retention"])
     app.include_router(evidence_router.router, prefix="/api", tags=["evidence"])
-    # v0.10.12 Wave 2 — catalog management verbs (crosswalk/where/license-info
+    # v0.10.12 Wave 2 - catalog management verbs (crosswalk/where/license-info
     # reads + import/remove local writes). Distinct from the read-only
     # `frameworks` browse router.
     app.include_router(catalog_router.router, prefix="/api", tags=["catalog"])
-    # v0.10.12 Wave 3 — read-only OSCAL verify + unsigned traceability emit
+    # v0.10.12 Wave 3 - read-only OSCAL verify + unsigned traceability emit
     # (signing stays CLI-only; these back the read-mostly GUI views).
     app.include_router(oscal_router.router, prefix="/api", tags=["oscal"])
     app.include_router(traceability_router.router, prefix="/api", tags=["traceability"])
 
-    # Static SPA mount — everything that isn't /api/* falls through to index.html.
+    # Static SPA mount - everything that isn't /api/* falls through to index.html.
     _mount_spa(app)
 
     return app
@@ -502,11 +506,11 @@ def _mount_spa(app: FastAPI) -> None:
         async def _spa_fallback(full_path: str, request: Request) -> FileResponse:
             """Serve index.html for every non-API path so React Router owns routing."""
             if full_path.startswith("api/"):
-                # Defensive — FastAPI routing should have caught these already.
+                # Defensive - FastAPI routing should have caught these already.
                 return FileResponse(STATIC_DIR / "index.html", status_code=404)
             # full_path is user-controlled (URL path component). Validate
             # the resolved candidate sits inside STATIC_DIR before
-            # serving — a request for ``../../etc/passwd`` resolves
+            # serving - a request for ``../../etc/passwd`` resolves
             # outside the static root and falls through to index.html.
             try:
                 target = validate_within(STATIC_DIR / full_path, STATIC_DIR)
@@ -518,7 +522,7 @@ def _mount_spa(app: FastAPI) -> None:
 
     else:
         logger.info(
-            "Static SPA directory is empty at %s — serving dev placeholder. "
+            "Static SPA directory is empty at %s - serving dev placeholder. "
             "Run `npm run build` in packages/evidentia-ui/ to populate.",
             STATIC_DIR,
         )
@@ -565,7 +569,7 @@ _env_dev = os.environ.get("EVIDENTIA_API_DEV", "").strip().lower() in {
 # v0.8.2 F-V81-S2: auth_provider is left None here; the
 # lifespan reads EVIDENTIA_API_AUTH_TOKEN_FILE at startup if
 # present. Module import is now side-effect-free (no filesystem
-# I/O) — safe for tooling that imports for OpenAPI generation,
+# I/O) - safe for tooling that imports for OpenAPI generation,
 # mypy plugin scans, or doc builds.
 app = create_app(
     offline=_env_offline,

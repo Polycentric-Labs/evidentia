@@ -2306,3 +2306,43 @@ def collect_incident_clock(
     if not complete:
         typer.echo("Inspect the result's source completeness and diagnostics.", err=True)
         raise typer.Exit(1)
+
+
+@app.command("scap")
+@require_role_cli("read")
+def collect_scap(
+    source: Path = typer.Option(..., "--file", metavar="PATH", help="Local SCAP XML results file."),
+    source_profile: str = typer.Option(
+        ..., "--source-profile", metavar="PROFILE", help="Explicit XCCDF or OVAL source profile."
+    ),
+    assessment_index: int = typer.Option(
+        ..., "--assessment-index", metavar="INDEX", help="Zero-based source assessment occurrence."
+    ),
+    cadence_slug: str | None = typer.Option(None, "--cadence-slug", help="Optional existing cadence identifier."),
+    completion_assertion: Path | None = typer.Option(
+        None, "--completion-assertion", metavar="PATH", help="Optional bounded OVAL completion assertion JSON file."
+    ),
+    asserted_by: str | None = typer.Option(
+        None, "--asserted-by", help="Caller label required with a completion assertion."
+    ),
+    output: Path | None = typer.Option(
+        None, "--output", metavar="PATH", help="Write prepared JSON to a local file; omitted means stdout."
+    ),
+    output_view: str = typer.Option("result", "--output-view", help="Output result or artifact JSON."),
+) -> None:
+    """Import one local SCAP results document with explicit profile selection."""
+    try:
+        from ._scap_io import run_scap
+    except Exception:
+        typer.echo("SCAP collection could not be loaded.", err=True)
+        raise typer.Exit(1) from None
+    run_scap(
+        source=source,
+        source_profile=source_profile,
+        assessment_index=assessment_index,
+        cadence_slug=cadence_slug,
+        completion_assertion=completion_assertion,
+        asserted_by=asserted_by,
+        output=output,
+        output_view=output_view,
+    )

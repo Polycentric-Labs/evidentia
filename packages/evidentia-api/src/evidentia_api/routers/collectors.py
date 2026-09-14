@@ -2160,6 +2160,16 @@ async def collect_convert(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return bundle
 
 
+def _status_modules_importable(*module_names: str) -> bool:
+    """Check legacy status importability without classifying import failures."""
+    for module_name in module_names:
+        try:
+            __import__(module_name, globals(), None, (), 0)
+        except ImportError:
+            return False
+    return True
+
+
 @router.get("/collectors/status")
 async def collectors_status() -> dict[str, Any]:
     """Report which collectors are installed + which credentials are set.
@@ -2167,178 +2177,24 @@ async def collectors_status() -> dict[str, Any]:
     Never returns token values — only ``configured: bool`` + the env var
     name the token was sourced from.
     """
-    aws_installed = False
-    github_installed = False
-    okta_installed = False
-    google_workspace_installed = False
-    postgres_installed = False
-    mysql_installed = False
-    sqlite_installed = False
-    mssql_installed = False
-    oracle_installed = False
-    databricks_installed = False
-    snowflake_installed = False
-    vanta_installed = False
-    drata_installed = False
-    bitsight_installed = False
-    securityscorecard_installed = False
-    nessus_installed = False
-    greenbone_installed = False
-    try:
-        import evidentia_collectors.aws
-
-        aws_installed = True
-    except ImportError:
-        pass
-    try:
-        import evidentia_collectors.github
-
-        github_installed = True
-    except ImportError:
-        pass
-    try:
-        import evidentia_collectors.okta
-
-        okta_installed = True
-    except ImportError:
-        pass
-    try:
-        # Google Workspace uses httpx (already a base dep): same pattern
-        # as Vanta/Drata/BitSight/SecurityScorecard.
-        import evidentia_collectors.google_workspace
-
-        google_workspace_installed = True
-    except ImportError:
-        pass
-    try:
-        import evidentia_collectors.sql.mysql
-
-        try:
-            import pymysql  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
-
-            mysql_installed = True
-        except ImportError:
-            mysql_installed = False
-    except ImportError:
-        pass
-    try:
-        # Postgres adapter loads cleanly without psycopg installed;
-        # the actual driver-import happens lazily on first connect.
-        # Detect the driver presence separately so the status surface
-        # reflects ready-to-use vs adapter-imported-but-driver-missing.
-        import evidentia_collectors.sql.postgres
-
-        try:
-            import psycopg  # noqa: F401
-
-            postgres_installed = True
-        except ImportError:
-            postgres_installed = False
-    except ImportError:
-        pass
-    try:
-        # SQLite uses stdlib sqlite3 — no extra dependency to detect.
-        # The adapter's installed status mirrors module importability.
-        import evidentia_collectors.sql.sqlite
-
-        sqlite_installed = True
-    except ImportError:
-        pass
-    try:
-        import evidentia_collectors.sql.mssql
-
-        try:
-            import pyodbc  # noqa: F401
-
-            mssql_installed = True
-        except ImportError:
-            mssql_installed = False
-    except ImportError:
-        pass
-    try:
-        import evidentia_collectors.sql.oracle
-
-        try:
-            import oracledb  # noqa: F401
-
-            oracle_installed = True
-        except ImportError:
-            oracle_installed = False
-    except ImportError:
-        pass
-    try:
-        # Databricks adapter loads cleanly without databricks-sdk
-        # installed; the actual SDK import happens lazily on first
-        # collect_v2 call.
-        import evidentia_collectors.databricks
-
-        try:
-            import databricks.sdk  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
-
-            databricks_installed = True
-        except ImportError:
-            databricks_installed = False
-    except ImportError:
-        pass
-    try:
-        # Snowflake adapter loads cleanly without
-        # snowflake-connector-python installed; the actual driver
-        # import happens lazily on first connect.
-        import evidentia_collectors.snowflake
-
-        try:
-            import snowflake.connector  # type: ignore[import-untyped, unused-ignore]  # noqa: F401
-
-            snowflake_installed = True
-        except ImportError:
-            snowflake_installed = False
-    except ImportError:
-        pass
-    try:
-        # Vanta uses httpx (already a base dep) — no extra pyproject
-        # extra to detect. Adapter importability == ready-to-use.
-        import evidentia_collectors.vanta
-
-        vanta_installed = True
-    except ImportError:
-        pass
-    try:
-        # Drata uses httpx (already a base dep) — same pattern as Vanta.
-        import evidentia_collectors.drata
-
-        drata_installed = True
-    except ImportError:
-        pass
-    try:
-        # BitSight uses httpx (already a base dep) — same pattern.
-        import evidentia_collectors.bitsight
-
-        bitsight_installed = True
-    except ImportError:
-        pass
-    try:
-        # SecurityScorecard uses httpx (already a base dep).
-        import evidentia_collectors.securityscorecard
-
-        securityscorecard_installed = True
-    except ImportError:
-        pass
-    try:
-        # The [scan] extra brings in defusedxml; the adapter module itself
-        # loads cleanly only once that's installed (module-level import).
-        import evidentia_collectors.nessus
-
-        nessus_installed = True
-    except ImportError:
-        pass
-    try:
-        # Same [scan] extra as Nessus: the adapter module loads cleanly
-        # only once defusedxml is installed (module-level import).
-        import evidentia_collectors.greenbone  # noqa: F401
-
-        greenbone_installed = True
-    except ImportError:
-        pass
+    # These legacy status flags mean importable, not proven genuine feature absence.
+    aws_installed = _status_modules_importable("evidentia_collectors.aws")
+    github_installed = _status_modules_importable("evidentia_collectors.github")
+    okta_installed = _status_modules_importable("evidentia_collectors.okta")
+    google_workspace_installed = _status_modules_importable("evidentia_collectors.google_workspace")
+    mysql_installed = _status_modules_importable("evidentia_collectors.sql.mysql", "pymysql")
+    postgres_installed = _status_modules_importable("evidentia_collectors.sql.postgres", "psycopg")
+    sqlite_installed = _status_modules_importable("evidentia_collectors.sql.sqlite")
+    mssql_installed = _status_modules_importable("evidentia_collectors.sql.mssql", "pyodbc")
+    oracle_installed = _status_modules_importable("evidentia_collectors.sql.oracle", "oracledb")
+    databricks_installed = _status_modules_importable("evidentia_collectors.databricks", "databricks.sdk")
+    snowflake_installed = _status_modules_importable("evidentia_collectors.snowflake", "snowflake.connector")
+    vanta_installed = _status_modules_importable("evidentia_collectors.vanta")
+    drata_installed = _status_modules_importable("evidentia_collectors.drata")
+    bitsight_installed = _status_modules_importable("evidentia_collectors.bitsight")
+    securityscorecard_installed = _status_modules_importable("evidentia_collectors.securityscorecard")
+    nessus_installed = _status_modules_importable("evidentia_collectors.nessus")
+    greenbone_installed = _status_modules_importable("evidentia_collectors.greenbone")
 
     return {
         "aws": {

@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import logging
 import os
+import tempfile
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -290,6 +291,14 @@ def _resolve_auto_mirror_backend() -> tuple[object, object] | None:
     return typed_result
 
 
+def _note_evidence_cleanup_failure(primary: BaseException, message: str) -> None:
+    """Keep cleanup diagnostics from replacing the original failure."""
+    try:
+        BaseException.add_note(primary, message)
+    except BaseException:
+        return
+
+
 def save_evidence(
     artifact: EvidenceArtifact,
     evidence_store_dir: Path | None = None,
@@ -314,12 +323,12 @@ def save_evidence(
     layer). Operators wanting fail-fast on mirror failure raise
     the exception in their factory.
 
-    Atomic-write semantics (mirrors poam_store v0.9.0 +
-    vendor_store v0.7.9): writes to ``v<N>.json.tmp`` then
-    ``os.replace`` to the canonical name. A crash mid-write
-    leaves either no file (callers see "lineage version missing")
-    OR the complete valid JSON in place — never a half-written
-    file.
+    Write a unique temporary file and close it before publishing
+    with an atomic hard link that refuses an existing destination.
+    Readers see either no version or the complete JSON. Unsupported
+    storage fails without an overwrite fallback. Cleanup or mirror
+    failures after publication leave the committed version in place;
+    a raised exception does not always mean that nothing was saved.
 
     Args:
         artifact: The evidence artifact to persist. Its
@@ -361,9 +370,45 @@ def save_evidence(
             next_version=head + 1,
         )
 
-    tmp_path = out_path.with_suffix(".json.tmp")
-    tmp_path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
-    os.replace(tmp_path, out_path)
+    payload = artifact.model_dump_json(indent=2)
+    descriptor, temporary_name = tempfile.mkstemp(dir=lineage_dir, prefix=f".{out_path.name}.", suffix=".tmp")
+    try:
+        try:
+            tmp_path = Path(temporary_name)
+            stream = os.fdopen(descriptor, "w", encoding="utf-8")
+        except BaseException as primary:
+            try:
+                os.close(descriptor)
+            except BaseException:
+                _note_evidence_cleanup_failure(primary, "Closing the owned evidence descriptor also failed.")
+            raise
+        try:
+            stream.write(payload)
+        except BaseException as primary:
+            try:
+                stream.close()
+            except BaseException:
+                _note_evidence_cleanup_failure(primary, "Closing the temporary evidence stream also failed.")
+            raise
+        else:
+            stream.close()
+        try:
+            os.link(tmp_path, out_path)
+        except FileExistsError:
+            head = _chain_head_version(canonical_lineage, store)
+            raise EvidenceWORMViolation(
+                lineage_id=canonical_lineage,
+                attempted_version=artifact.version,
+                next_version=head + 1,
+            ) from None
+    except BaseException as primary:
+        try:
+            os.unlink(temporary_name)
+        except BaseException:
+            _note_evidence_cleanup_failure(primary, "Removing the owned temporary evidence file also failed.")
+        raise
+    else:
+        os.unlink(temporary_name)
     logger.debug(
         "Saved evidence v%d for lineage %s: %s",
         artifact.version,

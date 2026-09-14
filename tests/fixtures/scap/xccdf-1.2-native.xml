@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestResult xmlns="http://checklists.nist.gov/xccdf/1.2" id="xccdf_org.example.synthetic_testresult_one" start-time="2024-02-29T23:50:00Z" end-time="2024-02-29T24:00:00-00:00">
+  <benchmark href="urn:synthetic:benchmark:one"/>
+  <target>synthetic-target-one</target>
+  <rule-result idref="xccdf_org.example.synthetic_rule_one">
+    <result>pa<!--split-->ss</result>
+    <instance context="component">alpha</instance>
+  </rule-result>
+  <rule-result idref="xccdf_org.example.synthetic_rule_one">
+    <result>not<?split value?>checked</result>
+    <instance context="component">beta</instance>
+  </rule-result>
+  <score maximum="100">50</score>
+</TestResult>

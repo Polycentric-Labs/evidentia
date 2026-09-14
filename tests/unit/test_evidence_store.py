@@ -11,9 +11,14 @@ Covers:
 
 from __future__ import annotations
 
+import errno
 import logging
+import multiprocessing
+import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
+from threading import Barrier
 from uuid import uuid4
 
 import pytest
@@ -629,3 +634,493 @@ class TestAutoMirrorEnvVar:
             assert "Auto-mirror to WORM backend failed" in caplog.text
         finally:
             sys.modules.pop("test_failing_mirror_mod", None)
+
+
+def _atomic_process_writer(artifact_json: str, store_path: str, barrier, sender) -> None:
+    """Align two separate writers at the actual filesystem publication call."""
+    from evidentia_core import evidence_store as store_module
+
+    os.environ.pop(store_module.EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, None)
+    os.environ.pop(store_module.EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR, None)
+    original_link = store_module.os.link
+
+    def aligned_link(source, destination) -> None:
+        barrier.wait(timeout=15)
+        original_link(source, destination)
+
+    store_module.os.link = aligned_link
+    try:
+        artifact = EvidenceArtifact.model_validate_json(artifact_json)
+        saved = save_evidence(artifact, evidence_store_dir=Path(store_path))
+        sender.send(("saved", saved.read_bytes()))
+    except EvidenceWORMViolation:
+        sender.send(("worm", None))
+    except BaseException as error:
+        sender.send(("error", type(error).__name__))
+        raise
+    finally:
+        sender.close()
+
+
+class TestAtomicEvidencePublication:
+    @pytest.fixture(autouse=True)
+    def isolate_mirror_configuration(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        monkeypatch.delenv(store_module.EVIDENCE_AUTO_MIRROR_WORM_ENV_VAR, raising=False)
+        monkeypatch.delenv(store_module.EVIDENCE_AUTO_MIRROR_BACKEND_ENV_VAR, raising=False)
+
+    @pytest.mark.parametrize("identical", [False, True])
+    def test_two_writers_keep_first_complete_version(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, identical: bool
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        first = _make_artifact(title="First complete artifact")
+        second = first.model_copy(update={} if identical else {"title": "Second complete artifact"})
+        barrier = Barrier(2)
+        link = store_module.os.link
+        temporary_paths: list[Path] = []
+        first_published: list[bytes] = []
+        mirror_calls: list[bool] = []
+
+        def publish(source: Path, destination: Path) -> None:
+            temporary_paths.append(source)
+            barrier.wait(timeout=10)
+            link(source, destination)
+            first_published.append(destination.read_bytes())
+
+        def mirror_disabled() -> None:
+            mirror_calls.append(True)
+
+        def save(artifact: EvidenceArtifact) -> str:
+            try:
+                save_evidence(artifact, evidence_store_dir=store_dir)
+            except EvidenceWORMViolation:
+                return "worm"
+            return "saved"
+
+        monkeypatch.setattr(store_module.os, "link", publish)
+        monkeypatch.setattr(store_module, "_resolve_auto_mirror_backend", mirror_disabled)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(save, artifact) for artifact in (first, second)]
+            outcomes = [future.result(timeout=15) for future in futures]
+        assert sorted(outcomes) == ["saved", "worm"]
+        destination = store_dir / first.effective_lineage_id / "v1.json"
+        assert first_published == [destination.read_bytes()]
+        assert len(set(temporary_paths)) == 2
+        assert all(not temporary.exists() for temporary in temporary_paths)
+        assert len(mirror_calls) == 1
+        winner = load_evidence_version(first.effective_lineage_id, 1, evidence_store_dir=store_dir)
+        assert winner.title in {first.title, second.title}
+
+    def test_separate_process_writers_cannot_overwrite(self, store_dir: Path) -> None:
+        first = _make_artifact(title="Process one")
+        second = first.model_copy(update={"title": "Process two"})
+        context = multiprocessing.get_context("spawn")
+        barrier = context.Barrier(2)
+        receivers = []
+        children = []
+        try:
+            for artifact in (first, second):
+                receiver, sender = context.Pipe(duplex=False)
+                child = context.Process(
+                    target=_atomic_process_writer,
+                    args=(artifact.model_dump_json(), str(store_dir), barrier, sender),
+                )
+                child.start()
+                sender.close()
+                receivers.append(receiver)
+                children.append(child)
+            outcomes = []
+            for receiver in receivers:
+                assert receiver.poll(25), "Writer did not finish within the finite test budget"
+                outcomes.append(receiver.recv())
+            for child in children:
+                child.join(timeout=5)
+                assert not child.is_alive()
+                assert child.exitcode == 0
+            assert sorted(outcome[0] for outcome in outcomes) == ["saved", "worm"]
+            saved_bytes = next(value for status, value in outcomes if status == "saved")
+            destination = store_dir / first.effective_lineage_id / "v1.json"
+            assert destination.read_bytes() == saved_bytes
+            assert EvidenceArtifact.model_validate_json(saved_bytes).id == first.id
+            assert list(destination.parent.glob("*.tmp")) == []
+        finally:
+            for child in children:
+                if child.is_alive():
+                    child.terminate()
+                child.join(timeout=5)
+            for receiver in receivers:
+                receiver.close()
+
+    def test_closed_complete_bytes_before_publication(self, store_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        artifact = _make_artifact(title="Exact native newline and Unicode: caf\u00e9")
+        destination = store_dir / artifact.effective_lineage_id / "v1.json"
+        expected = artifact.model_dump_json(indent=2).replace("\n", os.linesep).encode("utf-8")
+        fdopen = store_module.os.fdopen
+        link = store_module.os.link
+        descriptors: list[int] = []
+        observations: list[str] = []
+
+        class PausedWrite:
+            def __init__(self, stream) -> None:
+                self.stream = stream
+
+            def write(self, payload: str) -> None:
+                self.stream.write(payload[:17])
+                self.stream.flush()
+                assert not destination.exists()
+                observations.append("partial_private_only")
+                self.stream.write(payload[17:])
+
+            def close(self) -> None:
+                self.stream.close()
+
+        def opened(descriptor: int, *args, **kwargs):
+            descriptors.append(descriptor)
+            return PausedWrite(fdopen(descriptor, *args, **kwargs))
+
+        def publish(source: Path, target: Path) -> None:
+            with pytest.raises(OSError):
+                os.fstat(descriptors[0])
+            assert not target.exists()
+            assert source.read_bytes() == expected
+            link(source, target)
+            observations.append("complete_canonical")
+
+        monkeypatch.setattr(store_module.os, "fdopen", opened)
+        monkeypatch.setattr(store_module.os, "link", publish)
+        assert save_evidence(artifact, evidence_store_dir=store_dir) == destination
+        assert observations == ["partial_private_only", "complete_canonical"]
+        assert destination.read_bytes() == expected
+
+    @pytest.mark.parametrize("stage", ["serialize", "create", "open", "write", "close", "link"])
+    @pytest.mark.parametrize("cancel", [False, True])
+    def test_precommit_failure_keeps_primary_and_cleans_owned_state(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, stage: str, cancel: bool
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        class Cancelled(BaseException):
+            pass
+
+        primary = Cancelled() if cancel else OSError(errno.EIO, "injected owned save failure")
+        artifact = _make_artifact()
+        destination = store_dir / artifact.effective_lineage_id / "v1.json"
+        fdopen = store_module.os.fdopen
+        descriptors: list[int] = []
+        mirrors: list[bool] = []
+
+        def fail(*args, **kwargs):
+            raise primary
+
+        class FailingStream:
+            def __init__(self, stream) -> None:
+                self.stream = stream
+
+            def write(self, payload: str) -> None:
+                if stage == "write":
+                    self.stream.write(payload[:13])
+                    raise primary
+                self.stream.write(payload)
+
+            def close(self) -> None:
+                self.stream.close()
+                if stage == "close":
+                    raise primary
+
+        def opened(descriptor: int, *args, **kwargs):
+            descriptors.append(descriptor)
+            if stage == "open":
+                raise primary
+            return FailingStream(fdopen(descriptor, *args, **kwargs))
+
+        monkeypatch.setattr(store_module, "_resolve_auto_mirror_backend", lambda: mirrors.append(True))
+        if stage == "serialize":
+            monkeypatch.setattr(EvidenceArtifact, "model_dump_json", fail)
+        elif stage == "create":
+            monkeypatch.setattr(store_module.tempfile, "mkstemp", fail)
+        elif stage == "link":
+            monkeypatch.setattr(store_module.os, "link", fail)
+        else:
+            monkeypatch.setattr(store_module.os, "fdopen", opened)
+        with pytest.raises(type(primary)) as caught:
+            save_evidence(artifact, evidence_store_dir=store_dir)
+        assert caught.value is primary
+        assert not destination.exists()
+        assert list(destination.parent.glob("*.tmp")) == []
+        assert mirrors == []
+        for descriptor in descriptors:
+            with pytest.raises(OSError):
+                os.fstat(descriptor)
+
+    def test_cleanup_failure_cannot_replace_primary_cancellation(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        class Cancelled(BaseException):
+            pass
+
+        primary = Cancelled()
+        artifact = _make_artifact()
+        unlink = os.unlink
+        owned: list[Path] = []
+
+        def fail_link(source: Path, destination: Path) -> None:
+            owned.append(source)
+            raise primary
+
+        def fail_cleanup(target: Path, *args, **kwargs) -> None:
+            if Path(target) in owned:
+                raise OSError(errno.EACCES, "injected cleanup failure")
+            unlink(target, *args, **kwargs)
+
+        monkeypatch.setattr(store_module.os, "link", fail_link)
+        monkeypatch.setattr(store_module.os, "unlink", fail_cleanup)
+        try:
+            with pytest.raises(Cancelled) as caught:
+                save_evidence(artifact, evidence_store_dir=store_dir)
+            assert caught.value is primary
+            assert primary.__notes__ == ["Removing the owned temporary evidence file also failed."]
+            assert not (store_dir / artifact.effective_lineage_id / "v1.json").exists()
+        finally:
+            for temporary in owned:
+                unlink(temporary)
+
+    @pytest.mark.parametrize("cancel", [False, True])
+    def test_postcommit_failure_retains_complete_version(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, cancel: bool
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        class Cancelled(BaseException):
+            pass
+
+        artifact = _make_artifact()
+        destination = store_dir / artifact.effective_lineage_id / "v1.json"
+        original_link = store_module.os.link
+        original_unlink = os.unlink
+        primary = Cancelled() if cancel else OSError(errno.EACCES, "postcommit cleanup failure")
+        owned: list[Path] = []
+        mirrors: list[bool] = []
+
+        def publish(source: Path, target: Path) -> None:
+            owned.append(source)
+            original_link(source, target)
+            if cancel:
+                raise primary
+
+        def cleanup(target: Path, *args, **kwargs) -> None:
+            if Path(target) in owned and not cancel:
+                raise primary
+            original_unlink(target, *args, **kwargs)
+
+        monkeypatch.setattr(store_module.os, "link", publish)
+        monkeypatch.setattr(store_module.os, "unlink", cleanup)
+        monkeypatch.setattr(store_module, "_resolve_auto_mirror_backend", lambda: mirrors.append(True))
+        try:
+            with pytest.raises(type(primary)) as caught:
+                save_evidence(artifact, evidence_store_dir=store_dir)
+            assert caught.value is primary
+            assert destination.read_bytes() == artifact.model_dump_json(indent=2).replace("\n", os.linesep).encode(
+                "utf-8"
+            )
+            assert mirrors == []
+        finally:
+            for temporary in owned:
+                if temporary.exists():
+                    original_unlink(temporary)
+
+    @pytest.mark.parametrize("error_number", [errno.EACCES, errno.ENOTSUP, errno.EXDEV])
+    def test_unsupported_publication_has_no_overwrite_fallback(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, error_number: int
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        artifact = _make_artifact()
+
+        def unsupported(*args, **kwargs) -> None:
+            raise OSError(error_number, "no atomic hard-link publication")
+
+        def forbidden(*args, **kwargs) -> None:
+            raise AssertionError("Overwrite fallback must not run")
+
+        monkeypatch.setattr(store_module.os, "link", unsupported)
+        monkeypatch.setattr(store_module.os, "replace", forbidden)
+        monkeypatch.setattr(store_module.os, "rename", forbidden)
+        with pytest.raises(OSError) as caught:
+            save_evidence(artifact, evidence_store_dir=store_dir)
+        assert caught.value.errno == error_number
+        directory = store_dir / artifact.effective_lineage_id
+        assert not (directory / "v1.json").exists()
+        assert list(directory.glob("*.tmp")) == []
+
+    @pytest.mark.parametrize("fail_publication", [False, True])
+    def test_unrelated_temporary_files_remain_unchanged(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, fail_publication: bool
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        artifact = _make_artifact()
+        directory = store_dir / artifact.effective_lineage_id
+        directory.mkdir(parents=True)
+        unrelated = [directory / "v1.json.tmp", directory / ".v1.json.other-writer.tmp"]
+        expected = b"Other writer's private incomplete bytes"
+        for target in unrelated:
+            target.write_bytes(expected)
+
+        def refuse(*args, **kwargs) -> None:
+            raise OSError(errno.EACCES, "injected publication refusal")
+
+        if fail_publication:
+            monkeypatch.setattr(store_module.os, "link", refuse)
+            with pytest.raises(OSError):
+                save_evidence(artifact, evidence_store_dir=store_dir)
+        else:
+            save_evidence(artifact, evidence_store_dir=store_dir)
+        assert all(target.read_bytes() == expected for target in unrelated)
+        assert set(directory.glob("*.tmp")) == set(unrelated)
+        assert (directory / "v1.json").exists() is not fail_publication
+
+    @pytest.mark.parametrize("stage", ["resolver", "backend"])
+    def test_mirror_cancellation_retains_committed_artifact(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, stage: str
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+        from evidentia_core import evidence_store_worm as worm_module
+
+        class Cancelled(BaseException):
+            pass
+
+        primary = Cancelled()
+        artifact = _make_artifact()
+        destination = store_dir / artifact.effective_lineage_id / "v1.json"
+        expected = artifact.model_dump_json(indent=2).replace("\n", os.linesep).encode("utf-8")
+        observed = []
+
+        def cancelled(*args, **kwargs):
+            observed.append(destination.read_bytes())
+            raise primary
+
+        if stage == "resolver":
+            monkeypatch.setattr(store_module, "_resolve_auto_mirror_backend", cancelled)
+        else:
+            monkeypatch.setattr(store_module, "_resolve_auto_mirror_backend", lambda: (object(), object()))
+            monkeypatch.setattr(worm_module, "mirror_to_worm", cancelled)
+        with pytest.raises(Cancelled) as caught:
+            save_evidence(artifact, evidence_store_dir=store_dir)
+        assert caught.value is primary
+        assert observed == [expected]
+        assert destination.read_bytes() == expected
+        assert list(destination.parent.glob("*.tmp")) == []
+
+    @pytest.mark.parametrize("stage", ["open", "write", "link"])
+    def test_damaged_exception_notes_never_replace_primary(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch, stage: str
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        class Cancelled(BaseException):
+            pass
+
+        primary = Cancelled()
+        primary.__notes__ = ()
+        artifact = _make_artifact()
+        create = store_module.tempfile.mkstemp
+        close = os.close
+        unlink = os.unlink
+        fdopen = os.fdopen
+        owned = []
+
+        def created(*args, **kwargs):
+            result = create(*args, **kwargs)
+            owned.append(result)
+            return result
+
+        def closing(descriptor: int) -> None:
+            close(descriptor)
+            if stage == "open" and owned and descriptor == owned[0][0]:
+                raise OSError(errno.EIO, "secondary close failure")
+
+        class FailingStream:
+            def __init__(self, stream) -> None:
+                self.stream = stream
+
+            def write(self, payload: str) -> None:
+                self.stream.write(payload[:13])
+                raise primary
+
+            def close(self) -> None:
+                self.stream.close()
+                raise OSError(errno.EIO, "secondary stream failure")
+
+        def opened(descriptor: int, *args, **kwargs):
+            if stage == "open":
+                raise primary
+            return FailingStream(fdopen(descriptor, *args, **kwargs))
+
+        def refused(*args, **kwargs) -> None:
+            raise primary
+
+        def cleanup(target, *args, **kwargs) -> None:
+            if stage == "link" and owned and str(target) == owned[0][1]:
+                raise OSError(errno.EACCES, "secondary unlink failure")
+            unlink(target, *args, **kwargs)
+
+        monkeypatch.setattr(store_module.tempfile, "mkstemp", created)
+        monkeypatch.setattr(store_module.os, "close", closing)
+        monkeypatch.setattr(store_module.os, "unlink", cleanup)
+        if stage in ("open", "write"):
+            monkeypatch.setattr(store_module.os, "fdopen", opened)
+        else:
+            monkeypatch.setattr(store_module.os, "link", refused)
+        try:
+            with pytest.raises(Cancelled) as caught:
+                save_evidence(artifact, evidence_store_dir=store_dir)
+            assert caught.value is primary
+            assert primary.__notes__ == ()
+            assert not (store_dir / artifact.effective_lineage_id / "v1.json").exists()
+            for descriptor, _ in owned:
+                with pytest.raises(OSError):
+                    os.fstat(descriptor)
+        finally:
+            for _, name in owned:
+                if Path(name).exists():
+                    unlink(name)
+
+    def test_path_allocation_failure_closes_created_descriptor_and_removes_owned_file(
+        self, store_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from evidentia_core import evidence_store as store_module
+
+        primary = MemoryError("injected temporary path allocation failure")
+        artifact = _make_artifact()
+        create = store_module.tempfile.mkstemp
+        original_path = store_module.Path
+        owned = []
+
+        def created(*args, **kwargs):
+            result = create(*args, **kwargs)
+            owned.append(result)
+            return result
+
+        def allocated(value, *args, **kwargs):
+            if owned and value == owned[0][1]:
+                raise primary
+            return original_path(value, *args, **kwargs)
+
+        monkeypatch.setattr(store_module.tempfile, "mkstemp", created)
+        monkeypatch.setattr(store_module, "Path", allocated)
+        with pytest.raises(MemoryError) as caught:
+            save_evidence(artifact, evidence_store_dir=store_dir)
+        assert caught.value is primary
+        assert len(owned) == 1
+        descriptor, name = owned[0]
+        with pytest.raises(OSError):
+            os.fstat(descriptor)
+        assert not original_path(name).exists()
+        assert not (store_dir / artifact.effective_lineage_id / "v1.json").exists()

@@ -968,6 +968,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collectors/scap/collect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Collect Scap
+         * @description Return every validated field, including a required nullable artifact.
+         */
+        post: operations["collect_scap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/securityscorecard/collect": {
         parameters: {
             query?: never;
@@ -3803,6 +3823,67 @@ export interface components {
          * @enum {string}
          */
         AnnexIIIDomain: "biometrics" | "critical_infrastructure" | "education" | "employment" | "essential_services" | "law_enforcement" | "migration" | "justice" | "none";
+        /** ArtifactAvailability */
+        ArtifactAvailability: {
+            /** Reasons */
+            reasons: ("native_completion_absent" | "native_completion_timezone_missing" | "native_completion_precision_unsupported" | "native_completion_range_unsupported" | "native_completion_normalization_unsupported" | "native_completion_future" | "native_start_unresolved" | "native_completion_before_start")[];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "available" | "unavailable";
+        };
+        /** AssertionActor */
+        AssertionActor: {
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "caller_declared" | "api_authenticated";
+            /** Provider */
+            provider: string | null;
+            /** Subject */
+            subject: string;
+        };
+        /** AssessmentProjection */
+        AssessmentProjection: {
+            coverage: components["schemas"]["CoverageProjection"];
+            /** Finding Refs */
+            finding_refs: components["schemas"]["FindingReference"][];
+            /** Outcomes */
+            outcomes: components["schemas"]["OutcomeOccurrence"][];
+            selection: components["schemas"]["AssessmentSelection"];
+            /** Times */
+            times: components["schemas"]["SourceTimeObservation"][];
+            /** Uninterpreted Roots */
+            uninterpreted_roots: number[];
+            /** Units */
+            units: components["schemas"]["AssessmentUnit"][];
+        };
+        /** AssessmentSelection */
+        AssessmentSelection: {
+            /** Assessment Index */
+            assessment_index: number;
+            /** Node Index */
+            node_index: number;
+            /**
+             * Unit Kind
+             * @enum {string}
+             */
+            unit_kind: "xccdf_test_result" | "oval_system";
+        };
+        /** AssessmentUnit */
+        AssessmentUnit: {
+            /** Assessment Index */
+            assessment_index: number;
+            /** Node Index */
+            node_index: number;
+            /**
+             * Unit Kind
+             * @enum {string}
+             */
+            unit_kind: "xccdf_test_result" | "oval_system";
+        };
         /** @enum {string} */
         AuthMode: "application" | "delegated";
         /** AzureTarget */
@@ -3826,6 +3907,20 @@ export interface components {
             /** Scope Label */
             scope_label?: string | null;
             target: components["schemas"]["CertificateTarget"];
+        };
+        /** CadenceProjection */
+        CadenceProjection: {
+            /** Linked Slug */
+            linked_slug: string | null;
+            /** Reasons */
+            reasons: (("native_completion_absent" | "native_completion_timezone_missing" | "native_completion_precision_unsupported" | "native_completion_range_unsupported" | "native_completion_normalization_unsupported" | "native_completion_future" | "native_start_unresolved" | "native_completion_before_start") | ("no_selected_outcome_evidence" | "selected_outcomes_not_evaluated"))[];
+            /** Requested Slug */
+            requested_slug: string | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "not_requested" | "linked" | "ineligible";
         };
         /**
          * CadenceSeries
@@ -4292,6 +4387,19 @@ export interface components {
             /** Window Days */
             window_days: number;
         };
+        /** ClassDirectives */
+        ClassDirectives: {
+            class_ref: components["schemas"]["NativeValueRef"];
+            /**
+             * Definition Class
+             * @enum {string}
+             */
+            definition_class: "compliance" | "inventory" | "miscellaneous" | "patch" | "vulnerability";
+            /** Node Index */
+            node_index: number;
+            /** Rules */
+            rules: components["schemas"]["DirectiveRule"][];
+        };
         /** ClockOutcome */
         ClockOutcome: {
             /** Elapsed Seconds */
@@ -4463,6 +4571,25 @@ export interface components {
              * @description Non-fatal issues encountered during collection: rate-limit backoffs, skipped resources, blind-spot disclosures.
              */
             warnings?: string[];
+        };
+        /** CompletionProjection */
+        CompletionProjection: {
+            assertion: components["schemas"]["StableCompletionAssertion"] | null;
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "native_reported" | "operator_asserted" | "none";
+            native_ref: components["schemas"]["NativeValueRef"] | null;
+            /** Qualification Reasons */
+            qualification_reasons: ("native_completion_absent" | "native_completion_timezone_missing" | "native_completion_precision_unsupported" | "native_completion_range_unsupported" | "native_completion_normalization_unsupported" | "native_completion_future" | "native_start_unresolved" | "native_completion_before_start")[];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "native_qualified" | "operator_qualified" | "unqualified";
+            /** Utc */
+            utc: string | null;
         };
         /**
          * ComplianceStatus
@@ -4816,6 +4943,24 @@ export interface components {
              */
             threat_name?: string | null;
         };
+        /** CoreStatusDefault */
+        CoreStatusDefault: {
+            /**
+             * Effective Status
+             * @enum {string}
+             */
+            effective_status: "error" | "exists" | "does not exist" | "not collected";
+            /**
+             * Interpretation
+             * @constant
+             */
+            interpretation: "reviewed_5_8_core_ip_address_status";
+            /** Node Index */
+            node_index: number;
+            /** Present */
+            present: boolean;
+            value_ref: components["schemas"]["NativeValueRef"] | null;
+        };
         /**
          * CoverageCount
          * @description One resource-type's scan/match/collect counts within a run.
@@ -4852,6 +4997,86 @@ export interface components {
             null: number;
             /** Unknown */
             unknown: number;
+        };
+        /** CoverageProjection */
+        CoverageProjection: {
+            /**
+             * Cadence Evidence
+             * @enum {string}
+             */
+            cadence_evidence: "countable" | "empty" | "not_evaluated";
+            /** Collection Flags */
+            collection_flags: components["schemas"]["NativeCollectionFlag"][];
+            /**
+             * Complete Schema Validation
+             * @constant
+             */
+            complete_schema_validation: "not_performed";
+            /** Core Status Defaults */
+            core_status_defaults: components["schemas"]["CoreStatusDefault"][];
+            /** Countable Top Level Outcome Count */
+            countable_top_level_outcome_count: number;
+            /**
+             * Native Export Detail
+             * @enum {string}
+             */
+            native_export_detail: "not_applicable" | "full" | "thin" | "mixed" | "no_reported_rules";
+            /** Outcome Counts */
+            outcome_counts: components["schemas"]["OutcomeCountRow"][];
+            oval_directives: components["schemas"]["OvalDirectiveProjection"] | null;
+            /**
+             * Platform Validation
+             * @constant
+             */
+            platform_validation: "not_performed";
+            /**
+             * Producer Interoperability
+             * @constant
+             */
+            producer_interoperability: "not_established";
+            /**
+             * Schema Validation
+             * @constant
+             */
+            schema_validation: "bounded_core_profile_rules";
+            /**
+             * Scope
+             * @constant
+             */
+            scope: "selected_assessment_native_projection";
+            /** Selected Node Index */
+            selected_node_index: number;
+            /** Selected Outcome Count */
+            selected_outcome_count: number;
+            /**
+             * Selected Unit Count
+             * @constant
+             */
+            selected_unit_count: 1;
+            /** Signature Node Indices */
+            signature_node_indices: number[];
+            /**
+             * Signature Verification
+             * @constant
+             */
+            signature_verification: "not_performed";
+            /**
+             * Source Population Complete
+             * @constant
+             */
+            source_population_complete: "not_established";
+            /** Status Observations */
+            status_observations: components["schemas"]["UnverifiedPlatformStatus"][];
+            /** Top Level Outcome Count */
+            top_level_outcome_count: number;
+            /** Uninterpreted Node Count */
+            uninterpreted_node_count: number;
+            /** Unselected Unit Count */
+            unselected_unit_count: number;
+            /** Visible Outcome Count */
+            visible_outcome_count: number;
+            /** Visible Unit Count */
+            visible_unit_count: number;
         };
         /** @enum {string} */
         CredentialBasis: "unverified:primary-token" | "unverified:retention-token" | "unverified:dlp-export";
@@ -4926,6 +5151,25 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** DefaultedBoolean */
+        DefaultedBoolean: {
+            /** Effective Value */
+            effective_value: boolean;
+            /** Present */
+            present: boolean;
+            value_ref: components["schemas"]["NativeValueRef"] | null;
+        };
+        /** DefaultedContent */
+        DefaultedContent: {
+            /**
+             * Effective Value
+             * @enum {string}
+             */
+            effective_value: "full" | "thin";
+            /** Present */
+            present: boolean;
+            value_ref: components["schemas"]["NativeValueRef"] | null;
+        };
         /**
          * DeploymentStatus
          * @description Operational lifecycle status of a registered AI system.
@@ -4971,6 +5215,18 @@ export interface components {
              * @description Distinct vendors that have at least one value on this dimension. Different from ``total_vendors`` when some vendors are missing the dimension entirely (e.g., region left blank).
              */
             vendors_with_value: number;
+        };
+        /** DirectiveRule */
+        DirectiveRule: {
+            content: components["schemas"]["DefaultedContent"];
+            /** Node Index */
+            node_index: number;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "true" | "false" | "unknown" | "error" | "not evaluated" | "not applicable";
+            reported: components["schemas"]["DefaultedBoolean"];
         };
         /** DomainTarget */
         DomainTarget: {
@@ -5803,6 +6059,13 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ExpandedName */
+        ExpandedName: {
+            /** Local Name */
+            local_name: string;
+            /** Namespace Uri */
+            namespace_uri: string;
+        };
         /** FCCOrganizationTarget */
         FCCOrganizationTarget: {
             /** Organization Name */
@@ -5920,6 +6183,20 @@ export interface components {
             /** Scope Label */
             scope_label?: string | null;
             target: components["schemas"]["ProductTarget"];
+        };
+        /** FindingReference */
+        FindingReference: {
+            /** Finding Id */
+            finding_id: string;
+            /**
+             * Mapping Rule Id
+             * @constant
+             */
+            mapping_rule_id: "scap-assessment-summary-v1";
+            /** Node Index */
+            node_index: number;
+            /** Source Key Sha256 */
+            source_key_sha256: string;
         };
         /**
          * FindingStatus
@@ -6804,6 +7081,30 @@ export interface components {
          * @enum {string}
          */
         LineOfDefense: "first" | "second" | "third";
+        /** LinkedArtifactMetadata */
+        LinkedArtifactMetadata: {
+            /** Assessment Index */
+            assessment_index: number;
+            /** Cadence Slug */
+            cadence_slug: string;
+            /**
+             * Scap Contract
+             * @constant
+             */
+            scap_contract: "scap-evidence-v1";
+            /**
+             * Source Profile
+             * @enum {string}
+             */
+            source_profile: "xccdf-1.2-results" | "oval-5.8-core-results" | "oval-5.11.2-core-results" | "oval-5.12.3-core-results";
+            /** Source Sha256 */
+            source_sha256: string;
+            /**
+             * Time Basis
+             * @enum {string}
+             */
+            time_basis: "native_reported" | "operator_asserted";
+        };
         /**
          * ListAcquisitionsResponse
          * @description 200 body for ``GET /ai-gov/acquisitions``.
@@ -7324,6 +7625,34 @@ export interface components {
          * @enum {string}
          */
         NISTAIRMFFunction: "govern" | "map" | "measure" | "manage";
+        /** NamespaceDeclaration */
+        NamespaceDeclaration: {
+            /** Namespace Uri */
+            namespace_uri: string;
+            /** Prefix */
+            prefix: string;
+        };
+        /** NativeCollectionFlag */
+        NativeCollectionFlag: {
+            /**
+             * Native Flag
+             * @enum {string}
+             */
+            native_flag: "error" | "complete" | "incomplete" | "does not exist" | "not collected" | "not applicable";
+            /** Object Node Index */
+            object_node_index: number;
+            value_ref: components["schemas"]["NativeValueRef"];
+        };
+        /** NativeDocument */
+        NativeDocument: {
+            /** Children */
+            children: number[];
+            declaration: components["schemas"]["XmlDeclaration"] | null;
+            /** Nodes */
+            nodes: (components["schemas"]["XmlElement"] | components["schemas"]["XmlComment"] | components["schemas"]["XmlPI"])[];
+            /** Text */
+            text: string | null;
+        };
         /** NativeTextCell */
         NativeTextCell: {
             /**
@@ -7333,6 +7662,18 @@ export interface components {
             state: "missing" | "null" | "empty" | "value";
             /** Value */
             value: string | null;
+        };
+        /** NativeValueRef */
+        NativeValueRef: {
+            /** Attribute Index */
+            attribute_index: number | null;
+            /** Node Index */
+            node_index: number;
+            /**
+             * Slot
+             * @enum {string}
+             */
+            slot: "text" | "attribute_value" | "element_simple_content";
         };
         /**
          * NessusCollectResponse
@@ -7395,6 +7736,16 @@ export interface components {
             slug: string;
         };
         Nonnegative: number;
+        /** NormalizedSourceTime */
+        NormalizedSourceTime: {
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "normalized" | "timezone_missing" | "precision_unsupported" | "range_unsupported" | "normalization_unsupported";
+            /** Utc */
+            utc: string | null;
+        };
         /**
          * OLIRRelationship
          * @description NIST OLIR (Online Informative References) relationship types.
@@ -7622,6 +7973,51 @@ export interface components {
              * @description FAIR risk band (severe/high/significant/moderate/low).
              */
             risk_category: string;
+        };
+        /** OutcomeCountRow */
+        OutcomeCountRow: {
+            /** Count */
+            count: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "xccdf_rule_result" | "oval_definition" | "oval_criteria" | "oval_criterion" | "oval_extend_definition" | "oval_test" | "oval_tested_item";
+            /**
+             * Native Result
+             * @enum {string}
+             */
+            native_result: "pass" | "fail" | "error" | "unknown" | "notapplicable" | "informational" | "fixed" | "notchecked" | "notselected" | "true" | "false" | "not evaluated" | "not applicable";
+        };
+        /** OutcomeOccurrence */
+        OutcomeOccurrence: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "xccdf_rule_result" | "oval_definition" | "oval_criteria" | "oval_criterion" | "oval_extend_definition" | "oval_test" | "oval_tested_item";
+            /**
+             * Native Result
+             * @enum {string}
+             */
+            native_result: "pass" | "fail" | "error" | "unknown" | "notapplicable" | "informational" | "fixed" | "notchecked" | "notselected" | "true" | "false" | "not evaluated" | "not applicable";
+            /** Node Index */
+            node_index: number;
+            /** Unit Node Index */
+            unit_node_index: number;
+            value_ref: components["schemas"]["NativeValueRef"];
+        };
+        /** OvalDirectiveProjection */
+        OvalDirectiveProjection: {
+            /** Class Rules */
+            class_rules: components["schemas"]["ClassDirectives"][];
+            /** Default Rules */
+            default_rules: components["schemas"]["DirectiveRule"][];
+            /** Embedded Definitions Node Index */
+            embedded_definitions_node_index: number | null;
+            include_source_definitions: components["schemas"]["DefaultedBoolean"];
+            /** Node Index */
+            node_index: number;
         };
         /**
          * Owner
@@ -8572,6 +8968,355 @@ export interface components {
             scope_label?: string | null;
             target: components["schemas"]["EndpointTarget"];
         };
+        /** ScapAssessmentSummary */
+        ScapAssessmentSummary: {
+            /** Countable Top Level Outcome Count */
+            countable_top_level_outcome_count: number;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "scap-assessment-summary-v1";
+            /** Selected Outcome Count */
+            selected_outcome_count: number;
+            selection: components["schemas"]["AssessmentSelection"];
+            source: components["schemas"]["SourceBinding"];
+            /** Source Key Sha256 */
+            source_key_sha256: string;
+            /**
+             * Summary Only
+             * @constant
+             */
+            summary_only: true;
+            /** Top Level Outcome Count */
+            top_level_outcome_count: number;
+            /** Visible Unit Count */
+            visible_unit_count: number;
+        };
+        /** ScapCollectionContext */
+        ScapCollectionContext: {
+            /** Collected At */
+            collected_at: string;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "scap";
+            /** Collector Version */
+            collector_version: string;
+            /**
+             * Credential Identity
+             * @constant
+             */
+            credential_identity: "not-established";
+            /** Evidentia Version */
+            evidentia_version: string;
+            filter_applied: components["schemas"]["ScapImportFilter"];
+            /** Pagination Context */
+            pagination_context: null;
+            /** Run Id */
+            run_id: string;
+            /** Source System Id */
+            source_system_id: string;
+        };
+        /** ScapCollectionManifest */
+        ScapCollectionManifest: {
+            /** Collection Finished At */
+            collection_finished_at: string;
+            /** Collection Started At */
+            collection_started_at: string;
+            /**
+             * Collector Id
+             * @constant
+             */
+            collector_id: "scap";
+            /** Collector Version */
+            collector_version: string;
+            /** Coverage Counts */
+            coverage_counts: components["schemas"]["ScapCoverageCount"][];
+            /** Empty Categories */
+            empty_categories: null[];
+            /** Errors */
+            errors: null[];
+            /** Evidentia Version */
+            evidentia_version: string;
+            filters_applied: components["schemas"]["ScapImportFilter"];
+            /** Incomplete Reason */
+            incomplete_reason: null;
+            /**
+             * Is Complete
+             * @constant
+             */
+            is_complete: true;
+            /** Run Id */
+            run_id: string;
+            /** Source System Ids */
+            source_system_ids: string[];
+            /**
+             * Total Findings
+             * @constant
+             */
+            total_findings: 1;
+            /** Warnings */
+            warnings: ("Source authenticity was not verified." | "The source does not establish complete scanner population coverage." | "Complete schema validation was not performed." | "OVAL platform validation was not performed." | "The finding summarizes one selected assessment; native outcomes are retained separately." | "A source signature is present and was not verified." | "The declared OVAL export detail includes thin output." | "Native content outside the interpreted core is preserved." | "Assessment completion is an explicit operator assertion." | "No native assessment completion time is available." | "The native completion time has no timezone." | "The native completion precision cannot be represented exactly." | "The native completion time is outside the supported range." | "The native completion time cannot be normalized under the admitted policy." | "The native completion is later than the import start." | "The native assessment start cannot be compared exactly." | "The native completion precedes the native assessment start." | "The selected assessment contains no top-level outcome evidence." | "The selected assessment contains only unevaluated top-level outcomes.")[];
+        };
+        /** ScapCollectionResult */
+        ScapCollectionResult: {
+            artifact_availability: components["schemas"]["ArtifactAvailability"];
+            assessment: components["schemas"]["AssessmentProjection"];
+            cadence: components["schemas"]["CadenceProjection"];
+            completion: components["schemas"]["CompletionProjection"];
+            /** Diagnostics */
+            diagnostics: components["schemas"]["ScapDiagnostic"][];
+            evidence_artifact: components["schemas"]["ScapEvidenceArtifact"] | null;
+            /** Findings */
+            findings: components["schemas"]["ScapSecurityFinding"][];
+            /** Imported At */
+            imported_at: string;
+            manifest: components["schemas"]["ScapCollectionManifest"];
+            native_document: components["schemas"]["NativeDocument"];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "scap-collection-v1";
+            source: components["schemas"]["SourceBinding"];
+            /**
+             * Status
+             * @constant
+             */
+            status: "imported";
+        };
+        /** ScapCoverageCount */
+        ScapCoverageCount: {
+            /**
+             * Collected
+             * @constant
+             */
+            collected: 1;
+            /**
+             * Matched Filter
+             * @constant
+             */
+            matched_filter: 1;
+            /**
+             * Resource Type
+             * @constant
+             */
+            resource_type: "scap-assessment-occurrence";
+            /** Scanned */
+            scanned: number;
+        };
+        /** ScapDiagnostic */
+        ScapDiagnostic: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "source_authenticity_unverified" | "source_population_not_established" | "complete_schema_validation_not_performed" | "platform_validation_not_performed" | "findings_are_summary_only" | "signature_unverified" | "partial_export_detail" | "uninterpreted_content_preserved" | "operator_completion_asserted" | "native_completion_absent" | "native_completion_timezone_missing" | "native_completion_precision_unsupported" | "native_completion_range_unsupported" | "native_completion_normalization_unsupported" | "native_completion_future" | "native_start_unresolved" | "native_completion_before_start" | "no_selected_outcome_evidence" | "selected_outcomes_not_evaluated";
+            /**
+             * Message
+             * @enum {string}
+             */
+            message: "Source authenticity was not verified." | "The source does not establish complete scanner population coverage." | "Complete schema validation was not performed." | "OVAL platform validation was not performed." | "The finding summarizes one selected assessment; native outcomes are retained separately." | "A source signature is present and was not verified." | "The declared OVAL export detail includes thin output." | "Native content outside the interpreted core is preserved." | "Assessment completion is an explicit operator assertion." | "No native assessment completion time is available." | "The native completion time has no timezone." | "The native completion precision cannot be represented exactly." | "The native completion time is outside the supported range." | "The native completion time cannot be normalized under the admitted policy." | "The native completion is later than the import start." | "The native assessment start cannot be compared exactly." | "The native completion precedes the native assessment start." | "The selected assessment contains no top-level outcome evidence." | "The selected assessment contains only unevaluated top-level outcomes.";
+            /** Node Index */
+            node_index: null;
+            /**
+             * Severity
+             * @constant
+             */
+            severity: "advisory";
+        };
+        /** ScapError */
+        ScapError: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "invalid_request" | "unsupported_profile" | "assessment_not_found" | "completion_assertion_invalid" | "completion_assertion_binding_mismatch" | "completion_assertion_not_permitted" | "completion_assertion_time_ineligible" | "unsafe_xml" | "malformed_xml" | "source_contract_invalid" | "source_read_failed" | "source_limit_exceeded" | "result_limit_exceeded" | "unsupported_media" | "collector_unavailable" | "scan_extra_unavailable" | "internal_dependency_failure" | "invalid_internal_result" | "processing_deadline_exceeded" | "publication_failed" | "artifact_unavailable";
+            /**
+             * Message
+             * @enum {string}
+             */
+            message: "Invalid SCAP import options." | "Unsupported SCAP source profile." | "The selected assessment occurrence is unavailable." | "Invalid SCAP completion assertion." | "The completion assertion does not match the selected source." | "A completion assertion is not permitted for this source." | "The asserted completion time is not eligible." | "The XML input is not permitted." | "The XML input is malformed." | "The input does not satisfy the selected SCAP source contract." | "The complete source could not be read." | "The source exceeds a SCAP import limit." | "The complete result exceeds a SCAP publication limit." | "The source media type or encoding is not supported." | "The SCAP collector is unavailable." | "The optional SCAP XML support is unavailable." | "SCAP import support failed." | "The SCAP result could not be validated." | "The SCAP import deadline was exceeded." | "The complete SCAP result could not be published." | "No eligible evidence artifact is available for this import.";
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "scap-error-v1";
+        };
+        /** ScapEvidenceArtifact */
+        ScapEvidenceArtifact: {
+            /** Collected At */
+            collected_at: string;
+            /**
+             * Collected By
+             * @constant
+             */
+            collected_by: "evidentia-scap-v1";
+            content: components["schemas"]["ScapEvidenceContent"];
+            /**
+             * Content Format
+             * @constant
+             */
+            content_format: "json";
+            /** Content Hash */
+            content_hash: string;
+            /** Control Mappings */
+            control_mappings: null[];
+            /**
+             * Description
+             * @constant
+             */
+            description: "Native source observations with disclosed completion provenance; no authenticity, completeness or compliance conclusion.";
+            /**
+             * Evidence Type
+             * @constant
+             */
+            evidence_type: "test_result";
+            /** Expires At */
+            expires_at: null;
+            /** File Path */
+            file_path: null;
+            /** File Size Bytes */
+            file_size_bytes: null;
+            /** Id */
+            id: string;
+            /** Lineage Id */
+            lineage_id: null;
+            /** Metadata */
+            metadata: components["schemas"]["UnlinkedArtifactMetadata"] | components["schemas"]["LinkedArtifactMetadata"];
+            /** Missing Elements */
+            missing_elements: null[];
+            /** Predecessor Id */
+            predecessor_id: null;
+            /**
+             * Source System
+             * @enum {string}
+             */
+            source_system: "scap-xccdf" | "scap-oval";
+            /**
+             * Sufficiency
+             * @constant
+             */
+            sufficiency: "unknown";
+            /** Sufficiency Rationale */
+            sufficiency_rationale: null;
+            /** Tags */
+            tags: ("scap" | "xccdf" | "oval")[];
+            /**
+             * Title
+             * @enum {string}
+             */
+            title: "Imported XCCDF assessment" | "Imported OVAL assessment";
+            /** Validated At */
+            validated_at: null;
+            /** Validated By */
+            validated_by: null;
+            /** Validator Confidence */
+            validator_confidence: null;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+        };
+        /** ScapEvidenceContent */
+        ScapEvidenceContent: {
+            assessment: components["schemas"]["AssessmentProjection"];
+            completion: components["schemas"]["StableArtifactCompletion"];
+            native_document: components["schemas"]["NativeDocument"];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "scap-evidence-v1";
+            source: components["schemas"]["SourceBinding"];
+        };
+        /** ScapImportFilter */
+        ScapImportFilter: {
+            /** Assessment Index */
+            assessment_index: number;
+            /**
+             * Scope
+             * @constant
+             */
+            scope: "selected_assessment_native_projection";
+            /** Selected Node Index */
+            selected_node_index: number;
+            /**
+             * Source Profile
+             * @enum {string}
+             */
+            source_profile: "xccdf-1.2-results" | "oval-5.8-core-results" | "oval-5.11.2-core-results" | "oval-5.12.3-core-results";
+            /** Source Sha256 */
+            source_sha256: string;
+            /**
+             * Time Basis
+             * @constant
+             */
+            time_basis: "file_import_observation";
+        };
+        /** ScapSecurityFinding */
+        ScapSecurityFinding: {
+            collection_context: components["schemas"]["ScapCollectionContext"];
+            /**
+             * Compliance Status
+             * @constant
+             */
+            compliance_status: "unknown";
+            /** Control Mappings */
+            control_mappings: null[];
+            /**
+             * Description
+             * @constant
+             */
+            description: "One selected assessment was imported. Native outcomes remain in the full SCAP result and any evidence artifact; this summary makes no vulnerability or compliance conclusion.";
+            /** First Observed */
+            first_observed: string;
+            /** Id */
+            id: string;
+            /** Last Observed */
+            last_observed: string;
+            raw_data: components["schemas"]["ScapAssessmentSummary"];
+            /** Remediation */
+            remediation: null;
+            /** Resolved At */
+            resolved_at: null;
+            /** Resource Account */
+            resource_account: null;
+            /** Resource Id */
+            resource_id: null;
+            /** Resource Region */
+            resource_region: null;
+            /**
+             * Resource Type
+             * @constant
+             */
+            resource_type: "scap-assessment-occurrence";
+            /**
+             * Severity
+             * @constant
+             */
+            severity: "informational";
+            /** Source Finding Id */
+            source_finding_id: null;
+            /**
+             * Source System
+             * @enum {string}
+             */
+            source_system: "scap-xccdf" | "scap-oval";
+            /**
+             * Status
+             * @constant
+             */
+            status: "active";
+            /**
+             * Title
+             * @enum {string}
+             */
+            title: "Imported XCCDF assessment" | "Imported OVAL assessment";
+        };
         /**
          * SecurityFinding
          * @description A security finding from an evidence collector.
@@ -8954,6 +9699,23 @@ export interface components {
              */
             stddev: number;
         };
+        /** SourceBinding */
+        SourceBinding: {
+            /** Bytes */
+            bytes: number;
+            /**
+             * Profile
+             * @enum {string}
+             */
+            profile: "xccdf-1.2-results" | "oval-5.8-core-results" | "oval-5.11.2-core-results" | "oval-5.12.3-core-results";
+            /**
+             * Projection Version
+             * @constant
+             */
+            projection_version: "scap-native-document-v1";
+            /** Sha256 */
+            sha256: string;
+        };
         /** SourceEvent */
         SourceEvent: {
             /** Event Id */
@@ -8985,6 +9747,23 @@ export interface components {
              * @enum {string}
              */
             representation: "rfc3339" | "unix_milliseconds" | "source_text";
+        };
+        /** SourceTimeObservation */
+        SourceTimeObservation: {
+            normalization: components["schemas"]["NormalizedSourceTime"];
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "document_compilation" | "assessment_start" | "assessment_completion" | "rule_completion" | "override_time" | "tailoring_version_time";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "document" | "embedded_definitions" | "selected_assessment" | "system_characteristics";
+            /** Scope Node Index */
+            scope_node_index: number;
+            value_ref: components["schemas"]["NativeValueRef"];
         };
         /** SplunkCollectResult */
         SplunkCollectResult: {
@@ -9066,6 +9845,47 @@ export interface components {
         SplunkIndexTarget: {
             /** Index */
             index: string & unknown;
+        };
+        /** StableArtifactCompletion */
+        StableArtifactCompletion: {
+            assertion: components["schemas"]["StableCompletionAssertion"] | null;
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "native_reported" | "operator_asserted";
+            native_ref: components["schemas"]["NativeValueRef"] | null;
+            /** Utc */
+            utc: string;
+        };
+        /** StableCompletionAssertion */
+        StableCompletionAssertion: {
+            actor: components["schemas"]["AssertionActor"];
+            /** Assessment Index */
+            assessment_index: number;
+            /**
+             * Basis
+             * @constant
+             */
+            basis: "operator_asserted";
+            /** Completed At */
+            completed_at: string;
+            /** Normalized Utc */
+            normalized_utc: string;
+            /** Reference */
+            reference: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "scap-completion-assertion-v1";
+            /**
+             * Source Profile
+             * @enum {string}
+             */
+            source_profile: "oval-5.8-core-results" | "oval-5.11.2-core-results" | "oval-5.12.3-core-results";
+            /** Source Sha256 */
+            source_sha256: string;
         };
         /**
          * StorageRetentionCollectResult
@@ -9265,6 +10085,46 @@ export interface components {
         UEITarget: {
             /** Uei */
             uei: string;
+        };
+        /** UnlinkedArtifactMetadata */
+        UnlinkedArtifactMetadata: {
+            /** Assessment Index */
+            assessment_index: number;
+            /**
+             * Scap Contract
+             * @constant
+             */
+            scap_contract: "scap-evidence-v1";
+            /**
+             * Source Profile
+             * @enum {string}
+             */
+            source_profile: "xccdf-1.2-results" | "oval-5.8-core-results" | "oval-5.11.2-core-results" | "oval-5.12.3-core-results";
+            /** Source Sha256 */
+            source_sha256: string;
+            /**
+             * Time Basis
+             * @enum {string}
+             */
+            time_basis: "native_reported" | "operator_asserted";
+        };
+        /** UnverifiedPlatformStatus */
+        UnverifiedPlatformStatus: {
+            /** Effective Status */
+            effective_status: null;
+            /**
+             * Interpretation
+             * @constant
+             */
+            interpretation: "unverified_platform_status";
+            /** Node Index */
+            node_index: number;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "direct_system_data_child" | "nested_platform_position";
+            value_ref: components["schemas"]["NativeValueRef"];
         };
         /**
          * UpdateSystemRequest
@@ -9849,6 +10709,69 @@ export interface components {
          * @enum {string}
          */
         WorkflowStepStatus: "pending" | "in_progress" | "approved" | "rejected" | "skipped";
+        /** XmlAttribute */
+        XmlAttribute: {
+            name: components["schemas"]["ExpandedName"];
+            /** Value */
+            value: string;
+        };
+        /** XmlComment */
+        XmlComment: {
+            /** Data */
+            data: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "comment";
+            /** Tail */
+            tail: string | null;
+        };
+        /** XmlDeclaration */
+        XmlDeclaration: {
+            /** Encoding */
+            encoding: string | null;
+            /** Standalone */
+            standalone: ("yes" | "no") | null;
+            /**
+             * Version
+             * @constant
+             */
+            version: "1.0";
+        };
+        /** XmlElement */
+        XmlElement: {
+            /** Attributes */
+            attributes: components["schemas"]["XmlAttribute"][];
+            /** Children */
+            children: number[];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "element";
+            name: components["schemas"]["ExpandedName"];
+            /** Namespace Declarations */
+            namespace_declarations: components["schemas"]["NamespaceDeclaration"][];
+            /** Tail */
+            tail: string | null;
+            /** Text */
+            text: string | null;
+        };
+        /** XmlPI */
+        XmlPI: {
+            /** Data */
+            data: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "processing_instruction";
+            /** Tail */
+            tail: string | null;
+            /** Target */
+            target: string;
+        };
         /**
          * _DecisionRole
          * @description How the AI's output is used in human decision-making.
@@ -12838,6 +13761,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    collect_scap: {
+        parameters: {
+            query: {
+                source_profile: "xccdf-1.2-results" | "oval-5.8-core-results" | "oval-5.11.2-core-results" | "oval-5.12.3-core-results";
+                /** @description Zero-based occurrence in canonical decimal form. The entire query is at most 1024 bytes. */
+                assessment_index: number;
+                cadence_slug?: string;
+            };
+            header?: {
+                /** @description One ASCII JSON value with the six completion-assertion fields. Actor identity comes from authentication. */
+                "X-Evidentia-SCAP-Completion-Assertion"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/xml": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapCollectionResult"];
+                };
+            };
+            /** @description The complete raw source is unreadable, unsafe or invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapError"];
+                };
+            };
+            /** @description API authentication required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                        provider: string;
+                        reason: string | null;
+                    };
+                };
+            };
+            /** @description Configured authentication and read permission are required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description A finite source or full-result limit was exceeded. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapError"];
+                };
+            };
+            /** @description Only UTF-8 application/xml and identity encoding are supported. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapError"];
+                };
+            };
+            /** @description The explicit options, selection or completion assertion are invalid. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapError"];
+                };
+            };
+            /** @description A fixed internal validation or publication failure occurred. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapError"];
+                };
+            };
+            /** @description Support is unavailable or the original deadline was exceeded. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScapError"];
                 };
             };
         };

@@ -14,6 +14,8 @@
  */
 
 import { incidentDemoResponse } from "@/lib/demo/incident-clock-fixtures";
+import { scapDemoResponse } from "@/lib/demo/scap-fixtures";
+import type { ScapRequest } from "@/lib/scap";
 import type { IncidentClockRequest } from "@/lib/incident-clock";
 import { registryDemoResponse } from "@/lib/demo/registry-fixtures";
 import type { RegistryRequest } from "@/lib/registry";
@@ -1594,6 +1596,8 @@ export const demoApi = {
           : DEMO_ENTRA_M365_PARTIAL,
       ),
     ),
+  collectScap: async (raw: ArrayBuffer, request: ScapRequest, scenario = "") =>
+    scapDemoResponse(raw, request, scenario),
   collectIncidentClock: async (body: IncidentClockRequest, scenario = "") =>
     incidentDemoResponse(body, scenario),
 
