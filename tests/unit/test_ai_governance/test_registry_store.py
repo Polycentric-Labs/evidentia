@@ -108,10 +108,12 @@ class TestAIRegistryStoreCRUD:
     def test_delete_removes_file(self, tmp_path: Path, sample_entry: AISystemRegistryEntry) -> None:
         store = AIRegistryStore(tmp_path)
         store.save(sample_entry)
-        assert store.delete(sample_entry.system_id) is True
+        deleted = store.delete(sample_entry.system_id)
+        assert deleted is True
         assert store.load(sample_entry.system_id) is None
         # Idempotent: delete again returns False, no raise.
-        assert store.delete(sample_entry.system_id) is False
+        deleted_again = store.delete(sample_entry.system_id)
+        assert deleted_again is False
 
     def test_path_traversal_id_rejected(self, tmp_path: Path) -> None:
         store = AIRegistryStore(tmp_path)

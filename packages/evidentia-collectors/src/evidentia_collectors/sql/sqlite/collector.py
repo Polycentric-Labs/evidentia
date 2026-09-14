@@ -12,7 +12,7 @@ import contextlib
 import os
 import stat
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evidentia_core.audit import (
     CollectionContext,
@@ -41,10 +41,6 @@ from evidentia_core.security.paths import (
     PathTraversalError,
     validate_within,
 )
-
-if TYPE_CHECKING:
-    import sqlite3  # noqa: F401
-
 
 _log = get_logger("evidentia.collectors.sql.sqlite")
 

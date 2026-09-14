@@ -55,6 +55,7 @@ class Wire:
                 self.request += part
             self.server.sendall(self.response)
         except (OSError, TimeoutError):
+            # Refusal and cancellation cases may close the peer before the response finishes.
             pass
         finally:
             self.server.close()
@@ -416,21 +417,7 @@ def test_real_owned_https_verifies_certificate_and_hostname(
     listener.settimeout(3)
     observed: list[bytes] = []
 
-    def serve() -> None:
-        try:
-            raw, _ = listener.accept()
-            with raw, server_context.wrap_socket(raw, server_side=True) as secure:
-                value = b""
-                while b"\r\n\r\n" not in value:
-                    value += secure.recv(8192)
-                observed.append(value)
-                secure.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}")
-        except (OSError, TimeoutError):
-            pass
-        finally:
-            listener.close()
-
-    server_thread = threading.Thread(target=serve, daemon=True)
+    server_thread = threading.Thread(target=_serve_sam_tls_peer, args=(listener, server_context, observed), daemon=True)
     server_thread.start()
     original_create = socket.create_connection
     original_resolve = socket.getaddrinfo
@@ -547,3 +534,115 @@ def test_expired_sam_attempt_refuses_before_dns_or_credentials(monkeypatch: pyte
             consume=lambda *_: None,
         )
     assert calls == []
+
+
+def _serve_sam_tls_peer(listener: Any, server_context: Any, observed: list[bytes]) -> None:
+    try:
+        raw, _ = listener.accept()
+        with raw, server_context.wrap_socket(raw, server_side=True) as secure:
+            value = b""
+            while b"\r\n\r\n" not in value:
+                part = secure.recv(8192)
+                if not part:
+                    return
+                value += part
+            observed.append(value)
+            secure.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}")
+    except (OSError, TimeoutError):
+        # Rejected certificates close the peer; the caller checks refusal and thread exit.
+        pass
+    finally:
+        listener.close()
+
+
+class _FixtureReadLimit(BaseException):
+    pass
+
+
+class _FixtureStream:
+    def __init__(self, parts: list[bytes | BaseException]) -> None:
+        self.parts = list(parts)
+        self.reads = 0
+        self.closed = 0
+        self.sent: list[bytes] = []
+
+    def __enter__(self) -> _FixtureStream:
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self.closed += 1
+
+    def recv(self, size: int) -> bytes:
+        assert size == 8192
+        self.reads += 1
+        if self.reads > 4:
+            raise _FixtureReadLimit()
+        part = self.parts.pop(0) if self.parts else b""
+        if isinstance(part, BaseException):
+            raise part
+        return part
+
+    def sendall(self, value: bytes) -> None:
+        self.sent.append(value)
+
+
+class _FixtureListener:
+    def __init__(self, raw: _FixtureStream) -> None:
+        self.raw = raw
+        self.closed = 0
+
+    def accept(self) -> tuple[_FixtureStream, object]:
+        return self.raw, None
+
+    def close(self) -> None:
+        self.closed += 1
+
+
+class _FixtureTLSContext:
+    def __init__(self, raw: _FixtureStream, secure: _FixtureStream) -> None:
+        self.raw = raw
+        self.secure = secure
+
+    def wrap_socket(self, raw: _FixtureStream, *, server_side: bool) -> _FixtureStream:
+        assert raw is self.raw and server_side is True
+        return self.secure
+
+
+@pytest.mark.parametrize(
+    ("parts", "expected", "reads"),
+    [
+        ([], [], 1),
+        ([b"GET / HTTP/1.1\r\n"], [], 2),
+        ([b"GET / HTTP/1.1\r\n\r\n"], [b"GET / HTTP/1.1\r\n\r\n"], 1),
+        ([b"GET / HTTP/1.1\r", b"\n\r\n"], [b"GET / HTTP/1.1\r\n\r\n"], 2),
+        ([OSError("Synthetic peer read failure")], [], 1),
+    ],
+    ids=["empty-eof", "partial-eof", "complete", "split-complete", "read-error"],
+)
+def test_tls_fixture_stops_on_eof_and_closes_owned_contexts(
+    parts: list[bytes | BaseException], expected: list[bytes], reads: int
+) -> None:
+    raw = _FixtureStream([])
+    secure = _FixtureStream(parts)
+    listener = _FixtureListener(raw)
+    context = _FixtureTLSContext(raw, secure)
+    observed: list[bytes] = []
+    _serve_sam_tls_peer(listener, context, observed)
+    assert secure.reads == reads
+    assert observed == expected
+    response = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}"
+    assert secure.sent == ([response] if expected else [])
+    assert raw.closed == secure.closed == listener.closed == 1
+
+
+def test_tls_fixture_preserves_cancellation_after_cleanup() -> None:
+    original = KeyboardInterrupt()
+    raw = _FixtureStream([])
+    secure = _FixtureStream([original])
+    listener = _FixtureListener(raw)
+    observed: list[bytes] = []
+    with pytest.raises(KeyboardInterrupt) as raised:
+        _serve_sam_tls_peer(listener, _FixtureTLSContext(raw, secure), observed)
+    assert raised.value is original
+    assert secure.reads == 1 and observed == [] and secure.sent == []
+    assert raw.closed == secure.closed == listener.closed == 1

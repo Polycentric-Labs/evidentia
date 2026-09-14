@@ -2,7 +2,7 @@
 
 Target source entry point
 -------------------------
-``evidentia_core.catalogs.loader`` — the v0.10.4 choke-point invariant
+``evidentia_core.catalogs.loader``: the v0.10.4 choke-point invariant
 routes every catalog file read through ``_load_catalog_data``, which
 dispatches on file extension (``.json`` -> ``json.loads``,
 ``.yaml`` / ``.yml`` -> ``yaml.safe_load``) and rejects non-mapping
@@ -68,6 +68,7 @@ def TestOneInput(data: bytes) -> None:
     body = to_text(fdp.ConsumeBytes(fdp.remaining_bytes()))
 
     fd, path_str = tempfile.mkstemp(suffix=ext)
+    primary_failed = False
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(body)
@@ -87,11 +88,17 @@ def TestOneInput(data: bytes) -> None:
                 loader(path)
             except _EXPECTED:
                 pass
+    except BaseException:
+        primary_failed = True
+        raise
     finally:
         try:
             os.unlink(path_str)
-        except OSError:
+        except FileNotFoundError:
             pass
+        except OSError:
+            if not primary_failed:
+                raise
 
 
 def main() -> None:

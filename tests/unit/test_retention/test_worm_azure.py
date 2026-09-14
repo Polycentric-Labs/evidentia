@@ -242,7 +242,7 @@ class TestConstruction:
             AzureImmutableBlobWORM(
                 account_url="https://fake.blob.core.windows.net",
                 container_name="",
-                client_factory=lambda: _ServiceStub(),
+                client_factory=_ServiceStub,
             )
 
     def test_invalid_lock_mode_rejected(self) -> None:
@@ -251,7 +251,7 @@ class TestConstruction:
                 account_url="https://fake.blob.core.windows.net",
                 container_name="x",
                 lock_mode="INVALID",  # type: ignore[arg-type]
-                client_factory=lambda: _ServiceStub(),
+                client_factory=_ServiceStub,
             )
 
     def test_repr_contains_container(self, worm: AzureImmutableBlobWORM) -> None:

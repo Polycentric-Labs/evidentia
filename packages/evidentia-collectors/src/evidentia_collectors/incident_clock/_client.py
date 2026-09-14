@@ -429,9 +429,9 @@ def _history_projection(
                 raise _AdmissionFailure("event_limit")
             timestamp = contract.native_text_cell(row, "created", maximum=2048)
             fields = {cast(contract.JiraMapping, mapping).field_id for mapping in (definition.start, definition.end)}
-            for index, value in enumerate(items):
+            for index, item_value in enumerate(items):
                 _check_time(data)
-                item = _object(value)
+                item = _object(item_value)
                 field_id = _opaque(item.get("fieldId"))
                 if field_id not in fields:
                     continue

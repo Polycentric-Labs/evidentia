@@ -9,9 +9,12 @@ profile.
 
 from __future__ import annotations
 
+import builtins
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
+from types import FunctionType, SimpleNamespace
 
 import pytest
 from evidentia.cli import catalog as catalog_cli
@@ -583,3 +586,170 @@ def test_control_source_text_is_rendered_literally(
     shown = runner.invoke(app, ["catalog", "show", "my-custom-fw", "--control", "CUST-1"])
     assert shown.exit_code == 0, shown.output
     assert literal in shown.output
+
+
+# Optional API discovery is separate from importing an installed package.
+class _AirGapStop(BaseException):
+    pass
+
+
+class _AirGapTable:
+    def __init__(self, *, title: str) -> None:
+        self.title = title
+        self.columns: list[tuple[str, dict[str, object]]] = []
+        self.rows: list[tuple[str, ...]] = []
+
+    def add_column(self, label: str, **options: object) -> None:
+        self.columns.append((label, options))
+
+    def add_row(self, *cells: str) -> None:
+        self.rows.append(cells)
+
+
+def _isolated_air_gap_report(
+    *,
+    available: bool = True,
+    discovery_error: BaseException | None = None,
+    import_error: BaseException | None = None,
+) -> tuple[Callable[[], None], list[str], list[object]]:
+    """Run the real report code with private globals and closed import stubs."""
+    from evidentia.cli import main as cli_main
+
+    events: list[str] = []
+    emitted: list[object] = []
+
+    def discover(name: str) -> object | None:
+        assert name == "evidentia_api"
+        events.append("discover")
+        if discovery_error is not None:
+            raise discovery_error
+        return object() if available else None
+
+    def config() -> SimpleNamespace:
+        events.append("config")
+        return SimpleNamespace(llm=None)
+
+    def import_stub(
+        name: str,
+        globals: object = None,
+        locals: object = None,
+        fromlist: object = (),
+        level: int = 0,
+    ) -> object:
+        assert level == 0
+        if name == "os":
+            return SimpleNamespace(environ={"EVIDENTIA_LLM_MODEL": "ollama/synthetic"})
+        if name == "importlib.util":
+            assert fromlist == ("find_spec",)
+            return SimpleNamespace(find_spec=discover)
+        if name == "evidentia_core.config":
+            return SimpleNamespace(load_config=config)
+        if name == "evidentia_core.network_guard":
+            return SimpleNamespace(LOCAL_LLM_PREFIXES=("ollama/",), is_loopback_or_private=unexpected_host_check)
+        if name == "evidentia_api":
+            events.append("import")
+            if import_error is not None:
+                raise import_error
+            if not available:
+                raise ModuleNotFoundError("Synthetic absent package", name="evidentia_api")
+            return SimpleNamespace()
+        raise AssertionError("Unexpected import in isolated report: " + name)
+
+    def unexpected_host_check(host: str) -> bool:
+        raise AssertionError("The local model prefix needs no host check")
+
+    original = cli_main._render_air_gap_report
+    private_builtins = dict(vars(builtins))
+    private_builtins["__import__"] = import_stub
+    private_globals = dict(original.__globals__)
+    private_globals.update(
+        __builtins__=private_builtins,
+        Table=_AirGapTable,
+        console=SimpleNamespace(print=emitted.append),
+    )
+    report = FunctionType(
+        original.__code__, private_globals, original.__name__, original.__defaults__, original.__closure__
+    )
+    return report, events, emitted
+
+
+@pytest.mark.parametrize("available", [False, True], ids=["absent", "installed"])
+def test_air_gap_optional_api_preserves_normal_table(available: bool) -> None:
+    report, events, emitted = _isolated_air_gap_report(available=available)
+    report()
+    assert events == ["config", "discover"] + (["import"] if available else [])
+    assert len(emitted) == 2
+    table = emitted[0]
+    assert isinstance(table, _AirGapTable)
+    assert table.title == "Air-gap Posture Report"
+    assert table.columns == [
+        ("Subsystem", {"style": "cyan"}),
+        ("Posture", {"style": "green"}),
+        ("Detail", {}),
+    ]
+    rows = [
+        ("LLM client", "AIR-GAP READY", "model=ollama/synthetic (local prefix)"),
+        ("Catalog loader", "AIR-GAP READY", "v0.4.0 loads only from bundled + user-dir catalogs (no URL fetch)"),
+        ("AI telemetry", "AIR-GAP READY", "LiteLLM + Instructor do not emit telemetry"),
+        ("Gap store", "AIR-GAP READY", "platformdirs user-data (local filesystem only)"),
+    ]
+    if available:
+        rows.append(("Web UI", "AIR-GAP READY", "\x60evidentia serve\x60 binds to 127.0.0.1 by default"))
+    assert table.rows == rows
+    assert emitted[1] == (
+        "\n[dim]Pass [bold cyan]--offline[/bold cyan] on any command to enforce; "
+        "this report audits the configuration, not live traffic.[/dim]"
+    )
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        ModuleNotFoundError("Synthetic transitive import failure", name="synthetic_dependency"),
+        ModuleNotFoundError("Synthetic package disappeared after discovery", name="evidentia_api"),
+        ImportError("Synthetic ordinary import failure"),
+        RuntimeError("Synthetic package initialization failure"),
+    ],
+    ids=["transitive", "disappeared", "ordinary-import", "initialization"],
+)
+def test_air_gap_installed_api_failure_propagates(failure: Exception) -> None:
+    report, events, emitted = _isolated_air_gap_report(import_error=failure)
+    with pytest.raises(type(failure)) as caught:
+        report()
+    assert caught.value is failure
+    assert events == ["config", "discover", "import"]
+    assert emitted == []
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        ModuleNotFoundError("Synthetic discovery import failure", name="synthetic_finder"),
+        ImportError("Synthetic finder import failure"),
+        ValueError("Synthetic unavailable module spec"),
+        RuntimeError("Synthetic finder failure"),
+    ],
+    ids=["discovery-module", "discovery-import", "invalid-spec", "finder"],
+)
+def test_air_gap_api_discovery_failure_propagates(failure: Exception) -> None:
+    report, events, emitted = _isolated_air_gap_report(discovery_error=failure)
+    with pytest.raises(type(failure)) as caught:
+        report()
+    assert caught.value is failure
+    assert events == ["config", "discover"]
+    assert emitted == []
+
+
+@pytest.mark.parametrize("stage", ["discovery", "import"])
+@pytest.mark.parametrize("failure_type", [_AirGapStop, KeyboardInterrupt, SystemExit])
+def test_air_gap_api_cancellation_identity(stage: str, failure_type: type[BaseException]) -> None:
+    failure = failure_type("Synthetic stop")
+    report, events, emitted = _isolated_air_gap_report(
+        discovery_error=failure if stage == "discovery" else None,
+        import_error=failure if stage == "import" else None,
+    )
+    with pytest.raises(failure_type) as caught:
+        report()
+    assert caught.value is failure
+    assert events == ["config", "discover"] + (["import"] if stage == "import" else [])
+    assert emitted == []

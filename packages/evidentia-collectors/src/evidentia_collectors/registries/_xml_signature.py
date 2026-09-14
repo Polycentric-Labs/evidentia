@@ -6,10 +6,10 @@ import base64
 import hashlib
 import importlib
 import importlib.metadata
+import importlib.resources
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from importlib import resources
 from typing import Any, Literal, cast
 
 from evidentia_collectors.retention._parsing import parse_strict_xml
@@ -83,7 +83,7 @@ def require_xml_extra() -> None:
 
 
 def _production_certificate() -> _TrustedCertificate:
-    path = resources.files("evidentia_collectors.registries").joinpath(
+    path = importlib.resources.files("evidentia_collectors.registries").joinpath(
         "data/incommon/production-signing-certificate.json"
     )
     with path.open("rb") as stream:
@@ -312,6 +312,7 @@ def verify_entity(
     except ImportError:
         failure = "dependency_failure"
     except Exception:
+        # Unexpected verifier failures use the fixed signature diagnostic below.
         pass
     if result is None:
         raise XMLSignatureError(failure)

@@ -111,8 +111,6 @@ class TestServerBuild:
     def test_four_core_tools_registered(self) -> None:
         # v0.8.1 F-V08-CR-4: use public list_tools() async API
         # rather than _tool_manager._tools private access.
-        import asyncio
-
         server = build_server()
         tools = asyncio.run(server.list_tools())
         registered = {t.name for t in tools}
@@ -127,8 +125,6 @@ class TestServerBuild:
         """v0.10.4 B3 — verify_signed_artifact is the 13th MCP tool
         (12 from v0.10.2 + this one). Surfaces the supply-chain
         verification moat to AI clients."""
-        import asyncio
-
         server = build_server()
         tools = asyncio.run(server.list_tools())
         names = {t.name for t in tools}
@@ -142,8 +138,6 @@ class TestServerBuild:
     def test_each_tool_has_a_description(self) -> None:
         """The SDK renders the docstring as the MCP tool description."""
         # v0.8.1 F-V08-CR-4: public list_tools() API.
-        import asyncio
-
         server = build_server()
         tools = asyncio.run(server.list_tools())
         for tool in tools:

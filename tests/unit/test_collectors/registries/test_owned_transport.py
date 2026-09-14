@@ -52,14 +52,12 @@ def test_fixed_fresh_unauthenticated_request_and_owned_close(destination: Any, m
     monkeypatch.setattr(_client, "_http_transport", lambda context, approved, owned: transport)
     charged: list[tuple[int, int]] = []
     attempt = _client.HttpAttempt()
-    assert (
-        attempt.fetch(
-            "https://example.org/source",
-            remaining=lambda: 60.0,
-            consume=lambda raw, decoded: charged.append((raw, decoded)),
-        )
-        == b"{}"
+    content = attempt.fetch(
+        "https://example.org/source",
+        remaining=lambda: 60.0,
+        consume=lambda raw, decoded: charged.append((raw, decoded)),
     )
+    assert content == b"{}"
     assert len(calls) == 1 and body.closed and attempt.status_code == 200
     assert calls[0].headers.get("Authorization") is None and calls[0].headers.get("Cookie") is None
     assert calls[0].extensions["timeout"] == {"connect": 5.0, "pool": 5.0, "read": 10.0, "write": 10.0}
@@ -182,6 +180,7 @@ def test_real_httpx_tls_and_environment_isolation(trust: str, monkeypatch: pytes
                 received.append(value)
                 secured.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nSet-Cookie: synthetic=value\r\n\r\n{}")
         except OSError:
+            # Rejected TLS cases close the peer; assertions below check the exact outcome.
             pass
         finally:
             listener.close()

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import contextlib
 import urllib.parse
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evidentia_core.audit import (
     CollectionContext,
@@ -47,10 +47,6 @@ from evidentia_collectors.sql.mssql.mapping import (
     USER_ROLE_INVENTORY_MAPPINGS,
     WRITE_PRIV_DETECTED_MAPPINGS,
 )
-
-if TYPE_CHECKING:
-    import pyodbc  # noqa: F401
-
 
 _log = get_logger("evidentia.collectors.sql.mssql")
 

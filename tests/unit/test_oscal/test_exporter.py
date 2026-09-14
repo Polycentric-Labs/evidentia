@@ -89,6 +89,7 @@ def test_each_gap_becomes_a_finding() -> None:
     report = _make_report()
     out = gap_report_to_oscal_ar(report)
     _result = out["assessment-results"]["results"][0]
+    assert isinstance(_result, dict)
     # Each of the 2 input gaps must be represented somewhere in the output.
     # Serialize + substring-check is robust to exporter shape choices (findings
     # vs observations vs risks — all valid OSCAL AR locations).

@@ -88,7 +88,6 @@ _STATE_RESOLVED = "resolved"
 _STATE_EXPLOITABLE = "exploitable"
 _STATE_IN_TRIAGE = "in_triage"
 _STATE_NOT_AFFECTED = "not_affected"
-_STATE_FALSE_POSITIVE = "false_positive"
 
 
 def gap_report_to_cyclonedx_vex(report: GapAnalysisReport) -> dict[str, Any]:

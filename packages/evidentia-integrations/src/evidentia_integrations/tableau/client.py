@@ -19,14 +19,9 @@ from __future__ import annotations
 
 import contextlib
 import os
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evidentia_integrations.tableau.config import TableauConfig
-
-if TYPE_CHECKING:
-    # Type-only import; tableauserverclient is in the [tableau]
-    # optional extra. The runtime import is lazy.
-    import tableauserverclient as TSC  # noqa: F401
 
 
 class TableauApiError(Exception):

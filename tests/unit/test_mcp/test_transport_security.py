@@ -52,7 +52,8 @@ def _production_app(
     def capture_run(server: EvidentiaMCPServer, transport: str, **kwargs: Any) -> None:
         options = dict(kwargs)
         app_options = dict(kwargs)
-        assert app_options.pop("port") == 8765
+        configured_port = app_options.pop("port")
+        assert configured_port == 8765
         if transport == "sse":
             app = server.sse_app(**app_options)
         else:

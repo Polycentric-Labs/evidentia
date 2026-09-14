@@ -1196,7 +1196,6 @@ class RegistryReadSession:
         cached = self._begin("ssl-labs", target)
         if cached is not None:
             return cached
-        target = cast(EndpointTarget, self.request.root.target)
         read = self._read(kind="none", method="DISABLED")
         self._diagnose("live_disabled", read)
         return self._finish()

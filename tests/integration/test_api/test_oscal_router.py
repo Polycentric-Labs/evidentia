@@ -253,8 +253,6 @@ class TestVerifyDSSEInline:
     def test_oscal_verify_dsse_inline(self, oscal_client: TestClient, tmp_path: Path) -> None:
         """Supplying a DSSE envelope + matching public key returns
         dsse_signature_valid=True and dsse_status='valid'."""
-        import json
-
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
         from evidentia_core.oscal import keysign
@@ -318,8 +316,6 @@ class TestVerifyDSSEInline:
         """When no DSSE fields are supplied the response carries
         dsse_status='not checked (no DSSE envelope)' and
         dsse_signature_valid=None."""
-        import json
-
         resp = oscal_client.post(
             "/api/oscal/verify",
             json={"content": json.dumps(_valid_ar_doc())},

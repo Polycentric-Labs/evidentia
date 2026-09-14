@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import contextlib
 import os
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evidentia_core.audit import (
     CollectionContext,
@@ -68,13 +68,6 @@ from evidentia_collectors.databricks.mapping import (
     SERVICE_PRINCIPAL_INACTIVE_MAPPINGS,
     SERVICE_PRINCIPAL_INVENTORY_MAPPINGS,
 )
-
-if TYPE_CHECKING:
-    # Type-only import; databricks-sdk is in the [databricks]
-    # optional extra. Runtime import is lazy so the package loads
-    # without the SDK installed.
-    from databricks.sdk import WorkspaceClient  # noqa: F401
-
 
 _log = get_logger("evidentia.collectors.databricks")
 

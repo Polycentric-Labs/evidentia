@@ -126,9 +126,11 @@ class TestAIAcquisitionStore:
     def test_delete(self, store: AIAcquisitionStore) -> None:
         acquisition = AIAcquisition(name="x")
         store.save(acquisition)
-        assert store.delete(acquisition.acquisition_id) is True
+        deleted = store.delete(acquisition.acquisition_id)
+        assert deleted is True
         assert store.load(acquisition.acquisition_id) is None
-        assert store.delete(acquisition.acquisition_id) is False
+        deleted_again = store.delete(acquisition.acquisition_id)
+        assert deleted_again is False
 
     def test_malformed_file_skipped_by_list_all(self, store: AIAcquisitionStore, tmp_path: Path) -> None:
         acquisition = AIAcquisition(name="x")
