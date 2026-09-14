@@ -187,7 +187,7 @@ function clone(value: unknown, limit = SCAP_ASSERTION_BYTES): Json {
       ensure(charged <= limit);
       return item;
     }
-    ensure(typeof item === "object" && item !== null && !active.has(item));
+    ensure(typeof item === "object" && !active.has(item));
     const array = Array.isArray(item);
     const proto = Object.getPrototypeOf(item);
     ensure(

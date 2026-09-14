@@ -310,9 +310,6 @@ def test_import_handle_refuses_repeated_and_failed_consumption():
 
 
 def test_model_construction_and_extra_private_flags_are_not_factory_authority(monkeypatch):
-    def constructed(finalize, inputs):
-        return collector._invoke_factory(finalize, FactoryInputs.model_construct(**inputs))
-
     original = collector._invoke_factory
 
     def forged(finalize, inputs):
