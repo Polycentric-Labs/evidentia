@@ -58,6 +58,7 @@ def _walk(
     if type(maximum) is not int or maximum < 0:
         raise ScapFailure()
     active: set[int] = set()
+    string_sizes: dict[str, int] = {}
     frames: list[_Frame] = []
     total = 0
     visited = 0
@@ -65,12 +66,6 @@ def _walk(
     parent: _Container | None = None
     parent_key: str | None = None
     result: JsonValue = None
-
-    def add(size: int) -> None:
-        nonlocal total
-        total += size
-        if total > maximum:
-            raise ScapFailure("result_limit_exceeded")
 
     try:
         while True:
@@ -83,31 +78,48 @@ def _walk(
             output: JsonValue
             new_frame: _Frame | None = None
             if current is None:
-                add(4)
+                total += 4
+                if total > maximum:
+                    raise ScapFailure("result_limit_exceeded")
                 output = None
             elif item_type is bool:
-                add(4 if current else 5)
+                total += 4 if current else 5
+                if total > maximum:
+                    raise ScapFailure("result_limit_exceeded")
                 output = cast(bool, current)
             elif item_type is str:
                 output = cast(str, current)
-                add(_string_size(output, maximum - total, budget, publication))
+                cached = string_sizes.get(output) if len(output) <= 64 else None
+                if cached is None:
+                    cached = _string_size(output, maximum - total, budget, publication)
+                    if len(string_sizes) < 512 and len(output) <= 64 and _ESCAPED.search(output) is None:
+                        string_sizes[output] = cached
+                total += cached
+                if total > maximum:
+                    raise ScapFailure("result_limit_exceeded")
             elif item_type is int:
                 number = cast(int, current)
                 if not -_MAX_INTEGER <= number <= _MAX_INTEGER:
                     raise ScapFailure()
-                add(len(str(number)))
+                total += len(str(number))
+                if total > maximum:
+                    raise ScapFailure("result_limit_exceeded")
                 output = number
             elif item_type is float:
                 decimal = cast(float, current)
                 if not math.isfinite(decimal):
                     raise ScapFailure()
-                add(len(json.dumps(decimal, allow_nan=False)))
+                total += len(json.dumps(decimal, allow_nan=False))
+                if total > maximum:
+                    raise ScapFailure("result_limit_exceeded")
                 output = decimal
             elif item_type is dict or item_type is list:
                 identity = id(current)
                 if identity in active:
                     raise ScapFailure()
-                add(2)
+                total += 2
+                if total > maximum:
+                    raise ScapFailure("result_limit_exceeded")
                 active.add(identity)
                 target: _Container | None = None
                 items: Iterator[tuple[object, object]]
@@ -145,14 +157,25 @@ def _walk(
                 except RuntimeError:
                     raise ScapFailure() from None
                 if frame.entries:
-                    add(1)
+                    total += 1
+                    if total > maximum:
+                        raise ScapFailure("result_limit_exceeded")
                 frame.entries += 1
                 if frame.mapping:
                     if type(key) is not str:
                         raise ScapFailure()
                     parent_key = cast(str, key)
-                    add(_string_size(parent_key, maximum - total, budget, publication))
-                    add(1)
+                    cached = string_sizes.get(parent_key) if len(parent_key) <= 64 else None
+                    if cached is None:
+                        cached = _string_size(parent_key, maximum - total, budget, publication)
+                        if len(string_sizes) < 512 and len(parent_key) <= 64 and _ESCAPED.search(parent_key) is None:
+                            string_sizes[parent_key] = cached
+                    total += cached
+                    if total > maximum:
+                        raise ScapFailure("result_limit_exceeded")
+                    total += 1
+                    if total > maximum:
+                        raise ScapFailure("result_limit_exceeded")
                 else:
                     parent_key = None
                 parent = frame.output
@@ -167,6 +190,8 @@ def _walk(
         frames.clear()
         active.clear()
         raise
+    finally:
+        string_sizes.clear()
 
 
 def _discard_snapshot(value: JsonValue, primary: BaseException | None) -> None:

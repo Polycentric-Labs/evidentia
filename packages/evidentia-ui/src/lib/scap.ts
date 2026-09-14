@@ -974,7 +974,7 @@ export const SCAP_RESPONSE_SCHEMAS: Readonly<Record<string, Schema>> = freeze({
     properties: {
       local_name: {
         maxLength: 256,
-        minLength: 1,
+        pattern: "^[\\s\\S]+$",
         type: "string",
       },
       namespace_uri: {
@@ -2524,7 +2524,7 @@ export const SCAP_RESPONSE_SCHEMAS: Readonly<Record<string, Schema>> = freeze({
       },
       target: {
         maxLength: 256,
-        minLength: 1,
+        pattern: "^[\\s\\S]+$",
         type: "string",
       },
     },

@@ -262,6 +262,7 @@ def test_owned_snapshots_clear_without_changing_source_or_cancellation(monkeypat
             assert frame.f_locals["encoded"] == b""
         if frame.f_code.co_name == "_walk":
             assert not frame.f_locals["frames"]
+            assert not frame.f_locals["string_sizes"]
             assert not frame.f_locals["result"]
         trace = trace.tb_next
     assert all(not snapshot for snapshot in snapshots)
@@ -283,3 +284,95 @@ def test_successful_encoder_releases_its_private_snapshot(monkeypatch):
     assert canonical_bytes(source) == b'{"values":[{"a":1}]}'
     assert source == {"values": [{"a": 1}]}
     assert all(not snapshot for snapshot in snapshots)
+
+
+def test_repeated_native_strings_remain_charged_for_every_occurrence() -> None:
+    shared = {"repeated": ["repeated", "repeated"]}
+    source = [shared] * 300
+    expected = json.dumps(source, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("ascii")
+    assert canonical_size(source, len(expected)) == len(expected)
+    assert canonical_bytes(source, len(expected)) == expected
+    copied = detached(source, len(expected))
+    assert copied == source
+    assert copied[0] is not copied[1]
+    for operation in (canonical_size, canonical_bytes, detached):
+        with pytest.raises(ScapFailure, match="publication limit"):
+            operation(source, len(expected) - 1)
+
+
+def test_repeated_string_subclass_is_refused_before_hashing() -> None:
+    calls = []
+
+    class TrapString(str):
+        def __hash__(self):
+            calls.append("hash")
+            raise AssertionError("A source hash callback must not execute")
+
+        def __eq__(self, other):
+            calls.append("equality")
+            raise AssertionError("A source equality callback must not execute")
+
+    for operation in (canonical_size, canonical_bytes, detached):
+        with pytest.raises(ScapFailure):
+            operation(["repeated", TrapString("repeated")], 4096)
+    assert calls == []
+
+
+def test_repeated_ascii_values_do_not_skip_the_original_deadline(monkeypatch) -> None:
+    from evidentia_collectors.scap import _limits
+
+    calls = []
+
+    def clock():
+        calls.append(True)
+        return 1.0 if len(calls) == 1 else 60.0
+
+    monkeypatch.setattr(_limits.time, "monotonic", clock)
+    with pytest.raises(ScapFailure) as error:
+        canonical_bytes(["repeated"] * 1024, 16384, Budget(60.0), publication=True)
+    assert error.value.code == "processing_deadline_exceeded"
+    assert len(calls) == 2
+
+
+def test_short_string_size_cache_is_bounded_per_walk(monkeypatch):
+    from collections import Counter
+
+    from evidentia_collectors.scap import _json
+
+    values = [f"entry-{index:03d}" for index in range(513)]
+    source = [*values, values[0], values[-1]]
+    expected = _json.json.dumps(source, separators=(",", ":")).encode("ascii")
+    calls = Counter()
+    original = _json._string_size
+
+    def observed(value, *args, **kwargs):
+        calls[value] += 1
+        return original(value, *args, **kwargs)
+
+    monkeypatch.setattr(_json, "_string_size", observed)
+    assert canonical_bytes(source, len(expected)) == expected
+    assert calls[values[0]] == 1
+    assert calls[values[-1]] == 2
+    assert len(calls) == 513
+    assert canonical_bytes(source, len(expected)) == expected
+    assert calls[values[0]] == 2
+    assert calls[values[-1]] == 4
+
+
+@pytest.mark.parametrize(("length", "expected_calls"), [(64, 1), (65, 2)])
+def test_short_string_cache_length_boundary(monkeypatch, length, expected_calls):
+    from evidentia_collectors.scap import _json
+
+    value = "a" * length
+    source = [value, value]
+    expected = _json.json.dumps(source, separators=(",", ":")).encode("ascii")
+    calls = []
+    original = _json._string_size
+
+    def observed(item, *args, **kwargs):
+        calls.append(item)
+        return original(item, *args, **kwargs)
+
+    monkeypatch.setattr(_json, "_string_size", observed)
+    assert canonical_bytes(source, len(expected)) == expected
+    assert calls == [value] * expected_calls

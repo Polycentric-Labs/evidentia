@@ -141,6 +141,82 @@ test("schema projection preserves every validation rule and property named title
   );
 });
 
+test("XML name schemas preserve nonempty Unicode and length boundaries", () => {
+  for (const schema of [
+    SCAP_RESPONSE_SCHEMAS.ExpandedName.properties?.local_name,
+    SCAP_RESPONSE_SCHEMAS.XmlPI.properties?.target,
+  ]) {
+    if (
+      schema === undefined ||
+      schema.pattern === undefined ||
+      schema.maxLength === undefined
+    )
+      throw new Error("Expected a bounded XML name schema");
+    const pattern = new RegExp(schema.pattern, "u");
+    for (const value of [
+      "",
+      " ",
+      "\t\r\n",
+      "\u1680",
+      "\u{10000}",
+      "x\n",
+      "x".repeat(256),
+      "x".repeat(257),
+    ]) {
+      const length = Array.from(value).length;
+      expect(pattern.test(value) && length <= schema.maxLength).toBe(
+        length >= 1 && length <= 256,
+      );
+    }
+  }
+});
+
+test("native XML names retain U+1680 while invalid names remain refused", async () => {
+  const source = scapDemoSource("xccdf-native-times");
+  const good = await scapDemoResponse(
+    source.raw,
+    source.request,
+    "xccdf-native-times",
+  );
+  const input = JSON.parse(good.rawJson) as ScapResult;
+  expect(input.evidence_artifact).toBeNull();
+  const root = input.native_document.nodes[0];
+  if (root.kind !== "element") throw new Error("Expected the fixture root");
+  root.attributes.push({
+    name: { namespace_uri: "", local_name: "\u1680" },
+    value: "",
+  });
+  input.native_document.children.push(input.native_document.nodes.length);
+  input.native_document.nodes.push({
+    kind: "processing_instruction",
+    target: "\u1680",
+    data: "",
+    tail: null,
+  });
+  const expected = (await prepareScapUpload(source.raw, source.request))
+    .expected;
+  const parsed = await parseScapResponse(JSON.stringify(input), expected);
+  expect(parsed.result.native_document).toEqual(input.native_document);
+  for (const field of ["local_name", "target"]) {
+    for (const invalid of ["", " ", "\t\r\n", "9name", "x".repeat(257)]) {
+      const changed = structuredClone(input);
+      const element = changed.native_document.nodes[0];
+      const instruction = changed.native_document.nodes.at(-1)!;
+      if (
+        element.kind !== "element" ||
+        instruction.kind !== "processing_instruction"
+      )
+        throw new Error("Expected the fixture node kinds");
+      if (field === "local_name")
+        element.attributes.at(-1)!.name.local_name = invalid;
+      else instruction.target = invalid;
+      await expect(
+        parseScapResponse(JSON.stringify(changed), expected),
+      ).rejects.toThrow();
+    }
+  }
+});
+
 test.each([
   "prototype",
   "accessor",

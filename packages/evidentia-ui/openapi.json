@@ -5826,7 +5826,7 @@
         "properties": {
           "local_name": {
             "maxLength": 256,
-            "minLength": 1,
+            "pattern": "^[\\s\\S]+$",
             "title": "Local Name",
             "type": "string"
           },
@@ -16138,7 +16138,7 @@
           },
           "target": {
             "maxLength": 256,
-            "minLength": 1,
+            "pattern": "^[\\s\\S]+$",
             "title": "Target",
             "type": "string"
           }

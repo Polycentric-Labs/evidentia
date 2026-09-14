@@ -21,8 +21,10 @@ from evidentia_collectors.scap._contracts import (
     UtcRuntime,
     UtcText,
     XmlElement,
+    XmlPI,
 )
 from evidentia_collectors.scap._limits import ScapFailure
+from jsonschema import Draft202012Validator
 from pydantic import TypeAdapter, ValidationError
 
 
@@ -123,6 +125,25 @@ def test_xml_names_have_their_declared_native_grammar(scalar, valid: str, invali
     assert TypeAdapter(scalar).validate_python(valid) == valid
     with pytest.raises((ScapFailure, ValidationError)):
         TypeAdapter(scalar).validate_python(invalid)
+
+
+@pytest.mark.parametrize("model,field", [(ExpandedName, "local_name"), (XmlPI, "target")])
+def test_xml_name_schema_preserves_nonempty_strings_without_a_nonblank_rule(model, field: str) -> None:
+    schema = model.model_json_schema()["properties"][field]
+    current = Draft202012Validator(schema)
+    prior = Draft202012Validator({"type": "string", "minLength": 1, "maxLength": 256})
+    for value in ["", " ", "\t\r\n", "\u1680", "\U00010000", "x\n", "x" * 256, "x" * 257, None, 1]:
+        assert current.is_valid(value) == prior.is_valid(value)
+    assert current.is_valid("\u1680")
+    native = (
+        {"namespace_uri": "", "local_name": "\u1680"}
+        if model is ExpandedName
+        else {"kind": "processing_instruction", "target": "\u1680", "data": "", "tail": None}
+    )
+    assert model.model_validate(native).model_dump(mode="json") == native
+    for invalid in ["", " ", "\t\r\n", "9name", "x" * 257]:
+        with pytest.raises((ScapFailure, ValidationError)):
+            model.model_validate({**native, field: invalid})
 
 
 def test_request_requires_every_key_and_has_no_extra_or_coercing_fields() -> None:

@@ -198,7 +198,7 @@ LocalName = Annotated[
     str,
     BeforeValidator(partial(_string, 1, 256)),
     BeforeValidator(partial(_xml_name, maximum=256, empty=False, pi=False)),
-    Field(min_length=1, max_length=256),
+    Field(max_length=256, json_schema_extra={"pattern": r"^[\s\S]+$"}),
 ]
 
 NamespacePrefix = Annotated[
@@ -218,7 +218,7 @@ PIName = Annotated[
     str,
     BeforeValidator(partial(_string, 1, 256)),
     BeforeValidator(partial(_xml_name, maximum=256, empty=False, pi=True)),
-    Field(min_length=1, max_length=256),
+    Field(max_length=256, json_schema_extra={"pattern": r"^[\s\S]+$"}),
 ]
 
 Sha256 = Annotated[
