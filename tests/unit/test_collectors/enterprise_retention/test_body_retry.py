@@ -76,7 +76,8 @@ def test_gzip_result_and_separate_raw_decoded_counts() -> None:
     selected = response(stream, {"Content-Encoding": "gzip"})
     counts: list[tuple[int, int]] = []
     try:
-        assert a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded))) == expected
+        decoded_body = a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded)))
+        assert decoded_body == expected
         assert sum((raw for raw, decoded in counts)) == len(encoded)
         assert sum((decoded for raw, decoded in counts)) == len(expected)
     finally:
@@ -176,7 +177,8 @@ def test_gzip_decoded_exact_limit_and_empty_member(expected: bytes) -> None:
     selected = response(stream, {"Content-Encoding": "\tGZIP "})
     counts: list[tuple[int, int]] = []
     try:
-        assert a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded))) == expected
+        decoded_body = a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded)))
+        assert decoded_body == expected
         assert sum((raw for raw, decoded in counts)) == len(encoded)
         assert sum((decoded for raw, decoded in counts)) == len(expected)
         assert stream.closed == 1
@@ -212,9 +214,8 @@ def test_gzip_raw_exact_boundary_is_independent_of_decoded_size(overshoot: int) 
                 a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded)))
             assert sum((decoded for raw, decoded in counts)) == 0
         else:
-            assert (
-                a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded))) == expected
-            )
+            decoded_body = a.read_enterprise_body(selected, consume=lambda raw, decoded: counts.append((raw, decoded)))
+            assert decoded_body == expected
             assert sum((decoded for raw, decoded in counts)) == len(expected)
         assert sum((raw for raw, decoded in counts)) == len(encoded)
     finally:
@@ -379,7 +380,8 @@ def test_inherited_default_bound_and_empty_checkpoints_are_exact() -> None:
     selected = response(Chunks())
     calls: list[tuple[int, int]] = []
     try:
-        assert a.read_enterprise_body(selected, consume=lambda raw, decoded: calls.append((raw, decoded))) == b""
+        decoded_body = a.read_enterprise_body(selected, consume=lambda raw, decoded: calls.append((raw, decoded)))
+        assert decoded_body == b""
         assert calls == [(0, 0), (0, 0)]
     finally:
         selected.close()

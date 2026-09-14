@@ -8,15 +8,11 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import httpx
 
 from evidentia_integrations.powerbi.config import PowerBIConfig
-
-if TYPE_CHECKING:
-    # Type-only import; msal is in the [powerbi] optional extra.
-    import msal  # noqa: F401
 
 
 class PowerBIApiError(Exception):

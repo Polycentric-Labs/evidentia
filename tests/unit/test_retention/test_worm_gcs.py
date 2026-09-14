@@ -214,7 +214,7 @@ class TestConstruction:
         with pytest.raises(WORMBackendError, match="non-empty"):
             GCSBucketLockWORM(
                 bucket_name="",
-                client_factory=lambda: _ClientStub(),
+                client_factory=_ClientStub,
             )
 
     def test_repr_contains_bucket(self, worm: GCSBucketLockWORM) -> None:

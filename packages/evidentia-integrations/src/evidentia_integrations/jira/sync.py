@@ -17,7 +17,6 @@ CLI / API callers can render per-gap results without a second pass.
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime
 from enum import Enum
 
@@ -38,8 +37,6 @@ from evidentia_integrations.jira.mapper import (
     gap_to_create_request,
     jira_status_to_gap_status,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class JiraSyncAction(str, Enum):

@@ -56,7 +56,6 @@ from typing import Any
 from _generators import (  # type: ignore[import-not-found]
     DATA_ROOT,
     REPO_ROOT,
-    emit_control_catalog,
 )
 
 PIN_PATH = (

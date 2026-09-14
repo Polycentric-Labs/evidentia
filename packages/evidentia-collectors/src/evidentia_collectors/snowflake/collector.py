@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import contextlib
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evidentia_core.audit import (
     CollectionContext,
@@ -62,14 +62,6 @@ from evidentia_collectors.snowflake.mapping import (
     USER_INVENTORY_MAPPINGS,
     USER_NEVER_LOGGED_IN_MAPPINGS,
 )
-
-if TYPE_CHECKING:
-    # Type-only import; snowflake-connector-python is in the
-    # [snowflake] optional extra. The runtime import is lazy in
-    # _ensure_connected so the package itself loads without the
-    # driver installed.
-    import snowflake.connector  # noqa: F401
-
 
 _log = get_logger("evidentia.collectors.snowflake")
 
@@ -240,21 +232,6 @@ _LOGIN_HISTORY_DEFAULT_WINDOW_DAYS = 90
 # Operators can shrink the window or raise the cap via the constructor
 # argument when their environment warrants it. Closes F-V08-CR-H1.
 _LOGIN_HISTORY_DEFAULT_MAX_ROWS = 10000
-
-
-# Snowflake's reserved built-in role names. Inventoried separately
-# from custom roles because grant-to-built-in-role is structurally
-# different (e.g. ACCOUNTADMIN can never be revoked from itself).
-_BUILT_IN_ROLES = frozenset(
-    {
-        "ACCOUNTADMIN",
-        "SECURITYADMIN",
-        "USERADMIN",
-        "SYSADMIN",
-        "PUBLIC",
-        "ORGADMIN",
-    }
-)
 
 
 # Roles that should be inventoried with extra scrutiny — these carry

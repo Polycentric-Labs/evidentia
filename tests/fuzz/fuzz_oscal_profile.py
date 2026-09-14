@@ -2,7 +2,7 @@
 
 Target source entry point
 -------------------------
-``evidentia_core.oscal.profile`` — ``_load_oscal_json`` parses an OSCAL
+``evidentia_core.oscal.profile``: ``_load_oscal_json`` parses an OSCAL
 profile document (``json.load`` + top-level-object validation) and
 ``resolve_profile`` walks ``profile.imports`` / ``back-matter.resources``
 to resolve an imported catalog and apply profile alterations.
@@ -17,12 +17,10 @@ The fuzz bytes are written to a temp ``.json`` file. ``_load_oscal_json``
 is the pure parse + dict-root check. ``resolve_profile`` is then driven
 on the same file to exercise the import/back-matter traversal; almost
 all malformed inputs resolve to a declared ``ProfileResolutionError``
-(missing imports, missing href, non-object root). The resolver only
-reads the one supplied file plus any *fragment* (``#uuid``) back-matter
-references that point back into the same document, so it does not chase
-arbitrary filesystem paths from fuzz input in this harness (a
-filesystem ``href`` simply yields ``FileNotFoundError`` /
-``ProfileResolutionError``, both caught).
+(missing imports, missing href, non-object root). The resolver can follow local filesystem hrefs,
+including absolute paths, file URIs, and relative paths. Run this
+harness only in an isolated fuzz environment with disposable files;
+catching a missing-file error does not restrict which paths it can read.
 
 Declared/expected exceptions (caught): ``ProfileResolutionError``,
 ``json.JSONDecodeError``, ``FileNotFoundError``, ``ValueError``,
@@ -62,6 +60,7 @@ def TestOneInput(data: bytes) -> None:
         return
     body = to_text(data)
     fd, path_str = tempfile.mkstemp(suffix=".json")
+    primary_failed = False
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(body)
@@ -74,11 +73,17 @@ def TestOneInput(data: bytes) -> None:
             resolve_profile(path)
         except _EXPECTED:
             pass
+    except BaseException:
+        primary_failed = True
+        raise
     finally:
         try:
             os.unlink(path_str)
-        except OSError:
+        except FileNotFoundError:
             pass
+        except OSError:
+            if not primary_failed:
+                raise
 
 
 def main() -> None:

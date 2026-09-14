@@ -196,6 +196,7 @@ def test_selector_actual_single_tls_handshake(trust: str, monkeypatch: pytest.Mo
             with accepted, server_context.wrap_socket(accepted, server_side=True):
                 pass
         except OSError:
+            # Untrusted and wrong-host controls deliberately abort the server handshake.
             pass
         finally:
             listener.close()

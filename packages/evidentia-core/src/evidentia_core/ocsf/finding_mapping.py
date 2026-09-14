@@ -62,8 +62,6 @@ _OCSF_CATEGORY_NAME = "Findings"
 
 # OCSF Detection Finding (v0.10.1) — what Prowler and AWS Security Hub
 # emit. Same Findings category as Compliance Finding.
-_OCSF_DETECTION_CLASS_UID = 2004
-_OCSF_DETECTION_CLASS_NAME = "Detection Finding"
 
 # Detection Finding has no `compliance` object, so `compliance_status`
 # must be synthesized from `severity_id`. The heuristic: a detection

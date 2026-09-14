@@ -15,6 +15,7 @@ from evidentia_collectors.sql.postgres import (
     COLLECTOR_ID,
     PostgresCollector,
     PostgresCollectorError,
+    PostgresQueryError,
 )
 from evidentia_core.models.finding import FindingStatus
 
@@ -334,3 +335,244 @@ class TestComplianceStatus:
         assert findings
         for f in findings:
             assert finding_from_ocsf(finding_to_ocsf(f)) == f
+
+
+class _PrivilegeScriptCursor:
+    """Consume one explicit statement script without a driver or database."""
+
+    def __init__(
+        self,
+        steps: list[tuple[str, BaseException | None]],
+        row: tuple[str, ...] = ("on",),
+        *,
+        fetch_error: BaseException | None = None,
+        close_error: BaseException | None = None,
+    ) -> None:
+        self.steps = list(steps)
+        self.row = row
+        self.fetch_error = fetch_error
+        self.close_error = close_error
+        self.executed: list[str] = []
+        self.close_calls = 0
+
+    def execute(self, query: str) -> None:
+        self.executed.append(query)
+        assert self.steps, "Unexpected statement after the declared script"
+        expected, failure = self.steps.pop(0)
+        assert query == expected
+        if failure is not None:
+            raise failure
+
+    def fetchone(self) -> tuple[str, ...]:
+        if self.fetch_error is not None:
+            raise self.fetch_error
+        return self.row
+
+    def close(self) -> None:
+        self.close_calls += 1
+        if self.close_error is not None:
+            raise self.close_error
+
+
+class _PrivilegeScriptConnection:
+    def __init__(self, cursors: list[_PrivilegeScriptCursor]) -> None:
+        self.pending = list(cursors)
+        self.used: list[_PrivilegeScriptCursor] = []
+        self.close_calls = 0
+
+    def cursor(self) -> _PrivilegeScriptCursor:
+        assert self.pending, "Unexpected cursor after the declared script"
+        cursor = self.pending.pop(0)
+        self.used.append(cursor)
+        return cursor
+
+    def close(self) -> None:
+        self.close_calls += 1
+
+
+class _PrivilegeProbeCancellation(BaseException):
+    """A synthetic cancellation distinct from ordinary query exceptions."""
+
+
+_PRIVILEGE_SETTING = "SELECT current_setting('default_transaction_read_only', true)"
+_PRIVILEGE_SAVEPOINT = "SAVEPOINT evidentia_priv_probe"
+_PRIVILEGE_CREATE = "CREATE TEMP TABLE evidentia_priv_probe_temp (id int) ON COMMIT DROP"
+_PRIVILEGE_ROLLBACK = "ROLLBACK TO SAVEPOINT evidentia_priv_probe"
+_PRIVILEGE_RELEASE = "RELEASE SAVEPOINT evidentia_priv_probe"
+_PRIVILEGE_IDENTITY = "SELECT current_user, current_database(), version()"
+
+
+class TestQ6PrivilegeProbeRecovery:
+    @pytest.mark.parametrize("setting, expected", [("on", True), ("off", False)])
+    @pytest.mark.parametrize("denied", [False, True])
+    def test_normal_and_expected_denial_preserve_exact_script(self, setting: str, expected: bool, denied: bool) -> None:
+        failure = PermissionError("synthetic denied query") if denied else None
+        steps = [
+            (_PRIVILEGE_SETTING, None),
+            (_PRIVILEGE_SAVEPOINT, None),
+            (_PRIVILEGE_CREATE, failure),
+            (_PRIVILEGE_ROLLBACK, None),
+            (_PRIVILEGE_RELEASE, None),
+        ]
+        cursor = _PrivilegeScriptCursor(steps, (setting,))
+        connection = _PrivilegeScriptConnection([cursor])
+        collector = PostgresCollector(connection=connection)
+        assert collector._probe_write_privilege(connection) == (expected, not denied)
+        assert cursor.executed == [query for query, _failure in steps]
+        assert cursor.steps == []
+        assert cursor.close_calls == 1
+        assert connection.pending == []
+        assert connection.close_calls == 0
+
+    @pytest.mark.parametrize("entry", ["probe", "connection", "collect"])
+    @pytest.mark.parametrize(
+        "failed_recovery", ["rollback", "release", "savepoint", "initial_rollback", "initial_release"]
+    )
+    def test_failed_recovery_refuses_before_reporting_or_collection(
+        self, entry: str, failed_recovery: str, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        denied = PermissionError("synthetic denied query")
+        recovery_error = RuntimeError("synthetic recovery detail must remain suppressed")
+        steps: list[tuple[str, BaseException | None]] = [(_PRIVILEGE_SETTING, None)]
+        if failed_recovery == "savepoint":
+            steps += [(_PRIVILEGE_SAVEPOINT, denied), (_PRIVILEGE_ROLLBACK, recovery_error)]
+        elif failed_recovery == "initial_rollback":
+            steps += [
+                (_PRIVILEGE_SAVEPOINT, None),
+                (_PRIVILEGE_CREATE, None),
+                (_PRIVILEGE_ROLLBACK, denied),
+                (_PRIVILEGE_ROLLBACK, recovery_error),
+            ]
+        elif failed_recovery == "initial_release":
+            steps += [
+                (_PRIVILEGE_SAVEPOINT, None),
+                (_PRIVILEGE_CREATE, None),
+                (_PRIVILEGE_ROLLBACK, None),
+                (_PRIVILEGE_RELEASE, denied),
+                (_PRIVILEGE_ROLLBACK, recovery_error),
+            ]
+        else:
+            steps += [(_PRIVILEGE_SAVEPOINT, None), (_PRIVILEGE_CREATE, denied)]
+            if failed_recovery == "rollback":
+                steps += [(_PRIVILEGE_ROLLBACK, recovery_error)]
+            else:
+                steps += [(_PRIVILEGE_ROLLBACK, None), (_PRIVILEGE_RELEASE, recovery_error)]
+        cursor = _PrivilegeScriptCursor(steps)
+        cursors = [cursor]
+        if entry != "probe":
+            cursors.insert(
+                0,
+                _PrivilegeScriptCursor(
+                    [(_PRIVILEGE_IDENTITY, None)], ("synthetic_reader", "synthetic_db", "synthetic_version")
+                ),
+            )
+        connection = _PrivilegeScriptConnection(cursors)
+        collector = PostgresCollector(connection=connection)
+        context_calls: list[str] = []
+
+        def refuse_context(run_id: str) -> Any:
+            context_calls.append(run_id)
+            raise AssertionError("Collection advanced after unconfirmed probe recovery")
+
+        monkeypatch.setattr(collector, "_build_context", refuse_context)
+        try:
+            with pytest.raises(PostgresQueryError) as caught:
+                if entry == "probe":
+                    collector._probe_write_privilege(connection)
+                elif entry == "connection":
+                    collector.test_connection()
+                else:
+                    collector.collect_v2()
+            assert type(caught.value) is PostgresQueryError
+            assert str(caught.value) == "Could not restore the Postgres privilege-probe savepoint."
+            assert caught.value.__cause__ is None
+            assert caught.value.__suppress_context__ is True
+        finally:
+            assert cursor.executed == [query for query, _failure in steps]
+            assert cursor.steps == []
+            assert all(item.close_calls == 1 for item in cursors)
+            assert connection.pending == []
+            assert connection.close_calls == 0
+        assert context_calls == []
+
+    @pytest.mark.parametrize("stage", ["execute", "fetch"])
+    def test_initial_query_error_propagates_with_cursor_cleanup(self, stage: str) -> None:
+        failure = RuntimeError("synthetic setting query failure")
+        cursor = _PrivilegeScriptCursor(
+            [(_PRIVILEGE_SETTING, failure if stage == "execute" else None)],
+            fetch_error=failure if stage == "fetch" else None,
+        )
+        connection = _PrivilegeScriptConnection([cursor])
+        with pytest.raises(RuntimeError) as caught:
+            PostgresCollector(connection=connection)._probe_write_privilege(connection)
+        assert caught.value is failure
+        assert cursor.executed == [_PRIVILEGE_SETTING]
+        assert cursor.steps == []
+        assert cursor.close_calls == 1
+        assert connection.close_calls == 0
+
+    @pytest.mark.parametrize(
+        "stage",
+        [
+            "setting",
+            "fetch",
+            "savepoint",
+            "create",
+            "rollback",
+            "release",
+            "recovery_rollback",
+            "recovery_release",
+            "close",
+        ],
+    )
+    def test_cancellation_identity_and_cursor_close_attempt(self, stage: str) -> None:
+        cancellation = _PrivilegeProbeCancellation("synthetic cancellation")
+        prefix: list[tuple[str, BaseException | None]] = [(_PRIVILEGE_SETTING, None)]
+        if stage == "setting":
+            prefix = [(_PRIVILEGE_SETTING, cancellation)]
+        elif stage not in {"fetch"}:
+            prefix.append((_PRIVILEGE_SAVEPOINT, cancellation if stage == "savepoint" else None))
+            if stage != "savepoint":
+                denial = PermissionError("synthetic denied query") if stage.startswith("recovery_") else None
+                prefix.append((_PRIVILEGE_CREATE, cancellation if stage == "create" else denial))
+                if stage != "create":
+                    prefix.append(
+                        (_PRIVILEGE_ROLLBACK, cancellation if stage in {"rollback", "recovery_rollback"} else None)
+                    )
+                    if stage not in {"rollback", "recovery_rollback"}:
+                        prefix.append(
+                            (_PRIVILEGE_RELEASE, cancellation if stage in {"release", "recovery_release"} else None)
+                        )
+        cursor = _PrivilegeScriptCursor(
+            prefix,
+            fetch_error=cancellation if stage == "fetch" else None,
+            close_error=cancellation if stage == "close" else None,
+        )
+        connection = _PrivilegeScriptConnection([cursor])
+        with pytest.raises(_PrivilegeProbeCancellation) as caught:
+            PostgresCollector(connection=connection)._probe_write_privilege(connection)
+        assert caught.value is cancellation
+        assert cursor.executed == [query for query, _failure in prefix]
+        assert cursor.steps == []
+        assert cursor.close_calls == 1
+        assert connection.close_calls == 0
+
+    def test_ordinary_close_failure_remains_an_error(self) -> None:
+        failure = RuntimeError("synthetic close failure")
+        cursor = _PrivilegeScriptCursor(
+            [
+                (_PRIVILEGE_SETTING, None),
+                (_PRIVILEGE_SAVEPOINT, None),
+                (_PRIVILEGE_CREATE, None),
+                (_PRIVILEGE_ROLLBACK, None),
+                (_PRIVILEGE_RELEASE, None),
+            ],
+            close_error=failure,
+        )
+        connection = _PrivilegeScriptConnection([cursor])
+        with pytest.raises(RuntimeError) as caught:
+            PostgresCollector(connection=connection)._probe_write_privilege(connection)
+        assert caught.value is failure
+        assert cursor.steps == []
+        assert cursor.close_calls == 1
+        assert connection.close_calls == 0

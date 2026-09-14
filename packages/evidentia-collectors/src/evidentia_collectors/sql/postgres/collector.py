@@ -23,7 +23,7 @@ Mirrors the v0.7.0 enterprise-grade collector pattern:
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evidentia_core.audit import (
     CollectionContext,
@@ -56,13 +56,6 @@ from evidentia_collectors.sql.postgres.mapping import (
     USER_ROLE_INVENTORY_MAPPINGS,
     WRITE_PRIV_DETECTED_MAPPINGS,
 )
-
-if TYPE_CHECKING:
-    # Type-only import; psycopg is in the [sql-postgres] optional
-    # extra. The runtime import is lazy in __init__ so that the
-    # package itself loads without psycopg installed.
-    import psycopg  # noqa: F401
-
 
 _log = get_logger("evidentia.collectors.sql.postgres")
 
@@ -372,7 +365,7 @@ class PostgresCollector:
                     cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
                     cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
                 except Exception:
-                    pass
+                    raise PostgresQueryError("Could not restore the Postgres privilege-probe savepoint.") from None
 
             return read_only_setting, create_temp_succeeded
         finally:

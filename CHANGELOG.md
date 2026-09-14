@@ -330,6 +330,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Quality corrections.** Catalog listing and diagnostics distinguish missing
+  optional support from broken imports. PostgreSQL collection stops when a
+  privilege-probe savepoint cannot be restored. Fuzz harness cleanup preserves
+  the original parser failure, and the local SAM TLS fixture stops at EOF.
+  Reviewed dead code and ambiguous variable names are removed, and regression
+  tests cover the corrected failure paths.
+
 - **Registry TLS minimum.** Every registry HTTPS context now explicitly requires
   TLS 1.2 or later. Certificate trust, hostname verification and disabled key
   logging remain enforced; a weaker context default cannot lower the protocol floor.

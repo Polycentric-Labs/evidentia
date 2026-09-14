@@ -65,7 +65,6 @@ the latter must not masquerade as a definitive absence.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -88,8 +87,6 @@ from evidentia_collectors.github.client import (
     GitHubApiError,
     GitHubClient,
 )
-
-_log = logging.getLogger(__name__)
 
 COLLECTOR_ID = "github-osps"
 

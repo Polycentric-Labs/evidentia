@@ -390,6 +390,7 @@ def _render_air_gap_report() -> None:
     pure configuration audit.
     """
     import os
+    from importlib.util import find_spec
 
     from evidentia_core.config import load_config
     from evidentia_core.network_guard import (
@@ -460,7 +461,7 @@ def _render_air_gap_report() -> None:
     )
 
     # 5. FastAPI server (if installed) — localhost bind recommended.
-    try:
+    if find_spec("evidentia_api") is not None:
         import evidentia_api  # noqa: F401
 
         table.add_row(
@@ -468,8 +469,6 @@ def _render_air_gap_report() -> None:
             "AIR-GAP READY",
             "`evidentia serve` binds to 127.0.0.1 by default",
         )
-    except ImportError:
-        pass
 
     console.print(table)
     console.print(

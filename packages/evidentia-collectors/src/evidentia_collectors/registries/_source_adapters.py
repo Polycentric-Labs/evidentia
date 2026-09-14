@@ -278,7 +278,6 @@ def _physical_lines(content: bytes) -> list[_Line]:
         text = content.decode("utf-8", errors="strict")
     except UnicodeError:
         failed = True
-        text = ""
     if failed:
         raise AdapterError("body_utf8_invalid")
     # UTF-8 decoding cannot expand the byte count; retain an explicit decoded check.

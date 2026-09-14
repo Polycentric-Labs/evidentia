@@ -738,8 +738,6 @@ class TestRFC0007Alignment:
         assert notif_with["three_pao_name"] == "Acme 3PAO LLC"
 
     def test_oscal_scr_json_serializable(self) -> None:
-        import json
-
         entry = _make_entry()
         form = emit_scr_form(entry, entry)
         populated = form.model_copy(
