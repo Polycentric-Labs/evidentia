@@ -217,6 +217,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependency maintenance.** Update LiteLLM to 1.99.0, sse-starlette to 3.4.11,
+  compliance-trestle to 5.1.0, NumPy to 2.5.3 and Lucide React to 1.39.0.
+  The reviewed lockfiles retain the other package versions, and the Docker
+  requirements keep their complete hash pins. The Pages artifact action uses
+  the reviewed v5.0.1 commit.
+
 - **MCP SDK 2.2 (V13-16).** The server uses the SDK's typed `MCPServer` API.
   Tool names, input/output schemas and CLI transport selectors remain unchanged.
   Description wording and relative indentation are preserved; Python 3.13 and
@@ -329,6 +335,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   roadmap entries are left as written.
 
 ### Fixed
+
+- **Console development checks.** Badge and Button export their components
+  without unused variant-helper exports. The entry point imports its selected
+  router from a dedicated module, preserving normal and demo navigation while
+  resolving the three Fast Refresh lint warnings. Source lint excludes only the
+  unchanged Asciinema 3.15.1 minified publisher artifact; every other path retains
+  its existing rules.
 
 - **Quality corrections.** Catalog listing and diagnostics distinguish missing
   optional support from broken imports. PostgreSQL collection opens an explicit
