@@ -350,22 +350,36 @@ class PostgresCollector:
             # connection. We always rollback regardless of outcome —
             # we don't want to leave a temp table behind even if the
             # CREATE somehow committed.
-            create_temp_succeeded = False
+            primary_error: BaseException | None = None
             try:
-                cur.execute("SAVEPOINT evidentia_priv_probe")
-                cur.execute("CREATE TEMP TABLE evidentia_priv_probe_temp (id int) ON COMMIT DROP")
-                create_temp_succeeded = True
-                cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
-                cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
-            except Exception:
-                # Permission denied is expected for a read-only
-                # principal. Any other error here also means we
-                # couldn't write — treat as read-only.
-                try:
-                    cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
-                    cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
-                except Exception:
-                    raise PostgresQueryError("Could not restore the Postgres privilege-probe savepoint.") from None
+                with conn.transaction():
+                    try:
+                        create_temp_succeeded = False
+                        try:
+                            cur.execute("SAVEPOINT evidentia_priv_probe")
+                            cur.execute("CREATE TEMP TABLE evidentia_priv_probe_temp (id int) ON COMMIT DROP")
+                            create_temp_succeeded = True
+                            cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
+                            cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
+                        except Exception:
+                            # Permission denied is expected for a read-only
+                            # principal. Any other error here also means we
+                            # couldn't write — treat as read-only.
+                            try:
+                                cur.execute("ROLLBACK TO SAVEPOINT evidentia_priv_probe")
+                                cur.execute("RELEASE SAVEPOINT evidentia_priv_probe")
+                            except Exception:
+                                raise PostgresQueryError(
+                                    "Could not restore the Postgres privilege-probe savepoint."
+                                ) from None
+                    except BaseException as error:
+                        primary_error = error
+                        raise
+            except BaseException as error:
+                if primary_error is not None and error is not primary_error:
+                    # Native transaction cleanup must not replace the body failure.
+                    raise primary_error from None
+                raise
 
             return read_only_setting, create_temp_succeeded
         finally:

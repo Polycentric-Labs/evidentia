@@ -334,8 +334,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Quality corrections.** Catalog listing and diagnostics distinguish missing
-  optional support from broken imports. PostgreSQL collection stops when a
-  privilege-probe savepoint cannot be restored. Fuzz harness cleanup preserves
+  optional support from broken imports. PostgreSQL collection opens an explicit
+  transaction for its temporary-table privilege probe and stops when the probe
+  savepoint cannot be restored. Secondary transaction-cleanup interruptions
+  preserve the directly captured probe failure. Fuzz harness cleanup preserves
   the original parser failure, and the local SAM TLS fixture stops at EOF.
   Reviewed dead code and ambiguous variable names are removed, and regression
   tests cover the corrected failure paths.
