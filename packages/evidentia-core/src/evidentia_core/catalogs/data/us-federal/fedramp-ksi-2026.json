@@ -1,8 +1,8 @@
 {
   "framework_id": "fedramp-ksi-2026",
   "framework_name": "FedRAMP Key Security Indicators (Consolidated Rules for 2026)",
-  "version": "2026.07.14.01 (CR26)",
-  "source": "FedRAMP — https://github.com/FedRAMP/rules @ 58efbf3d8984 (fedramp-consolidated-rules.json)",
+  "version": "2026.09.13.02 (CR26)",
+  "source": "FedRAMP — https://github.com/FedRAMP/rules @ 58487bda77d7 (fedramp-consolidated-rules.json)",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -73,7 +73,7 @@
       "title": "Implementing Best Practices",
       "description": "The use and configuration of third-party machine-based information resources is persistently compared against the original provider's best practices and guidance.",
       "family": "Cloud Native Architecture",
-      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.3, cm-2, pl-10.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently, Provider."
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-17.3, cm-2, pl-10.\n\nRelated FedRAMP terms: Information Resource, Machine-Based (Information Resources), Persistently."
     },
     {
       "id": "KSI-CNA-MAT",
@@ -220,14 +220,14 @@
       "title": "Reviewing Executive Support",
       "description": "Executive support for achieving the provider's security goals is persistently reviewed and demonstrated.",
       "family": "Policy and Inventory",
-      "guidance": "No NIST SP 800-53 Rev 5 mapping declared upstream (`controls: []` at the pinned revision).\n\nRelated FedRAMP terms: Persistently, Provider."
+      "guidance": "No NIST SP 800-53 Rev 5 mapping declared upstream (`controls: []` at the pinned revision).\n\nRelated FedRAMP terms: Persistently."
     },
     {
       "id": "KSI-PIY-RIS",
       "title": "Reviewing Investments in Security",
       "description": "The effectiveness of the provider's investments in achieving security goals is persistently reviewed.",
       "family": "Policy and Inventory",
-      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-5, ca-2, cp-2.1, cp-4.1, ir-3.2, pm-3, sa-2, sa-3, sr-2.1.\n\nRelated FedRAMP terms: Persistently, Provider."
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ac-5, ca-2, cp-2.1, cp-4.1, ir-3.2, pm-3, sa-2, sa-3, sr-2.1.\n\nRelated FedRAMP terms: Persistently."
     },
     {
       "id": "KSI-PIY-RSD",
@@ -241,7 +241,7 @@
       "title": "Reviewing Vulnerability Disclosures",
       "description": "The effectiveness of the provider's vulnerability disclosure program is persistently reviewed.",
       "family": "Policy and Inventory",
-      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ra-5.11.\n\nRelated FedRAMP terms: Persistently, Provider, Vulnerability."
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): ra-5.11.\n\nRelated FedRAMP terms: Persistently, Vulnerability."
     },
     {
       "id": "KSI-RPL-ABO",
@@ -262,7 +262,7 @@
       "title": "Reviewing Recovery Objectives",
       "description": "The desired Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) are defined and persistently reviewed for alignment with the provider's business needs and capabilities.",
       "family": "Recovery Planning",
-      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cp-2.3, cp-10.\n\nRelated FedRAMP terms: Persistently, Provider."
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): cp-2.3, cp-10.\n\nRelated FedRAMP terms: Persistently."
     },
     {
       "id": "KSI-RPL-TRC",
@@ -318,7 +318,7 @@
       "title": "Removing Unwanted Data",
       "description": "Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.",
       "family": "Service Configuration",
-      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): si-12.3, si-18.4.\n\nRelated FedRAMP terms: Agency, Federal Customer Data, Promptly.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage."
+      "guidance": "NIST SP 800-53 Rev 5 mapping (upstream `controls`, verbatim): si-12.3, si-18.4.\n\nRelated FedRAMP terms: Federal Customer Data, Promptly.\n\nClass-B variant statement (upstream `varies_by_class`, verbatim): **Optional:** Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.\n\nClass-C variant statement (upstream `varies_by_class`, verbatim): Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage."
     },
     {
       "id": "KSI-SVC-SIN",
