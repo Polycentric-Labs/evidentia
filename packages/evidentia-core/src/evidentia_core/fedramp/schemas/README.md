@@ -71,3 +71,16 @@ The `2026-06-24` date in the filenames identifies the CR26 ruleset; upstream
 policy (their README) is that a future ruleset (CR27) cuts NEW dated files and
 leaves these frozen, so a new dated set appearing upstream is a MAJOR drift
 signal, not an in-place edit.
+
+## History: the 2026-09-18 rules refresh
+
+The rule dataset is pinned to `2026.09.13.02` at commit
+`58487bda77d76d9ce334304ec2e779ece7cc7d54`. Regeneration retains all
+46 KSI indicators and 180 provider requirements. The source removes generic
+actor terms from cross-references, clarifies when reporting information applies
+in `CCM-OCR-AVL`, and corrects repeated words in `IEC-CSO-OIR`. The FRR
+generator continues to preserve its documented provider-facing projection.
+
+A fresh upstream probe found no remaining rules, tracked-schema or baseline
+drift. The three vendored schema files remain byte-identical to their pinned
+upstream copies; this refresh changes the rules pin and generated catalogs.

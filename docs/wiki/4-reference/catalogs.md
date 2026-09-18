@@ -38,8 +38,8 @@ Catalogs grouped by their derived text depth:
 | `cms-ars-5.2` | CMS Acceptable Risk Safeguards (ARS) 5.2 | 5.2 | A | full | control |
 | `fda-21-cfr-pt11` | FDA 21 CFR Part 11: Electronic Records; Electronic Signatures | 1997 (with guidance updates) | A | headings | control |
 | `fda-524b-appendix1` | FDA Section 524B Premarket Cybersecurity: Security Control Categories | 2026-02-03 (final guidance) | A | full | control |
-| `fedramp-frr-2026` | FedRAMP Requirements: provider-facing rules (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | full | control |
-| `fedramp-ksi-2026` | FedRAMP Key Security Indicators (Consolidated Rules for 2026) | 2026.07.14.01 (CR26) | A | full | control |
+| `fedramp-frr-2026` | FedRAMP Requirements: provider-facing rules (Consolidated Rules for 2026) | 2026.09.13.02 (CR26) | A | full | control |
+| `fedramp-ksi-2026` | FedRAMP Key Security Indicators (Consolidated Rules for 2026) | 2026.09.13.02 (CR26) | A | full | control |
 | `fedramp-rev5-high` | FedRAMP Rev 5 High Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
 | `fedramp-rev5-li-saas` | FedRAMP Rev 5 LI-SAAS Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
 | `fedramp-rev5-low` | FedRAMP Rev 5 Low Baseline | Rev 5 (profiles published 2024-09-24) | A | full | control |
