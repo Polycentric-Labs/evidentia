@@ -35,6 +35,7 @@ import sys
 from pathlib import Path
 
 SECURITY_SENSITIVE_PACKAGES = [
+    "anyio",
     "urllib3",
     "requests",
     "cryptography",
