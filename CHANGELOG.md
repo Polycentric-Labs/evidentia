@@ -223,11 +223,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guidance and reporting language are retained; tracked schemas and baseline
   pins pass a fresh upstream comparison.
 
-- **Dependency maintenance.** Update LiteLLM to 1.99.0, sse-starlette to 3.4.11,
-  compliance-trestle to 5.1.0, NumPy to 2.5.3 and Lucide React to 1.39.0.
-  The reviewed lockfiles retain the other package versions, and the Docker
-  requirements keep their complete hash pins. The Pages artifact action uses
-  the reviewed v5.0.1 commit.
+- **Dependency maintenance.** Update LiteLLM to 1.100.0, boto3 and botocore to
+  1.43.92, Schemathesis to 4.26.0 and Lucide React to 1.42.0. The lockfiles also
+  refresh Ruff, platformdirs, ESLint, Playwright and React Virtual, alongside
+  sse-starlette 3.4.11, compliance-trestle 5.1.0 and NumPy 2.5.3. Retention
+  signing uses the reviewed botocore contract and refuses other versions. Docker
+  requirements retain complete hash pins. The Pages artifact action uses the
+  reviewed v5.0.1 commit.
 
 - **MCP SDK 2.2 (V13-16).** The server uses the SDK's typed `MCPServer` API.
   Tool names, input/output schemas and CLI transport selectors remain unchanged.
