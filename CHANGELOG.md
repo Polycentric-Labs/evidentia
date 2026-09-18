@@ -217,6 +217,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Async dependency security and pin alignment.** Update AnyIO to 4.15.1 for
+  GHSA-82r6-8w77-94w6 and GHSA-5p39-cfhj-2xmp, with typing-extensions 4.16.0.
+  Align certifi 2026.7.22 and requests 2.34.2 with the existing container pins.
+  The strict dependency-drift check now includes AnyIO. Console dependencies
+  advance React to 19.3.0, React Router to 7.18.4 and Vite to 8.3.0, with
+  the resolved companion packages retained in the lockfile.
+
 - **FedRAMP rules refresh.** Update the pinned CR26 rules to
   `2026.09.13.02` and regenerate the KSI and provider requirement catalogs.
   Indicator and requirement membership stays at 46 and 180. Updated source
