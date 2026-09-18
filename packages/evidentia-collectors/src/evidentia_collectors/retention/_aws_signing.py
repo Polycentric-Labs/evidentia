@@ -13,7 +13,7 @@ from typing import Literal, Protocol, cast
 from ._contracts import S3_REGIONS as S3_REGIONS
 from ._credentials import AwsCredentials
 
-SUPPORTED_BOTOCORE_VERSION = "1.43.89"
+SUPPORTED_BOTOCORE_VERSION = "1.43.92"
 _BUCKET_PATTERN = re.compile(r"[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]")
 _RESERVED_PREFIXES = ("xn--", "sthree-", "amzn-s3-demo-")
 _RESERVED_SUFFIXES = ("-s3alias", "--ol-s3", ".mrap", "--x-s3", "--table-s3")

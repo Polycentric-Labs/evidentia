@@ -435,7 +435,7 @@ def test_signer_revalidates_mutated_and_fabricated_material() -> None:
 
 @pytest.mark.parametrize(
     "version",
-    ["1.43.88", "1.43.90", "1.44.0", "1.43.89+local", None],
+    ["1.43.91", "1.43.93", "1.44.0", "1.43.92+local", None],
     ids=["older", "newer", "minor", "local", "invalid"],
 )
 def test_version_refusal_precedes_helper_import(version: object, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -454,14 +454,14 @@ def test_version_refusal_precedes_helper_import(version: object, monkeypatch: py
 
 def test_module_and_distribution_versions_must_agree(monkeypatch: pytest.MonkeyPatch) -> None:
     module = ModuleType("botocore")
-    module.__dict__["__version__"] = "1.43.90"
+    module.__dict__["__version__"] = "1.43.93"
     touched: list[str] = []
 
     def fake_import(name: str) -> ModuleType:
         touched.append(name)
         return module
 
-    monkeypatch.setattr(signing, "_package_version", lambda name: "1.43.89")
+    monkeypatch.setattr(signing, "_package_version", lambda name: "1.43.92")
     monkeypatch.setattr(signing, "_import_module", fake_import)
     with pytest.raises(signing.SigningError, match=r"^signing_unsupported$"):
         sign()
@@ -483,7 +483,7 @@ def test_missing_import_identity_is_preserved(name: str, monkeypatch: pytest.Mon
     def missing(module_name: str) -> ModuleType:
         raise ModuleNotFoundError("synthetic module failure", name=name)
 
-    monkeypatch.setattr(signing, "_package_version", lambda package_name: "1.43.89")
+    monkeypatch.setattr(signing, "_package_version", lambda package_name: "1.43.92")
     monkeypatch.setattr(signing, "_import_module", missing)
     with pytest.raises(ModuleNotFoundError) as caught:
         sign()
