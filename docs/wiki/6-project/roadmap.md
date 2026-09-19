@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: 2026-09-05, at the day-N container rebuild release; current release v0.12.1.**
+**Last updated: 2026-09-19; current release v0.12.1.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -138,12 +138,13 @@ groups:
   plus Google Workspace, immutable-storage and retention configuration,
   incident-clock ingest (ServiceNow, Jira, PagerDuty), and the
   zero-credential public-registry resolvers behind a single selector leaf.
-- **Catalogs**: ingest the four already-machine-readable open corpora
-  (Australian ISM, CISA SCuBA, FINOS CCC, and BSI Grundschutz++ with
-  share-alike segregation), and fix the currency defects the project ships
+- **Catalogs**: ingest the admitted machine-readable corpora (Australian
+  ISM, CISA SCuBA, and BSI Grundschutz++ with share-alike segregation),
+  and fix the currency defects the project ships
   today (`cisa-cpgs` 2.0, `swift-cscf` v2026, `nerc-cip-v7` designators,
   `cjis-v6` 6.1 with per-CSA audit versions, and the rest of the V13-09
-  table).
+  table). FINOS CCC remains excluded from v0.13 pending legal review; its
+  adoption criteria are in the [deferred register](#deferred--rejected-items).
 - **The correctness debt**: `api-stability.md` §1 repaired with the gate
   extended to cover it; the "cryptographic CIMD signatures" misnomer
   retired; crosswalk and catalog-truth defects; the `catalog pin` phantom
@@ -161,8 +162,8 @@ groups:
 Pulled forward on 2026-09-06 from the provisional v0.14 to v0.16 sketches
 (V13-25 to V13-28 in the plan): STIG and SCAP results ingest, the CycloneDX
 VEX 1.7 opt-in flag, an RFC 9116 `security.txt` probe inside the
-registry-selector leaf, and patch cadence from release APIs. The whole plan
-ships in this cycle. Entra ID / M365 now has all nine collector capabilities and
+registry-selector leaf, and patch cadence from release APIs. Delivery follows
+the ratified plan and recorded owner deferrals. Entra ID / M365 now has all nine collector capabilities and
 CLI/API/console parity. Its approved test path combines authored-synthetic Graph
 transports with a selected recorded CISA DLP export; live-tenant acceptance
 remains unverified. See the [collector design](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/designs/entra-m365-collector-design.md).
@@ -2522,6 +2523,18 @@ ROI framing in ways they don't respond to "coverage %".
 
 ## Deferred / rejected items
 
+- **FINOS Common Cloud Controls (CCC)**: deferred for legal review, with the
+  six selected source and normalized catalogs excluded from v0.13. Revisit
+  adoption in a later planning cycle after reviewing the exact releases,
+  imported fields and mappings, product behavior, distribution channels,
+  and responsible legal entity. Resolve CSL acceptance and patent-grant
+  scope, third-party mapping rights, and notices that must survive package
+  and standalone exports. Free or paid distribution alone does not decide
+  these questions, and a separate package does not establish legal isolation.
+  Obtain focused legal review and an explicit owner decision before adoption.
+  Until then, each release decision must record continued exclusion; this
+  is a follow-up requirement, not a permanent rejection. See the
+  [v0.13 disposition](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.13-plan.md#finos-ccc-legal-review-before-release-2026-09-13).
 - **RSA Archer integration**: deferred indefinitely. Enterprise-only,
   requires an Archer instance to develop against, and the market has
   been moving to REST-native alternatives for years.

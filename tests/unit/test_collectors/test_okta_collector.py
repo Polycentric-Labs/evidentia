@@ -6,6 +6,7 @@ required.
 
 from __future__ import annotations
 
+import socket
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -344,9 +345,17 @@ def test_dry_run_returns_empty_list() -> None:
     assert captured == []
 
 
-def test_user_agent_header_set() -> None:
+def test_user_agent_header_set(monkeypatch: pytest.MonkeyPatch) -> None:
     """The collector identifies itself in the UA header for
     operator-side correlation in Okta system-log audit."""
+    # Resolve the synthetic organization locally; this test only inspects headers.
+    monkeypatch.setattr(
+        socket,
+        "getaddrinfo",
+        lambda *_args, **_kwargs: [
+            (socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP, "", ("93.184.216.34", 443))
+        ],
+    )
     coll = OktaCollector(
         org_url="https://test-org.okta.com",
         api_token="t",

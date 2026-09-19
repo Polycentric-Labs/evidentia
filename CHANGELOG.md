@@ -217,6 +217,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Python dependency maintenance.** Update Google Cloud Storage to 3.14.1,
+  Hypothesis to 6.168.0, Schemathesis to 4.26.1, botocore to 1.43.94,
+  Databricks SDK to 0.138.0, Instructor to 1.17.0, LiteLLM to 1.100.1 and
+  Okta SDK to 3.4.5. Retention signing keeps an exact botocore version check
+  and rejects the previous and adjacent versions. The Okta user-agent test
+  resolves its synthetic host locally without a DNS request.
+
 - **Async dependency security and pin alignment.** Update AnyIO to 4.15.1 for
   GHSA-82r6-8w77-94w6 and GHSA-5p39-cfhj-2xmp, with typing-extensions 4.16.0.
   Align certifi 2026.7.22 and requests 2.34.2 with the existing container pins.
