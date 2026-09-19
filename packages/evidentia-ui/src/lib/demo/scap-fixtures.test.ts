@@ -1,3 +1,4 @@
+import { SCAP_DEMO_CASES as LIGHTWEIGHT_CASES } from "./scap-demo-cases";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   SCAP_DEMO_CASES,
@@ -47,4 +48,11 @@ test("demo mode refuses changed bytes or request and does not interpret arbitrar
       "xccdf-qualified",
     ),
   ).rejects.toThrow();
+});
+
+test("lightweight labels preserve all fixture IDs, profiles and order", () => {
+  expect(LIGHTWEIGHT_CASES).toEqual(SCAP_DEMO_CASES);
+  expect(LIGHTWEIGHT_CASES).toHaveLength(20);
+  expect(Object.isFrozen(LIGHTWEIGHT_CASES)).toBe(true);
+  expect(LIGHTWEIGHT_CASES.every((item) => Object.isFrozen(item))).toBe(true);
 });

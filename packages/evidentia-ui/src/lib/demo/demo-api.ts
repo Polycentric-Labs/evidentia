@@ -1,21 +1,23 @@
 /**
- * Fixtures-backed implementation of the `api` client (Task B2).
+ * Fixture implementation of the demo API client (Task B2).
  *
- * In a `VITE_DEMO=true` build, `api.ts` swaps the real fetch-based client for
- * this object so the static demo GUI runs with **zero network**: every method
- * resolves straight from `fixtures.ts` (the Meridian v2 hero dataset). Method
- * names and signatures mirror the real `api` object one-for-one so the routes /
- * hooks are none the wiser. The two SSE routes (Explain, RiskGenerate) drive
- * `simulateSse` to replay a baked stream instead of opening an EventSource.
+ * In a VITE_DEMO=true build, api.ts selects this client without backend
+ * collection requests. Synthetic SCAP examples load as a separate application
+ * asset. Other methods use fixtures.ts and the Meridian v2 dataset.
+ * Signatures match the real client. Explain and RiskGenerate replay recorded
+ * events through simulateSse instead of opening an EventSource.
  *
- * Mutating verbs (`putConfig`, `createVendor`, `replacePoamItem`, …) echo their
- * input back (or return the relevant fixture) so the UI's optimistic flows
- * resolve without a backend; nothing is persisted across a reload.
+ * Mutating methods return their input or the matching fixture. They do not
+ * persist changes across a reload.
  */
 
 import { incidentDemoResponse } from "@/lib/demo/incident-clock-fixtures";
-import { scapDemoResponse } from "@/lib/demo/scap-fixtures";
-import type { ScapRequest } from "@/lib/scap";
+import { SCAP_DEMO_CASES } from "@/lib/demo/scap-demo-cases";
+import {
+  prepareScapUpload,
+  ScapResponseError,
+  type ScapRequest,
+} from "@/lib/scap";
 import type { IncidentClockRequest } from "@/lib/incident-clock";
 import { registryDemoResponse } from "@/lib/demo/registry-fixtures";
 import type { RegistryRequest } from "@/lib/registry";
@@ -1596,8 +1598,25 @@ export const demoApi = {
           : DEMO_ENTRA_M365_PARTIAL,
       ),
     ),
-  collectScap: async (raw: ArrayBuffer, request: ScapRequest, scenario = "") =>
-    scapDemoResponse(raw, request, scenario),
+  collectScap: async (
+    raw: ArrayBuffer,
+    request: ScapRequest,
+    scenario = "",
+  ) => {
+    if (!SCAP_DEMO_CASES.some((item) => item.id === scenario))
+      throw new ScapResponseError();
+    const prepared = await prepareScapUpload(raw, request);
+    try {
+      const { scapDemoResponse } = await import("@/lib/demo/scap-fixtures");
+      return await scapDemoResponse(
+        prepared.body,
+        prepared.expected.request,
+        scenario,
+      );
+    } catch {
+      throw new ScapResponseError();
+    }
+  },
   collectIncidentClock: async (body: IncidentClockRequest, scenario = "") =>
     incidentDemoResponse(body, scenario),
 

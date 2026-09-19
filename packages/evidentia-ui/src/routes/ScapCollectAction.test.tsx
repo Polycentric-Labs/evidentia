@@ -255,3 +255,38 @@ test("oversized files and duplicate assertion fields fail locally without auth o
   expect(auth).not.toHaveBeenCalled();
   expect(api.collectScap).not.toHaveBeenCalled();
 });
+
+test("a successful delayed authentication refresh keeps the original selection", async () => {
+  let finish!: (value: boolean) => void;
+  const auth = vi.fn(
+    () =>
+      new Promise<boolean>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const view = render(
+    <ScapCollectAction freshAuth authInvalidated={false} verifyAuth={auth} />,
+  );
+  const selected = select();
+  const good = await scapDemoResponse(
+    selected.raw,
+    selected.request,
+    "xccdf-qualified",
+  );
+  vi.mocked(api.collectScap).mockResolvedValue(good);
+  fireEvent.click(submit());
+  await waitFor(() => expect(auth).toHaveBeenCalledOnce());
+  view.rerender(
+    <ScapCollectAction
+      freshAuth={false}
+      authInvalidated={false}
+      verifyAuth={auth}
+    />,
+  );
+  await act(async () => {
+    finish(true);
+  });
+  await screen.findByRole("region", { name: "SCAP collection result" });
+  expect(api.collectScap).toHaveBeenCalledOnce();
+  expect(vi.mocked(api.collectScap).mock.calls[0][1]).toEqual(selected.request);
+});

@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { IS_DEMO } from "@/lib/demo";
-import { SCAP_DEMO_CASES, scapDemoSource } from "@/lib/demo/scap-fixtures";
+import { SCAP_DEMO_CASES } from "@/lib/demo/scap-demo-cases";
+import type { scapDemoSource } from "@/lib/demo/scap-fixtures";
 import {
   SCAP_ASSERTION_BYTES,
   SCAP_PROFILES,
@@ -98,6 +99,7 @@ export function ScapCollectAction({
   const [demo, setDemo] = useState<ReturnType<typeof scapDemoSource> | null>(
     null,
   );
+  const [demoLoading, setDemoLoading] = useState(false);
   const [response, setResponse] = useState<ScapResponse | null>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -106,7 +108,8 @@ export function ScapCollectAction({
   const [nodePage, setNodePage] = useState(0);
   const generation = useRef(0),
     mounted = useRef(true),
-    busy = useRef(false);
+    busy = useRef(false),
+    demoLoadGeneration = useRef(0);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -118,18 +121,34 @@ export function ScapCollectAction({
   }, [authInvalidated]);
   const changed = () => {
     generation.current++;
+    setDemoLoading(false);
     setError("");
   };
-  const loadDemo = () => {
+  const loadDemo = async () => {
     changed();
-    const chosen = scapDemoSource(scenario);
-    setDemo(chosen);
-    setFile(null);
-    setSidecar(null);
-    setProfile(chosen.request.source_profile);
-    setIndex(String(chosen.request.assessment_index));
-    setCadence(chosen.request.cadence_slug ?? "");
-    setUseAssertion(chosen.request.completion_assertion !== null);
+    const token = generation.current;
+    demoLoadGeneration.current = token;
+    const selectedScenario = scenario;
+    const current = () => mounted.current && token === generation.current;
+    setDemoLoading(true);
+    try {
+      const { scapDemoSource } = await import("@/lib/demo/scap-fixtures");
+      if (!current()) return;
+      const chosen = scapDemoSource(selectedScenario);
+      setDemo(chosen);
+      setFile(null);
+      setSidecar(null);
+      setProfile(chosen.request.source_profile);
+      setIndex(String(chosen.request.assessment_index));
+      setCadence(chosen.request.cadence_slug ?? "");
+      setUseAssertion(chosen.request.completion_assertion !== null);
+    } catch {
+      if (current())
+        setError("The synthetic SCAP example could not load. Try again.");
+    } finally {
+      if (mounted.current && demoLoadGeneration.current === token)
+        setDemoLoading(false);
+    }
   };
   const collect = async () => {
     if (busy.current || !freshAuth) return;
@@ -232,8 +251,14 @@ export function ScapCollectAction({
                 </option>
               ))}
             </select>
-            <Button type="button" variant="outline" onClick={loadDemo}>
-              Load synthetic example
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void loadDemo()}
+            >
+              {demoLoading
+                ? "Loading synthetic example..."
+                : "Load synthetic example"}
             </Button>
             <p className="text-sm text-muted-foreground">
               Demo collection accepts only the loaded synthetic source and its

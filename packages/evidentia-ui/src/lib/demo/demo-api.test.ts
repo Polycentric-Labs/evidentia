@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SCAP_DEMO_CASES } from "./scap-demo-cases";
 import { demoApi, simulateSse } from "./demo-api";
 import { DEMO_FRAMEWORKS } from "./fixtures";
 
@@ -117,4 +118,94 @@ describe("Entra/M365 synthetic results", () => {
       expect(again.capabilities[0].scanned).not.toBe(999);
     },
   );
+});
+
+describe("SCAP examples loaded on demand", () => {
+  beforeEach(async () => {
+    vi.stubGlobal(
+      "crypto",
+      (await vi.importActual<{ webcrypto: Crypto }>("node:crypto")).webcrypto,
+    );
+  });
+  afterEach(() => {
+    vi.doUnmock("@/lib/demo/scap-fixtures");
+    vi.unstubAllGlobals();
+  });
+  it.each(SCAP_DEMO_CASES)(
+    "preserves the exact $id result through the demo client",
+    async ({ id }) => {
+      const fixtures =
+        await vi.importActual<typeof import("./scap-fixtures")>(
+          "./scap-fixtures",
+        );
+      const selected = fixtures.scapDemoSource(id);
+      const expected = await fixtures.scapDemoResponse(
+        selected.raw,
+        selected.request,
+        id,
+      );
+      const result = await demoApi.collectScap(
+        selected.raw,
+        selected.request,
+        id,
+      );
+      expect(result.rawJson).toBe(expected.rawJson);
+      expect(result.artifactRawJson).toBe(expected.artifactRawJson);
+    },
+  );
+  it("refuses unknown scenarios before loading the fixture asset", async () => {
+    const factory = vi.fn(() => {
+      throw new Error("Unexpected fixture load");
+    });
+    vi.doMock("@/lib/demo/scap-fixtures", factory);
+    await expect(
+      demoApi.collectScap(new ArrayBuffer(1), {} as never, "unknown-scenario"),
+    ).rejects.toThrow("The SCAP input or response is invalid");
+    expect(factory).not.toHaveBeenCalled();
+  });
+  it("captures source bytes and nested request values before a delayed fixture load", async () => {
+    const fixtures =
+      await vi.importActual<typeof import("./scap-fixtures")>(
+        "./scap-fixtures",
+      );
+    const selected = fixtures.scapDemoSource("oval-5.8-asserted");
+    const original = fixtures.scapDemoSource("oval-5.8-asserted");
+    const expected = await fixtures.scapDemoResponse(
+      original.raw,
+      original.request,
+      "oval-5.8-asserted",
+    );
+    let release!: (value: typeof fixtures) => void;
+    const module = new Promise<typeof fixtures>((resolve) => {
+      release = resolve;
+    });
+    const factory = vi.fn(() => module);
+    vi.doMock("@/lib/demo/scap-fixtures", factory);
+    const pending = demoApi.collectScap(
+      selected.raw,
+      selected.request,
+      "oval-5.8-asserted",
+    );
+    await vi.waitFor(() => expect(factory).toHaveBeenCalledOnce());
+    new Uint8Array(selected.raw)[0] ^= 1;
+    selected.request.assessment_index = 99;
+    selected.request.completion_assertion!.source_sha256 = "0".repeat(64);
+    release(fixtures);
+    const result = await pending;
+    expect(result.rawJson).toBe(expected.rawJson);
+    expect(result.artifactRawJson).toBe(expected.artifactRawJson);
+  });
+  it("returns the fixed refusal when the fixture asset fails to load", async () => {
+    const fixtures =
+      await vi.importActual<typeof import("./scap-fixtures")>(
+        "./scap-fixtures",
+      );
+    const source = fixtures.scapDemoSource("xccdf-qualified");
+    vi.doMock("@/lib/demo/scap-fixtures", () => {
+      throw new Error("Synthetic asset-load failure");
+    });
+    await expect(
+      demoApi.collectScap(source.raw, source.request, "xccdf-qualified"),
+    ).rejects.toThrow("The SCAP input or response is invalid");
+  });
 });

@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Badge — re-skinned to the GUI v2 design-system classes (see index.css
+ * Badge uses the GUI v2 design-system classes (see index.css
  * @layer components). The variant union is unchanged so existing call sites
  * (incl. `severityBadge()` -> "critical" | "high" | …) keep working; severity
  * variants render the soft-tint + leading-dot treatment that mirrors the CLI.
@@ -16,7 +16,7 @@ const badgeVariants = cva("badge", {
       secondary: "secondary",
       destructive: "destructive",
       outline: "outline",
-      // Severity variants — `.sev` adds the leading dot; hue from --sev-*.
+      // Severity variants: `.sev` adds the leading dot; hue from --sev-*.
       critical: "sev critical",
       high: "sev high",
       medium: "sev medium",
@@ -30,11 +30,14 @@ const badgeVariants = cva("badge", {
 });
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends
+    React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+  return (
+    <span className={cn(badgeVariants({ variant }), className)} {...props} />
+  );
 }
 
 export { Badge };
