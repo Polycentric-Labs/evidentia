@@ -177,13 +177,21 @@ class TestGitHubSSRF:
         assert client is not None
         client.close()
 
-    def test_default_public_base_url_is_noop(self) -> None:
-        """The default api.github.com is public — the guard is a no-op."""
+    def test_default_public_base_url_is_noop(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The default host is admitted after deterministic public resolution."""
+        import socket
+        from unittest.mock import Mock
+
         from evidentia_collectors.github.client import GitHubClient
 
+        resolver = Mock(return_value=[(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 0))])
+        monkeypatch.setattr(socket, "getaddrinfo", resolver)
         client = GitHubClient(token="t")  # default BASE_URL
-        assert client is not None
-        client.close()
+        try:
+            assert client is not None
+            resolver.assert_called_once_with("api.github.com", None)
+        finally:
+            client.close()
 
 
 # ── SQL collectors (postgres / mysql / mssql / oracle) ──────────────
