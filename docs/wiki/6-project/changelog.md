@@ -220,6 +220,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AWS SDK update alignment.** Update boto3 and botocore together to 1.43.95,
+  preserve the exact retention-signing version guard, and group compatible
+  AWS SDK minor and patch updates in Dependabot. Update Schemathesis to 4.27.0
+  with jsonschema-rs 0.56.0. Refresh the matching container dependency hashes.
+
 - **Console form runtime.** Update React Hook Form to 7.88.0 with its exact
   lockfile resolution. No other console dependency version changes.
 
