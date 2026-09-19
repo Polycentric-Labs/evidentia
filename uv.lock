@@ -412,16 +412,16 @@ wheels = [
 
 [[package]]
 name = "botocore"
-version = "1.43.94"
+version = "1.43.95"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/5b/5a7cc096db8ddb5f6c221112d5a4a46888d9e38c1f5d5a06ae7e3e0755f2/botocore-1.43.94.tar.gz", hash = "sha256:cb97cedec5fceee3261f7fff75d0b0aa2cf68b32eeb2e8c2649e4657419773a6", size = 16104907, upload-time = "2026-09-14T20:10:00.315Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/db/2c/0031468b521eefed325a3da2d6576e068aab95837af0c96effea6438851c/botocore-1.43.95.tar.gz", hash = "sha256:779588da32bd48a7bb0c097da4bcb747260e86d2bfc507369dca56f1450e0722", size = 16106887, upload-time = "2026-09-15T19:23:44.23Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/6b/d5b5c06677fec26378197a7c37c2fc6afd1fe640c55512d8e96c87c4dd42/botocore-1.43.94-py3-none-any.whl", hash = "sha256:1dfb86603a87fdaebda2540db56aef5b226ec58ab72c13ca56737e4d66dea9ab", size = 15797479, upload-time = "2026-09-14T20:09:56.837Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/77/7ce7c937b31903f1402e478fdc97f98e727656fcea3cb54e74f1ca55793e/botocore-1.43.95-py3-none-any.whl", hash = "sha256:0fda26d16c7c7bf7082c421390a817b696f98a43d3da7c43dbbb093f76662876", size = 15800616, upload-time = "2026-09-15T19:23:41.228Z" },
 ]
 
 [[package]]
@@ -1109,8 +1109,8 @@ sql-postgres = [
 requires-dist = [
     { name = "boto3", marker = "extra == 'all'", specifier = ">=1.43.46" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.43.46" },
-    { name = "botocore", marker = "extra == 'all'", specifier = "==1.43.94" },
-    { name = "botocore", marker = "extra == 'retention'", specifier = "==1.43.94" },
+    { name = "botocore", marker = "extra == 'all'", specifier = "==1.43.95" },
+    { name = "botocore", marker = "extra == 'retention'", specifier = "==1.43.95" },
     { name = "databricks-sdk", marker = "extra == 'all'", specifier = ">=0.30" },
     { name = "databricks-sdk", marker = "extra == 'databricks'", specifier = ">=0.30" },
     { name = "defusedxml", marker = "extra == 'all'", specifier = ">=0.7.1" },
