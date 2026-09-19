@@ -1,8 +1,10 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
@@ -19,6 +21,7 @@ beforeEach(async () => {
   );
 });
 afterEach(() => {
+  vi.doUnmock("@/lib/demo/scap-fixtures");
   cleanup();
   vi.restoreAllMocks();
   vi.clearAllMocks();
@@ -32,6 +35,7 @@ async function load(id: string) {
   fireEvent.click(
     screen.getByRole("button", { name: "Load synthetic example" }),
   );
+  await screen.findByText(/^Loaded synthetic bytes: /);
   const source = scapDemoSource(id),
     response = await scapDemoResponse(source.raw, source.request, id);
   vi.mocked(api.collectScap).mockResolvedValue(response);
@@ -129,4 +133,102 @@ test("a second assessment remains an explicit occurrence with the first unselect
     "1",
   );
   expect(vi.mocked(api.collectScap).mock.calls[0][1].assessment_index).toBe(1);
+});
+
+async function deferFixtureAsset() {
+  const actual = await vi.importActual<
+    typeof import("@/lib/demo/scap-fixtures")
+  >("@/lib/demo/scap-fixtures");
+  const source = vi.fn(actual.scapDemoSource);
+  const module = { ...actual, scapDemoSource: source };
+  let release!: (value: typeof module) => void;
+  const promise = new Promise<typeof module>((resolve) => {
+    release = resolve;
+  });
+  const factory = vi.fn(() => promise);
+  vi.doMock("@/lib/demo/scap-fixtures", factory);
+  return { source, factory, finish: () => release(module) };
+}
+const loadExample = () =>
+  fireEvent.click(
+    screen.getByRole("button", { name: /Load(?:ing)? synthetic example/ }),
+  );
+
+test("a changed selection cancels an older asset load and only the newest selection is applied", async () => {
+  const delayed = await deferFixtureAsset();
+  render(<ScapCollectAction freshAuth verifyAuth={async () => true} />);
+  loadExample();
+  await waitFor(() => expect(delayed.factory).toHaveBeenCalledOnce());
+  fireEvent.change(screen.getByLabelText("Synthetic SCAP example"), {
+    target: { value: "oval-5.12.3-asserted" },
+  });
+  loadExample();
+  await act(async () => {
+    delayed.finish();
+  });
+  await screen.findByText(/^Loaded synthetic bytes: /);
+  expect(delayed.source).toHaveBeenCalledOnce();
+  expect(delayed.source).toHaveBeenCalledWith("oval-5.12.3-asserted");
+  expect(screen.getByLabelText("SCAP source profile")).toHaveValue(
+    "oval-5.12.3-core-results",
+  );
+  expect(api.collectScap).not.toHaveBeenCalled();
+});
+
+test("an asset completing after unmount does not read its source or collect", async () => {
+  const delayed = await deferFixtureAsset();
+  const view = render(
+    <ScapCollectAction freshAuth verifyAuth={async () => true} />,
+  );
+  loadExample();
+  await waitFor(() => expect(delayed.factory).toHaveBeenCalledOnce());
+  view.unmount();
+  await act(async () => {
+    delayed.finish();
+  });
+  expect(delayed.source).not.toHaveBeenCalled();
+  expect(api.collectScap).not.toHaveBeenCalled();
+});
+
+test("known authentication invalidation cancels a pending example load", async () => {
+  const delayed = await deferFixtureAsset();
+  const auth = vi.fn().mockResolvedValue(true);
+  const view = render(
+    <ScapCollectAction freshAuth authInvalidated={false} verifyAuth={auth} />,
+  );
+  loadExample();
+  await waitFor(() => expect(delayed.factory).toHaveBeenCalledOnce());
+  view.rerender(
+    <ScapCollectAction freshAuth={false} authInvalidated verifyAuth={auth} />,
+  );
+  await act(async () => {
+    delayed.finish();
+  });
+  expect(delayed.source).not.toHaveBeenCalled();
+  expect(
+    screen.queryByText(/^Loaded synthetic bytes: /),
+  ).not.toBeInTheDocument();
+  expect(auth).not.toHaveBeenCalled();
+  expect(api.collectScap).not.toHaveBeenCalled();
+});
+
+test("a failed example asset preserves the last accepted result and exposes a fixed message", async () => {
+  await load("xccdf-qualified");
+  const previous = screen.getByRole("region", {
+    name: "SCAP collection result",
+  }).textContent;
+  vi.doMock("@/lib/demo/scap-fixtures", () => {
+    throw new Error("Synthetic asset-load failure");
+  });
+  loadExample();
+  await screen.findByText(
+    "The synthetic SCAP example could not load. Try again.",
+  );
+  expect(
+    screen.getByRole("region", { name: "SCAP collection result" }).textContent,
+  ).toBe(previous);
+  expect(
+    screen.queryByText("Synthetic asset-load failure"),
+  ).not.toBeInTheDocument();
+  expect(api.collectScap).toHaveBeenCalledOnce();
 });

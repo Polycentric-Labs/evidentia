@@ -220,6 +220,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Console form runtime.** Update React Hook Form to 7.88.0 with its exact
+  lockfile resolution. No other console dependency version changes.
+
 - **Python dependency maintenance.** Update Google Cloud Storage to 3.14.1,
   Hypothesis to 6.168.0, Schemathesis to 4.26.1, botocore to 1.43.94,
   Databricks SDK to 0.138.0, Instructor to 1.17.0, LiteLLM to 1.100.1 and
@@ -360,6 +363,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   roadmap entries are left as written.
 
 ### Fixed
+
+- **Console loading and markup.** Load the synthetic SCAP fixture asset only
+  when an example is requested. Capture collection inputs before loading and
+  reject stale, unmounted or invalidated completions. Preserve all 20 fixed
+  demo cases, exact downloads and the strict response decoder. Badge labels
+  use inline HTML inside paragraph descriptions, and Vite resolves the source
+  alias with the ES module directory in both supported config loaders.
 
 - **Console development checks.** Badge and Button export their components
   without unused variant-helper exports. The entry point imports its selected
