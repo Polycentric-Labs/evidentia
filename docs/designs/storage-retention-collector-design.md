@@ -126,7 +126,7 @@ tokens to 16384. A supplied expiry is normalized to UTC; null means unknown. Mat
 rechecked for each attempt, including after slow client construction or signing.
 
 The S3 adapter accepts only the same two fixed GET routes and frozen region list. It requires botocore
-1.43.92 in both distribution metadata and the imported module. A mismatch yields `signing_unsupported`.
+1.43.94 in both distribution metadata and the imported module. A mismatch yields `signing_unsupported`.
 Each attempt creates fresh explicit SDK credentials, request, signing timestamp and `S3SigV4Auth` object.
 The reviewed helper sequence delegates request preparation, canonicalization, string-to-sign, signature
 and header injection to botocore without calling its logging `add_auth` orchestration. It does not copy
@@ -135,7 +135,7 @@ cryptographic algorithms or use an SDK endpoint client for transport.
 
 The exact botocore boundary is deliberate because the orchestration uses private SDK helpers. Any version
 change requires helper-source review, normal SDK request parity and DEBUG record-factory/filter/handler
-checks. The retention extra uses botocore==1.43.92 and defusedxml>=0.7.1. Missing top-level optional dependencies remain distinct from broken transitive imports.
+checks. The retention extra uses botocore==1.43.94 and defusedxml>=0.7.1. Missing top-level optional dependencies remain distinct from broken transitive imports.
 
 For every attempt, the common layer checks generated URL bytes, GET, empty body, Host and preserved
 signed headers. It calls `network_guard.check_url`, `enforce_public_host` and same-thread
