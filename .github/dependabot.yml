@@ -2,27 +2,27 @@
 #
 # Security updates run regardless of this file (GitHub auto-detects
 # manifests for security advisories). This file enables and configures
-# regular VERSION updates — periodic non-security bumps that keep deps
+# regular VERSION updates - periodic non-security bumps that keep deps
 # current.
 #
 # Conventions:
-#   - Weekly cadence (Monday 06:00 ET) — single batch to triage at the
+#   - Weekly cadence (Monday 06:00 ET) - single batch to triage at the
 #     start of the week, not a daily drip.
-#   - Grouped updates (one PR per group, not per package) — turns ~10
+#   - Grouped updates (one PR per group, not per package) - turns ~10
 #     individual PRs into a few reviewable batches.
 #   - Per-ecosystem open-PR cap so the queue can't run away.
 #   - Conventional-commit prefixes so release-automation tooling parses
 #     the bump-type correctly.
 #
 # Isolation strategy (added after the v0.10.12/13 cycle, where pydantic
-# 2.13, typer 0.26, and click 8.2 — all breaking *minors* — rode an
+# 2.13, typer 0.26, and click 8.2 - all breaking *minors* - rode an
 # 18-package group bump and broke CI before the break was visible):
 #   - `cooldown` holds a freshly published release for a few days so a
 #     yanked / hotfixed bad release is superseded before Dependabot
 #     proposes it (longer for majors than patches). Security advisories
 #     bypass cooldown (they are not version updates).
 #   - `update-types: [minor, patch]` on the routine groups raises every
-#     *major* as its own PR — a major is never buried in a batch.
+#     *major* as its own PR - a major is never buried in a batch.
 #   - A dedicated `python-frameworks` group pulls the breaking-prone
 #     web/CLI core (pydantic / fastapi / starlette / typer / click /
 #     uvicorn / httpx) into a small, separately-reviewable PR. A
@@ -32,7 +32,7 @@
 #     complementary guards.
 #
 # Security update PRs are NEVER grouped (see `applies-to: version-updates`
-# scope on each group below) — each advisory deserves its own PR with a
+# scope on each group below) - each advisory deserves its own PR with a
 # clear advisory reference, per the v0.7.2 supply-chain follow-up
 # pattern (commit 8baa93d).
 
@@ -40,7 +40,7 @@ version: 2
 updates:
 
   # ---------------------------------------------------------------------
-  # Python (uv workspace — covers all 7 pyproject.toml files via uv.lock)
+  # Python (uv workspace - covers all 7 pyproject.toml files via uv.lock)
   # ---------------------------------------------------------------------
   - package-ecosystem: "uv"
     directory: "/"
@@ -62,7 +62,17 @@ updates:
       semver-minor-days: 7
       semver-patch-days: 3
     groups:
-      # Breaking-prone web/CLI framework core — its own small PR, never
+      # AWS packages share version constraints across optional and development dependencies.
+      python-aws-sdk:
+        applies-to: version-updates
+        patterns:
+          - "boto3"
+          - "botocore"
+          - "s3transfer"
+        update-types:
+          - "minor"
+          - "patch"
+      # Breaking-prone web/CLI framework core - its own small PR, never
       # buried in the routine batch (the pydantic/typer/click break class).
       python-frameworks:
         applies-to: version-updates
@@ -116,7 +126,7 @@ updates:
         versions: [">=15"]
 
   # ---------------------------------------------------------------------
-  # Frontend (npm — packages/evidentia-ui)
+  # Frontend (npm - packages/evidentia-ui)
   # ---------------------------------------------------------------------
   - package-ecosystem: "npm"
     directory: "/packages/evidentia-ui"
