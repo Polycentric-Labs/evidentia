@@ -1893,7 +1893,7 @@ function parse(text: string, source = false, signal?: AbortSignal): Parsed {
         at += 4;
       } else at += c < 128 ? 1 : c < 2048 ? 2 : 3;
     }
-    offsets[text.length] = at;
+    offsets.set([at], offsets.length - 1);
   }
   const tokens = new Map<string, Token>();
   let pos = 0;
@@ -1941,7 +1941,7 @@ function parse(text: string, source = false, signal?: AbortSignal): Parsed {
     } else if (c === "{") {
       pos++;
       space();
-      value = Object.create(null) as Obj;
+      const entries = new Map<string, Json>();
       const names = new Set<string>();
       if (text[pos] !== "}")
         do {
@@ -1953,7 +1953,7 @@ function parse(text: string, source = false, signal?: AbortSignal): Parsed {
           space();
           requireThat(text[pos++] === ":");
           const child = token(depth + 1);
-          value[name.value] = child.value;
+          entries.set(name.value, child.value);
           pairs.push([name, child]);
           members++;
           requireThat(!source || (names.size <= 64 && members <= 100000));
@@ -1962,6 +1962,7 @@ function parse(text: string, source = false, signal?: AbortSignal): Parsed {
           pos++;
         } while (true);
       requireThat(text[pos++] === "}");
+      value = Object.setPrototypeOf(Object.fromEntries(entries), null) as Obj;
       kind = "json_object";
     } else if (c === "[") {
       pos++;
@@ -2117,7 +2118,7 @@ function shape(value: Json, schema: Schema, native = false): Json {
     return result;
   } else if (schema.type === "object") {
     const record = obj(value);
-    const result: Obj = Object.create(null) as Obj;
+    const entries = new Map<string, Json>();
     if (schema.properties) {
       const fields = Object.keys(schema.properties);
       requireThat(
@@ -2125,13 +2126,13 @@ function shape(value: Json, schema: Schema, native = false): Json {
           fields.every((k) => Object.hasOwn(record, k)),
       );
       for (const name of fields)
-        result[name] = shape(record[name], schema.properties[name], native);
+        entries.set(name, shape(record[name], schema.properties[name], native));
     } else {
       requireThat(typeof schema.additionalProperties === "object");
       for (const name of Object.keys(record))
-        result[name] = shape(record[name], schema.additionalProperties, native);
+        entries.set(name, shape(record[name], schema.additionalProperties, native));
     }
-    return result;
+    return Object.setPrototypeOf(Object.fromEntries(entries), null) as Obj;
   }
   return value;
 }

@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 HERE = Path(__file__).resolve().parent
-INPUT_SHA256 = "81bc48e06b75f63be4256bc61b4b29d4287079d0182c55c91d4e6136ff06ca61"
+INPUT_SHA256 = "4e8527816510ba62820e8de4c568b26b06d9f2ac9f790d99c69d9b21fbc81fbb"
 NATIVE_TESTS = [
     "test_f2_manifest_save_replaces_one_complete_file",
     "test_f2_legacy_generations_retain_prior_and_remove_does_not_open_payload",
@@ -106,13 +106,21 @@ def filesystem_facts(directory):
             library.gnu_get_libc_version.restype = ctypes.c_char_p
             facts["glibc"] = library.gnu_get_libc_version().decode("ascii")
         else:
-            require(hasattr(os, "ST_LOCAL"), "The native ST_LOCAL constant is absent")
-            facts["st_local"] = os.ST_LOCAL
-            facts["filesystem_flags"] = os.fstatvfs(descriptor).f_flag
-            require(facts["filesystem_flags"] & facts["st_local"], "The filesystem is not local")
+            facts["mnt_local"] = 0x1000
+            facts["filesystem_flags"] = storage._darwin_filesystem_flags(descriptor, NativeBudget())
+            require(facts["filesystem_flags"] & facts["mnt_local"], "The filesystem is not local")
         return facts
     finally:
         os.close(descriptor)
+
+
+def coverage_tracer_names(active, version):
+    require(active is not None and not active.config.branch, "Normal statement coverage is required")
+    require(version in {(3, 12), (3, 14)}, "Unsupported coverage interpreter")
+    tracers = [type(tracer).__name__ for tracer in active._collector.tracers]
+    expected = "CTracer" if version == (3, 12) else "SysMonitor"
+    require(tracers and all(name == expected for name in tracers), "Coverage tracer changed")
+    return tracers
 
 
 def verify(checkout, source_dir, output, spec):
@@ -168,12 +176,7 @@ def verify(checkout, source_dir, output, spec):
             self.current = item.nodeid
             started = time.perf_counter()
             active = coverage.Coverage.current()
-            require(active is not None and not active.config.branch, "Normal statement coverage is required")
-            tracers = [type(t).__name__ for t in active._collector.tracers]
-            require(
-                tracers == (["CTracer"] if sys.version_info[:2] == (3, 12) else ["SysMonitor"]),
-                "Coverage tracer changed",
-            )
+            tracers = coverage_tracer_names(active, sys.version_info[:2])
             yield
             report["tests"].append(
                 {

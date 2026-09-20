@@ -184,7 +184,7 @@ def _linux_filesystem_type(descriptor: int, budget: NativeBudget) -> int:
         ctypes.sizeof(StatFs) != 120
         or ctypes.alignment(StatFs) != 8
         or any(
-            getattr(StatFs, name).offset != offset for (name, _), offset in zip(StatFs._fields_, offsets, strict=True)
+            getattr(StatFs, field[0]).offset != offset for field, offset in zip(StatFs._fields_, offsets, strict=True)
         )
     ):
         raise CatalogStorageError("catalog_storage_unsupported")
@@ -212,12 +212,81 @@ def _linux_filesystem_type(descriptor: int, budget: NativeBudget) -> int:
     return int(value.f_type)
 
 
+def _darwin_filesystem_flags(descriptor: int, budget: NativeBudget) -> int:
+    """Require a local mount using the reviewed Darwin 64-bit statfs ABI."""
+    import ctypes
+    import platform
+
+    budget.check()
+    machine = platform.machine().lower()
+    if (
+        sys.platform != "darwin"
+        or machine not in ("arm64", "x86_64")
+        or ctypes.sizeof(ctypes.c_void_p) != 8
+        or ctypes.sizeof(ctypes.c_int) != 4
+    ):
+        raise CatalogStorageError("catalog_storage_unsupported")
+
+    class StatFs(ctypes.Structure):
+        _fields_ = [
+            ("f_bsize", ctypes.c_uint32),
+            ("f_iosize", ctypes.c_int32),
+            ("f_blocks", ctypes.c_uint64),
+            ("f_bfree", ctypes.c_uint64),
+            ("f_bavail", ctypes.c_uint64),
+            ("f_files", ctypes.c_uint64),
+            ("f_ffree", ctypes.c_uint64),
+            ("f_fsid", ctypes.c_int32 * 2),
+            ("f_owner", ctypes.c_uint32),
+            ("f_type", ctypes.c_uint32),
+            ("f_flags", ctypes.c_uint32),
+            ("f_fssubtype", ctypes.c_uint32),
+            ("f_fstypename", ctypes.c_char * 16),
+            ("f_mntonname", ctypes.c_char * 1024),
+            ("f_mntfromname", ctypes.c_char * 1024),
+            ("f_flags_ext", ctypes.c_uint32),
+            ("f_reserved", ctypes.c_uint32 * 7),
+        ]
+
+    offsets = (0, 4, 8, 16, 24, 32, 40, 48, 56, 60, 64, 68, 72, 88, 1112, 2136, 2140)
+    if (
+        ctypes.sizeof(StatFs) != 2168
+        or ctypes.alignment(StatFs) != 8
+        or any(
+            getattr(StatFs, field[0]).offset != offset for field, offset in zip(StatFs._fields_, offsets, strict=True)
+        )
+    ):
+        raise CatalogStorageError("catalog_storage_unsupported")
+    try:
+        library = ctypes.CDLL(None, use_errno=True)
+        # Intel retains the older unsuffixed ABI; Apple silicon has only INODE64.
+        query = getattr(library, "fstatfs" if machine == "arm64" else "fstatfs$INODE64")
+    except (AttributeError, OSError) as error:
+        raise CatalogStorageError("catalog_storage_unsupported") from error
+    query.argtypes = [ctypes.c_int, ctypes.POINTER(StatFs)]
+    query.restype = ctypes.c_int
+    value = StatFs()
+    budget.check()
+    try:
+        result = query(descriptor, ctypes.byref(value))
+    except Exception as error:
+        raise CatalogStorageError("catalog_storage_unsupported") from error
+    budget.check()
+    if result != 0:
+        raise CatalogStorageError("catalog_storage_unsupported") from OSError(ctypes.get_errno(), "fstatfs")
+    if not value.f_flags & 0x1000:  # Darwin MNT_LOCAL is absent from statvfs.f_flag.
+        raise CatalogStorageError("catalog_storage_unsupported")
+    return int(value.f_flags)
+
+
 def _windows_local_drive(path: Path, budget: NativeBudget) -> None:
     """Refuse mapped remote or unsupported drives before creating storage."""
     import ctypes
     from ctypes import wintypes
 
     budget.check()
+    if sys.platform != "win32":
+        raise CatalogStorageError("catalog_storage_unsupported")
     api = ctypes.WinDLL("kernel32", use_last_error=True)
     query = api.GetDriveTypeW
     query.argtypes = [wintypes.LPCWSTR]
@@ -390,7 +459,9 @@ class _NativeLock:
             raise CatalogStorageError("catalog_storage_unsupported")
         if sys.platform == "linux":
             _linux_filesystem_type(self.directory_fd, budget)
-        if hasattr(os, "ST_LOCAL"):
+        if sys.platform == "darwin":
+            _darwin_filesystem_flags(self.directory_fd, budget)
+        elif hasattr(os, "ST_LOCAL"):
             budget.check()
             local_flags = native_os.fstatvfs(self.directory_fd).f_flag
             budget.check()
@@ -435,6 +506,9 @@ class _NativeLock:
     def _windows_acquire(self, budget: NativeBudget) -> None:
         import ctypes
         from ctypes import wintypes
+
+        if sys.platform != "win32":
+            raise CatalogStorageError("catalog_storage_unsupported")
 
         class AttributeTag(ctypes.Structure):
             _fields_ = [("attributes", wintypes.DWORD), ("tag", wintypes.DWORD)]
@@ -564,7 +638,7 @@ class _NativeLock:
     def close(self) -> list[tuple[str, BaseException]]:
         failures = self.cleanup_failures[:]
         self.cleanup_failures.clear()
-        if os.name == "nt":
+        if sys.platform == "win32":
             import ctypes
 
             if self.locked:
@@ -891,14 +965,7 @@ class CatalogManifestTransaction:
             ):
                 raise CatalogStorageError("catalog_storage_unsupported")
             if sys.platform == "darwin":
-                native_os: Any = os
-                if not hasattr(os, "ST_LOCAL") or not callable(getattr(os, "fstatvfs", None)):
-                    raise CatalogStorageError("catalog_storage_unsupported")
-                budget.check()
-                local_flags = native_os.fstatvfs(descriptor).f_flag
-                budget.check()
-                if not local_flags & os.ST_LOCAL:
-                    raise CatalogStorageError("catalog_storage_unsupported")
+                _darwin_filesystem_flags(descriptor, budget)
             else:
                 _linux_filesystem_type(descriptor, budget)
             self._storage_device = opened.st_dev

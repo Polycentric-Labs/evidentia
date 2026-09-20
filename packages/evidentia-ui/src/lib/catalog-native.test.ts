@@ -951,3 +951,31 @@ describe("raised replacement publication table", () => {
     },
   );
 });
+
+it.each(["__proto__", "constructor", "prototype", "toString"])(
+  "retains the open schema key %s as inert own data",
+  async (key) => {
+    const bundle = example();
+    const catalog = ordinary(bundle);
+    catalog.controls[0].properties = Object.fromEntries([[key, "retained"]]);
+    const result = await decodeNativeCatalog(JSON.stringify(catalog), expected(bundle));
+    const properties = result.controls[0].properties;
+    expect(Object.getPrototypeOf(properties)).toBeNull();
+    expect(Object.hasOwn(properties, key)).toBe(true);
+    expect(properties[key]).toBe("retained");
+    expect(Object.isFrozen(properties)).toBe(true);
+    expect(Object.hasOwn(Object.prototype, "retained")).toBe(false);
+  },
+);
+it.each(["__proto__", "constructor", "toString"])(
+  "rejects duplicate wire keys named %s before object construction",
+  async (key) => {
+    const bundle = example();
+    const catalog = ordinary(bundle);
+    const wire = JSON.stringify(catalog).replace(
+      '"properties":{}',
+      '"properties":{' + JSON.stringify(key) + ':"first",' + JSON.stringify(key) + ':"second"}',
+    );
+    await expect(decodeNativeCatalog(wire, expected(bundle))).rejects.toThrow();
+  },
+);

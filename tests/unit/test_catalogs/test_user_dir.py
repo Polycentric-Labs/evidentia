@@ -1454,18 +1454,20 @@ def test_f2_generation_scan_close_preserves_primary_and_fixed_cleanup(tmp_path, 
 
 
 def _fake_darwin_storage(monkeypatch, *, flags=None, query_error=None, after_query=None, close_error=None):
+    import ctypes
+    import platform
     from pathlib import Path
     from types import SimpleNamespace
 
     import evidentia_core.catalogs.user_dir as module
 
-    synthetic_local_flag = 1 << 20
+    synthetic_local_flag = 0x1000
     calls = []
     owned = {}
     monkeypatch.setattr(module.sys, "platform", "darwin")
     for name in ("O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC"):
         monkeypatch.setattr(module.os, name, 0, raising=False)
-    monkeypatch.setattr(module.os, "ST_LOCAL", synthetic_local_flag, raising=False)
+    monkeypatch.setattr(platform, "machine", lambda: "arm64")
 
     def open_directory(path, native_flags):
         descriptor = 900 + len(calls)
@@ -1473,13 +1475,15 @@ def _fake_darwin_storage(monkeypatch, *, flags=None, query_error=None, after_que
         calls.append(("open", Path(path)))
         return descriptor
 
-    def query(descriptor):
-        calls.append(("query", owned[descriptor]))
-        if query_error is not None:
-            raise query_error
-        if after_query is not None:
-            after_query()
-        return SimpleNamespace(f_flag=synthetic_local_flag if flags is None else flags)
+    class Query:
+        def __call__(self, descriptor, pointer):
+            calls.append(("query", owned[descriptor]))
+            if query_error is not None:
+                raise query_error
+            if after_query is not None:
+                after_query()
+            pointer._obj.f_flags = synthetic_local_flag if flags is None else flags
+            return 0
 
     def close(descriptor):
         calls.append(("close", owned.pop(descriptor)))
@@ -1489,12 +1493,12 @@ def _fake_darwin_storage(monkeypatch, *, flags=None, query_error=None, after_que
     monkeypatch.setattr(module.os, "open", open_directory)
     monkeypatch.setattr(module.os, "fstat", lambda descriptor: owned[descriptor].lstat())
     monkeypatch.setattr(module.os, "get_inheritable", lambda descriptor: False)
-    monkeypatch.setattr(module.os, "fstatvfs", query, raising=False)
+    monkeypatch.setattr(ctypes, "CDLL", lambda *args, **kwargs: SimpleNamespace(fstatfs=Query()))
     monkeypatch.setattr(module.os, "close", close)
     return calls, owned
 
 
-@pytest.mark.parametrize("failure", ["remote", "missing_query", "missing_local_flag", "query_error"])
+@pytest.mark.parametrize("failure", ["remote", "missing_query", "unsupported_abi", "query_error"])
 def test_f2_darwin_admission_refuses_before_first_mutation(tmp_path, monkeypatch, failure) -> None:
     from pathlib import Path
 
@@ -1508,9 +1512,14 @@ def test_f2_darwin_admission_refuses_before_first_mutation(tmp_path, monkeypatch
         query_error=primary if failure == "query_error" else None,
     )
     if failure == "missing_query":
-        monkeypatch.delattr(module.os, "fstatvfs")
-    elif failure == "missing_local_flag":
-        monkeypatch.delattr(module.os, "ST_LOCAL")
+        import ctypes
+        from types import SimpleNamespace
+
+        monkeypatch.setattr(ctypes, "CDLL", lambda *args, **kwargs: SimpleNamespace())
+    elif failure == "unsupported_abi":
+        import platform
+
+        monkeypatch.setattr(platform, "machine", lambda: "unsupported")
     mutations = []
     original_mkdir = Path.mkdir
 
@@ -1524,7 +1533,7 @@ def test_f2_darwin_admission_refuses_before_first_mutation(tmp_path, monkeypatch
     with pytest.raises((module.CatalogStorageError, OSError)) as caught:
         transaction._storage_directory(root, NativeBudget(), create=True)
     if failure == "query_error":
-        assert caught.value is primary
+        assert caught.value.__cause__ is primary
     else:
         assert caught.value.code == "catalog_storage_unsupported"
     assert mutations == []
