@@ -13,6 +13,12 @@ vi.mock("@/lib/api", async () => {
   return {
     ...actual,
     api: {
+      health: vi.fn().mockResolvedValue({
+        status: "ok",
+        version: "test",
+        auth_configured: false,
+      }),
+      importNativeCatalog: vi.fn(),
       catalogCrosswalk: vi.fn(),
       catalogWhere: vi.fn(),
       catalogLicenseInfo: vi.fn(),
@@ -103,12 +109,12 @@ describe("CatalogPage", () => {
       expect(mockedApi.catalogLicenseInfo).toHaveBeenCalledWith("iso-27001"),
     );
     expect(await screen.findByText("CC-BY-4.0")).toBeInTheDocument();
-    expect(
-      screen.getByText("https://example.com/license"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("https://example.com/license")).toBeInTheDocument();
     expect(screen.getByText("https://example.com/source")).toBeInTheDocument();
     expect(screen.getByText("retired")).toBeInTheDocument();
-    expect(screen.getByText("Consult the successor catalog.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Consult the successor catalog."),
+    ).toBeInTheDocument();
     expect(screen.getByText("2026-09-09")).toBeInTheDocument();
   });
 
@@ -126,18 +132,13 @@ describe("CatalogPage", () => {
       "my-framework",
     );
     // `{{`/`}}` escape the userEvent keyboard-syntax braces → literal `{}`.
-    await user.type(
-      screen.getByLabelText(/Catalog content/i),
-      '{{"id":"x"}',
-    );
+    await user.type(screen.getByLabelText(/Catalog content/i), '{{"id":"x"}');
     await user.type(
       screen.getByLabelText(/Name \(optional\)/i),
       "My Framework",
     );
 
-    await user.click(
-      screen.getByRole("button", { name: /Import catalog/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /Import catalog/i }));
 
     await waitFor(() =>
       expect(mockedApi.catalogImport).toHaveBeenCalledWith(
@@ -171,20 +172,17 @@ describe("CatalogPage", () => {
       screen.getByLabelText("Framework id", { selector: "#import-framework" }),
       "dup-framework",
     );
-    await user.type(
-      screen.getByLabelText(/Catalog content/i),
-      '{{"id":"x"}',
-    );
+    await user.type(screen.getByLabelText(/Catalog content/i), '{{"id":"x"}');
 
-    await user.click(
-      screen.getByRole("button", { name: /Import catalog/i }),
-    );
+    await user.click(screen.getByRole("button", { name: /Import catalog/i }));
 
     expect(
       await screen.findByText(/Import rejected \(400\)/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Catalog already exists; use force=true to overwrite\./i),
+      screen.getByText(
+        /Catalog already exists; use force=true to overwrite\./i,
+      ),
     ).toBeInTheDocument();
   });
 });

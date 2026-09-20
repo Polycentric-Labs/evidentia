@@ -195,7 +195,12 @@ class FrameworkRegistry:
         return self._entry_ids[framework_id]
 
     def get_catalog(self, framework_id: str) -> ControlCatalog:
-        """Get a catalog by framework ID (cached)."""
+        """Check current native registration before using the legacy ID cache."""
+        from evidentia_core.catalogs.user_dir import load_registered_native_catalog
+
+        native = load_registered_native_catalog(framework_id)
+        if native is not None:
+            return native
         if framework_id not in self._catalogs:
             self._catalogs[framework_id] = load_catalog(framework_id)
         return self._catalogs[framework_id]

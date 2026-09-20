@@ -242,3 +242,38 @@ worked-example test suite for a multi-maturity Tier-A catalog with
 companion OSCAL sidecar. Mirror this pattern when contributing a
 similarly-structured catalog (per-maturity / per-baseline / per-
 profile slices of a single upstream source).
+
+## Preserved publisher Markdown links
+
+The bundled CISA SCuBA source documents preserve their publisher bytes. Seven
+relative quick-start links were written for the upstream repository layout, so
+resolving them from Evidentia's relocated package data directory gives a false
+broken-link result. The documentation checker uses the original upstream context
+for those seven links only.
+
+The rule is bound to `cisagov/ScubaGear` commit
+`7ef9501d7de9804ddb9d6013af6b665cccfb39d9`, the full package source path, each
+file's SHA-256, the link line and the exact target
+`../../../README.md#quick-start-guide`. It resolves that target in the checker to
+the pinned upstream README. Source Markdown and catalog data are unchanged.
+
+| Source file | Line | SHA-256 |
+|---|---:|---|
+| `aad.md` | 37 | `ea0fe8dec93fa85ce580280b326b955c11aeb5fa24a18e840186bff05f58c415` |
+| `defender.md` | 38 | `5718b800e9c99ac73f0196a2665ba563e36bfe0236aaf6a54a0eccbcf97f402e` |
+| `exo.md` | 56 | `de6fd5151958383ecaae4f8a0d1092d5bb6d6d885d21afc8f13221dd775d80c1` |
+| `powerplatform.md` | 67 | `e87a2d553aa0390dcce5d9e7d4a69e1cd898080cd5cf1c519e8e72e2a1cc98e5` |
+| `securitysuite.md` | 64 | `55623da97cb70fbee74c0405639d14150c118e7f1446b10c4477b2b3efaf9bbf` |
+| `sharepoint.md` | 26 | `7ea2f414156f2d367924f8a8d5b2267cfd39a679ae65bbfbc2327cafaac2cb10` |
+| `teams.md` | 59 | `0b7d56dfea2f579face7fa94371f88a038c5e4cc7d795d6c3195c5a46dab2d6a` |
+
+Changed source bytes fail the check. A different path, line or target receives
+the existing local-link checks. Other links in the same files still require
+tracked local targets. The rule grants no source-wide exclusion, and all other
+documentation checks remain active. Like other external links, the pinned
+upstream URL is not fetched by this offline checker; passing the check does not
+establish remote availability or validate the anchor.
+
+The source index retains each original path under
+`PowerShell/ScubaGear/baselines/`. Future source revisions need a new review;
+matching a file name alone never carries this rule forward.

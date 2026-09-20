@@ -2,7 +2,7 @@
 
 Evidentia ships a **Model Context Protocol (MCP) server** that exposes its gap
 analysis, control lookup, CONMON, TPRM, POA&M, and signed-artifact verification
-surface as **14 tools** an AI agent can call directly. This guide gets that
+surface as **15 tools** an AI agent can call directly. This guide gets that
 server running and wires it into the MCP hosts you actually use (Claude Desktop
 and Claude Code) so an agent can drive Evidentia on your behalf. It
 covers the `evidentia mcp` command group (`serve`, `doctor`, `cimd-migrate`), the
@@ -52,7 +52,7 @@ Example output using only the bundled catalogs:
 Evidentia MCP doctor: PASS
   • MCP SDK: importable
   • Catalog registry: 106 frameworks loaded
-  • MCP server: 14 tools registered
+  • MCP server: 15 tools registered
 ```
 
 If you see `1` with an import error instead, the `mcp` extra is missing — re-run
@@ -124,7 +124,7 @@ Claude Desktop reads `claude_desktop_config.json` (on Windows:
 }
 ```
 
-Restart Claude Desktop. The 14 Evidentia tools become available to the model.
+Restart Claude Desktop. The 15 Evidentia tools are listed. The native catalog tool also requires the explicit scope grant described below.
 
 > **If `evidentia` isn't found**, Claude Desktop launches the command with its own
 > environment, which may not include your virtualenv's scripts directory. Replace
@@ -170,7 +170,9 @@ Confirm the server is registered and reachable with `claude mcp list`.
 
 ## Step 6 — (Optional) Gate tools per client with CIMD
 
-By default every connected client can call every one of the 14 tools. For
+The original fourteen tools retain their existing no-registry behavior. The new
+`get_catalog_native` tool always requires a configured registry and an explicit
+literal `get_catalog_native` grant; a wildcard does not grant it. For
 multi-client deployments you can restrict which tools a given client may call
 with a **CIMD (Client ID Metadata Document) registry** — a JSON file mapping each
 `client_id` to a space-separated allowlist of tool names in its `scope`.
@@ -330,3 +332,14 @@ changed incompatibly before the next major release.
   shim; use `--transport stdio` (the default) instead.
 - **CIMD client's `conmon_*` calls are rejected** — the registry predates those
   tools; run `evidentia mcp cimd-migrate <registry> --dry-run`, then apply it.
+
+### Grant native catalog reads explicitly
+
+Add `get_catalog_native` to a specific client scope only when that client should
+read the complete native source bundle. The request takes `framework_id` and
+`bundle_sha256`, with no paths or URLs. A missing registry, identity or grant
+is denied before source loading and signing. A changed generation must be
+selected again; the tool does not substitute newer content.
+
+Default `cimd-migrate` behavior keeps existing grants and does not add this tool.
+Use the explicit `--tools` selection when preparing a reviewed grant change.

@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit
 
 import anyio
@@ -45,6 +46,8 @@ def _production_app(
     transport: Transport,
     *,
     host: str = "127.0.0.1",
+    cimd_registry: CIMDRegistry | None = None,
+    default_client_id: str | None = None,
 ) -> ProductionApp:
     """Build the ASGI app from the exact arguments sent by the public runner."""
     captures: list[ProductionApp] = []
@@ -63,7 +66,13 @@ def _production_app(
 
     monkeypatch.setattr(EvidentiaMCPServer, "run", capture_run)
     runner = server_module.run_sse if transport == "sse" else server_module.run_http
-    runner(host=host, port=8765, allow_root=tmp_path)
+    runner(
+        host=host,
+        port=8765,
+        allow_root=tmp_path,
+        cimd_registry=cimd_registry,
+        default_client_id=default_client_id,
+    )
     assert len(captures) == 1
     return captures[0]
 
@@ -337,7 +346,7 @@ async def test_http_initialization_and_tool_call(
             assert not result["result"].get("isError", False)
             assert result["result"]["structuredContent"]["id"] == "AC-2"
             listing = _response_json(await client.post("/mcp", headers=session_headers, json=_rpc(3, "tools/list")))
-            assert len(listing["result"]["tools"]) == 14
+            assert len(listing["result"]["tools"]) == 15
             closed = await client.delete("/mcp", headers=session_headers)
             assert closed.status_code == 200
 
@@ -378,7 +387,7 @@ async def test_sse_advertised_route_initialization_and_tool_call(
             assert result["result"]["structuredContent"]["id"] == "AC-2"
             response = await client.post(endpoint, json=_rpc(3, "tools/list"))
             assert response.status_code == 202
-            assert len((await stream.next_json())["result"]["tools"]) == 14
+            assert len((await stream.next_json())["result"]["tools"]) == 15
             wrong_session = endpoint.split("?", 1)[0] + "?session_id=" + "0" * 32
             response = await client.post(wrong_session, json=_rpc(4, "tools/list"))
             assert response.status_code == 404
@@ -504,3 +513,121 @@ async def test_actual_body_limit_including_untrusted_lengths(
                     if expected == 200:
                         assert (await stream.next_json())["result"]["structuredContent"] == {"ok": True}
     assert executions == (["called"] if expected == 200 else [])
+
+
+def _assert_native_bundle_sources(payload: dict[str, Any]) -> None:
+    """Compare transported source bytes with the pinned on-disk publisher inputs."""
+    import hashlib
+
+    from evidentia_core.models.open_corpora import NativeBundle
+
+    NativeBundle.model_validate(payload)
+    directory = Path(__file__).resolve().parents[3] / (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4"
+    )
+    index = json.loads((directory / "source-index.json").read_text(encoding="utf-8"))
+    expected = []
+    for source in index["sources"]:
+        storage = source["storage"]
+        if storage["kind"] == "chunks":
+            raw = b"".join(
+                json.loads((directory / part["path"]).read_text(encoding="utf-8"))["raw_utf8"].encode("utf-8")
+                for part in storage["parts"]
+            )
+        else:
+            raw = (directory / storage["path"]).read_bytes()
+        assert len(raw) == source["binding"]["raw_bytes"]
+        assert hashlib.sha256(raw).hexdigest() == source["binding"]["raw_sha256"]
+        expected.append({"binding": source["binding"], "raw_utf8": raw.decode("utf-8")})
+    data = payload["data"]
+    assert data["catalog_id"] == "au-ism"
+    assert data["profile"] == "au-ism-2026.09.4"
+    assert data["documents"] == expected
+    compact = json.dumps(data, ensure_ascii=True, allow_nan=False, separators=(",", ":")).encode("utf-8")
+    assert hashlib.sha256(b"evidentia.catalog-native.v1\0" + compact).hexdigest() == payload["bundle_sha256"]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("transport", ["http", "sse"])
+async def test_native_tool_wire_scope_generation_and_recovery(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, transport: Transport
+) -> None:
+    """Use production routes and the real source handler through encoded RPC frames."""
+    from evidentia_core.catalogs.registry import FrameworkRegistry
+
+    selection = FrameworkRegistry().get_catalog("au-ism").native_source.bundle_sha256
+    registry = CIMDRegistry(
+        clients={
+            "allowed": CIMDDocument(
+                client_id="allowed", client_name="Synthetic allowed", scope="get_catalog_native get_control"
+            ),
+            "denied": CIMDDocument(client_id="denied", client_name="Synthetic denied", scope="get_control"),
+        }
+    )
+    configured = _production_app(monkeypatch, tmp_path, transport, cimd_registry=registry, default_client_id="allowed")
+
+    async def exercise(
+        client: httpx.AsyncClient, endpoint: str, headers: dict[str, str], stream: SSEStream | None
+    ) -> None:
+        async def call(request_id: int, params: dict[str, Any]) -> dict[str, Any]:
+            response = await client.post(endpoint, headers=headers, json=_rpc(request_id, "tools/call", params))
+            if stream is None:
+                result = _response_json(response)
+            else:
+                assert response.status_code == 202
+                result = await stream.next_json()
+            assert result["id"] == request_id
+            return result
+
+        with patch("evidentia_mcp.server.FrameworkRegistry", wraps=FrameworkRegistry) as lookup:
+            denied = await call(
+                2, {"name": "get_catalog_native", "arguments": {"extra": "unparsed"}, "_meta": {"client_id": "denied"}}
+            )
+            assert denied["error"]["code"] == -32602
+            assert lookup.call_count == 0
+            malformed = await call(
+                3, {"name": "get_catalog_native", "arguments": {"framework_id": "au-ism", "bundle_sha256": "A" * 64}}
+            )
+            assert malformed["error"]["code"] == -32602
+            assert lookup.call_count == 0
+            stale = await call(
+                4, {"name": "get_catalog_native", "arguments": {"framework_id": "au-ism", "bundle_sha256": "0" * 64}}
+            )
+            assert stale["result"]["isError"] is True
+            assert "catalog_generation_changed" in str(stale["result"]["content"])
+            native = await call(
+                5, {"name": "get_catalog_native", "arguments": {"framework_id": "au-ism", "bundle_sha256": selection}}
+            )
+            assert not native["result"].get("isError", False)
+            payload = native["result"]["structuredContent"]
+            _assert_native_bundle_sources(payload)
+            assert len(native["result"]["content"]) == 1
+            assert native["result"]["content"][0]["type"] == "text"
+            assert json.loads(native["result"]["content"][0]["text"]) == payload
+            assert lookup.call_count == 2
+            recovery = await call(
+                6,
+                {
+                    "name": "get_control",
+                    "arguments": {"framework_id": "nist-800-53-rev5-moderate", "control_id": "AC-2"},
+                },
+            )
+            assert recovery["result"]["structuredContent"]["id"] == "AC-2"
+
+    # This includes multiple calls and source-oracle checks. Each source call
+    # still has its own unchanged 60-second production budget.
+    with anyio.fail_after(180):
+        async with (
+            configured.app.router.lifespan_context(configured.app),
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=configured.app), base_url=BASE_URL, headers=HEADERS
+            ) as client,
+        ):
+            if transport == "http":
+                headers = await _initialize_http(client)
+                await exercise(client, "/mcp", headers, None)
+                assert (await client.delete("/mcp", headers=headers)).status_code == 200
+            else:
+                async with _sse_stream(configured.app) as stream:
+                    endpoint = await _initialize_sse(client, stream)
+                    await exercise(client, endpoint, {}, stream)

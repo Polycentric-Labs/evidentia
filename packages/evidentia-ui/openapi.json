@@ -1283,6 +1283,17 @@
             "description": "URL to the authoritative source where licensed control text can be obtained",
             "title": "License Url"
           },
+          "native_source_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogNativeControlSourceRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reference to an exact occurrence in the separately retained native source bundle"
+          },
           "objective": {
             "anyOf": [
               {
@@ -1402,7 +1413,7 @@
         "type": "object"
       },
       "CatalogImportPayload": {
-        "description": "Body shape for ``POST /api/catalog/import``.\n\nThe catalog is supplied as inline ``content`` (NOT a server-side\npath) so the API never reads an operator-chosen file off the server\n— closing the path-traversal / arbitrary-read surface the CLI's\nfile-path argument would expose over HTTP.",
+        "description": "Body shape for ``POST /api/catalog/import``.\n\nThe catalog is supplied as inline ``content`` (NOT a server-side\npath) so the API never reads an operator-chosen file off the server\n- closing the path-traversal / arbitrary-read surface the CLI's\nfile-path argument would expose over HTTP.",
         "properties": {
           "content": {
             "description": "Raw catalog document (JSON or YAML text).",
@@ -1467,6 +1478,924 @@
           "content"
         ],
         "title": "CatalogImportPayload",
+        "type": "object"
+      },
+      "CatalogNativeAbsentSelection": {
+        "additionalProperties": false,
+        "description": "Closed AbsentSelection value.",
+        "properties": {
+          "state": {
+            "const": "absent",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "CatalogNativeAbsentSelection",
+        "type": "object"
+      },
+      "CatalogNativeCatalogPublicationObservation": {
+        "additionalProperties": false,
+        "description": "Closed CatalogPublicationObservation value.",
+        "properties": {
+          "cleanup_errors": {
+            "items": {
+              "enum": [
+                "temporary_cleanup_failed",
+                "handle_close_failed",
+                "lock_release_failed"
+              ],
+              "type": "string"
+            },
+            "maxItems": 3,
+            "title": "Cleanup Errors",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "cleanup_state": {
+            "enum": [
+              "not_started",
+              "complete",
+              "failed"
+            ],
+            "title": "Cleanup State",
+            "type": "string"
+          },
+          "error_code": {
+            "enum": [
+              null,
+              "catalog_transaction_conflict",
+              "catalog_storage_unsupported",
+              "catalog_manifest_invalid",
+              "catalog_storage_limit_exceeded",
+              "catalog_generation_conflict",
+              "catalog_storage_failed",
+              "catalog_publication_failed",
+              "catalog_publication_indeterminate",
+              "catalog_cleanup_failed",
+              "processing_deadline_exceeded",
+              "catalog_interrupted"
+            ],
+            "title": "Error Code"
+          },
+          "failure_phase": {
+            "enum": [
+              null,
+              "admission",
+              "preparation",
+              "lock",
+              "manifest_read",
+              "generation",
+              "manifest_stage",
+              "replace",
+              "readback",
+              "cleanup"
+            ],
+            "title": "Failure Phase"
+          },
+          "observed_manifest_state": {
+            "enum": [
+              "not_observed",
+              "absent",
+              "present"
+            ],
+            "title": "Observed Manifest State",
+            "type": "string"
+          },
+          "observed_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Sha256"
+          },
+          "operation": {
+            "enum": [
+              "native_import",
+              "legacy_import",
+              "remove",
+              "compatibility_replace"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "primary_kind": {
+            "enum": [
+              "none",
+              "exception",
+              "base_exception"
+            ],
+            "title": "Primary Kind",
+            "type": "string"
+          },
+          "prior_manifest_state": {
+            "enum": [
+              "unread",
+              "absent",
+              "present"
+            ],
+            "title": "Prior Manifest State",
+            "type": "string"
+          },
+          "prior_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Sha256"
+          },
+          "proposed_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Sha256"
+          },
+          "publication_state": {
+            "enum": [
+              "not_attempted",
+              "unchanged",
+              "not_committed",
+              "committed",
+              "indeterminate"
+            ],
+            "title": "Publication State",
+            "type": "string"
+          },
+          "readback_result": {
+            "enum": [
+              "not_attempted",
+              "matches_prior",
+              "matches_proposed",
+              "other",
+              "unavailable"
+            ],
+            "title": "Readback Result",
+            "type": "string"
+          },
+          "replace_outcome": {
+            "enum": [
+              "not_called",
+              "returned",
+              "raised"
+            ],
+            "title": "Replace Outcome",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "catalog-publication-observation-v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "operation",
+          "publication_state",
+          "prior_manifest_state",
+          "prior_sha256",
+          "proposed_sha256",
+          "replace_outcome",
+          "observed_manifest_state",
+          "observed_sha256",
+          "readback_result",
+          "cleanup_state",
+          "cleanup_errors",
+          "failure_phase",
+          "primary_kind",
+          "error_code"
+        ],
+        "title": "CatalogNativeCatalogPublicationObservation",
+        "type": "object"
+      },
+      "CatalogNativeCatalogStorageErrorEnvelope": {
+        "additionalProperties": false,
+        "description": "Closed CatalogStorageErrorEnvelope value.",
+        "properties": {
+          "code": {
+            "enum": [
+              "catalog_transaction_conflict",
+              "catalog_generation_conflict",
+              "catalog_storage_unsupported",
+              "catalog_manifest_invalid",
+              "catalog_storage_limit_exceeded",
+              "catalog_storage_failed",
+              "catalog_publication_failed",
+              "catalog_publication_indeterminate",
+              "catalog_cleanup_failed",
+              "processing_deadline_exceeded"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "publication": {
+            "$ref": "#/components/schemas/CatalogNativeCatalogPublicationObservation"
+          }
+        },
+        "required": [
+          "code",
+          "publication"
+        ],
+        "title": "CatalogNativeCatalogStorageErrorEnvelope",
+        "type": "object"
+      },
+      "CatalogNativeControlBinding": {
+        "additionalProperties": false,
+        "description": "Closed ControlBinding value.",
+        "properties": {
+          "admitted_criticality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "SHALL",
+                  "SHOULD"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admitted Criticality"
+          },
+          "control_id": {
+            "maxLength": 128,
+            "title": "Control Id",
+            "type": "string"
+          },
+          "family_occurrence_index": {
+            "anyOf": [
+              {
+                "maximum": 4095.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family Occurrence Index"
+          },
+          "occurrence_index": {
+            "maximum": 4095.0,
+            "minimum": 0.0,
+            "title": "Occurrence Index",
+            "type": "integer"
+          },
+          "parent_control_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Control Id"
+          }
+        },
+        "required": [
+          "control_id",
+          "occurrence_index",
+          "family_occurrence_index",
+          "parent_control_id",
+          "admitted_criticality"
+        ],
+        "title": "CatalogNativeControlBinding",
+        "type": "object"
+      },
+      "CatalogNativeControlSourceRef": {
+        "additionalProperties": false,
+        "description": "Closed ControlSourceRef value.",
+        "properties": {
+          "bundle_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Bundle Sha256",
+            "type": "string"
+          },
+          "occurrence_index": {
+            "maximum": 4095.0,
+            "minimum": 0.0,
+            "title": "Occurrence Index",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bundle_sha256",
+          "occurrence_index"
+        ],
+        "title": "CatalogNativeControlSourceRef",
+        "type": "object"
+      },
+      "CatalogNativeDiagnostic": {
+        "additionalProperties": false,
+        "description": "Closed Diagnostic value.",
+        "properties": {
+          "code": {
+            "enum": [
+              "source_identity_conflict",
+              "missing_reference_record",
+              "source_reference_difference",
+              "legacy_ids_retired"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "occurrence_index": {
+            "anyOf": [
+              {
+                "maximum": 4095.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurrence Index"
+          },
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeValueRef"
+            },
+            "maxItems": 8,
+            "title": "Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "occurrence_index",
+          "refs"
+        ],
+        "title": "CatalogNativeDiagnostic",
+        "type": "object"
+      },
+      "CatalogNativeFieldRef": {
+        "additionalProperties": false,
+        "description": "Closed FieldRef value.",
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/CatalogNativeValueRef"
+          },
+          "name": {
+            "maxLength": 1024,
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/CatalogNativeValueRef"
+          }
+        },
+        "required": [
+          "name",
+          "key",
+          "value"
+        ],
+        "title": "CatalogNativeFieldRef",
+        "type": "object"
+      },
+      "CatalogNativeImportResult": {
+        "additionalProperties": false,
+        "description": "Closed ImportResult value.",
+        "properties": {
+          "bundle_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Bundle Sha256",
+            "type": "string"
+          },
+          "catalog_id": {
+            "const": "bsi-grundschutz-plus-plus",
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "control_count": {
+            "const": 1000,
+            "title": "Control Count",
+            "type": "integer"
+          },
+          "projection_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Projection Sha256",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "catalog-native-import-result-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_hashes": {
+            "items": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "maxItems": 3,
+            "title": "Source Hashes",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "imported",
+              "already_present"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "storage": {
+            "const": "external",
+            "title": "Storage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "catalog_id",
+          "bundle_sha256",
+          "projection_sha256",
+          "status",
+          "control_count",
+          "storage",
+          "source_hashes"
+        ],
+        "title": "CatalogNativeImportResult",
+        "type": "object"
+      },
+      "CatalogNativeNativeBundle": {
+        "additionalProperties": false,
+        "description": "Closed NativeBundle value.",
+        "properties": {
+          "bundle_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Bundle Sha256",
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CatalogNativeNativeData"
+          }
+        },
+        "required": [
+          "bundle_sha256",
+          "data"
+        ],
+        "title": "CatalogNativeNativeBundle",
+        "type": "object"
+      },
+      "CatalogNativeNativeData": {
+        "additionalProperties": false,
+        "description": "Closed NativeData value.",
+        "properties": {
+          "catalog_id": {
+            "enum": [
+              "au-ism",
+              "cisa-scuba",
+              "bsi-grundschutz-plus-plus"
+            ],
+            "title": "Catalog Id",
+            "type": "string"
+          },
+          "context_indices": {
+            "items": {
+              "maximum": 4095.0,
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            "maxItems": 1024,
+            "title": "Context Indices",
+            "type": "array"
+          },
+          "control_bindings": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeControlBinding"
+            },
+            "maxItems": 2048,
+            "title": "Control Bindings",
+            "type": "array"
+          },
+          "converter_id": {
+            "const": "evidentia-open-corpora-v1",
+            "title": "Converter Id",
+            "type": "string"
+          },
+          "converter_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Converter Sha256",
+            "type": "string"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeDiagnostic"
+            },
+            "maxItems": 512,
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeSourceDocument"
+            },
+            "maxItems": 16,
+            "title": "Documents",
+            "type": "array"
+          },
+          "occurrences": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeOccurrence"
+            },
+            "maxItems": 4096,
+            "title": "Occurrences",
+            "type": "array"
+          },
+          "profile": {
+            "enum": [
+              "au-ism-2026.09.4",
+              "cisa-scuba-m365-7ef9501d",
+              "bsi-grundschutz-plus-plus-367d7750"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "catalog-native-v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "profile",
+          "catalog_id",
+          "converter_id",
+          "converter_sha256",
+          "documents",
+          "occurrences",
+          "control_bindings",
+          "context_indices",
+          "diagnostics"
+        ],
+        "title": "CatalogNativeNativeData",
+        "type": "object"
+      },
+      "CatalogNativeNativeReadError": {
+        "additionalProperties": false,
+        "description": "Closed NativeReadError value.",
+        "properties": {
+          "code": {
+            "enum": [
+              "native_source_unavailable",
+              "catalog_generation_changed",
+              "native_source_invalid",
+              "processing_deadline_exceeded"
+            ],
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "CatalogNativeNativeReadError",
+        "type": "object"
+      },
+      "CatalogNativeNullSelection": {
+        "additionalProperties": false,
+        "description": "Closed NullSelection value.",
+        "properties": {
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeValueRef"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Refs",
+            "type": "array"
+          },
+          "state": {
+            "const": "native_null",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "refs"
+        ],
+        "title": "CatalogNativeNullSelection",
+        "type": "object"
+      },
+      "CatalogNativeOccurrence": {
+        "additionalProperties": false,
+        "description": "Closed Occurrence value.",
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeFieldRef"
+            },
+            "maxItems": 64,
+            "title": "Fields",
+            "type": "array"
+          },
+          "index": {
+            "maximum": 4095.0,
+            "minimum": 0.0,
+            "title": "Index",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "catalog",
+              "metadata",
+              "group",
+              "control",
+              "principle",
+              "section",
+              "policy",
+              "reference_policy",
+              "context_block"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "parent_index": {
+            "anyOf": [
+              {
+                "maximum": 4095.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Index"
+          },
+          "selections": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeSemanticSelection"
+            },
+            "maxItems": 32,
+            "title": "Selections",
+            "type": "array"
+          },
+          "sibling_ordinal": {
+            "maximum": 4095.0,
+            "minimum": 0.0,
+            "title": "Sibling Ordinal",
+            "type": "integer"
+          },
+          "source": {
+            "$ref": "#/components/schemas/CatalogNativeValueRef"
+          }
+        },
+        "required": [
+          "index",
+          "kind",
+          "parent_index",
+          "sibling_ordinal",
+          "source",
+          "fields",
+          "selections"
+        ],
+        "title": "CatalogNativeOccurrence",
+        "type": "object"
+      },
+      "CatalogNativePresentSelection": {
+        "additionalProperties": false,
+        "description": "Closed PresentSelection value.",
+        "properties": {
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNativeValueRef"
+            },
+            "maxItems": 256,
+            "minItems": 1,
+            "title": "Refs",
+            "type": "array"
+          },
+          "state": {
+            "const": "present",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "refs"
+        ],
+        "title": "CatalogNativePresentSelection",
+        "type": "object"
+      },
+      "CatalogNativeSemanticSelection": {
+        "additionalProperties": false,
+        "description": "Closed SemanticSelection value.",
+        "properties": {
+          "role": {
+            "enum": [
+              "native_id",
+              "title",
+              "class",
+              "statement",
+              "guidance",
+              "parameter",
+              "applicability",
+              "essential_eight_applicability",
+              "rationale",
+              "note",
+              "last_modified",
+              "implementation",
+              "criticality",
+              "criticality_identity",
+              "resources",
+              "license_requirements",
+              "badge",
+              "nist_mapping",
+              "mitre_mapping",
+              "status",
+              "publication_time",
+              "native_version",
+              "schema_version",
+              "reference_record"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogNativeAbsentSelection"
+              },
+              {
+                "$ref": "#/components/schemas/CatalogNativeNullSelection"
+              },
+              {
+                "$ref": "#/components/schemas/CatalogNativePresentSelection"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "role",
+          "value"
+        ],
+        "title": "CatalogNativeSemanticSelection",
+        "type": "object"
+      },
+      "CatalogNativeSourceBinding": {
+        "additionalProperties": false,
+        "description": "Closed SourceBinding value.",
+        "properties": {
+          "commit": {
+            "pattern": "^[0-9a-f]{40}$",
+            "title": "Commit",
+            "type": "string"
+          },
+          "media_type": {
+            "enum": [
+              "application/json",
+              "text/markdown",
+              "text/plain"
+            ],
+            "title": "Media Type",
+            "type": "string"
+          },
+          "raw_bytes": {
+            "maximum": 8388608.0,
+            "minimum": 0.0,
+            "title": "Raw Bytes",
+            "type": "integer"
+          },
+          "raw_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Raw Sha256",
+            "type": "string"
+          },
+          "repository": {
+            "maxLength": 256,
+            "title": "Repository",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "authoritative",
+              "reference",
+              "license",
+              "publication_context"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "source_key": {
+            "maxLength": 64,
+            "title": "Source Key",
+            "type": "string"
+          },
+          "upstream_path": {
+            "maxLength": 1024,
+            "title": "Upstream Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_key",
+          "role",
+          "media_type",
+          "repository",
+          "commit",
+          "upstream_path",
+          "raw_bytes",
+          "raw_sha256"
+        ],
+        "title": "CatalogNativeSourceBinding",
+        "type": "object"
+      },
+      "CatalogNativeSourceDocument": {
+        "additionalProperties": false,
+        "description": "Closed SourceDocument value.",
+        "properties": {
+          "binding": {
+            "$ref": "#/components/schemas/CatalogNativeSourceBinding"
+          },
+          "raw_utf8": {
+            "maxLength": 8388608,
+            "title": "Raw Utf8",
+            "type": "string"
+          }
+        },
+        "required": [
+          "binding",
+          "raw_utf8"
+        ],
+        "title": "CatalogNativeSourceDocument",
+        "type": "object"
+      },
+      "CatalogNativeValueRef": {
+        "additionalProperties": false,
+        "description": "Closed ValueRef value.",
+        "properties": {
+          "byte_end": {
+            "maximum": 8388608.0,
+            "minimum": 0.0,
+            "title": "Byte End",
+            "type": "integer"
+          },
+          "byte_start": {
+            "maximum": 8388608.0,
+            "minimum": 0.0,
+            "title": "Byte Start",
+            "type": "integer"
+          },
+          "document_index": {
+            "maximum": 15.0,
+            "minimum": 0.0,
+            "title": "Document Index",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "json_object",
+              "json_array",
+              "json_string",
+              "json_number",
+              "json_boolean",
+              "json_null",
+              "markdown_block",
+              "utf8_text"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_index",
+          "byte_start",
+          "byte_end",
+          "kind",
+          "sha256"
+        ],
+        "title": "CatalogNativeValueRef",
         "type": "object"
       },
       "CatalogPublicationNotice": {
@@ -2476,6 +3405,17 @@
             ],
             "description": "URL to the authoritative source / purchase page",
             "title": "License Url"
+          },
+          "native_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogNativeNativeBundle"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Complete pinned native documents and source-backed projection references"
           },
           "notes": {
             "anyOf": [
@@ -18773,7 +19713,7 @@
     },
     "/api/catalog/crosswalk": {
       "get": {
-        "description": "Cross-framework mappings for a control (read-only).\n\nMirrors ``evidentia catalog crosswalk --source --target --control``.\nReturns a list envelope; an empty ``mappings`` list (total 0) when no\nmapping exists — consistent with the CLI's \"no mappings found\" path\n(a successful zero-result, not a 404).",
+        "description": "Cross-framework mappings for a control (read-only).\n\nMirrors ``evidentia catalog crosswalk --source --target --control``.\nReturns a list envelope; an empty ``mappings`` list (total 0) when no\nmapping exists - consistent with the CLI's \"no mappings found\" path\n(a successful zero-result, not a 404).",
         "operationId": "get_crosswalk_api_catalog_crosswalk_get",
         "parameters": [
           {
@@ -18895,6 +19835,16 @@
             },
             "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeCatalogStorageErrorEnvelope"
+                }
+              }
+            },
+            "description": "Catalog transaction or generation conflict."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -18904,9 +19854,155 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeCatalogStorageErrorEnvelope"
+                }
+              }
+            },
+            "description": "Catalog publication or storage failure."
           }
         },
         "summary": "Import Catalog",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/catalog/import-native": {
+      "post": {
+        "description": "Import the pinned BSI sources after authorization and bounded body admission.",
+        "operationId": "import_native_catalog_api_catalog_import_native_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "description": "Closed ExternalImportRequest value.",
+                "properties": {
+                  "documents": {
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "Closed SourceUpload value.",
+                      "properties": {
+                        "raw_utf8": {
+                          "maxLength": 8388608,
+                          "title": "Raw Utf8",
+                          "type": "string"
+                        },
+                        "source_key": {
+                          "enum": [
+                            "bsi-catalog",
+                            "bsi-license",
+                            "bsi-readme"
+                          ],
+                          "title": "Source Key",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "source_key",
+                        "raw_utf8"
+                      ],
+                      "title": "CatalogNativeSourceUpload",
+                      "type": "object"
+                    },
+                    "maxItems": 3,
+                    "minItems": 3,
+                    "title": "Documents",
+                    "type": "array"
+                  },
+                  "profile": {
+                    "const": "bsi-grundschutz-plus-plus-367d7750",
+                    "title": "Profile",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "profile",
+                  "documents"
+                ],
+                "title": "CatalogNativeExternalImportRequest",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeCatalogStorageErrorEnvelope"
+                }
+              }
+            },
+            "description": "Catalog transaction or generation conflict."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                }
+              }
+            },
+            "description": "Raw request body exceeds 16 MiB."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                }
+              }
+            },
+            "description": "Invalid pinned native source request."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CatalogNativeCatalogStorageErrorEnvelope"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                    }
+                  ],
+                  "title": "Response 503 Import Native Catalog Api Catalog Import Native Post"
+                }
+              }
+            },
+            "description": "Catalog publication, storage or deadline failure."
+          }
+        },
+        "summary": "Import Native Catalog",
         "tags": [
           "catalog"
         ]
@@ -18979,7 +20075,7 @@
     },
     "/api/catalog/where": {
       "get": {
-        "description": "Show where a framework resolves from — user, bundled, or 404.\n\nMirrors ``evidentia catalog where``. The user catalog dir is the one\nthe ``EVIDENTIA_CATALOG_DIR`` env var (or platform default) points at.",
+        "description": "Show where a framework resolves from - user, bundled, or 404.\n\nMirrors ``evidentia catalog where``. The user catalog dir is the one\nthe ``EVIDENTIA_CATALOG_DIR`` env var (or platform default) points at.",
         "operationId": "where_framework_api_catalog_where_get",
         "parameters": [
           {
@@ -19046,7 +20142,7 @@
     },
     "/api/catalog/{framework_id}": {
       "delete": {
-        "description": "Remove a user-imported catalog. 204 on success; 404 otherwise.\n\nLOCAL DELETE. Gated on ``require_role(\"admin\")``. Bundled catalogs\nare never user-imported, so they cannot be removed — an attempt to\nremove one (or an unknown ID) returns 404, mirroring the CLI's\n\"no user-imported framework; bundled catalogs cannot be removed\"\nbehavior.",
+        "description": "Remove a user-imported catalog. 204 on success; 404 otherwise.\n\nLOCAL DELETE. Gated on ``require_role(\"admin\")``. Bundled catalogs\nare never user-imported, so they cannot be removed - an attempt to\nremove one (or an unknown ID) returns 404, mirroring the CLI's\n\"no user-imported framework; bundled catalogs cannot be removed\"\nbehavior.",
         "operationId": "remove_catalog_api_catalog__framework_id__delete",
         "parameters": [
           {
@@ -19093,6 +20189,16 @@
             },
             "description": "No user-imported framework under that ID (``error: not_found``)."
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeCatalogStorageErrorEnvelope"
+                }
+              }
+            },
+            "description": "Catalog transaction or generation conflict."
+          },
           "422": {
             "content": {
               "application/json": {
@@ -19102,6 +20208,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeCatalogStorageErrorEnvelope"
+                }
+              }
+            },
+            "description": "Catalog publication or storage failure."
           }
         },
         "summary": "Remove Catalog",
@@ -23794,7 +24910,7 @@
     },
     "/api/frameworks": {
       "get": {
-        "description": "Return the manifest-derived framework list with optional filtering.\n\nMatches :meth:`FrameworkRegistry.list_frameworks` exactly — callers can\nexpect the stable dict shape documented there.",
+        "description": "Return the manifest-derived framework list with optional filtering.\n\nMatches :meth:`FrameworkRegistry.list_frameworks` exactly - callers can\nexpect the stable dict shape documented there.",
         "operationId": "list_frameworks_api_frameworks_get",
         "parameters": [
           {
@@ -23919,7 +25035,7 @@
     },
     "/api/frameworks/{framework_id}/controls/{control_id}": {
       "get": {
-        "description": "Look up a single control by (framework, control_id).\n\nAccepts either NIST-publication-style (``AC-2(1)``) or NIST-OSCAL-style\n(``ac-2.1``) IDs — the catalog's normalizer resolves both.",
+        "description": "Look up a single control by (framework, control_id).\n\nAccepts either NIST-publication-style (``AC-2(1)``) or NIST-OSCAL-style\n(``ac-2.1``) IDs - the catalog's normalizer resolves both.",
         "operationId": "get_control_api_frameworks__framework_id__controls__control_id__get",
         "parameters": [
           {
@@ -23974,6 +25090,88 @@
           }
         },
         "summary": "Get Control",
+        "tags": [
+          "frameworks"
+        ]
+      }
+    },
+    "/api/frameworks/{framework_id}/native-source": {
+      "get": {
+        "description": "Return only the complete validated source generation requested by the caller.",
+        "operationId": "get_native_source_api_frameworks__framework_id__native_source_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "framework_id",
+            "required": true,
+            "schema": {
+              "title": "Framework Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bundle_sha256",
+            "required": true,
+            "schema": {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeBundle"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                }
+              }
+            },
+            "description": "Native source is unavailable."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                }
+              }
+            },
+            "description": "The requested native generation is no longer current."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                }
+              }
+            },
+            "description": "Invalid framework or exact bundle digest."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogNativeNativeReadError"
+                }
+              }
+            },
+            "description": "Native source processing failed."
+          }
+        },
+        "summary": "Get Native Source",
         "tags": [
           "frameworks"
         ]

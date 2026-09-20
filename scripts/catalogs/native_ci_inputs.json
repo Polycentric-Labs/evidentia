@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "profile": "bsi-grundschutz-plus-plus-367d7750",
+  "repository": "BSI-Bund/Stand-der-Technik-Bibliothek",
+  "commit": "367d775010abee641b258926bb482fcd05270059",
+  "files": [
+    {
+      "name": "Grundschutz++-resolved_catalog.json",
+      "upstream_path": "control_layer/Grundschutz++/Grundschutz++-resolved_catalog.json",
+      "bytes": 5400710,
+      "sha256": "691e8ca0af378718a9e4b5876f3e194a449f3214dceab6d86bec3e2388a969df"
+    },
+    {
+      "name": "LICENSE",
+      "upstream_path": "LICENSE",
+      "bytes": 20137,
+      "sha256": "23ee78c8bae49cf08ea2f0c84945c66b987ebe4520881fb51b3dad4fb43d07c2"
+    },
+    {
+      "name": "README.md",
+      "upstream_path": "README.md",
+      "bytes": 3604,
+      "sha256": "ad2cfde96832b9762b18711bb252d604777131c220588b0206df618ef154ee29"
+    }
+  ],
+  "expected": {
+    "profile": "bsi-grundschutz-plus-plus-367d7750",
+    "bundle_sha256": "331c89538db98142ca5347125bc4c2eff84eb05b2b3544211a2ea357dba203e3",
+    "projection_sha256": "6a0b09c60e665d1af2b07fbb40d41546a3c31da37075b541e882edd9d32b19f5",
+    "wire_sha256": "a6a9e2fd803cdf4936a3820910148bd914d9de6088557b7c6c232da61c53f32e",
+    "whole_wire_bytes": 11481584,
+    "independent_expected_counts": {
+      "catalog": 1,
+      "metadata": 1,
+      "group": 160,
+      "control": 1000,
+      "context_block": 2
+    }
+  },
+  "persisted": [
+    {
+      "leaf": "source-index.json",
+      "content_bytes": 1765,
+      "content_sha256": "c731d4f18fa29e7dd03e13542d3be8b539cf4556128f2a9629655ea0226b34f5",
+      "persisted_bytes": 1766,
+      "persisted_sha256": "4503da204b34db7749ab554e11f81f26cee8425d3aee5f92001604b977e4a2fa"
+    },
+    {
+      "leaf": "catalog.json",
+      "content_bytes": 11481584,
+      "content_sha256": "a6a9e2fd803cdf4936a3820910148bd914d9de6088557b7c6c232da61c53f32e",
+      "persisted_bytes": 11481585,
+      "persisted_sha256": "20ed89a29a786af3061437e59064a1fce8941b283bdb617c5510208b0ef764e6"
+    }
+  ]
+}

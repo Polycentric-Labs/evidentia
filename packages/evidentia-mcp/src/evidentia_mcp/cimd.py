@@ -55,10 +55,10 @@ Operators provide CIMD via a JSON file:
       }
     }
 
-CIMD is OPTIONAL. When ``cimd_registry`` is ``None`` (default),
-the server preserves v0.8.4 behavior — every tool is callable
-by every connected client, no per-client gating. CIMD enables
-the gating; absence of CIMD does not weaken the trust model.
+CIMD is OPTIONAL for the existing tools. When ``cimd_registry`` is
+``None`` (default), those tools retain their existing pass-through behavior.
+The separate ``get_catalog_native`` scope always requires an explicit
+configured CIMD grant, including when no registry is configured.
 
 Threat model
 

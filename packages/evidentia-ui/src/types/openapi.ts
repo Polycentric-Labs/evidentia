@@ -332,7 +332,7 @@ export interface paths {
          *
          *     Mirrors ``evidentia catalog crosswalk --source --target --control``.
          *     Returns a list envelope; an empty ``mappings`` list (total 0) when no
-         *     mapping exists — consistent with the CLI's "no mappings found" path
+         *     mapping exists - consistent with the CLI's "no mappings found" path
          *     (a successful zero-result, not a 404).
          */
         get: operations["get_crosswalk_api_catalog_crosswalk_get"];
@@ -371,6 +371,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/import-native": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Native Catalog
+         * @description Import the pinned BSI sources after authorization and bounded body admission.
+         */
+        post: operations["import_native_catalog_api_catalog_import_native_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/license-info/{framework_id}": {
         parameters: {
             query?: never;
@@ -403,7 +423,7 @@ export interface paths {
         };
         /**
          * Where Framework
-         * @description Show where a framework resolves from — user, bundled, or 404.
+         * @description Show where a framework resolves from - user, bundled, or 404.
          *
          *     Mirrors ``evidentia catalog where``. The user catalog dir is the one
          *     the ``EVIDENTIA_CATALOG_DIR`` env var (or platform default) points at.
@@ -432,7 +452,7 @@ export interface paths {
          * @description Remove a user-imported catalog. 204 on success; 404 otherwise.
          *
          *     LOCAL DELETE. Gated on ``require_role("admin")``. Bundled catalogs
-         *     are never user-imported, so they cannot be removed — an attempt to
+         *     are never user-imported, so they cannot be removed - an attempt to
          *     remove one (or an unknown ID) returns 404, mirroring the CLI's
          *     "no user-imported framework; bundled catalogs cannot be removed"
          *     behavior.
@@ -1806,7 +1826,7 @@ export interface paths {
          * List Frameworks
          * @description Return the manifest-derived framework list with optional filtering.
          *
-         *     Matches :meth:`FrameworkRegistry.list_frameworks` exactly — callers can
+         *     Matches :meth:`FrameworkRegistry.list_frameworks` exactly - callers can
          *     expect the stable dict shape documented there.
          */
         get: operations["list_frameworks_api_frameworks_get"];
@@ -1854,9 +1874,29 @@ export interface paths {
          * @description Look up a single control by (framework, control_id).
          *
          *     Accepts either NIST-publication-style (``AC-2(1)``) or NIST-OSCAL-style
-         *     (``ac-2.1``) IDs — the catalog's normalizer resolves both.
+         *     (``ac-2.1``) IDs - the catalog's normalizer resolves both.
          */
         get: operations["get_control_api_frameworks__framework_id__controls__control_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/frameworks/{framework_id}/native-source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Native Source
+         * @description Return only the complete validated source generation requested by the caller.
+         */
+        get: operations["get_native_source_api_frameworks__framework_id__native_source_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4061,6 +4101,8 @@ export interface components {
              * @description URL to the authoritative source where licensed control text can be obtained
              */
             license_url?: string | null;
+            /** @description Reference to an exact occurrence in the separately retained native source bundle */
+            native_source_ref?: components["schemas"]["CatalogNativeControlSourceRef"] | null;
             /**
              * Objective
              * @description OSCAL `part.name=objective` prose — concise statement of what the control aims to achieve
@@ -4134,7 +4176,7 @@ export interface components {
          *
          *     The catalog is supplied as inline ``content`` (NOT a server-side
          *     path) so the API never reads an operator-chosen file off the server
-         *     — closing the path-traversal / arbitrary-read surface the CLI's
+         *     - closing the path-traversal / arbitrary-read surface the CLI's
          *     file-path argument would expose over HTTP.
          */
         CatalogImportPayload: {
@@ -4176,6 +4218,361 @@ export interface components {
              * @default C
              */
             tier: string;
+        };
+        /**
+         * CatalogNativeAbsentSelection
+         * @description Closed AbsentSelection value.
+         */
+        CatalogNativeAbsentSelection: {
+            /**
+             * State
+             * @constant
+             */
+            state: "absent";
+        };
+        /**
+         * CatalogNativeCatalogPublicationObservation
+         * @description Closed CatalogPublicationObservation value.
+         */
+        CatalogNativeCatalogPublicationObservation: {
+            /** Cleanup Errors */
+            cleanup_errors: ("temporary_cleanup_failed" | "handle_close_failed" | "lock_release_failed")[];
+            /**
+             * Cleanup State
+             * @enum {string}
+             */
+            cleanup_state: "not_started" | "complete" | "failed";
+            /**
+             * Error Code
+             * @enum {unknown}
+             */
+            error_code: null | "catalog_transaction_conflict" | "catalog_storage_unsupported" | "catalog_manifest_invalid" | "catalog_storage_limit_exceeded" | "catalog_generation_conflict" | "catalog_storage_failed" | "catalog_publication_failed" | "catalog_publication_indeterminate" | "catalog_cleanup_failed" | "processing_deadline_exceeded" | "catalog_interrupted";
+            /**
+             * Failure Phase
+             * @enum {unknown}
+             */
+            failure_phase: null | "admission" | "preparation" | "lock" | "manifest_read" | "generation" | "manifest_stage" | "replace" | "readback" | "cleanup";
+            /**
+             * Observed Manifest State
+             * @enum {string}
+             */
+            observed_manifest_state: "not_observed" | "absent" | "present";
+            /** Observed Sha256 */
+            observed_sha256: string | null;
+            /**
+             * Operation
+             * @enum {string}
+             */
+            operation: "native_import" | "legacy_import" | "remove" | "compatibility_replace";
+            /**
+             * Primary Kind
+             * @enum {string}
+             */
+            primary_kind: "none" | "exception" | "base_exception";
+            /**
+             * Prior Manifest State
+             * @enum {string}
+             */
+            prior_manifest_state: "unread" | "absent" | "present";
+            /** Prior Sha256 */
+            prior_sha256: string | null;
+            /** Proposed Sha256 */
+            proposed_sha256: string | null;
+            /**
+             * Publication State
+             * @enum {string}
+             */
+            publication_state: "not_attempted" | "unchanged" | "not_committed" | "committed" | "indeterminate";
+            /**
+             * Readback Result
+             * @enum {string}
+             */
+            readback_result: "not_attempted" | "matches_prior" | "matches_proposed" | "other" | "unavailable";
+            /**
+             * Replace Outcome
+             * @enum {string}
+             */
+            replace_outcome: "not_called" | "returned" | "raised";
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "catalog-publication-observation-v1";
+        };
+        /**
+         * CatalogNativeCatalogStorageErrorEnvelope
+         * @description Closed CatalogStorageErrorEnvelope value.
+         */
+        CatalogNativeCatalogStorageErrorEnvelope: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "catalog_transaction_conflict" | "catalog_generation_conflict" | "catalog_storage_unsupported" | "catalog_manifest_invalid" | "catalog_storage_limit_exceeded" | "catalog_storage_failed" | "catalog_publication_failed" | "catalog_publication_indeterminate" | "catalog_cleanup_failed" | "processing_deadline_exceeded";
+            publication: components["schemas"]["CatalogNativeCatalogPublicationObservation"];
+        };
+        /**
+         * CatalogNativeControlBinding
+         * @description Closed ControlBinding value.
+         */
+        CatalogNativeControlBinding: {
+            /** Admitted Criticality */
+            admitted_criticality: ("SHALL" | "SHOULD") | null;
+            /** Control Id */
+            control_id: string;
+            /** Family Occurrence Index */
+            family_occurrence_index: number | null;
+            /** Occurrence Index */
+            occurrence_index: number;
+            /** Parent Control Id */
+            parent_control_id: string | null;
+        };
+        /**
+         * CatalogNativeControlSourceRef
+         * @description Closed ControlSourceRef value.
+         */
+        CatalogNativeControlSourceRef: {
+            /** Bundle Sha256 */
+            bundle_sha256: string;
+            /** Occurrence Index */
+            occurrence_index: number;
+        };
+        /**
+         * CatalogNativeDiagnostic
+         * @description Closed Diagnostic value.
+         */
+        CatalogNativeDiagnostic: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "source_identity_conflict" | "missing_reference_record" | "source_reference_difference" | "legacy_ids_retired";
+            /** Occurrence Index */
+            occurrence_index: number | null;
+            /** Refs */
+            refs: components["schemas"]["CatalogNativeValueRef"][];
+        };
+        /**
+         * CatalogNativeFieldRef
+         * @description Closed FieldRef value.
+         */
+        CatalogNativeFieldRef: {
+            key: components["schemas"]["CatalogNativeValueRef"];
+            /** Name */
+            name: string;
+            value: components["schemas"]["CatalogNativeValueRef"];
+        };
+        /**
+         * CatalogNativeImportResult
+         * @description Closed ImportResult value.
+         */
+        CatalogNativeImportResult: {
+            /** Bundle Sha256 */
+            bundle_sha256: string;
+            /**
+             * Catalog Id
+             * @constant
+             */
+            catalog_id: "bsi-grundschutz-plus-plus";
+            /**
+             * Control Count
+             * @constant
+             */
+            control_count: 1000;
+            /** Projection Sha256 */
+            projection_sha256: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "catalog-native-import-result-v1";
+            /** Source Hashes */
+            source_hashes: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "imported" | "already_present";
+            /**
+             * Storage
+             * @constant
+             */
+            storage: "external";
+        };
+        /**
+         * CatalogNativeNativeBundle
+         * @description Closed NativeBundle value.
+         */
+        CatalogNativeNativeBundle: {
+            /** Bundle Sha256 */
+            bundle_sha256: string;
+            data: components["schemas"]["CatalogNativeNativeData"];
+        };
+        /**
+         * CatalogNativeNativeData
+         * @description Closed NativeData value.
+         */
+        CatalogNativeNativeData: {
+            /**
+             * Catalog Id
+             * @enum {string}
+             */
+            catalog_id: "au-ism" | "cisa-scuba" | "bsi-grundschutz-plus-plus";
+            /** Context Indices */
+            context_indices: number[];
+            /** Control Bindings */
+            control_bindings: components["schemas"]["CatalogNativeControlBinding"][];
+            /**
+             * Converter Id
+             * @constant
+             */
+            converter_id: "evidentia-open-corpora-v1";
+            /** Converter Sha256 */
+            converter_sha256: string;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["CatalogNativeDiagnostic"][];
+            /** Documents */
+            documents: components["schemas"]["CatalogNativeSourceDocument"][];
+            /** Occurrences */
+            occurrences: components["schemas"]["CatalogNativeOccurrence"][];
+            /**
+             * Profile
+             * @enum {string}
+             */
+            profile: "au-ism-2026.09.4" | "cisa-scuba-m365-7ef9501d" | "bsi-grundschutz-plus-plus-367d7750";
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "catalog-native-v1";
+        };
+        /**
+         * CatalogNativeNativeReadError
+         * @description Closed NativeReadError value.
+         */
+        CatalogNativeNativeReadError: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "native_source_unavailable" | "catalog_generation_changed" | "native_source_invalid" | "processing_deadline_exceeded";
+        };
+        /**
+         * CatalogNativeNullSelection
+         * @description Closed NullSelection value.
+         */
+        CatalogNativeNullSelection: {
+            /** Refs */
+            refs: components["schemas"]["CatalogNativeValueRef"][];
+            /**
+             * State
+             * @constant
+             */
+            state: "native_null";
+        };
+        /**
+         * CatalogNativeOccurrence
+         * @description Closed Occurrence value.
+         */
+        CatalogNativeOccurrence: {
+            /** Fields */
+            fields: components["schemas"]["CatalogNativeFieldRef"][];
+            /** Index */
+            index: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "catalog" | "metadata" | "group" | "control" | "principle" | "section" | "policy" | "reference_policy" | "context_block";
+            /** Parent Index */
+            parent_index: number | null;
+            /** Selections */
+            selections: components["schemas"]["CatalogNativeSemanticSelection"][];
+            /** Sibling Ordinal */
+            sibling_ordinal: number;
+            source: components["schemas"]["CatalogNativeValueRef"];
+        };
+        /**
+         * CatalogNativePresentSelection
+         * @description Closed PresentSelection value.
+         */
+        CatalogNativePresentSelection: {
+            /** Refs */
+            refs: components["schemas"]["CatalogNativeValueRef"][];
+            /**
+             * State
+             * @constant
+             */
+            state: "present";
+        };
+        /**
+         * CatalogNativeSemanticSelection
+         * @description Closed SemanticSelection value.
+         */
+        CatalogNativeSemanticSelection: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "native_id" | "title" | "class" | "statement" | "guidance" | "parameter" | "applicability" | "essential_eight_applicability" | "rationale" | "note" | "last_modified" | "implementation" | "criticality" | "criticality_identity" | "resources" | "license_requirements" | "badge" | "nist_mapping" | "mitre_mapping" | "status" | "publication_time" | "native_version" | "schema_version" | "reference_record";
+            /** Value */
+            value: components["schemas"]["CatalogNativeAbsentSelection"] | components["schemas"]["CatalogNativeNullSelection"] | components["schemas"]["CatalogNativePresentSelection"];
+        };
+        /**
+         * CatalogNativeSourceBinding
+         * @description Closed SourceBinding value.
+         */
+        CatalogNativeSourceBinding: {
+            /** Commit */
+            commit: string;
+            /**
+             * Media Type
+             * @enum {string}
+             */
+            media_type: "application/json" | "text/markdown" | "text/plain";
+            /** Raw Bytes */
+            raw_bytes: number;
+            /** Raw Sha256 */
+            raw_sha256: string;
+            /** Repository */
+            repository: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "authoritative" | "reference" | "license" | "publication_context";
+            /** Source Key */
+            source_key: string;
+            /** Upstream Path */
+            upstream_path: string;
+        };
+        /**
+         * CatalogNativeSourceDocument
+         * @description Closed SourceDocument value.
+         */
+        CatalogNativeSourceDocument: {
+            binding: components["schemas"]["CatalogNativeSourceBinding"];
+            /** Raw Utf8 */
+            raw_utf8: string;
+        };
+        /**
+         * CatalogNativeValueRef
+         * @description Closed ValueRef value.
+         */
+        CatalogNativeValueRef: {
+            /** Byte End */
+            byte_end: number;
+            /** Byte Start */
+            byte_start: number;
+            /** Document Index */
+            document_index: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "json_object" | "json_array" | "json_string" | "json_number" | "json_boolean" | "json_null" | "markdown_block" | "utf8_text";
+            /** Sha256 */
+            sha256: string;
         };
         /**
          * CatalogPublicationNotice
@@ -4705,6 +5102,8 @@ export interface components {
              * @description URL to the authoritative source / purchase page
              */
             license_url?: string | null;
+            /** @description Complete pinned native documents and source-backed projection references */
+            native_source?: components["schemas"]["CatalogNativeNativeBundle"] | null;
             /**
              * Notes
              * @description Operator notice about source scope and currency
@@ -12181,6 +12580,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Catalog transaction or generation conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -12188,6 +12596,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Catalog publication or storage failure. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"];
+                };
+            };
+        };
+    };
+    import_native_catalog_api_catalog_import_native_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Documents */
+                    documents: {
+                        /** Raw Utf8 */
+                        raw_utf8: string;
+                        /**
+                         * Source Key
+                         * @enum {string}
+                         */
+                        source_key: "bsi-catalog" | "bsi-license" | "bsi-readme";
+                    }[];
+                    /**
+                     * Profile
+                     * @constant
+                     */
+                    profile: "bsi-grundschutz-plus-plus-367d7750";
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeImportResult"];
+                };
+            };
+            /** @description RBAC deny under an operator-configured policy (``error: rbac_denied``; inert under the default permissive policy). ``detail`` carries ``action`` + ``identity``. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Catalog transaction or generation conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"];
+                };
+            };
+            /** @description Raw request body exceeds 16 MiB. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeReadError"];
+                };
+            };
+            /** @description Invalid pinned native source request. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeReadError"];
+                };
+            };
+            /** @description Catalog publication, storage or deadline failure. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"] | components["schemas"]["CatalogNativeNativeReadError"];
                 };
             };
         };
@@ -12340,6 +12842,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Catalog transaction or generation conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -12347,6 +12858,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Catalog publication or storage failure. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"];
                 };
             };
         };
@@ -15234,6 +15754,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_native_source_api_frameworks__framework_id__native_source_get: {
+        parameters: {
+            query: {
+                bundle_sha256: string;
+            };
+            header?: never;
+            path: {
+                framework_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeBundle"];
+                };
+            };
+            /** @description Native source is unavailable. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeReadError"];
+                };
+            };
+            /** @description The requested native generation is no longer current. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeReadError"];
+                };
+            };
+            /** @description Invalid framework or exact bundle digest. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeReadError"];
+                };
+            };
+            /** @description Native source processing failed. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogNativeNativeReadError"];
                 };
             };
         };

@@ -115,7 +115,7 @@ lookup answers for every NIST and FedRAMP Rev 5 baseline.
 `import` registers a user catalog into your local catalog directory. Because a
 user import **shadows** a bundled catalog with the same `framework_id`, importing
 a licensed ISO 27001 copy makes it the active catalog for every subsequent
-`catalog show`, `gap analyze`, etc. There are three modes.
+`catalog show`, `gap analyze`, etc. The ordinary import modes are described below; native BSI import has a separate pinned source contract.
 
 **Direct JSON** — import a catalog file as-is (the `framework_id` is read from the
 file):
@@ -187,7 +187,7 @@ The Source should read `user`.
 evidentia catalog remove my-baseline
 ```
 
-`remove` deletes a **user-imported** framework only — bundled catalogs are never
+`remove` unregisters a **user-imported** framework only — bundled catalogs are never
 touched, and removing one of them (or an unknown id) reports that there is no
 user import to remove. Removing a shadowing import re-exposes the bundled catalog
 underneath. The command prompts for confirmation; skip it with `--yes` (`-y`):
@@ -234,11 +234,48 @@ catalog API endpoint:
 A successful import or removal refreshes the **Frameworks** browser so the new
 resolution shows up immediately.
 
-> **RBAC note.** The CLI carries no role checks. The HTTP surface adds them on the
-> two mutating verbs — `import` needs the `write` role and `remove` needs `admin`.
-> Under the default permissive policy (no `EVIDENTIA_RBAC_POLICY_FILE` set) every
-> caller is treated as admin, so an unconfigured local server behaves exactly like
-> the CLI.
+> **RBAC note.** CLI and HTTP imports require `write`; removal requires `admin`.
+> CLI authorization precedes source and catalog path access. With no configured
+> RBAC policy, the existing permissive local behavior remains.
+
+## Native source catalogs
+
+The bundled `au-ism` and `cisa-scuba` catalogs retain their pinned source documents, ordered native occurrences, context and projection references. In the Frameworks detail page, load **Native source** to inspect that bundle. Text and links are displayed literally. Pagination shows 20 occurrences at a time; previews are bounded, while the verified JSON download retains the complete response. A changed selection or failed reload disables that download until the selected generation is verified again.
+
+The CLI can print the complete bundle or the selected control occurrence and its enclosing context:
+
+```bash
+evidentia catalog show au-ism --native-source
+evidentia catalog show au-ism --control ism-1997 --native-source
+```
+
+The read API is `GET /api/frameworks/{framework_id}/native-source?bundle_sha256=<digest>`. Use the digest from the selected catalog. A generation conflict returns 409; it never silently substitutes a newer bundle. A source hash binds bytes to the reviewed snapshot; it is not a statement of publisher identity or currentness.
+
+### Import the external BSI snapshot
+
+BSI Grundschutz++ source text is not bundled. Obtain the three files yourself from `BSI-Bund/Stand-der-Technik-Bibliothek` at commit `367d775010abee641b258926bb482fcd05270059`, review their license and publication terms, and place only these selected files in a local source directory:
+
+- `Grundschutz++-resolved_catalog.json`, from `control_layer/Grundschutz++/`.
+- `LICENSE`, from the repository root.
+- `README.md`, from the repository root.
+
+```bash
+evidentia catalog import --native-profile bsi-grundschutz-plus-plus-367d7750 --source-dir ./bsi-source
+```
+
+Both flags are required. Do not combine them with the legacy source, profile, catalog, name, ID, tier, license or force overrides. The importer requires the exact pinned bytes, publishes the external catalog as `bsi-grundschutz-plus-plus`, and verifies an already-present generation before reporting success. It does not fetch files or accept license terms for you.
+
+In the Catalog screen, **Import native BSI source** requires the same three files and explicit confirmation. The API accepts their UTF-8 text inline through `POST /api/catalog/import-native`, with profile `bsi-grundschutz-plus-plus-367d7750` and document keys `bsi-catalog`, `license`, and `readme`. The request is capped at 16 MiB raw bytes and 8 MiB aggregate decoded source bytes. Server paths and URLs are not accepted. Authentication and write authorization precede body consumption.
+
+Canceling a browser request does not prove that publication was rolled back. Check the returned publication state, or reload the catalog before deciding whether to retry.
+
+### Publication and storage limits
+
+Ordinary and native imports publish immutable generations, then update the user manifest under one local lock. Removal drops the manifest entry and retains the old payload files; it is not secure erasure or garbage collection. Stop older Evidentia processes before using this store: a writer that does not participate in this transaction cannot share its concurrency guarantee.
+
+Storage must be local and support the checked locking and atomic rename operations. Linux admission is limited to the reviewed GNU libc x86-64 ABI and ext-family filesystem type. macOS requires local filesystem checks and native no-replacement rename support. Windows refuses remote drives, reparse paths and unsuitable lock files. Unsupported storage is refused rather than downgraded to unlocked writes. Network shares and unverified storage configurations are outside this contract.
+
+Errors preserve publication observations, including a committed change followed by a reporting error or an indeterminate result. A nonzero CLI result or HTTP error alone does not establish that no change occurred. Reload and inspect before retrying.
 
 ## What's next
 

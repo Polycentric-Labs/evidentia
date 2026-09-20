@@ -585,14 +585,27 @@ frameworks:
   refresh: monthly
   text_depth: headings
 - id: au-ism
-  name: Australian Information Security Manual
-  version: September 2024
+  name: Information security manual
+  version: 2026.09.4
   tier: A
   category: control
   path: international/au-ism.json
-  source_url: Australian Signals Directorate (ACSC) — https://cyber.gov.au/ism (Creative Commons BY 4.0)
-  refresh: monthly
-  text_depth: headings
+  source_url: https://github.com/AustralianCyberSecurityCentre/ism-oscal/tree/9f77120a7f8671c73da02431cdc299fac264edab
+  license: See notices/ism.txt and the preserved upstream README.
+  refresh: manual
+  text_depth: full
+  notes: 1143 controls; 49 principles remain native context. The 24 old heading IDs are retired without aliases.
+- id: cisa-scuba
+  name: CISA M365 Secure Configuration Baselines
+  version: 7ef9501d7de9804ddb9d6013af6b665cccfb39d9
+  tier: A
+  category: control
+  path: cisa/scuba.json
+  source_url: https://github.com/cisagov/ScubaGear/tree/7ef9501d7de9804ddb9d6013af6b665cccfb39d9
+  license: See notices/scuba.txt, the preserved license file and each source document's attribution.
+  refresh: manual
+  text_depth: full
+  notes: 128 policies from eight authoritative documents; the unchanged reference JSON contains 127 records.
 - id: canada-itsg-33
   name: 'Canada ITSG-33 — IT Security Risk Management: A Lifecycle Approach'
   version: December 2014 (current)

@@ -1,0 +1,162 @@
+{
+  "schema_version": "evidentia-open-corpora-sources-v1",
+  "converter_id": "evidentia-open-corpora-v1",
+  "converter_files": [
+    "packages/evidentia-core/src/evidentia_core/models/open_corpora.py",
+    "packages/evidentia-core/src/evidentia_core/models/catalog.py",
+    "packages/evidentia-core/src/evidentia_core/catalogs/loader.py",
+    "packages/evidentia-core/src/evidentia_core/catalogs/open_corpora.py"
+  ],
+  "source_policy": "Exact reviewed source bytes only. No fetch, source-version fallback, inferred aliases or provider execution.",
+  "profiles": [
+    {
+      "profile": "au-ism-2026.09.4",
+      "catalog_id": "au-ism",
+      "distribution": "bundled",
+      "files": [
+        {
+          "repository": "AustralianCyberSecurityCentre/ism-oscal",
+          "commit": "9f77120a7f8671c73da02431cdc299fac264edab",
+          "upstream_path": "ISM_catalog.json",
+          "native_document_name": "ISM_catalog.json",
+          "raw_bytes": 2677748,
+          "raw_sha256": "237ea09362b8449ed5c5ee85de4725a0468ee73d13af7cf61c26d4e6ac47f12d"
+        },
+        {
+          "repository": "AustralianCyberSecurityCentre/ism-oscal",
+          "commit": "9f77120a7f8671c73da02431cdc299fac264edab",
+          "upstream_path": "README.md",
+          "native_document_name": "README.md",
+          "raw_bytes": 3867,
+          "raw_sha256": "3f8036197253160f3aaf517eca7cf478601ac08a68b3470748cfa697a10807f3"
+        }
+      ]
+    },
+    {
+      "profile": "cisa-scuba-m365-7ef9501d",
+      "catalog_id": "cisa-scuba",
+      "distribution": "bundled",
+      "files": [
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/aad.md",
+          "native_document_name": "aad.md",
+          "raw_bytes": 85909,
+          "raw_sha256": "ea0fe8dec93fa85ce580280b326b955c11aeb5fa24a18e840186bff05f58c415"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/defender.md",
+          "native_document_name": "defender.md",
+          "raw_bytes": 58801,
+          "raw_sha256": "5718b800e9c99ac73f0196a2665ba563e36bfe0236aaf6a54a0eccbcf97f402e"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/exo.md",
+          "native_document_name": "exo.md",
+          "raw_bytes": 35917,
+          "raw_sha256": "de6fd5151958383ecaae4f8a0d1092d5bb6d6d885d21afc8f13221dd775d80c1"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/powerbi.md",
+          "native_document_name": "powerbi.md",
+          "raw_bytes": 41593,
+          "raw_sha256": "f9d22c204fdd11d53800d1da9afece03edcb05dac11878417f5042f73ea66b1f"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/powerplatform.md",
+          "native_document_name": "powerplatform.md",
+          "raw_bytes": 29143,
+          "raw_sha256": "e87a2d553aa0390dcce5d9e7d4a69e1cd898080cd5cf1c519e8e72e2a1cc98e5"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/securitysuite.md",
+          "native_document_name": "securitysuite.md",
+          "raw_bytes": 76745,
+          "raw_sha256": "55623da97cb70fbee74c0405639d14150c118e7f1446b10c4477b2b3efaf9bbf"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/sharepoint.md",
+          "native_document_name": "sharepoint.md",
+          "raw_bytes": 18780,
+          "raw_sha256": "7ea2f414156f2d367924f8a8d5b2267cfd39a679ae65bbfbc2327cafaac2cb10"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/baselines/teams.md",
+          "native_document_name": "teams.md",
+          "raw_bytes": 46804,
+          "raw_sha256": "0b7d56dfea2f579face7fa94371f88a038c5e4cc7d795d6c3195c5a46dab2d6a"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "PowerShell/ScubaGear/schemas/ScubaBaselines.json",
+          "native_document_name": "ScubaBaselines.json",
+          "raw_bytes": 880055,
+          "raw_sha256": "25c5c6aa260a1dfa911cf18f91a715241a70fd60721d117129207630cb8349bf"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "LICENSE",
+          "native_document_name": "LICENSE",
+          "raw_bytes": 7048,
+          "raw_sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        },
+        {
+          "repository": "cisagov/ScubaGear",
+          "commit": "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+          "upstream_path": "docs/misc/scubabaselineschema.md",
+          "native_document_name": "scubabaselineschema.md",
+          "raw_bytes": 9221,
+          "raw_sha256": "341cc7f3a1ee0c7d64e8b2ebdc805ebae0dcc2778936a5c4ee486ba9268d801d"
+        }
+      ]
+    },
+    {
+      "profile": "bsi-grundschutz-plus-plus-367d7750",
+      "catalog_id": "bsi-grundschutz-plus-plus",
+      "distribution": "external_only",
+      "files": [
+        {
+          "repository": "BSI-Bund/Stand-der-Technik-Bibliothek",
+          "commit": "367d775010abee641b258926bb482fcd05270059",
+          "upstream_path": "control_layer/Grundschutz++/Grundschutz++-resolved_catalog.json",
+          "native_document_name": "Grundschutz++-resolved_catalog.json",
+          "raw_bytes": 5400710,
+          "raw_sha256": "691e8ca0af378718a9e4b5876f3e194a449f3214dceab6d86bec3e2388a969df"
+        },
+        {
+          "repository": "BSI-Bund/Stand-der-Technik-Bibliothek",
+          "commit": "367d775010abee641b258926bb482fcd05270059",
+          "upstream_path": "LICENSE",
+          "native_document_name": "LICENSE",
+          "raw_bytes": 20137,
+          "raw_sha256": "23ee78c8bae49cf08ea2f0c84945c66b987ebe4520881fb51b3dad4fb43d07c2"
+        },
+        {
+          "repository": "BSI-Bund/Stand-der-Technik-Bibliothek",
+          "commit": "367d775010abee641b258926bb482fcd05270059",
+          "upstream_path": "README.md",
+          "native_document_name": "README.md",
+          "raw_bytes": 3604,
+          "raw_sha256": "ad2cfde96832b9762b18711bb252d604777131c220588b0206df618ef154ee29"
+        }
+      ]
+    }
+  ]
+}

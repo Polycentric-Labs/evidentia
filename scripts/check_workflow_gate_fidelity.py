@@ -184,6 +184,9 @@ def _step_condition(path: str, job_id: str, name: str, index: int) -> str | None
             "Run tests (with coverage on Linux)": "matrix.os == 'ubuntu-latest'",
             "Run tests (no coverage on non-Linux)": "matrix.os != 'ubuntu-latest'",
             "Upload coverage to Codecov": "matrix.os == 'ubuntu-latest'",
+            "Fetch pinned native catalog inputs": "matrix.os != 'windows-latest'",
+            "Verify native catalog storage under coverage": "matrix.os != 'windows-latest'",
+            "Retain native catalog verification receipts": "always() && matrix.os != 'windows-latest'",
         }.get(name)
     if (
         path == DEPENDABOT_WORKFLOW

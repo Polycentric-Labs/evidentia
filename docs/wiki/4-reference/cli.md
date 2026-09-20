@@ -208,6 +208,8 @@ Import a user-supplied catalog into the local user catalog directory.
 | `--catalog` | Local OSCAL catalog JSON overriding the href of a profile with one import. |
 | `--tier` | Redistribution tier of imported content (A/B/C/D). Default C. |
 | `--catalog-dir` | Override user catalog directory (also via EVIDENTIA_CATALOG_DIR). |
+| `--native-profile` | Pinned native source profile. |
+| `--source-dir` | Directory containing the exact native source files. |
 
 ### `evidentia catalog license-info`
 
@@ -246,6 +248,7 @@ Show controls in a framework catalog (or detail for one control).
 | --- | --- |
 | `FRAMEWORK` | — |
 | `--control, -c` | Show detail for a specific control ID. |
+| `--native-source` | Show the complete bound native source JSON. |
 
 ### `evidentia catalog where`
 

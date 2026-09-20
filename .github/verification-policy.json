@@ -237,13 +237,19 @@
       "Checkout",
       "Install uv",
       "Set up Python 3.12",
-      "Sync workspace"
+      "Sync workspace",
+      "Fetch pinned native catalog inputs",
+      "Verify native catalog storage under coverage",
+      "Retain native catalog verification receipts"
     ],
     "pytest (ubuntu-latest, Python 3.14)": [
       "Checkout",
       "Install uv",
       "Set up Python 3.14",
-      "Sync workspace"
+      "Sync workspace",
+      "Fetch pinned native catalog inputs",
+      "Verify native catalog storage under coverage",
+      "Retain native catalog verification receipts"
     ],
     "pytest (windows-latest, Python 3.12)": [
       "Checkout",
@@ -261,13 +267,19 @@
       "Checkout",
       "Install uv",
       "Set up Python 3.12",
-      "Sync workspace"
+      "Sync workspace",
+      "Fetch pinned native catalog inputs",
+      "Verify native catalog storage under coverage",
+      "Retain native catalog verification receipts"
     ],
     "pytest (macos-latest, Python 3.14)": [
       "Checkout",
       "Install uv",
       "Set up Python 3.14",
-      "Sync workspace"
+      "Sync workspace",
+      "Fetch pinned native catalog inputs",
+      "Verify native catalog storage under coverage",
+      "Retain native catalog verification receipts"
     ],
     "ruff": [
       "Checkout",
@@ -335,7 +347,7 @@
       "Set up Python",
       "Extract workspace version from pyproject.toml",
       "Verify CHANGELOG block presence + size",
-      "Advisory \u2014 commits since last tag vs the CHANGELOG block"
+      "Advisory — commits since last tag vs the CHANGELOG block"
     ],
     "verify-conformance-evidence": [
       "Checkout",
@@ -544,10 +556,10 @@
         "Install osv-scanner (v2.4.0, checksum-verified)",
         "osv-scan regenerated container requirements",
         "Build image (load into local Docker, not pushed)",
-        "Smoke test \u2014 `evidentia version`",
-        "Smoke test \u2014 `evidentia catalog list`",
-        "Smoke test \u2014 image labels",
-        "Smoke test \u2014 non-root execution"
+        "Smoke test — `evidentia version`",
+        "Smoke test — `evidentia catalog list`",
+        "Smoke test — image labels",
+        "Smoke test — non-root execution"
       ],
       "mandatory_steps": [
         "Checkout",
@@ -711,6 +723,9 @@
         "Install uv",
         "Set up Python 3.12",
         "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts",
         "Run tests (with coverage on Linux)",
         "Run tests (no coverage on non-Linux)",
         "Upload coverage to Codecov"
@@ -719,7 +734,10 @@
         "Checkout",
         "Install uv",
         "Set up Python 3.12",
-        "Sync workspace"
+        "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts"
       ]
     },
     {
@@ -733,6 +751,9 @@
         "Install uv",
         "Set up Python 3.14",
         "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts",
         "Run tests (with coverage on Linux)",
         "Run tests (no coverage on non-Linux)",
         "Upload coverage to Codecov"
@@ -741,7 +762,10 @@
         "Checkout",
         "Install uv",
         "Set up Python 3.14",
-        "Sync workspace"
+        "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts"
       ]
     },
     {
@@ -755,6 +779,9 @@
         "Install uv",
         "Set up Python 3.12",
         "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts",
         "Run tests (with coverage on Linux)",
         "Run tests (no coverage on non-Linux)",
         "Upload coverage to Codecov"
@@ -777,6 +804,9 @@
         "Install uv",
         "Set up Python 3.14",
         "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts",
         "Run tests (with coverage on Linux)",
         "Run tests (no coverage on non-Linux)",
         "Upload coverage to Codecov"
@@ -799,6 +829,9 @@
         "Install uv",
         "Set up Python 3.12",
         "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts",
         "Run tests (with coverage on Linux)",
         "Run tests (no coverage on non-Linux)",
         "Upload coverage to Codecov"
@@ -807,7 +840,10 @@
         "Checkout",
         "Install uv",
         "Set up Python 3.12",
-        "Sync workspace"
+        "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts"
       ]
     },
     {
@@ -821,6 +857,9 @@
         "Install uv",
         "Set up Python 3.14",
         "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts",
         "Run tests (with coverage on Linux)",
         "Run tests (no coverage on non-Linux)",
         "Upload coverage to Codecov"
@@ -829,7 +868,10 @@
         "Checkout",
         "Install uv",
         "Set up Python 3.14",
-        "Sync workspace"
+        "Sync workspace",
+        "Fetch pinned native catalog inputs",
+        "Verify native catalog storage under coverage",
+        "Retain native catalog verification receipts"
       ]
     },
     {
@@ -1027,14 +1069,14 @@
         "Set up Python",
         "Extract workspace version from pyproject.toml",
         "Verify CHANGELOG block presence + size",
-        "Advisory \u2014 commits since last tag vs the CHANGELOG block"
+        "Advisory — commits since last tag vs the CHANGELOG block"
       ],
       "mandatory_steps": [
         "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
         "Set up Python",
         "Extract workspace version from pyproject.toml",
         "Verify CHANGELOG block presence + size",
-        "Advisory \u2014 commits since last tag vs the CHANGELOG block"
+        "Advisory — commits since last tag vs the CHANGELOG block"
       ]
     },
     {
@@ -1129,7 +1171,7 @@
     ".github/workflows/evidentia.yml": "dd4ef1e122f4c1dfc005298f8b97e05e22bb97f3edb4ad2c7a3c0f097b217f12",
     ".github/workflows/parity.yml": "d96e6d4e861bd674f25ac024a9f500b75b4bf8444eb0b96883151b8a8dffb6fb",
     ".github/workflows/secret-scan.yml": "4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23",
-    ".github/workflows/test.yml": "25d5b672b164fb25ae4539b8dd0daaed29c773ff518ca2b3b517d0c2c9f6dac2",
+    ".github/workflows/test.yml": "ada989cedd452f3da02d6c082f7256842fbed9cbac70b244c01792f29911b89b",
     ".github/workflows/verify-changelog.yml": "264df97c1f6edd7863e30e82670988792279fd02f0114303c91c0cb313b7c59f",
     ".github/workflows/verify-osps-conformance.yml": "1e072be9855d60f2ab9fd70ba471c92e9b21e828a044c1e092e52bffce96e778",
     ".github/workflows/verify-workflow-perms.yml": "3da76a441f4b0ba854de3723b7d4f32ad3170df2df77559c20869ecd0886d9c2",

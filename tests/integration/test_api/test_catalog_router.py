@@ -1,7 +1,7 @@
 """TestClient coverage for /api/catalog/* management endpoints (v0.10.12).
 
 Surfaces the catalog management CLI verbs (crosswalk / where / license-info
-/ import / remove) over HTTP. This is the WRITE/management surface — it is
+/ import / remove) over HTTP. This is the WRITE/management surface - it is
 distinct from the read-only ``frameworks`` browse router, which already
 exists under ``/api/frameworks``.
 
@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import stat
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -70,7 +71,7 @@ def cat_readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iter
     deny-by-default policy whose ``default_role`` is ``reader``. An
     anonymous request (identity None) resolves to that role, so reads
     pass while ``require_role("write")`` / ``require_role("admin")`` gates
-    deny — proving those gates actually bite (they are inert under the
+    deny - proving those gates actually bite (they are inert under the
     permissive DEFAULT_POLICY the other tests run with).
     """
     monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "user-catalogs"))
@@ -81,6 +82,13 @@ def cat_readonly_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iter
     app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)
     with TestClient(app) as client:
         yield client
+
+
+def _stored_catalog_path(tmp_path: Path, framework_id: str = "acme-internal") -> Path:
+    from evidentia_core.catalogs.user_dir import load_user_manifest
+
+    entry = load_user_manifest().get(framework_id)
+    return tmp_path / "user-catalogs" / (entry.path if entry is not None else framework_id + ".json")
 
 
 def _import_payload(
@@ -235,7 +243,7 @@ class TestImport:
         payload = {**_import_payload(), "force": True, "content": json.dumps(replacement)}
         r = cat_client.post("/api/catalog/import", json=payload)
         assert r.status_code == 201, r.text
-        persisted = json.loads((tmp_path / "user-catalogs" / "acme-internal.json").read_text(encoding="utf-8"))
+        persisted = json.loads(_stored_catalog_path(tmp_path).read_text(encoding="utf-8"))
         assert persisted == replacement
         metadata = cat_client.get("/api/catalog/license-info/acme-internal")
         assert metadata.status_code == 200, metadata.text
@@ -254,6 +262,7 @@ class TestImport:
         manifest_path = user_dir / "frameworks.yaml"
         if existing:
             assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+        catalog_path = _stored_catalog_path(tmp_path)
         catalog_before = catalog_path.read_bytes() if existing else None
         manifest_before = manifest_path.read_bytes() if existing else None
         invalid_catalog = {**_SAMPLE_CATALOG, "controls": "not a list"}
@@ -314,8 +323,8 @@ class TestImport:
 
         assert response.status_code == 201, response.text
         assert cleanup_roots
-        assert all(path.parent == user_dir for path in cleanup_roots)
-        assert json.loads((user_dir / "acme-internal.json").read_text(encoding="utf-8")) == replacement
+        assert all(path.name.startswith(".catalog-import-") and path.parent != user_dir for path in cleanup_roots)
+        assert json.loads(_stored_catalog_path(tmp_path).read_text(encoding="utf-8")) == replacement
         assert all(snapshot == manifest_path.read_bytes() for snapshot in cleanup_manifests)
         manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
         assert manifest["frameworks"][0]["version"] == "2.0"
@@ -324,7 +333,7 @@ class TestImport:
         resolved = cat_client.get("/api/catalog/where?framework_id=acme-internal")
         assert resolved.status_code == 200, resolved.text
         assert resolved.json()["source"] == "user"
-        assert Path(resolved.json()["path"]) == user_dir / "acme-internal.json"
+        assert Path(resolved.json()["path"]) == _stored_catalog_path(tmp_path)
         assert resolved.json()["text_depth"] == "full"
 
     @pytest.mark.parametrize("existing", [False, True])
@@ -336,6 +345,7 @@ class TestImport:
         user_dir = tmp_path / "user-catalogs"
         catalog_path = user_dir / "acme-internal.json"
         manifest_path = user_dir / "frameworks.yaml"
+        catalog_path = _stored_catalog_path(tmp_path)
         catalog_before = catalog_path.read_bytes() if existing else None
         manifest_before = manifest_path.read_bytes() if existing else None
         original_rmdir = os.rmdir
@@ -363,7 +373,7 @@ class TestImport:
         assert response.status_code == 400, response.text
         assert response.json()["detail"]["error"] == "invalid_body"
         assert cleanup_roots
-        assert all(path.parent == user_dir for path in cleanup_roots)
+        assert all(path.name.startswith(".catalog-import-") and path.parent != user_dir for path in cleanup_roots)
         assert (catalog_path.read_bytes() if catalog_path.exists() else None) == catalog_before
         assert (manifest_path.read_bytes() if manifest_path.exists() else None) == manifest_before
 
@@ -381,7 +391,7 @@ class TestImport:
     )
     def test_path_traversal_framework_id_rejected(self, cat_client: TestClient, framework_id: str) -> None:
         # A framework_id with path separators / .. must never reach the
-        # filesystem helper — the router rejects the shape outright.
+        # filesystem helper - the router rejects the shape outright.
         payload = {
             "framework_id": framework_id,
             "content": json.dumps(_SAMPLE_CATALOG),
@@ -423,31 +433,31 @@ class TestImport:
     def test_resolved_destination_escape_preserves_existing_files(
         self, cat_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, outside_directory: str
     ) -> None:
-        from evidentia_api.routers import catalog as catalog_router
-
         assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
         user_dir = tmp_path / "user-catalogs"
         catalog_path = user_dir / "acme-internal.json"
         manifest_path = user_dir / "frameworks.yaml"
+        catalog_path = _stored_catalog_path(tmp_path)
         catalog_before = catalog_path.read_bytes()
         manifest_before = manifest_path.read_bytes()
         outside_path = tmp_path / outside_directory / "acme-internal.json"
         outside_path.parent.mkdir()
         outside_path.write_bytes(b"Unrelated catalog bytes")
-        original_realpath = os.path.realpath
+        original_lstat = Path.lstat
 
-        def resolve_candidate_outside(path: str | Path, *, strict: bool = False) -> str:
-            if Path(path) == catalog_path:
-                # Model the canonical target of an existing link without platform privileges.
-                return str(outside_path)
-            return original_realpath(path, strict=strict)
+        def linked_root(path: str | Path, *args, **kwargs):
+            value = original_lstat(path, *args, **kwargs)
+            if Path(path) == user_dir:
+                return os.stat_result((stat.S_IFLNK, *tuple(value)[1:]))
+            return value
 
         with monkeypatch.context() as patch:
-            patch.setattr(catalog_router.os.path, "realpath", resolve_candidate_outside)
+            patch.setattr(Path, "lstat", linked_root)
             response = cat_client.post("/api/catalog/import", json={**_import_payload(), "force": True})
 
-        assert response.status_code == 400, response.text
-        assert response.json()["detail"]["error"] == "invalid_id"
+        assert response.status_code == 503, response.text
+        assert response.json()["code"] == "catalog_storage_unsupported"
+        assert response.json()["publication"]["publication_state"] == "not_attempted"
         assert outside_path.read_bytes() == b"Unrelated catalog bytes"
         assert catalog_path.read_bytes() == catalog_before
         assert manifest_path.read_bytes() == manifest_before
@@ -625,7 +635,7 @@ publication_notices:
         "/api/catalog/import", json={"framework_id": "acme-internal", "format": "yaml", "content": content}
     )
     assert response.status_code == 201, response.text
-    saved = json.loads((tmp_path / "user-catalogs/acme-internal.json").read_text(encoding="utf-8"))
+    saved = json.loads(_stored_catalog_path(tmp_path).read_text(encoding="utf-8"))
     assert saved["verified_on"] == "2026-09-09"
     assert saved["audit_contexts"]["US-TX"]["valid_through"] == "2027-03-31"
     assert saved["publication_notices"][0]["effective_on"] == "2029-10-01"
@@ -813,3 +823,313 @@ def test_yaml_non_string_source_keys_reject_before_lossy_json_staging(
     assert rejected.json()["detail"]["error"] == "invalid_body"
     assert {path.name: path.read_bytes() for path in saved.parent.iterdir() if path.is_file()} == before
     assert not list(saved.parent.glob(".catalog-import-*"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", [Role.READER, Role.DENY])
+async def test_native_import_role_refusal_precedes_body(role, monkeypatch, tmp_path):
+    from evidentia_api.routers import catalog as catalog_router
+    from evidentia_core.catalogs import open_corpora
+
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "catalog-denied-probe"))
+    assert (
+        Path(catalog_router.__file__).resolve()
+        == Path(__file__).resolve().parents[3] / "packages/evidentia-api/src/evidentia_api/routers/catalog.py"
+    )
+    app = FastAPI()
+    app.state.rbac_policy = RBACPolicy(default_role=role)
+    app.include_router(catalog_router.router, prefix="/api")
+    counts = {"receive": 0, "source": 0}
+
+    def source(*args, **kwargs):
+        counts["source"] += 1
+        pytest.fail("Denied request processed source values")
+
+    monkeypatch.setattr(open_corpora, "_source_snapshot", source)
+
+    async def receive():
+        counts["receive"] += 1
+        raise AssertionError("Denied request consumed a body")
+
+    messages = []
+
+    async def send(message):
+        messages.append(message)
+
+    await app(
+        {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "POST",
+            "scheme": "http",
+            "path": "/api/catalog/import-native",
+            "raw_path": b"/api/catalog/import-native",
+            "query_string": b"",
+            "root_path": "",
+            "headers": [(b"content-type", b"application/json"), (b"content-length", b"not-a-number")],
+            "server": ("testserver", 80),
+            "client": ("testclient", 1),
+        },
+        receive,
+        send,
+    )
+    assert next(message["status"] for message in messages if message["type"] == "http.response.start") == 403
+    assert counts == {"receive": 0, "source": 0}
+    assert not (tmp_path / "catalog-denied-probe").exists()
+
+
+@pytest.mark.parametrize(
+    "body,headers,status",
+    [
+        (b"{}", {"content-type": "text/plain"}, 422),
+        (b"{}", {"content-type": "application/json", "content-encoding": "gzip"}, 422),
+        (b"{}", {"content-type": "application/json", "content-length": "3"}, 422),
+        (b"{}", {"content-type": "application/json", "content-length": "16777217"}, 413),
+        (b'{"profile":"unsupported","documents":[]}', {"content-type": "application/json"}, 422),
+        (b'{"profile":"x","profile":"x","documents":[]}', {"content-type": "application/json"}, 422),
+        (
+            b'{"profile":"x","documents":[],"source_dir":"synthetic-private-path"}',
+            {"content-type": "application/json"},
+            422,
+        ),
+        (bytes([255]), {"content-type": "application/json"}, 422),
+        (b'{"profile":"\\ud800","documents":[]}', {"content-type": "application/json"}, 422),
+    ],
+)
+def test_native_import_closed_body_refusals(body, headers, status, cat_client, monkeypatch, tmp_path):
+    from evidentia_api.routers import catalog as catalog_router
+
+    calls = []
+
+    def forbidden(*args, **kwargs):
+        calls.append(True)
+        pytest.fail("Rejected native body reached publication")
+
+    monkeypatch.setattr(catalog_router.CatalogManifestTransaction, "commit", forbidden)
+    result = cat_client.post("/api/catalog/import-native", content=body, headers=headers)
+    assert result.status_code == status, result.text
+    assert result.json() == {"code": "native_source_invalid"}
+    assert calls == []
+    assert not (tmp_path / "user-catalogs").exists()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("extra", [0, 1])
+async def test_native_import_counts_actual_stream_bytes(extra, monkeypatch, tmp_path):
+    from evidentia_api.routers import catalog as catalog_router
+    from evidentia_core.catalogs import loader
+
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "user-catalogs"))
+    app = FastAPI()
+    app.include_router(catalog_router.router, prefix="/api")
+    parse_sizes = []
+
+    def parser(_path, *, raw_bytes, mode):
+        from evidentia_core.models.open_corpora import NativeSourceError
+
+        parse_sizes.append(len(raw_bytes))
+        raise NativeSourceError()
+
+    monkeypatch.setattr(loader, "_load_catalog_data", parser)
+    chunks = [b" " * 1_048_576] * 16 + ([b" "] if extra else [])
+    consumed = 0
+
+    async def receive():
+        nonlocal consumed
+        body = chunks[consumed]
+        consumed += 1
+        return {"type": "http.request", "body": body, "more_body": consumed < len(chunks)}
+
+    messages = []
+
+    async def send(message):
+        messages.append(message)
+
+    await app(
+        {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "POST",
+            "scheme": "http",
+            "path": "/api/catalog/import-native",
+            "raw_path": b"/api/catalog/import-native",
+            "query_string": b"",
+            "root_path": "",
+            "headers": [(b"content-type", b"application/json")],
+            "server": ("testserver", 80),
+            "client": ("testclient", 1),
+        },
+        receive,
+        send,
+    )
+    assert next(message["status"] for message in messages if message["type"] == "http.response.start") == (
+        413 if extra else 422
+    )
+    assert parse_sizes == ([] if extra else [16_777_216])
+    assert not (tmp_path / "user-catalogs").exists()
+
+
+@pytest.mark.parametrize("after_replace", [False, True])
+def test_api_publication_failure_reports_observed_state(after_replace, cat_client, tmp_path, monkeypatch):
+    from evidentia_core.catalogs import user_dir
+    from evidentia_core.models.open_corpora import CatalogStorageErrorEnvelope
+
+    assert cat_client.post("/api/catalog/import", json=_import_payload()).status_code == 201
+    retained = _stored_catalog_path(tmp_path)
+    original = user_dir.os.replace
+
+    def fail(src, dst):
+        if Path(dst).name == "frameworks.yaml":
+            if after_replace:
+                original(src, dst)
+            raise OSError("synthetic-private-path-must-not-leak")
+        return original(src, dst)
+
+    monkeypatch.setattr(user_dir.os, "replace", fail)
+    result = cat_client.delete("/api/catalog/acme-internal")
+    assert result.status_code == 503
+    parsed = CatalogStorageErrorEnvelope.model_validate(result.json())
+    assert parsed.code == parsed.publication.error_code == "catalog_publication_failed"
+    assert parsed.publication.publication_state == ("committed" if after_replace else "not_committed")
+    assert "synthetic-private-path" not in result.text
+    assert retained.is_file()
+
+
+@pytest.mark.asyncio
+async def test_native_import_deadline_cancels_a_stalled_body(monkeypatch, tmp_path):
+    import asyncio
+    import time
+
+    from evidentia_api.routers import catalog as catalog_router
+    from evidentia_core.models import open_corpora
+    from starlette.requests import Request
+
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "catalogs"))
+    original = open_corpora.NativeBudget.__init__
+
+    def short_budget(self):
+        original(self)
+        self._deadline = time.monotonic() + 10.01
+
+    monkeypatch.setattr(open_corpora.NativeBudget, "__init__", short_budget)
+    cancelled = []
+
+    async def receive():
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+
+    request = Request({"type": "http", "headers": [(b"content-type", b"application/json")]}, receive)
+    result = await asyncio.wait_for(catalog_router.import_native_catalog(request), timeout=2)
+    assert result.status_code == 503
+    assert json.loads(result.body) == {"code": "processing_deadline_exceeded"}
+    assert cancelled == [True]
+    assert not (tmp_path / "catalogs").exists()
+
+
+def test_native_import_openapi_describes_closed_inline_request(api_client):
+    schema = api_client.get("/api/openapi.json").json()
+    operation = schema["paths"]["/api/catalog/import-native"]["post"]
+    body = operation["requestBody"]
+    assert body["required"] is True
+    request_schema = body["content"]["application/json"]["schema"]
+    assert request_schema["additionalProperties"] is False
+    assert set(request_schema["required"]) == {"profile", "documents"}
+    documents = request_schema["properties"]["documents"]
+    assert documents["minItems"] == documents["maxItems"] == 3
+    assert documents["items"]["additionalProperties"] is False
+    assert set(documents["items"]["required"]) == {"source_key", "raw_utf8"}
+    assert "$ref" not in json.dumps(request_schema)
+    assert set(operation["responses"]) >= {"201", "403", "409", "413", "422", "503"}
+    errors = operation["responses"]["503"]["content"]["application/json"]["schema"]["anyOf"]
+    assert {item["$ref"].rsplit("/", 1)[-1] for item in errors} == {
+        "CatalogNativeCatalogStorageErrorEnvelope",
+        "CatalogNativeNativeReadError",
+    }
+
+
+def test_api_cleanup_preserves_active_base_exception(cat_client, monkeypatch):
+    from evidentia_api.routers import catalog as catalog_router
+
+    primary = KeyboardInterrupt("synthetic primary")
+
+    def validation(*args, **kwargs):
+        raise primary
+
+    def cleanup(*args, **kwargs):
+        raise SystemExit("synthetic cleanup")
+
+    monkeypatch.setattr(catalog_router, "load_evidentia_catalog", validation)
+    monkeypatch.setattr(catalog_router.shutil, "rmtree", cleanup)
+    import asyncio
+
+    payload = catalog_router.CatalogImportPayload.model_validate(_import_payload())
+    with pytest.raises(KeyboardInterrupt) as caught:
+        asyncio.run(catalog_router.import_catalog(payload))
+    assert caught.value is primary
+
+
+@pytest.mark.asyncio
+async def test_native_import_authentication_denial_never_reads_body(monkeypatch, tmp_path):
+    from evidentia_api.auth_middleware import AuthProviderMiddleware
+    from evidentia_api.routers import catalog as catalog_router
+    from evidentia_core.plugins.auth import AuthResult
+
+    class DeniedProvider:
+        def authenticate(self, *, authorization_header):
+            return AuthResult(authenticated=False, reason="Synthetic denial")
+
+        def name(self):
+            return "synthetic-denied-provider"
+
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "catalogs"))
+    app = FastAPI()
+    app.state.auth_provider = DeniedProvider()
+    app.add_middleware(AuthProviderMiddleware)
+    app.include_router(catalog_router.router, prefix="/api")
+    receives = []
+
+    async def receive():
+        receives.append(True)
+        raise AssertionError("Unauthenticated request read the body")
+
+    messages = []
+
+    async def send(message):
+        messages.append(message)
+
+    await app(
+        {
+            "type": "http",
+            "asgi": {"version": "3.0", "spec_version": "2.4"},
+            "http_version": "1.1",
+            "method": "POST",
+            "scheme": "http",
+            "path": "/api/catalog/import-native",
+            "raw_path": b"/api/catalog/import-native",
+            "query_string": b"",
+            "root_path": "",
+            "headers": [(b"content-type", b"application/json")],
+            "server": ("testserver", 80),
+            "client": ("testclient", 1),
+        },
+        receive,
+        send,
+    )
+    assert next(item["status"] for item in messages if item["type"] == "http.response.start") == 401
+    assert receives == []
+    assert not (tmp_path / "catalogs").exists()
+
+
+def test_legacy_writer_schemas_include_publication_errors(api_client):
+    schema = api_client.get("/api/openapi.json").json()
+    for path, method in [("/api/catalog/import", "post"), ("/api/catalog/{framework_id}", "delete")]:
+        for status in ("409", "503"):
+            response = schema["paths"][path][method]["responses"][status]
+            assert response["content"]["application/json"]["schema"]["$ref"].endswith(
+                "/CatalogNativeCatalogStorageErrorEnvelope"
+            )

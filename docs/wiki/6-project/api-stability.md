@@ -82,6 +82,10 @@ defined) and that every `evidentia_core/models/*.py` module has a row.
 | `models/finding.py` (v0.10.0+) | `SecurityFinding`, `Finding` (v0.10.1 alias: both names refer to the same class), `FindingStatus`, `ComplianceStatus`. Frozen following the v0.10.0 OCSF-alignment evolution. Field changes are additive-only. v0.10.0 added the `compliance_status` and `remediation` optional fields. v0.10.1 introduces `Finding` as the canonical name alongside `SecurityFinding`; the `SecurityFinding` alias is retained for at least 1 minor cycle per the deprecation policy. Target removal of the `SecurityFinding` alias: v1.0.0 (the earliest major bump). See [deprecation-calendar.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/deprecation-calendar.md). v0.10.5 Phase 10 adds the **deterministic-`id` derivation contract**: when a `SecurityFinding` is constructed with both `source_system` and `source_finding_id` present and no explicit `id=`, the `id` field derives as uuid5(NAMESPACE_EVIDENTIA_FINDING, f"{source_system}\x00{source_finding_id}") via `deterministic_finding_id()` in `models/common.py`. The NAMESPACE_EVIDENTIA_FINDING UUID (`c81bcb44-9b41-5b18-9f10-72b3b9b4d3d6`) is pinned forever. Two collect() calls against an unchanged source produce findings with byte-identical `id` values. Per-collector verdicts in [collector-idempotency-audit.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/collector-idempotency-audit.md). |
 | `models/gap.py` | `GapStatus`, `GapSeverity`, `GapAnalysisReport`, `ControlGap`, `Milestone`, `POAMState`, `ImplementationEffort`, `EfficiencyOpportunity`. v0.9.5 adds `Milestone.owner` / `Milestone.reviewer` optional fields; these are now frozen. |
 | `models/catalog.py` | `CatalogControl`, `CatalogSourceRow`, `ControlCatalog`, `CatalogAuditContext`, `CatalogPublicationNotice`, `CatalogStatus`, `FrameworkMapping`, `CrosswalkDefinition`, `RelationshipType`, `TextDepth`, `StatementRow`, `has_statement()`, `derive_text_depth()`. v0.10.6 added the `CrosswalkDefinition.provenance` / `verification` / `verification_note` optional fields (additive-only and backward-compatible: the eight pre-v0.10.6 crosswalks load unchanged). v0.13 adds the optional `withdrawn` field, set from the OSCAL `status` prop. |
+| `models/open_corpora.py` (v0.13+) | `ValueRef`, `FieldRef`, `FieldSelection`, `SourceBinding`, `SourceDocument`, `SemanticSelection`, `Occurrence`, `ControlSourceRef`, `Diagnostic`, `ControlBinding` |
+| `models/open_corpora.py` (v0.13+) | `NativeData`, `NativeBundle`, `PackageRef`, `SourceChunk` |
+| `models/open_corpora.py` (v0.13+) | `SourceUpload`, `ExternalImportRequest`, `ImportResult`, `NativeReadRequest`, `NativeReadError`, `CatalogPublicationObservation`, `CatalogStorageErrorEnvelope` |
+| `models/open_corpora.py` (v0.13+) | `StoredFile`, `StoredChunk`, `StoredChunks`, `SourceIndexEntry`, `PackagedIndex`, `ExternalStoredFile`, `ExternalEntry`, `ExternalIndex` |
 | `models/tprm.py` | `Vendor`, `VendorType`, `CriticalityTier`, `RegulatoryClassification`, `FourthParty`, `EvidenceRef` |
 | `models/fedramp_ksi.py` | `KsiEvidenceItem`, `KsiPersistenceCycle`, `KsiIndicatorEntry`, `FrrRequirementEntry`, `KsiStatusDocument` |
 | `models/gap_diff.py` | `GapDiffEntry`, `GapDiffSummary`, `GapDiff` |
@@ -663,6 +667,7 @@ Frozen tool surface (as of v0.9.7):
 | `poam_list` | v0.10.2 | List POA&Ms from the local store (read-only) |
 | `verify_signed_artifact` | v0.10.4 | Verify an Evidentia signed-artifact bundle (`*.ar`); wraps `verify_ar_file` with `validate_within(--allow-root)` path-gating and the standard SignedToolOutput envelope. Returns the OSCAL-bound verification report. |
 | `conmon_series` | v0.13 | Cadence evidence series over the evidence store |
+| `get_catalog_native` | v0.13 | Exact-generation native catalog source bundle, with a required explicit CIMD grant |
 
 Tool *parameter names* are frozen. Tool *descriptions* may be
 refined for clarity without constituting a breaking change.
@@ -672,7 +677,7 @@ adding new tools through CIMD registry updates (via
 `evidentia mcp cimd-migrate` in v0.9.7+) is a deployment-time
 concern, not an API contract.
 
-In v0.13, the server uses MCP Python SDK 2.2. Its fourteen tool names,
+In v0.13, the server uses MCP Python SDK 2.2. The original fourteen tool names,
 descriptions and input/output schemas match the prior locked SDK 1.29.1
 contract. Python SDK attributes use snake case; protocol fields retain their
 wire aliases. The three CLI transport selectors and bind defaults are unchanged.
@@ -694,7 +699,7 @@ it before trusting the payload. Signer invocation failures retain the existing
 `signature=null` / `signing_error` envelope. Invalid enabled signer factories
 produce an error instead of unsigned success. The signing wrapper leaves non-object structured results and SDK input-request
 control flow unsigned. The modern SDK path can carry these shapes; legacy
-schema validation rejects them. None of the fourteen tools declares such an
+schema validation rejects them. None of the original fourteen tools declares such an
 output.
 
 ---
@@ -918,3 +923,49 @@ downloads preserve the validated artifact. Saving remains a separate authorized
 action through the evidence store. Stable artifact identity does not advance its
 version, and duplicate version-1 saves retain append-only refusal. See the
 [SCAP operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/scap-collectors.md) for exact limits and error behavior.
+
+### Native catalog source contract (v0.13)
+
+`ControlCatalog.native_source` and `CatalogControl.native_source_ref` are additive
+optional fields. A bundle retains ordered source documents, occurrences, fields,
+context, references and digest bindings. Explicit native null and absent values
+remain distinct. Projection references do not duplicate documents or add
+assessment controls. Loading verifies the native bundle and its projection; a
+syntactically valid hash alone does not establish publisher authenticity.
+
+`GET /api/frameworks/{framework_id}/native-source` requires the exact
+`bundle_sha256` of the selected generation. The admitted frameworks are `au-ism`,
+`cisa-scuba` and externally imported `bsi-grundschutz-plus-plus`. A changed
+generation returns 409; unavailable or invalid native source and processing
+deadline errors retain fixed codes. CLI `catalog show --native-source` prints
+the complete bundle; with `--control`, it prints the bound occurrence and its
+context. No existing CLI leaf is removed or renamed.
+
+`POST /api/catalog/import-native` accepts only the pinned BSI profile and exactly
+three inline UTF-8 documents. It rejects extra fields, duplicate keys, invalid
+Unicode, unsupported media/encoding and nonmatching source bytes. Authentication
+and write authorization run before request-body consumption. Raw body admission
+is 16 MiB, with an 8 MiB aggregate source limit. CLI native import requires both
+`--native-profile` and `--source-dir`, and refuses legacy overrides. Neither
+surface downloads source files or accepts their license terms.
+
+Both ordinary and native CLI/API writers use the same local manifest transaction.
+Imports publish immutable payload generations. Removal updates registration and
+retains prior files. CLI imports require `write` and removals require `admin`
+before source-path access, matching the HTTP roles. The permissive default
+policy is unchanged. Unsupported storage fails closed; the supported local
+filesystem boundaries and older-writer limits are documented in the
+[catalog guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/wiki/2-guides/manage-catalogs.md#publication-and-storage-limits).
+
+Write errors carry a bounded publication observation with an error code that
+matches the envelope. The observation distinguishes unchanged, committed and
+indeterminate outcomes. A failed response must not be treated as proof of
+rollback. Process interruption is not converted into an ordinary HTTP result.
+
+The fifteenth MCP tool, `get_catalog_native`, has a closed framework/digest input
+and complete validated native output. It requires a configured CIMD registry
+and a literal grant for this tool, even where the older tools allow no-registry
+operation. Authorization precedes argument processing, loading, cache use and
+signing. Default migration adds no grant; paths, imports and remote fetching
+are not part of this read-only tool. The original fourteen schemas and the
+existing payload-signature envelope remain unchanged.

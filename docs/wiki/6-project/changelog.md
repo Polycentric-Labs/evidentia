@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Native catalog sources (V13-08).** Australian ISM and CISA Microsoft 365
+  SCuBA retain pinned source documents, ordered native context, exact identifiers
+  and projection references. An external-only BSI Grundschutz++ importer accepts
+  three operator-selected files at the reviewed commit. CLI, API and console
+  expose exact-generation source bundles; the fifteenth MCP tool,
+  `get_catalog_native`, requires an explicit CIMD grant. Source browsing preserves
+  literal text and complete verified downloads. Catalog imports and removal share
+  a locked manifest transaction with immutable generations and retained payloads.
+  CLI write/admin checks precede catalog path access. Publication failures report
+  observed state rather than claiming rollback. FINOS CCC remains excluded
+  pending owner legal review. See [Manage catalogs](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/wiki/2-guides/manage-catalogs.md).
+
 - **Local SCAP imports (V13-25).** `collect scap`, its raw XML API and the
   Collect screen accept explicit XCCDF 1.2 and OVAL 5.8, 5.11.2 or 5.12.3
   core-results profiles. Full native graphs, selected assessments and exact

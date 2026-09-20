@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { IS_DEMO } from "@/lib/demo";
+import {
+  bindNativeControl,
+  createNativeSelection,
+  nativeBundleDownload,
+  nativeDocumentDownload,
+  nativePreview,
+  nativeRefText,
+  occurrencePage,
+  type NativeBundle,
+  type NativeRequest,
+  type ValueRef,
+  type CatalogNativeOccurrence,
+} from "@/lib/catalog-native";
 import type { CatalogControl, CatalogSourceRow } from "@/types/catalog";
 
 const NOTICE_DATES = [
@@ -269,13 +283,381 @@ function ControlSourceRows({ control }: { control: CatalogControl }) {
   );
 }
 
+function NativeText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const preview = nativePreview(text);
+  return (
+    <div>
+      <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+        {expanded ? text : preview.text}
+      </pre>
+      {preview.truncated && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? "Collapse source text" : "Expand source text"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function NativeSpan({
+  bundle,
+  reference,
+}: {
+  bundle: NativeBundle;
+  reference: ValueRef;
+}) {
+  return (
+    <div>
+      <p className="text-xs muted">
+        Document {reference.document_index}, bytes {reference.byte_start} to{" "}
+        {reference.byte_end} ({reference.kind})
+      </p>
+      <NativeText text={nativeRefText(bundle, reference)} />
+    </div>
+  );
+}
+
+function NativeOccurrence({
+  bundle,
+  occurrence,
+}: {
+  bundle: NativeBundle;
+  occurrence: CatalogNativeOccurrence;
+}) {
+  return (
+    <article
+      className="stack-3"
+      aria-label={"Native occurrence " + occurrence.index}
+    >
+      <h3>
+        Occurrence {occurrence.index}: {occurrence.kind}
+      </h3>
+      <p>
+        Parent:{" "}
+        {occurrence.parent_index === null ? "none" : occurrence.parent_index}.
+        Source order: {occurrence.sibling_ordinal}.
+      </p>
+      <NativeSpan bundle={bundle} reference={occurrence.source} />
+      <dl>
+        {occurrence.fields.map((field, index) => (
+          <div key={index}>
+            <dt>{field.name}</dt>
+            <dd>
+              <NativeSpan bundle={bundle} reference={field.value} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <dl>
+        {occurrence.selections.map((selection, index) => (
+          <div key={index}>
+            <dt>{selection.role}</dt>
+            <dd>
+              {selection.value.state === "absent" ? (
+                "Absent"
+              ) : (
+                <>
+                  <p>
+                    {selection.value.state === "native_null"
+                      ? "Native null"
+                      : "Present"}
+                  </p>
+                  {selection.value.refs.map((reference, refIndex) => (
+                    <NativeSpan
+                      key={refIndex}
+                      bundle={bundle}
+                      reference={reference}
+                    />
+                  ))}
+                </>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </article>
+  );
+}
+
+export function NativeSourcePanel({
+  catalog,
+  authGeneration,
+}: {
+  catalog: import("@/types/catalog").ControlCatalog;
+  authGeneration: string;
+}) {
+  const bundle = catalog.native_source;
+  const [selected, setSelected] = useState(
+    bundle?.data.control_bindings[0]?.control_id ?? "",
+  );
+  const [page, setPage] = useState(0);
+  const [selection] = useState(createNativeSelection);
+  const [running, setRunning] = useState<{
+    ticket: ReturnType<typeof selection.begin>;
+    auth: string;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [last, setLast] = useState<{
+    bundle: NativeBundle;
+    control: string;
+    auth: string;
+    signal: AbortSignal;
+  } | null>(null);
+  const epoch = useRef(0);
+  const pending =
+    running !== null &&
+    !running.ticket.signal.aborted &&
+    running.auth === authGeneration &&
+    running.ticket.framework === catalog.framework_id &&
+    running.ticket.bundle === bundle?.bundle_sha256 &&
+    running.ticket.selection === selected;
+  const invalidate = useCallback(() => {
+    selection.invalidate();
+    setRunning(null);
+    setLast((prior) => (prior ? { ...prior } : prior));
+  }, [selection]);
+  useLayoutEffect(() => {
+    const changed = () => invalidate();
+    window.addEventListener("focus", changed);
+    window.addEventListener("storage", changed);
+    return () => {
+      selection.invalidate();
+      window.removeEventListener("focus", changed);
+      window.removeEventListener("storage", changed);
+    };
+  }, [
+    selection,
+    invalidate,
+    catalog.framework_id,
+    bundle?.bundle_sha256,
+    selected,
+    authGeneration,
+  ]);
+  if (!bundle) return null;
+  const load = async () => {
+    if (IS_DEMO || pending || !selected) return;
+    const ticket = selection.begin(
+      catalog.framework_id,
+      bundle.bundle_sha256,
+      selected,
+      ++epoch.current,
+    );
+    const current = () => !ticket.signal.aborted;
+    setRunning({ ticket, auth: authGeneration });
+    setError(null);
+    try {
+      const received = await api.getCatalogNative(
+        {
+          framework_id: catalog.framework_id as NativeRequest["framework_id"],
+          bundle_sha256: bundle.bundle_sha256,
+        },
+        ticket.signal,
+      );
+      if (!current() || !selection.accept(ticket, received)) return;
+      setLast({
+        bundle: received,
+        control: selected,
+        auth: authGeneration,
+        signal: ticket.signal,
+      });
+      setPage(0);
+    } catch {
+      if (current())
+        setError(
+          "Native source could not be verified. The last verified result is retained.",
+        );
+    } finally {
+      if (current()) setRunning(null);
+    }
+  };
+  const activeDownload =
+    !IS_DEMO &&
+    last !== null &&
+    !last.signal.aborted &&
+    last.bundle.data.catalog_id === catalog.framework_id &&
+    last.bundle.bundle_sha256 === bundle.bundle_sha256 &&
+    last.control === selected &&
+    last.auth === authGeneration;
+  const download = (documentIndex?: number) => {
+    if (!activeDownload || !last || last.signal.aborted) return;
+    const value =
+      documentIndex === undefined
+        ? nativeBundleDownload(last.bundle)
+        : nativeDocumentDownload(last.bundle, documentIndex);
+    const filename =
+      documentIndex === undefined
+        ? last.bundle.data.catalog_id + "-native.json"
+        : last.bundle.data.documents[documentIndex].binding.source_key + ".txt";
+    const object = URL.createObjectURL(
+      new Blob([new Uint8Array(value)], {
+        type:
+          documentIndex === undefined
+            ? "application/json"
+            : "text/plain;charset=utf-8",
+      }),
+    );
+    try {
+      const link = document.createElement("a");
+      link.href = object;
+      link.download = filename;
+      link.click();
+    } finally {
+      URL.revokeObjectURL(object);
+    }
+  };
+  let bound: CatalogNativeOccurrence | null = null;
+  if (last) {
+    const binding = last.bundle.data.control_bindings.find(
+      (row) => row.control_id === last.control,
+    )!;
+    bound = bindNativeControl(last.bundle, last.control, {
+      bundle_sha256: last.bundle.bundle_sha256,
+      occurrence_index: binding.occurrence_index,
+    });
+  }
+  const pages = last ? Math.ceil(last.bundle.data.occurrences.length / 20) : 0;
+  return (
+    <section className="stack-3" aria-label="Native catalog source">
+      <h2 className="h2">Native source</h2>
+      <p>
+        Source text is displayed literally. It does not run commands, load
+        images, or open source links.
+      </p>
+      {IS_DEMO && (
+        <p>
+          Native source retrieval and downloads are unavailable in the demo.
+        </p>
+      )}
+      <label>
+        Source control{" "}
+        <select
+          value={selected}
+          disabled={IS_DEMO}
+          onChange={(event) => {
+            invalidate();
+            setSelected(event.target.value);
+          }}
+        >
+          {bundle.data.control_bindings.map((row) => (
+            <option key={row.control_id} value={row.control_id}>
+              {row.control_id}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="row gap-2">
+        <Button
+          disabled={IS_DEMO || pending || !selected}
+          onClick={() => void load()}
+        >
+          {pending ? "Verifying source..." : "Load native source"}
+        </Button>
+        <Button variant="outline" disabled={!pending} onClick={invalidate}>
+          Cancel source request
+        </Button>
+      </div>
+      {error && <p role="alert">{error}</p>}
+      {last && (
+        <div className="stack-3">
+          <p>
+            Last verified source: {last.bundle.data.catalog_id}, control{" "}
+            {last.control}. Bundle SHA-256:{" "}
+            <code>{last.bundle.bundle_sha256}</code>
+          </p>
+          <Button disabled={!activeDownload} onClick={() => download()}>
+            Download native bundle
+          </Button>
+          <ul>
+            {last.bundle.data.documents.map((document, index) => (
+              <li key={index}>
+                <code>{document.binding.upstream_path}</code> (
+                {document.binding.raw_bytes} bytes). SHA-256:{" "}
+                <code>{document.binding.raw_sha256}</code>{" "}
+                <Button
+                  disabled={!activeDownload}
+                  variant="outline"
+                  onClick={() => download(index)}
+                >
+                  Download source document {index + 1}
+                </Button>
+              </li>
+            ))}
+          </ul>
+          {bound && (
+            <details>
+              <summary>Selected control and its source context</summary>
+              <NativeOccurrence bundle={last.bundle} occurrence={bound} />
+              {(() => {
+                const parents: CatalogNativeOccurrence[] = [];
+                let parent = bound.parent_index;
+                while (parent !== null) {
+                  const row = last.bundle.data.occurrences[parent];
+                  parents.push(row);
+                  parent = row.parent_index;
+                }
+                return parents
+                  .reverse()
+                  .map((row) => (
+                    <NativeOccurrence
+                      key={row.index}
+                      bundle={last.bundle}
+                      occurrence={row}
+                    />
+                  ));
+              })()}
+            </details>
+          )}
+          <p>
+            Source occurrences, page {page + 1} of {pages}.
+          </p>
+          <div className="row gap-2">
+            <Button
+              variant="outline"
+              disabled={page === 0}
+              onClick={() => setPage(page - 1)}
+            >
+              Previous occurrences
+            </Button>
+            <Button
+              variant="outline"
+              disabled={page + 1 >= pages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next occurrences
+            </Button>
+          </div>
+          {occurrencePage(last.bundle, page).map((row) => (
+            <NativeOccurrence
+              key={last.bundle.bundle_sha256 + ":" + row.index}
+              bundle={last.bundle}
+              occurrence={row}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function FrameworkDetailPage() {
   const { id } = useParams<{ id: string }>();
   const query = useQuery({
     queryKey: ["framework", id],
-    queryFn: () => api.getFramework(id ?? ""),
+    queryFn: ({ signal }) => api.getFramework(id ?? "", signal),
     enabled: Boolean(id),
   });
+  const health = useQuery({
+    queryKey: ["health"],
+    queryFn: () => api.health(),
+    enabled: !IS_DEMO,
+  });
+  const authGeneration =
+    health.status + ":" + health.dataUpdatedAt + ":" + health.errorUpdatedAt;
 
   if (!id) {
     return (
@@ -514,6 +896,12 @@ export function FrameworkDetailPage() {
           </CardHeader>
         </Card>
       )}
+
+      <NativeSourcePanel
+        key={catalog.framework_id}
+        catalog={catalog}
+        authGeneration={authGeneration}
+      />
 
       <section aria-labelledby="controls-list" className="stack-3">
         <h2 id="controls-list" className="h2">

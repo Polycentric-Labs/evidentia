@@ -73,3 +73,42 @@ def test_list_frameworks_carries_text_depth():
     by_id = {row["id"]: row for row in rows}
     assert by_id["nist-800-53-rev5"]["text_depth"] == "full"
     assert by_id["iso-27001-2022"]["text_depth"] == "headings"
+
+
+def test_registered_native_is_checked_before_existing_id_cache(monkeypatch):
+    from evidentia_core.catalogs import user_dir
+
+    registry = FrameworkRegistry()
+    old = object()
+    first, second = object(), object()
+    registry._catalogs["bsi-grundschutz-plus-plus"] = old
+    results = iter((first, second, None))
+    calls = []
+
+    def registered(framework_id):
+        calls.append(framework_id)
+        return next(results)
+
+    monkeypatch.setattr(user_dir, "load_registered_native_catalog", registered)
+    assert registry.get_catalog("bsi-grundschutz-plus-plus") is first
+    assert registry.get_catalog("bsi-grundschutz-plus-plus") is second
+    assert registry.get_catalog("bsi-grundschutz-plus-plus") is old
+    assert calls == ["bsi-grundschutz-plus-plus"] * 3
+    assert registry._catalogs["bsi-grundschutz-plus-plus"] is old
+
+
+def test_broken_native_registration_cannot_return_cached_catalog(monkeypatch):
+    from evidentia_core.catalogs import user_dir
+    from evidentia_core.models.open_corpora import NativeSourceError
+
+    registry = FrameworkRegistry()
+    registry._catalogs["bsi-grundschutz-plus-plus"] = object()
+    primary = NativeSourceError("catalog_generation_changed")
+
+    def refuse(framework_id):
+        raise primary
+
+    monkeypatch.setattr(user_dir, "load_registered_native_catalog", refuse)
+    with pytest.raises(NativeSourceError) as caught:
+        registry.get_catalog("bsi-grundschutz-plus-plus")
+    assert caught.value is primary

@@ -215,6 +215,12 @@ line-length = 120
 # one tuple per row makes these files diff-reviewable. dist/ is build output.
 extend-exclude = ["scripts/catalogs/", "dist/"]
 
+[tool.ruff.format]
+# Preserve this exact publisher snapshot. Native-source tests verify its pinned SHA-256.
+exclude = [
+    "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/scubabaselineschema.md",
+]
+
 [tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
