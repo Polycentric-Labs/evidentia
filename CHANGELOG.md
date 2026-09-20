@@ -217,6 +217,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Python dependency updates.** Align boto3 and botocore at 1.43.96 while
+  retaining the exact retention-signing version guard. Update Azure Blob
+  Storage, LibCST, mutmut, Ruff, Schemathesis, platformdirs and Snowflake,
+  including the matching container pins. Keep the missing-Snowflake-SDK test
+  offline and apply the new Ruff context-manager rule to MCP transport tests.
+
 - **AWS SDK group isolation.** Exclude boto3, botocore and s3transfer from
   the broad Python runtime and development update groups. These packages
   remain in their dedicated compatible SDK group; security updates retain

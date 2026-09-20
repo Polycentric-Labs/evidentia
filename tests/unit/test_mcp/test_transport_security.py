@@ -313,31 +313,33 @@ async def test_http_initialization_and_tool_call(
     if origin is not None:
         headers["Origin"] = origin
     with anyio.fail_after(20):
-        async with configured.app.router.lifespan_context(configured.app):
-            async with httpx.AsyncClient(
+        async with (
+            configured.app.router.lifespan_context(configured.app),
+            httpx.AsyncClient(
                 transport=httpx.ASGITransport(app=configured.app), base_url=BASE_URL, headers=headers
-            ) as client:
-                session_headers = await _initialize_http(client)
-                response = await client.post(
-                    "/mcp",
-                    headers=session_headers,
-                    json=_rpc(
-                        2,
-                        "tools/call",
-                        {
-                            "name": "get_control",
-                            "arguments": {"framework_id": "nist-800-53-rev5-moderate", "control_id": "AC-2"},
-                        },
-                    ),
-                )
-                result = _response_json(response)
-                assert result["id"] == 2
-                assert not result["result"].get("isError", False)
-                assert result["result"]["structuredContent"]["id"] == "AC-2"
-                listing = _response_json(await client.post("/mcp", headers=session_headers, json=_rpc(3, "tools/list")))
-                assert len(listing["result"]["tools"]) == 14
-                closed = await client.delete("/mcp", headers=session_headers)
-                assert closed.status_code == 200
+            ) as client,
+        ):
+            session_headers = await _initialize_http(client)
+            response = await client.post(
+                "/mcp",
+                headers=session_headers,
+                json=_rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "get_control",
+                        "arguments": {"framework_id": "nist-800-53-rev5-moderate", "control_id": "AC-2"},
+                    },
+                ),
+            )
+            result = _response_json(response)
+            assert result["id"] == 2
+            assert not result["result"].get("isError", False)
+            assert result["result"]["structuredContent"]["id"] == "AC-2"
+            listing = _response_json(await client.post("/mcp", headers=session_headers, json=_rpc(3, "tools/list")))
+            assert len(listing["result"]["tools"]) == 14
+            closed = await client.delete("/mcp", headers=session_headers)
+            assert closed.status_code == 200
 
 
 @pytest.mark.anyio
@@ -350,38 +352,38 @@ async def test_sse_advertised_route_initialization_and_tool_call(
     if origin is not None:
         headers["Origin"] = origin
     with anyio.fail_after(20):
-        async with configured.app.router.lifespan_context(configured.app):
-            async with (
-                httpx.AsyncClient(
-                    transport=httpx.ASGITransport(app=configured.app), base_url=BASE_URL, headers=headers
-                ) as client,
-                _sse_stream(configured.app, origin) as stream,
-            ):
-                endpoint = await _initialize_sse(client, stream)
-                response = await client.post(
-                    endpoint,
-                    json=_rpc(
-                        2,
-                        "tools/call",
-                        {
-                            "name": "get_control",
-                            "arguments": {"framework_id": "nist-800-53-rev5-moderate", "control_id": "AC-2"},
-                        },
-                    ),
-                )
-                assert response.status_code == 202
-                result = await stream.next_json()
-                assert result["id"] == 2
-                assert not result["result"].get("isError", False)
-                assert result["result"]["structuredContent"]["id"] == "AC-2"
-                response = await client.post(endpoint, json=_rpc(3, "tools/list"))
-                assert response.status_code == 202
-                assert len((await stream.next_json())["result"]["tools"]) == 14
-                wrong_session = endpoint.split("?", 1)[0] + "?session_id=" + "0" * 32
-                response = await client.post(wrong_session, json=_rpc(4, "tools/list"))
-                assert response.status_code == 404
-                response = await client.get(endpoint)
-                assert response.status_code == 405
+        async with (
+            configured.app.router.lifespan_context(configured.app),
+            httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=configured.app), base_url=BASE_URL, headers=headers
+            ) as client,
+            _sse_stream(configured.app, origin) as stream,
+        ):
+            endpoint = await _initialize_sse(client, stream)
+            response = await client.post(
+                endpoint,
+                json=_rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "get_control",
+                        "arguments": {"framework_id": "nist-800-53-rev5-moderate", "control_id": "AC-2"},
+                    },
+                ),
+            )
+            assert response.status_code == 202
+            result = await stream.next_json()
+            assert result["id"] == 2
+            assert not result["result"].get("isError", False)
+            assert result["result"]["structuredContent"]["id"] == "AC-2"
+            response = await client.post(endpoint, json=_rpc(3, "tools/list"))
+            assert response.status_code == 202
+            assert len((await stream.next_json())["result"]["tools"]) == 14
+            wrong_session = endpoint.split("?", 1)[0] + "?session_id=" + "0" * 32
+            response = await client.post(wrong_session, json=_rpc(4, "tools/list"))
+            assert response.status_code == 404
+            response = await client.get(endpoint)
+            assert response.status_code == 405
 
 
 @pytest.mark.anyio
@@ -405,12 +407,14 @@ async def test_post_rejects_invalid_transport_headers(
     headers = HEADERS | extra_headers
     path = "/messages/?session_id=" + "0" * 32 if transport == "sse" else "/mcp"
     with anyio.fail_after(20):
-        async with configured.app.router.lifespan_context(configured.app):
-            async with httpx.AsyncClient(
+        async with (
+            configured.app.router.lifespan_context(configured.app),
+            httpx.AsyncClient(
                 transport=httpx.ASGITransport(app=configured.app), base_url=BASE_URL, headers=headers
-            ) as client:
-                response = await client.post(path, json=_initialize_message())
-                assert response.status_code == expected
+            ) as client,
+        ):
+            response = await client.post(path, json=_initialize_message())
+            assert response.status_code == expected
 
 
 @pytest.mark.anyio
@@ -480,21 +484,23 @@ async def test_actual_body_limit_including_untrusted_lengths(
     assert len(body) == size
     body_headers = {} if declared is None else {"Content-Length": str(size) if declared == "exact" else declared}
     with anyio.fail_after(30):
-        async with configured.app.router.lifespan_context(configured.app):
-            async with httpx.AsyncClient(
+        async with (
+            configured.app.router.lifespan_context(configured.app),
+            httpx.AsyncClient(
                 transport=httpx.ASGITransport(app=configured.app), base_url=BASE_URL, headers=HEADERS
-            ) as client:
-                if transport == "http":
-                    session_headers = await _initialize_http(client)
-                    response = await client.post("/mcp", headers=session_headers | body_headers, content=_chunks(body))
-                    assert response.status_code == expected
+            ) as client,
+        ):
+            if transport == "http":
+                session_headers = await _initialize_http(client)
+                response = await client.post("/mcp", headers=session_headers | body_headers, content=_chunks(body))
+                assert response.status_code == expected
+                if expected == 200:
+                    assert _response_json(response)["result"]["structuredContent"] == {"ok": True}
+            else:
+                async with _sse_stream(configured.app) as stream:
+                    endpoint = await _initialize_sse(client, stream)
+                    response = await client.post(endpoint, headers=body_headers, content=_chunks(body))
+                    assert response.status_code == (202 if expected == 200 else expected)
                     if expected == 200:
-                        assert _response_json(response)["result"]["structuredContent"] == {"ok": True}
-                else:
-                    async with _sse_stream(configured.app) as stream:
-                        endpoint = await _initialize_sse(client, stream)
-                        response = await client.post(endpoint, headers=body_headers, content=_chunks(body))
-                        assert response.status_code == (202 if expected == 200 else expected)
-                        if expected == 200:
-                            assert (await stream.next_json())["result"]["structuredContent"] == {"ok": True}
+                        assert (await stream.next_json())["result"]["structuredContent"] == {"ok": True}
     assert executions == (["called"] if expected == 200 else [])

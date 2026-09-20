@@ -161,13 +161,13 @@ attrs==26.1.0 \
     #   aiohttp
     #   jsonschema
     #   referencing
-boto3==1.43.95 \
-    --hash=sha256:9d71f299111e1f4e8c28f573a1b7c0555fe40d2147fe9bef852a02bd57cbde60 \
-    --hash=sha256:c906921c4f9ab41e9587af6586f072c8f2be6979e8bde2ec26aa443bb1745019
+boto3==1.43.96 \
+    --hash=sha256:30fb2b5467ef5175ed48f43c06c435eec5da841594a5d7653c4da679df0740fc \
+    --hash=sha256:73f0386fcc412ce5ad3ae4245e2a405e69e889988dd77e91b82e3b66404f3fee
     # via litellm
-botocore==1.43.95 \
-    --hash=sha256:0fda26d16c7c7bf7082c421390a817b696f98a43d3da7c43dbbb093f76662876 \
-    --hash=sha256:779588da32bd48a7bb0c097da4bcb747260e86d2bfc507369dca56f1450e0722
+botocore==1.43.96 \
+    --hash=sha256:3ef7c8c40738bb42a40eb0ac3dc2d9f1698946541874ae9b505e49f289272805 \
+    --hash=sha256:c21153a07b97e8497f4ffa83e340a055f3f479b074e6eedf7d0562a9bc861cac
     # via
     #   boto3
     #   s3transfer
@@ -1296,9 +1296,9 @@ packaging==26.3 \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
     # via huggingface-hub
-platformdirs==4.11.8 \
-    --hash=sha256:52f2f181bbfde907966932cc8312d967d02976422d66d537ea16092b8e291081 \
-    --hash=sha256:f23abafea7dd4276d1f29104b83598d7dcc567cafd07c9c951e66665645437fc
+platformdirs==4.11.9 \
+    --hash=sha256:0a3958f58a9e30321eaef0a424dd0b77cce242886b36b8aa992f9731ef2d59c1 \
+    --hash=sha256:e2c66a8d384596cd98e3c4aea2d761df7bac95d9d8a2cc3946daa8cdafdaebc1
     # via evidentia-core
 propcache==0.5.2 \
     --hash=sha256:01c4fc7480cd0598bb4b57022df55b9ca296da7fc5a8760bd8451a7e63a7d427 \

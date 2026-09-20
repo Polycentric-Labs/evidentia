@@ -321,7 +321,14 @@ class TestImportError:
         """Without snowflake-connector-python installed, attempting
         connect surfaces a typed error pointing at the [snowflake]
         extra. We simulate the missing module via sys.modules pin."""
+        import socket
         import sys
+
+        monkeypatch.setattr(
+            socket,
+            "getaddrinfo",
+            lambda *_args, **_kwargs: [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("8.8.8.8", 443))],
+        )
 
         # Save originals to restore.
         saved_snowflake = sys.modules.get("snowflake")
