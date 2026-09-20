@@ -1,5 +1,31 @@
 # Dockerfile dependency pinning policy
 
+## Automated container platform and base verification
+
+The container-build and release workflows target `linux/amd64` explicitly.
+They check the loaded image architecture before smoke tests, before saving the
+release image, and after loading it for publication. Local builds for other
+architectures are outside this automated acceptance scope.
+
+The runtime base remains pinned to a DHI index digest. Publisher SBOM and
+provenance verification is bound to the selected amd64 child of that index.
+For index `ff47bcf5c9a1918cf4ad19368202410a2189c69d902c0637ff4277e1ca3009e4`,
+the owner approved Docker's documented public-key verification with
+`--verify --skip-tlog` after both strict verification attempts failed to find
+the signatures in the transparency log. Verification used the pinned Docker
+public key. Both signed subjects identify the selected amd64 child, and the
+reviewed index manifest binds that child to the pinned index. This exception
+establishes signature verification, not public transparency-log inclusion.
+It applies only to that reviewed digest and those attestations. Preserve the
+strict failures and repeat the review for a changed digest. See
+[Docker's verification guidance](https://docs.docker.com/dhi/how-to/verify/#handle-missing-transparency-log-entries).
+
+Arm64 publisher verification remains unestablished. A matching metadata subject
+does not establish image-layer integrity, runtime compatibility or vulnerability
+status. Each base refresh requires fresh tag/index correspondence and the normal
+build, architecture, smoke, SBOM and security checks. Image signing and release
+publication gates continue to apply.
+
 > Status (v0.8.4): **G4 PATH 2 ACTIVATED — supply-chain hardening
 > complete.** release.yml regenerates `docker/requirements.txt`
 > against PyPI's just-published wheels between Wait-for-PyPI step
@@ -320,3 +346,30 @@ post-tag verification):
 - PEP 740 attestation verification:
   https://peps.python.org/pep-0740/
 - v0.8.0 reproducible-build target: see `docs/v0.8.0-plan.md` G4
+
+## DHI registry access in CI
+
+Docker requires authentication when pulling Community images from `dhi.io`.
+A local `docker login` does not authenticate a GitHub-hosted runner. See
+[Docker's DHI usage guide](https://docs.docker.com/dhi/how-to/use/).
+
+Before a container-relevant change is delivered, configure a dedicated Docker
+token with public-repository read-only permission. It must have no write,
+delete or private-repository access. Store `DHI_USERNAME` and `DHI_READ_TOKEN`
+in the repository's GitHub Actions secrets. Store the same two names in its
+Dependabot secrets for container-relevant Dependabot pull requests. Enter the
+values directly in GitHub; do not add them to source, logs or issue comments.
+
+The container smoke workflow logs in immediately before the image build when
+container inputs changed. The release build does the same for its local-wheel
+image. Both use the pinned login action, target only `dhi.io`, and enable
+logout after the job. Neither step grants image publication permission. A
+missing or rejected credential fails the applicable build. Unrelated changes
+retain the existing container-relevance skip rule.
+
+GitHub does not provide these secrets to pull requests from forks. A relevant
+fork change therefore needs maintainer review and a trusted repository branch
+before the authenticated container check can pass. Do not switch to
+`pull_request_target`, pass credentials to an untrusted fork, or skip the build
+to work around missing access. Authentication does not replace the digest,
+platform, signature, SBOM, vulnerability or smoke checks.

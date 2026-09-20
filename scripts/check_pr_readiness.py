@@ -85,6 +85,7 @@ CONTAINER = ".github/workflows/container-build.yml"
 TEST = ".github/workflows/test.yml"
 MERIDIAN = ".github/workflows/evidentia.yml"
 CONTAINER_STEPS = {
+    "Log in to Docker Hardened Images",
     "Set up Docker Buildx",
     "Determine latest published evidentia version (from PyPI)",
     "Wait for PyPI propagation",

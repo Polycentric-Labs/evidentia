@@ -229,6 +229,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Container platform and base refresh.** Pin the reviewed DHI Python runtime
+  base and target `linux/amd64` explicitly in build and release workflows.
+  Check the image architecture before smoke tests, artifact transfer and
+  publication. The pinning policy records the exact approved publisher-key
+  verification exception and its missing transparency-log assurance.
+
 - **Console dependency maintenance.** Update Tailwind Merge to 3.7.0,
   Prettier to 3.9.8 and the Vitest family together to 5.0.1. Complete missing
   registry metadata for unchanged lockfile entries and retain their exact versions.
@@ -391,6 +397,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   roadmap entries are left as written.
 
 ### Fixed
+
+- **Container registry authentication.** Authenticate required container builds
+  to `dhi.io` with a dedicated public-image-read-only token. Missing access
+  fails the build. Keep fork credentials unavailable, log out after the job,
+  and retain all digest, platform, vulnerability and publication gates.
 
 - **Console loading and markup.** Load the synthetic SCAP fixture asset only
   when an example is requested. Capture collection inputs before loading and
