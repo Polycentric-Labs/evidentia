@@ -91,6 +91,9 @@ updates:
           - "minor"
           - "patch"
         exclude-patterns:
+          - "boto3"
+          - "botocore"
+          - "s3transfer"
           - "pydantic*"
           - "fastapi"
           - "starlette"
@@ -101,6 +104,10 @@ updates:
       python-dev:
         applies-to: version-updates
         dependency-type: "development"
+        exclude-patterns:
+          - "boto3"
+          - "botocore"
+          - "s3transfer"
         update-types:
           - "minor"
           - "patch"
