@@ -220,6 +220,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AWS SDK group isolation.** Exclude boto3, botocore and s3transfer from
+  the broad Python runtime and development update groups. These packages
+  remain in their dedicated compatible SDK group; security updates retain
+  their existing policy.
 - **AWS SDK update alignment.** Update boto3 and botocore together to 1.43.95,
   preserve the exact retention-signing version guard, and group compatible
   AWS SDK minor and patch updates in Dependabot. Update Schemathesis to 4.27.0
