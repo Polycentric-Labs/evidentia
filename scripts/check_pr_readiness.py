@@ -100,6 +100,11 @@ CONTAINER_STEPS = {
 LINUX = "Run tests (with coverage on Linux)"
 NONLINUX = "Run tests (no coverage on non-Linux)"
 CODECOV = "Upload coverage to Codecov"
+NATIVE_CATALOG_STEPS = {
+    "Fetch pinned native catalog inputs",
+    "Verify native catalog storage under coverage",
+    "Retain native catalog verification receipts",
+}
 CACHE_SEED = "Seed baseline on cache miss (first run ever or key bump)"
 MERIDIAN_REQUIRED = {
     "Analyze head",
@@ -508,6 +513,8 @@ def check_steps(
         else:
             required.add(NONLINUX)
             skipped |= {LINUX, CODECOV}
+        if match and match[1] == "windows":
+            skipped |= NATIVE_CATALOG_STEPS
         if not {LINUX, NONLINUX, CODECOV} <= by_name.keys():
             errors.append("Missing pytest branch evidence: " + job["name"])
     if run["path"] == TEST and job["name"] == "pytest no-extras (collector SSRF guard fidelity)":

@@ -24,6 +24,11 @@ START = "2020-01-01T00:00:00Z"
 END = "2020-01-01T00:00:10Z"
 REPORT_END = "2020-01-01T00:00:12Z"
 ROW = dict[str, Any]
+NATIVE_CATALOG_STEPS = (
+    "Fetch pinned native catalog inputs",
+    "Verify native catalog storage under coverage",
+    "Retain native catalog verification receipts",
+)
 
 
 @pytest.fixture(scope="module")
@@ -132,6 +137,8 @@ def synthetic_snapshot(checker: Any, policy: Any) -> ROW:
                 inactive = (
                     {checker.NONLINUX} if "ubuntu" in requirement["context"] else {checker.LINUX, checker.CODECOV}
                 )
+                if "windows-latest" in requirement["context"]:
+                    inactive.update(NATIVE_CATALOG_STEPS)
                 for step in job["steps"]:
                     if step["name"] in inactive:
                         step["conclusion"] = "skipped"
@@ -1077,3 +1084,55 @@ def test_suite_bound_to_selected_run_cannot_be_an_idle_container(checker: Any, p
     snapshot["suite_ids"].append(987654)
     run["check_suite_id"] = 987654
     reject(checker, policy, snapshot, "Suite is not")
+
+
+@pytest.mark.parametrize("version", ["3.12", "3.14"])
+def test_windows_native_catalog_steps_follow_reviewed_condition(
+    checker: Any, policy: Any, snapshot: ROW, version: str
+) -> None:
+    name = f"pytest (windows-latest, Python {version})"
+    result = checker.assess_pair(snapshot, copy.deepcopy(snapshot), policy, PR, HEAD)
+    assert result["ready"], result["errors"]
+    assert all(name + " / " + item in result["allowed_skips"] for item in NATIVE_CATALOG_STEPS)
+    assert len(policy["baseline"]) == 25
+
+
+@pytest.mark.parametrize("platform", ["ubuntu", "macos"])
+@pytest.mark.parametrize("version", ["3.12", "3.14"])
+@pytest.mark.parametrize("name", NATIVE_CATALOG_STEPS)
+@pytest.mark.parametrize("outcome", ["skipped", "failure", "cancelled", "neutral", None])
+def test_native_catalog_steps_remain_mandatory(
+    checker: Any, policy: Any, snapshot: ROW, platform: str, version: str, name: str, outcome: object
+) -> None:
+    step(snapshot, f"pytest ({platform}-latest, Python {version})", name)["conclusion"] = outcome
+    reject(checker, policy, snapshot, "Mandatory step not successful")
+
+
+@pytest.mark.parametrize("version", ["3.12", "3.14"])
+@pytest.mark.parametrize("name", NATIVE_CATALOG_STEPS)
+@pytest.mark.parametrize(
+    "status,outcome",
+    [
+        ("completed", "failure"),
+        ("completed", "cancelled"),
+        ("completed", "neutral"),
+        ("completed", None),
+        ("in_progress", "skipped"),
+        ("queued", None),
+    ],
+)
+def test_windows_native_catalog_condition_rejects_failed_or_unfinished_steps(
+    checker: Any, policy: Any, snapshot: ROW, version: str, name: str, status: str, outcome: object
+) -> None:
+    step(snapshot, f"pytest (windows-latest, Python {version})", name).update(status=status, conclusion=outcome)
+    reject(checker, policy, snapshot, "Step not successful")
+
+
+@pytest.mark.parametrize("version", ["3.12", "3.14"])
+@pytest.mark.parametrize("name", NATIVE_CATALOG_STEPS)
+def test_windows_native_catalog_condition_requires_step_evidence(
+    checker: Any, policy: Any, snapshot: ROW, version: str, name: str
+) -> None:
+    row = job(snapshot, f"pytest (windows-latest, Python {version})")
+    row["steps"] = [item for item in row["steps"] if item["name"] != name]
+    reject(checker, policy, snapshot, "Missing source workflow step identities")
