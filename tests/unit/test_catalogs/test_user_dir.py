@@ -938,6 +938,7 @@ def test_f2_linux_owned_directory_refusal_preserves_primary_and_closes(tmp_path,
     from evidentia_core.catalogs import user_dir
     from evidentia_core.models.open_corpora import NativeBudget
 
+    monkeypatch.setattr(user_dir.sys, "platform", "linux")
     observed = tmp_path.stat()
     transaction = user_dir.CatalogManifestTransaction(tmp_path)
     closed, queried = [], []

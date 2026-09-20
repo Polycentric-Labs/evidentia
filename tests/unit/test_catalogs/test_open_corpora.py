@@ -378,6 +378,7 @@ def test_native_file_refuses_reparse_or_read_drift(tmp_path, monkeypatch, case):
         monkeypatch.setattr(type(target), "lstat", changed_stat)
     else:
         original_read = os.read
+        initial = target.stat()
         changed = False
 
         def change_read(fd, count):
@@ -386,6 +387,9 @@ def test_native_file_refuses_reparse_or_read_drift(tmp_path, monkeypatch, case):
             if not changed:
                 changed = True
                 target.write_bytes(b'{"x":2}')
+                # Force visible metadata drift independently of clock granularity.
+                os.utime(target, ns=(initial.st_atime_ns, initial.st_mtime_ns + 2_000_000_000))
+                assert target.stat().st_mtime_ns != initial.st_mtime_ns
             return result
 
         monkeypatch.setattr(os, "read", change_read)
