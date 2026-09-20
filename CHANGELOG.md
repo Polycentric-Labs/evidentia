@@ -217,6 +217,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Console dependency maintenance.** Update Tailwind Merge to 3.7.0,
+  Prettier to 3.9.8 and the Vitest family together to 5.0.1. Complete missing
+  registry metadata for unchanged lockfile entries and retain their exact versions.
+
 - **Python dependency updates.** Align boto3 and botocore at 1.43.96 while
   retaining the exact retention-signing version guard. Update Azure Blob
   Storage, LibCST, mutmut, Ruff, Schemathesis, platformdirs and Snowflake,
