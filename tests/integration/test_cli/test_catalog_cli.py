@@ -1,7 +1,7 @@
 """Integration tests for `evidentia catalog` subcommands (v0.2.1 D7).
 
-The v0.2.0 release introduced four new subcommands — ``import``, ``where``,
-``license-info``, ``remove`` — and zero tests for any of them. These
+The v0.2.0 release introduced four new subcommands - ``import``, ``where``,
+``license-info``, ``remove`` - and zero tests for any of them. These
 tests run the commands end-to-end via Typer's CliRunner against a
 tmp_path user-catalog directory so no state leaks into the real user
 profile.
@@ -10,6 +10,7 @@ profile.
 from __future__ import annotations
 
 import builtins
+import hashlib
 import json
 import os
 from collections.abc import Callable
@@ -40,6 +41,12 @@ def _isolated_user_dir(tmp_path: Path, monkeypatch):
     FrameworkRegistry.reset_instance()
     yield user_dir
     FrameworkRegistry.reset_instance()
+
+
+def _imported_path(tmp_path: Path, framework_id: str) -> Path:
+    entry = load_user_manifest().get(framework_id)
+    assert entry is not None
+    return tmp_path / "user-catalogs" / entry.path
 
 
 def _minimal_user_catalog(tmp_path: Path, framework_id: str = "my-custom-fw") -> Path:
@@ -87,7 +94,7 @@ def test_catalog_list_tier_filter(runner: CliRunner) -> None:
     """--tier A narrows to Tier-A frameworks only."""
     result = runner.invoke(app, ["catalog", "list", "--tier", "A"])
     assert result.exit_code == 0, result.output
-    # Bundled NIST 800-53-mod is Tier A — should appear
+    # Bundled NIST 800-53-mod is Tier A - should appear
     assert "nist-800-53-mod" in result.output
 
 
@@ -118,7 +125,7 @@ def test_catalog_license_info_shows_text_depth(runner: CliRunner) -> None:
 
 
 # -----------------------------------------------------------------------------
-# catalog import / where / license-info / remove — round trip
+# catalog import / where / license-info / remove - round trip
 # -----------------------------------------------------------------------------
 
 
@@ -248,11 +255,12 @@ def test_invalid_catalog_import_preserves_existing_state(
     runner: CliRunner, tmp_path: Path, replace_existing: bool
 ) -> None:
     """Validation rejects content before publishing it in the user directory."""
-    user_catalog = tmp_path / "user-catalogs" / "my-custom-fw.json"
+    user_catalog = tmp_path / "user-catalogs" / "never-published.json"
     if replace_existing:
         original = _minimal_user_catalog(tmp_path)
         imported = runner.invoke(app, ["catalog", "import", str(original)])
         assert imported.exit_code == 0, imported.output
+        user_catalog = _imported_path(tmp_path, "my-custom-fw")
     previous_bytes = user_catalog.read_bytes() if replace_existing else None
     previous_manifest = load_user_manifest().model_dump()
     invalid = tmp_path / "invalid.json"
@@ -319,7 +327,7 @@ def test_profile_import_uses_explicit_catalog(
 
     assert result.exit_code == 0, result.output
     assert "(1 controls)" in result.output
-    saved = json.loads((tmp_path / "user-catalogs" / "my-baseline.json").read_text(encoding="utf-8"))
+    saved = json.loads(_imported_path(tmp_path, "my-baseline").read_text(encoding="utf-8"))
     assert [control["id"] for control in saved["controls"]] == ["AC-1"]
     assert saved["controls"][0]["description"] == "Approve policy."
     assert saved["families"] == ([] if shape == "top-level" else ["Access Control"])
@@ -335,7 +343,7 @@ def test_profile_import_missing_override_preserves_user_state(
     original = _minimal_user_catalog(tmp_path)
     imported = runner.invoke(app, ["catalog", "import", str(original)])
     assert imported.exit_code == 0, imported.output
-    saved_path = tmp_path / "user-catalogs" / "my-custom-fw.json"
+    saved_path = _imported_path(tmp_path, "my-custom-fw")
     saved_bytes = saved_path.read_bytes()
     previous_manifest = load_user_manifest().model_dump()
     profile, source = _profile_import_files(tmp_path)
@@ -433,14 +441,14 @@ def test_catalog_import_publishes_manifest_before_scratch_cleanup(
 
     assert manifests_at_cleanup, "The test must exercise real temporary-directory cleanup"
     assert result.exit_code == 0, result.output
-    saved = json.loads((tmp_path / "user-catalogs" / "my-custom-fw.json").read_text(encoding="utf-8"))
+    saved = json.loads(_imported_path(tmp_path, "my-custom-fw").read_text(encoding="utf-8"))
     assert saved == replacement
     entry = load_user_manifest().get("my-custom-fw")
     assert entry is not None
     assert entry.name == "Replacement framework"
     assert entry.version == "2.0"
     assert entry.tier == "B"
-    assert entry.path == "my-custom-fw.json"
+    assert entry.path == "legacy/" + hashlib.sha256(source.read_bytes()).hexdigest() + "/catalog.json"
     assert entry.placeholder is False
     assert entry.license == "Synthetic license"
     assert entry.text_depth == "headings"
@@ -753,3 +761,357 @@ def test_air_gap_api_cancellation_identity(stage: str, failure_type: type[BaseEx
     assert caught.value is failure
     assert events == ["config", "discover"] + (["import"] if stage == "import" else [])
     assert emitted == []
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["import", "catalog-denied-probe/source.json"],
+        ["import", "--profile", "catalog-denied-probe/profile.json", "--catalog", "catalog-denied-probe/catalog.json"],
+        ["import", "catalog-denied-probe/source.json", "--catalog-dir", "catalog-denied-probe/store"],
+        ["remove", "synthetic-denied", "--catalog-dir", "catalog-denied-probe/store", "--yes"],
+        [
+            "import",
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            "catalog-denied-probe/native",
+        ],
+        [
+            "import",
+            "--native-profile",
+            "invalid-profile",
+            "--source-dir",
+            "catalog-denied-probe/native",
+            "--profile",
+            "catalog-denied-probe/profile.json",
+        ],
+        ["import", "--source-dir", "catalog-denied-probe/native"],
+    ],
+)
+def test_role_precedes_catalog_path_io(
+    arguments: list[str], runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Denied commands keep data paths lexical through parsing and authorization."""
+    import builtins
+    import os
+
+    from evidentia.cli import _rbac
+    from evidentia.cli import catalog as catalog_module
+    from evidentia_core.rbac import RBACPolicy, Role
+
+    assert Path(catalog_module.__file__).resolve() == (
+        Path(__file__).resolve().parents[3] / "packages/evidentia/src/evidentia/cli/catalog.py"
+    )
+    monkeypatch.setattr(_rbac, "get_rbac_policy", lambda: RBACPolicy(default_role=Role.READER))
+    monkeypatch.setattr(_rbac, "get_rbac_identity", lambda: "synthetic-reader")
+    calls: list[str] = []
+
+    def guarded(original: object, operation: str):
+        def invoke(value, *args, **kwargs):
+            if isinstance(value, (str, bytes, os.PathLike)) and "catalog-denied-probe" in os.fsdecode(value):
+                calls.append(operation)
+                raise AssertionError("denied_catalog_path_io")
+            return original(value, *args, **kwargs)
+
+        return invoke
+
+    monkeypatch.setattr(os, "stat", guarded(os.stat, "stat"))
+    monkeypatch.setattr(os, "access", guarded(os.access, "access"))
+    monkeypatch.setattr(os, "mkdir", guarded(os.mkdir, "mkdir"))
+    monkeypatch.setattr(builtins, "open", guarded(builtins.open, "open"))
+    result = runner.invoke(app, ["catalog", *arguments])
+    assert result.exit_code == 77, result.output
+    assert calls == []
+
+
+@pytest.mark.parametrize("role,can_remove", [("editor", False), ("admin", True)])
+def test_catalog_configured_write_and_admin_roles(role, can_remove, runner, tmp_path, monkeypatch):
+    from evidentia.cli import _rbac
+    from evidentia_core.rbac import RBACPolicy, Role
+
+    monkeypatch.setattr(_rbac, "get_rbac_policy", lambda: RBACPolicy(default_role=Role(role)))
+    source = _minimal_user_catalog(tmp_path)
+    imported = runner.invoke(app, ["catalog", "import", str(source)])
+    assert imported.exit_code == 0, imported.output
+    payload = _imported_path(tmp_path, "my-custom-fw")
+    original = payload.read_bytes()
+    removed = runner.invoke(app, ["catalog", "remove", "my-custom-fw", "--yes"])
+    assert removed.exit_code == (0 if can_remove else 77), removed.output
+    assert payload.read_bytes() == original
+    assert (load_user_manifest().get("my-custom-fw") is None) == can_remove
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--native-profile", "bsi-grundschutz-plus-plus-367d7750"],
+        ["--source-dir", "catalog-denied-probe/native"],
+        ["--native-profile", "unsupported", "--source-dir", "catalog-denied-probe/native"],
+        [
+            "catalog-denied-probe/source.json",
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            "catalog-denied-probe/native",
+        ],
+        [
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            "catalog-denied-probe/native",
+            "--profile",
+            "catalog-denied-probe/profile.json",
+        ],
+        [
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            "catalog-denied-probe/native",
+            "--name",
+            "changed",
+        ],
+        [
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            "catalog-denied-probe/native",
+            "--framework-id",
+            "changed",
+        ],
+        [
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            "catalog-denied-probe/native",
+            "--force",
+        ],
+    ],
+)
+def test_authorized_native_conflicts_precede_source_io(options, runner, monkeypatch):
+    from evidentia_core.catalogs import open_corpora
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Conflicting native flags reached source or transaction work")
+
+    monkeypatch.setattr(open_corpora, "read_source_directory", forbidden)
+    monkeypatch.setattr(catalog_cli.CatalogManifestTransaction, "commit", forbidden)
+    original_stat = os.stat
+
+    def guarded_stat(value, *args, **kwargs):
+        if "catalog-denied-probe" in os.fsdecode(value):
+            pytest.fail("Conflicting native flags triggered path stat")
+        return original_stat(value, *args, **kwargs)
+
+    monkeypatch.setattr(os, "stat", guarded_stat)
+    result = runner.invoke(app, ["catalog", "import", *options])
+    assert result.exit_code == 1, result.output
+    assert "Native import requires" in result.output
+
+
+@pytest.mark.parametrize("mode", ["direct", "profile"])
+def test_catalog_direct_path_callers_use_the_transaction(mode, tmp_path, monkeypatch):
+    operations = []
+    original_commit = catalog_cli.CatalogManifestTransaction.commit
+
+    def record(transaction, intent):
+        operations.append(intent.operation)
+        return original_commit(transaction, intent)
+
+    monkeypatch.setattr(catalog_cli.CatalogManifestTransaction, "commit", record)
+    source = _minimal_user_catalog(tmp_path) if mode == "direct" else None
+    profile, catalog = _profile_import_files(tmp_path) if mode == "profile" else (None, None)
+    catalog_cli.import_catalog(
+        source=source,
+        framework_id="path-caller",
+        name=None,
+        license_terms=None,
+        force=False,
+        profile=profile,
+        catalog=catalog,
+        tier="C",
+        catalog_dir=tmp_path / "user-catalogs",
+    )
+    imported = _imported_path(tmp_path, "path-caller")
+    before = imported.read_bytes()
+    catalog_cli.remove_framework("path-caller", catalog_dir=tmp_path / "user-catalogs", yes=True)
+    assert operations == ["legacy_import", "remove"]
+    assert imported.read_bytes() == before
+
+
+@pytest.mark.parametrize("after_replace", [False, True])
+def test_cli_reports_publication_facts_without_false_success(after_replace, runner, tmp_path, monkeypatch):
+    from evidentia_core.catalogs import user_dir
+
+    source = _minimal_user_catalog(tmp_path)
+    imported = runner.invoke(app, ["catalog", "import", str(source)])
+    assert imported.exit_code == 0, imported.output
+    payload = _imported_path(tmp_path, "my-custom-fw")
+    original = user_dir.os.replace
+    failure = OSError("synthetic-private-path-must-not-be-emitted")
+
+    def fail_replace(src, dst):
+        if Path(dst).name == "frameworks.yaml":
+            if after_replace:
+                original(src, dst)
+            raise failure
+        return original(src, dst)
+
+    monkeypatch.setattr(user_dir.os, "replace", fail_replace)
+    result = runner.invoke(app, ["catalog", "remove", "my-custom-fw", "--yes"])
+    assert result.exit_code == 1
+    exception_chain = []
+    current = result.exception
+    while current is not None and all(current is not item for item in exception_chain):
+        exception_chain.append(current)
+        current = current.__cause__ or current.__context__
+    assert any(item is failure for item in exception_chain)
+    assert "synthetic-private-path" not in result.output
+    assert "Removed user-imported" not in result.output
+    observation, _ = json.JSONDecoder().raw_decode(result.output[result.output.index("{") :])
+    assert observation["error_code"] == "catalog_publication_failed"
+    assert observation["publication_state"] == ("committed" if after_replace else "not_committed")
+    assert observation["readback_result"] == ("matches_proposed" if after_replace else "matches_prior")
+    assert (load_user_manifest().get("my-custom-fw") is None) == after_replace
+    assert payload.is_file()
+
+
+@pytest.mark.parametrize("after_replace", [False, True])
+def test_cli_preserves_interruption_identity_and_observation(after_replace, runner, tmp_path, monkeypatch, capsys):
+    from evidentia_core.catalogs import user_dir
+
+    source = _minimal_user_catalog(tmp_path)
+    imported = runner.invoke(app, ["catalog", "import", str(source)])
+    assert imported.exit_code == 0, imported.output
+    original = user_dir.os.replace
+    failure = KeyboardInterrupt("synthetic-interruption")
+
+    def interrupt(src, dst):
+        if Path(dst).name == "frameworks.yaml":
+            if after_replace:
+                original(src, dst)
+            raise failure
+        return original(src, dst)
+
+    monkeypatch.setattr(user_dir.os, "replace", interrupt)
+    with pytest.raises(KeyboardInterrupt) as caught:
+        catalog_cli.remove_framework("my-custom-fw", catalog_dir=tmp_path / "user-catalogs", yes=True)
+    assert caught.value is failure
+    output = capsys.readouterr().out
+    observation, _ = json.JSONDecoder().raw_decode(output[output.index("{") :])
+    assert observation["error_code"] == "catalog_interrupted"
+    assert observation["publication_state"] == ("committed" if after_replace else "not_committed")
+    assert "Removed user-imported" not in output
+
+
+def test_confirmation_refuses_concurrently_changed_entry(runner, tmp_path, monkeypatch):
+    from evidentia_core.catalogs.user_dir import CatalogManifestTransaction, CatalogMutationIntent
+
+    source = _minimal_user_catalog(tmp_path)
+    assert runner.invoke(app, ["catalog", "import", str(source)]).exit_code == 0
+    previous = load_user_manifest().get("my-custom-fw")
+    assert previous is not None
+    raw = _imported_path(tmp_path, "my-custom-fw").read_bytes()
+    replacement = previous.model_copy(update={"name": "Concurrent replacement"})
+
+    def confirm(_prompt):
+        CatalogManifestTransaction().commit(CatalogMutationIntent.legacy(replacement, raw, force=True))
+        return True
+
+    monkeypatch.setattr(catalog_cli.typer, "confirm", confirm)
+    result = runner.invoke(app, ["catalog", "remove", "my-custom-fw"])
+    assert result.exit_code == 1, result.output
+    assert "catalog_transaction_conflict" in result.output
+    assert load_user_manifest().get("my-custom-fw").name == "Concurrent replacement"
+
+
+def test_native_show_unavailable_is_a_fixed_failure(runner):
+    result = runner.invoke(app, ["catalog", "show", "nist-800-53-mod", "--native-source"])
+    assert result.exit_code == 1
+    assert result.output.strip() == "native_source_unavailable"
+
+
+def test_native_source_output_preserves_complete_bundle_and_control_context(runner, monkeypatch):
+    catalog = FrameworkRegistry.get_instance().get_catalog("cisa-scuba")
+    bundle = catalog.native_source
+    assert bundle is not None
+    captured = []
+    monkeypatch.setattr(catalog_cli.console, "print_json", lambda *, json, highlight: captured.append(json))
+    result = runner.invoke(app, ["catalog", "show", "cisa-scuba", "--native-source"])
+    assert result.exit_code == 0, result.output
+    assert len(captured) == 1
+    full = json.loads(captured.pop())
+    assert full == bundle.model_dump(mode="json")
+    assert any(occurrence["parent_index"] is None for occurrence in full["data"]["occurrences"])
+    control = next(item for item in catalog.controls if item.native_source_ref is not None)
+    result = runner.invoke(app, ["catalog", "show", "cisa-scuba", "--control", control.id, "--native-source"])
+    assert result.exit_code == 0, result.output
+    selected = json.loads(captured.pop())
+    assert selected["native_source_ref"] == control.native_source_ref.model_dump(mode="json")
+    assert selected["occurrence"] == full["data"]["occurrences"][control.native_source_ref.occurrence_index]
+    assert selected["declared_context"] == [
+        full["data"]["occurrences"][index] for index in full["data"]["context_indices"]
+    ]
+    parent = selected["occurrence"]["parent_index"]
+    expected_parents = []
+    while parent is not None:
+        item = full["data"]["occurrences"][parent]
+        expected_parents.append(item)
+        parent = item["parent_index"]
+    assert selected["enclosing_context"] == list(reversed(expected_parents))
+    assert "documents" not in selected
+    assert "raw_utf8" not in json.dumps(selected)
+
+
+def test_native_cli_refuses_extra_source_leaf_before_transaction(runner, tmp_path, monkeypatch):
+    source_dir = tmp_path / "native-input"
+    source_dir.mkdir()
+    (source_dir / "unexpected.txt").write_text("Synthetic source", encoding="utf-8")
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Invalid source reached publication")
+
+    monkeypatch.setattr(catalog_cli.CatalogManifestTransaction, "commit", forbidden)
+    result = runner.invoke(
+        app,
+        [
+            "catalog",
+            "import",
+            "--native-profile",
+            "bsi-grundschutz-plus-plus-367d7750",
+            "--source-dir",
+            str(source_dir),
+        ],
+    )
+    assert result.exit_code == 1
+    assert result.output.strip() == "native_source_invalid"
+    assert not (tmp_path / "user-catalogs").exists()
+
+
+def test_cli_staging_cleanup_preserves_primary_exception(tmp_path, monkeypatch):
+    from evidentia_core.catalogs import loader
+
+    source = _minimal_user_catalog(tmp_path)
+    primary = KeyboardInterrupt("synthetic primary")
+
+    def validation(*args, **kwargs):
+        raise primary
+
+    def cleanup(*args, **kwargs):
+        raise SystemExit("synthetic cleanup")
+
+    monkeypatch.setattr(loader, "load_any_catalog", validation)
+    monkeypatch.setattr(catalog_cli.shutil, "rmtree", cleanup)
+    with pytest.raises(KeyboardInterrupt) as caught:
+        catalog_cli.import_catalog(
+            source=source,
+            framework_id=None,
+            name=None,
+            license_terms=None,
+            force=False,
+            profile=None,
+            catalog=None,
+            tier="C",
+            catalog_dir=tmp_path / "catalogs",
+        )
+    assert caught.value is primary

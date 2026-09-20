@@ -422,3 +422,118 @@ async def test_no_registry_does_not_inspect_malformed_metadata(caplog: pytest.Lo
 
     assert result is delegate.return_value
     assert _scope_events(caplog) == []
+
+
+@pytest.mark.asyncio
+async def test_f3_native_tool_requires_registry_before_dispatch(caplog: pytest.LogCaptureFixture) -> None:
+    server, delegate = _make_server()
+    enforce_cimd_scope(server)
+    with caplog.at_level(logging.INFO, logger=_SCOPE_LOG), pytest.raises(MCPError) as caught:
+        await server.call_tool("get_catalog_native", {"bad": object()}, None)
+    assert caught.value.code == INVALID_PARAMS == -32602
+    assert caught.value.message == "tool call denied: get_catalog_native requires an explicit CIMD grant"
+    delegate.assert_not_awaited()
+    events = _scope_events(caplog)
+    assert len(events) == 1
+    _assert_decision(events[0], allowed=False, client_id=None, tool_name="get_catalog_native", scope=None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scope", ["", "*", "get_catalog_*", "list_frameworks", "get_catalog_native"])
+async def test_f3_native_tool_requires_the_literal_scope(scope: str) -> None:
+    server, delegate = _make_server(_make_registry(allowed=scope))
+    enforce_cimd_scope(server, default_client_id="allowed")
+    arguments = {"framework_id": "au-ism", "bundle_sha256": "0" * 64}
+    if scope == "get_catalog_native":
+        assert await server.call_tool("get_catalog_native", arguments, None) is delegate.return_value
+        delegate.assert_awaited_once_with("get_catalog_native", arguments, None)
+    else:
+        with pytest.raises(MCPError):
+            await server.call_tool("get_catalog_native", arguments, None)
+        delegate.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "name",
+    [
+        "list_frameworks",
+        "get_control",
+        "gap_analyze",
+        "gap_diff",
+        "conmon_list_cadences",
+        "conmon_next_due",
+        "conmon_check_state",
+        "conmon_health",
+        "conmon_series",
+        "gap_analyze_sarif",
+        "collect_ocsf",
+        "tprm_vendor_list",
+        "poam_list",
+        "verify_signed_artifact",
+    ],
+)
+async def test_f3_old_names_keep_absent_registry_passthrough(name) -> None:
+    server, delegate = _make_server()
+    enforce_cimd_scope(server)
+    arguments = {"opaque": object()}
+    context = _context({"client_id": False})
+    assert await server.call_tool(name, arguments, context) is delegate.return_value
+    delegate.assert_awaited_once_with(name, arguments, context)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("invalid", ["dict_subclass", "key_subclass", "value_subclass", "list", "none"])
+async def test_f3_native_raw_guard_refuses_non_native_types_without_callbacks(invalid) -> None:
+    class String(str):
+        def __eq__(self, other):
+            raise AssertionError("subclass equality must not run")
+
+        __hash__ = str.__hash__
+
+    class Mapping(dict):
+        def __iter__(self):
+            raise AssertionError("non-native iteration must not run")
+
+    values = {
+        "dict_subclass": Mapping(framework_id="au-ism", bundle_sha256="a" * 64),
+        "key_subclass": {String("framework_id"): "au-ism", "bundle_sha256": "a" * 64},
+        "value_subclass": {"framework_id": String("au-ism"), "bundle_sha256": "a" * 64},
+        "list": [],
+        "none": None,
+    }
+    server, delegate = _make_server(_make_registry(allowed="get_catalog_native"))
+    enforce_cimd_scope(server, default_client_id="allowed")
+    with pytest.raises(MCPError, match=r"^invalid get_catalog_native arguments$") as caught:
+        await server.call_tool("get_catalog_native", values[invalid], None)
+    assert caught.value.code == -32602
+    delegate.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_f3_native_authorization_precedes_all_argument_access() -> None:
+    class Opaque(dict):
+        def __iter__(self):
+            raise AssertionError("arguments inspected before authorization")
+
+    for registry, fallback in [(None, None), (_make_registry(denied="list_frameworks"), "denied")]:
+        server, delegate = _make_server(registry)
+        enforce_cimd_scope(server, default_client_id=fallback)
+        with pytest.raises(MCPError, match="denied"):
+            await server.call_tool("get_catalog_native", Opaque(), None)
+        delegate.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_f3_valid_native_forwarding_preserves_cancellation_identity() -> None:
+    server, delegate = _make_server(_make_registry(allowed="get_catalog_native"))
+    canceled = asyncio.CancelledError("synthetic cancellation")
+    delegate.side_effect = canceled
+    enforce_cimd_scope(server)
+    arguments = {"framework_id": "au-ism", "bundle_sha256": "a" * 64}
+    context = _context({"client_id": "allowed"})
+    with pytest.raises(asyncio.CancelledError) as caught:
+        await server.call_tool("get_catalog_native", arguments, context)
+    assert caught.value is canceled
+    assert delegate.await_args.args[1] is arguments
+    assert delegate.await_args.args[2] is context

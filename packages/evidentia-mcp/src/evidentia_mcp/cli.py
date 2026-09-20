@@ -277,7 +277,7 @@ def doctor() -> None:
     2. The bundled catalog registry loads.
     3. The MCP server can be constructed (all tool
        registrations succeed).
-    4. The four core tools are registered.
+    4. All fifteen current tools are registered.
 
     Exits 0 on success; 1 on any check failure (with a
     human-readable diagnostic on stderr).
@@ -309,10 +309,21 @@ def doctor() -> None:
 
     # 3. + 4. MCP server constructs + has expected tools
     expected_tools = {
-        "list_frameworks",
-        "get_control",
+        "collect_ocsf",
+        "conmon_check_state",
+        "conmon_health",
+        "conmon_list_cadences",
+        "conmon_next_due",
+        "conmon_series",
         "gap_analyze",
+        "gap_analyze_sarif",
         "gap_diff",
+        "get_control",
+        "list_frameworks",
+        "poam_list",
+        "tprm_vendor_list",
+        "verify_signed_artifact",
+        "get_catalog_native",
     }
     try:
         import asyncio

@@ -9,6 +9,17 @@
  * from one uvicorn instance). Dev mode: Vite's proxy forwards /api to :8000.
  */
 
+import {
+  decodeNativeBundle,
+  decodeNativeCatalog,
+  decodeNativeSurface,
+  readNativeResponse,
+  NativeCatalogError,
+  type NativeRequest,
+  type NativeBundle,
+  type CatalogNativeExternalImportRequest,
+  type CatalogNativeImportResult,
+} from "@/lib/catalog-native";
 import { demoApi, demoExportGapReport } from "@/lib/demo/demo-api";
 import { IS_DEMO } from "@/lib/demo";
 import {
@@ -157,6 +168,172 @@ async function requestText(path: string, init?: RequestInit): Promise<string> {
   }
 
   return await response.text();
+}
+
+/** Read bounded native success and refusal bodies before parsing. */
+async function nativeCatalogResponse(
+  response: Response,
+  signal?: AbortSignal,
+  legacyError = false,
+): Promise<string> {
+  if (response.status === 401 || response.status === 403) {
+    await response.body?.cancel();
+    throw new ApiError("Catalog access was denied.", response.status, null);
+  }
+  if (!response.ok) {
+    // Preserve the actual status while reusing the bounded byte reader for
+    // the error body. This never treats the operation as successful.
+    const raw = await readNativeResponse(
+      new Response(response.body, { status: 200 }),
+      signal,
+    );
+    if (legacyError) {
+      let payload: unknown = null;
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        /* Preserve the legacy empty-body error. */
+      }
+      throw new ApiError(
+        "The framework request failed.",
+        response.status,
+        payload,
+      );
+    }
+    let error: unknown;
+    try {
+      error = decodeNativeSurface("storageError", raw);
+    } catch {
+      error = decodeNativeSurface("readError", raw);
+    }
+    throw new ApiError(
+      "The catalog operation was refused.",
+      response.status,
+      error,
+    );
+  }
+  return readNativeResponse(response, signal);
+}
+
+async function getFrameworkCatalog(
+  id: string,
+  signal?: AbortSignal,
+): Promise<ControlCatalog> {
+  signal?.throwIfAborted();
+  const response = await fetch("/api/frameworks/" + encodeURIComponent(id), {
+    signal,
+    headers: { Accept: "application/json" },
+  });
+  const raw = await nativeCatalogResponse(response, signal, true);
+  // This temporary value selects the declared digest only. The strict decoder
+  // re-parses the bounded wire and validates hashes and correspondence.
+  const selection = JSON.parse(raw) as ControlCatalog;
+  if (selection.native_source != null) {
+    const request = decodeNativeSurface(
+      "readRequest",
+      JSON.stringify({
+        framework_id: id,
+        bundle_sha256: selection.native_source.bundle_sha256,
+      }),
+    ) as unknown as NativeRequest;
+    return decodeNativeCatalog(raw, request, signal);
+  }
+  if (id === "au-ism" || id === "cisa-scuba") throw new NativeCatalogError();
+  signal?.throwIfAborted();
+  return selection;
+}
+
+async function getCatalogNative(
+  selection: NativeRequest,
+  signal?: AbortSignal,
+): Promise<NativeBundle> {
+  const values = nativeOwnData(selection, ["framework_id", "bundle_sha256"]);
+  const request = decodeNativeSurface(
+    "readRequest",
+    JSON.stringify(values),
+  ) as unknown as NativeRequest;
+  signal?.throwIfAborted();
+  const response = await fetch(
+    "/api/frameworks/" +
+      encodeURIComponent(request.framework_id) +
+      "/native-source?bundle_sha256=" +
+      request.bundle_sha256,
+    { signal, headers: { Accept: "application/json" } },
+  );
+  return decodeNativeBundle(
+    await nativeCatalogResponse(response, signal),
+    request,
+    signal,
+  );
+}
+
+async function importNativeCatalog(
+  payload: CatalogNativeExternalImportRequest,
+  signal?: AbortSignal,
+): Promise<CatalogNativeImportResult> {
+  const values = nativeOwnData(payload, ["profile", "documents"]);
+  const docs = values.documents;
+  if (
+    !Array.isArray(docs) ||
+    Object.getPrototypeOf(docs) !== Array.prototype ||
+    docs.length !== 3 ||
+    Reflect.ownKeys(docs).length !== 4
+  )
+    throw new NativeCatalogError();
+  const descriptors = Object.getOwnPropertyDescriptors(docs);
+  const documents = [0, 1, 2].map((index) => {
+    const descriptor = descriptors[String(index)];
+    if (!descriptor || !("value" in descriptor)) throw new NativeCatalogError();
+    return nativeOwnData(descriptor.value, ["source_key", "raw_utf8"]);
+  });
+  const snapshot = decodeNativeSurface(
+    "importRequest",
+    JSON.stringify({ profile: values.profile, documents }),
+  );
+  const body = JSON.stringify(snapshot);
+  if (new TextEncoder().encode(body).byteLength > 16_777_216)
+    throw new NativeCatalogError();
+  signal?.throwIfAborted();
+  const response = await fetch("/api/catalog/import-native", {
+    method: "POST",
+    signal,
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body,
+  });
+  const result = decodeNativeSurface(
+    "importResult",
+    await nativeCatalogResponse(response, signal),
+  ) as unknown as CatalogNativeImportResult;
+  signal?.throwIfAborted();
+  return result;
+}
+
+function nativeOwnData(
+  value: unknown,
+  keys: string[],
+): Record<string, unknown> {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+  )
+    throw new NativeCatalogError();
+  const names = Reflect.ownKeys(value);
+  if (
+    names.length !== keys.length ||
+    names.some((name) => typeof name !== "string" || !keys.includes(name))
+  )
+    throw new NativeCatalogError();
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  const captured: Record<string, unknown> = {};
+  for (const name of keys) {
+    const descriptor = descriptors[name];
+    if (!descriptor || !("value" in descriptor)) throw new NativeCatalogError();
+    if (name !== "documents" && typeof descriptor.value !== "string")
+      throw new NativeCatalogError();
+    captured[name] = descriptor.value;
+  }
+  return captured;
 }
 
 export interface FrameworkListEntry {
@@ -728,8 +905,9 @@ const realApi = {
       `/api/frameworks${qs ? `?${qs}` : ""}`,
     );
   },
-  getFramework: (id: string) =>
-    request<ControlCatalog>(`/api/frameworks/${encodeURIComponent(id)}`),
+  getFramework: getFrameworkCatalog,
+  getCatalogNative,
+  importNativeCatalog,
   getControl: (frameworkId: string, controlId: string) =>
     request<CatalogControl>(
       `/api/frameworks/${encodeURIComponent(frameworkId)}/controls/${encodeURIComponent(
@@ -1570,6 +1748,20 @@ const realApi = {
  */
 export const api = IS_DEMO
   ? Object.assign(demoApi, {
+      getCatalogNative: async (
+        _request: NativeRequest,
+        _signal?: AbortSignal,
+      ): Promise<NativeBundle> => {
+        throw new Error(
+          "Native catalog downloads are unavailable in the demo.",
+        );
+      },
+      importNativeCatalog: async (
+        _payload: CatalogNativeExternalImportRequest,
+        _signal?: AbortSignal,
+      ): Promise<CatalogNativeImportResult> => {
+        throw new Error("Native catalog import is unavailable in the demo.");
+      },
       collectStorageRetention: (_body: StorageRetentionCollectRequest) =>
         Promise.resolve().then(() => {
           const result = storageRetentionDemoResult();

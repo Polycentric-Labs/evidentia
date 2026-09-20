@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia ships **106** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
+Evidentia ships **107** framework catalogs in-tree. The **Tier** is the redistribution posture: what you may redistribute, and whether the control text is licensed. The **Text** column is the derived text depth: `full` means every non-withdrawn control carries statement text distinct from its title, `partial` means some do, and `headings` means none do, so the catalog carries control numbering and titles only. Use `evidentia catalog list` to enumerate them at runtime.
 
 ## Tiers
 
@@ -20,9 +20,9 @@ Catalogs grouped by their derived text depth:
 
 | Text depth | Catalogs |
 | --- | --- |
-| full | 34 |
+| full | 36 |
 | partial | 0 |
-| headings | 72 |
+| headings | 71 |
 
 ## US Federal (49)
 
@@ -83,7 +83,7 @@ Catalogs grouped by their derived text depth:
 | ID | Name | Version | Tier | Text | Category |
 | --- | --- | --- | --- | --- | --- |
 | `au-essential-8` | Australian Essential Eight | Nov 2023 | A | headings | control |
-| `au-ism` | Australian Information Security Manual | September 2024 | A | headings | control |
+| `au-ism` | Information security manual | 2026.09.4 | A | full | control |
 | `canada-itsg-33` | Canada ITSG-33: IT Security Risk Management: A Lifecycle Approach | December 2014 (current) | A | headings | control |
 | `canada-pipeda` | Canada PIPEDA: Personal Information Protection and Electronic Documents Act | S.C. 2000, c. 5 (current) | D | full | obligation |
 | `eu-ai-act` | EU AI Act (Regulation 2024/1689) | 2024/1689; application dates amended by 2026/1744 | A | full | control |
@@ -154,4 +154,10 @@ Catalogs grouped by their derived text depth:
 | `soc2-tsc` | SOC 2 Trust Services Criteria (stub) | 2017 (with 2022 Points of Focus revisions) | C | headings | control |
 | `swift-cscf-2024` | SWIFT Customer Security Controls Framework (CSCF) v2024 | v2024 | C | headings | control |
 | `swift-cscf-2026` | Swift Customer Security Controls Framework (CSCF) v2026 | v2026 (1 July 2025) | C | headings | control |
+
+## cisa (1)
+
+| ID | Name | Version | Tier | Text | Category |
+| --- | --- | --- | --- | --- | --- |
+| `cisa-scuba` | CISA M365 Secure Configuration Baselines | 7ef9501d7de9804ddb9d6013af6b665cccfb39d9 | A | full | control |
 

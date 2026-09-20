@@ -1,0 +1,5 @@
+Australian ISM 2026.09.4 is retained as an exact pinned source snapshot.
+Publisher attribution and licensing context remain in the source README.
+The 1,143 controls are indexed; 49 principles remain native context.
+The 24 former heading identifiers are retired without automatic replacements.
+Select current controls explicitly. Existing evidence is not rewritten.

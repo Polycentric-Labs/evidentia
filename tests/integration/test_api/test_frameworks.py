@@ -167,3 +167,78 @@ def test_bundled_source_rows_survive_full_http_responses(
     assert json.dumps(detail.json()["source_rows"], sort_keys=True) == json.dumps(
         expected[selected_control], sort_keys=True
     )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "",
+        "?bundle_sha256=bad",
+        "?bundle_sha256=" + "0" * 64 + "&extra=1",
+        "?bundle_sha256=" + "0" * 64 + "&bundle_sha256=" + "0" * 64,
+    ],
+)
+def test_native_source_rejects_invalid_selection_before_loading(api_client, monkeypatch, query):
+    from evidentia_core.catalogs.registry import FrameworkRegistry
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Invalid selection reached catalog loading")
+
+    monkeypatch.setattr(FrameworkRegistry, "get_catalog", forbidden)
+    response = api_client.get("/api/frameworks/cisa-scuba/native-source" + query)
+    assert response.status_code == 422
+    assert response.json() == {"code": "native_source_invalid"}
+
+
+def test_native_source_http_retains_complete_bundle_and_exact_generation(api_client, monkeypatch, tmp_path):
+    from evidentia_core.catalogs.registry import FrameworkRegistry
+
+    monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "catalogs"))
+    catalog = FrameworkRegistry.get_instance().get_catalog("cisa-scuba")
+    bundle = catalog.native_source
+    assert bundle is not None
+    expected = bundle.model_dump(mode="json")
+    response = api_client.get(
+        "/api/frameworks/cisa-scuba/native-source", params={"bundle_sha256": bundle.bundle_sha256}
+    )
+    assert response.status_code == 200, response.text[:200]
+    assert response.json() == expected
+    full = api_client.get("/api/frameworks/cisa-scuba")
+    assert full.status_code == 200
+    assert full.json()["native_source"] == expected
+    control = next(item for item in catalog.controls if item.native_source_ref is not None)
+    selected = api_client.get("/api/frameworks/cisa-scuba/controls/" + control.id)
+    assert selected.status_code == 200
+    assert selected.json()["native_source_ref"] == control.native_source_ref.model_dump(mode="json")
+    assert "native_source" not in selected.json()
+    stale = api_client.get("/api/frameworks/cisa-scuba/native-source", params={"bundle_sha256": "0" * 64})
+    assert stale.status_code == 409
+    assert stale.json() == {"code": "catalog_generation_changed"}
+
+
+@pytest.mark.parametrize(
+    "error,status,code",
+    [
+        (OSError("synthetic-private-path"), 503, "native_source_unavailable"),
+        (FileNotFoundError("synthetic-private-path"), 404, "native_source_unavailable"),
+    ],
+)
+def test_native_source_read_error_has_no_host_detail(api_client, monkeypatch, error, status, code):
+    from evidentia_core.catalogs.registry import FrameworkRegistry
+
+    def fail(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(FrameworkRegistry, "get_catalog", fail)
+    response = api_client.get("/api/frameworks/cisa-scuba/native-source", params={"bundle_sha256": "0" * 64})
+    assert response.status_code == status
+    assert response.json() == {"code": code}
+
+
+def test_native_source_schema_requires_exact_bundle_digest(api_client):
+    schema = api_client.get("/api/openapi.json").json()
+    operation = schema["paths"]["/api/frameworks/{framework_id}/native-source"]["get"]
+    query = next(item for item in operation["parameters"] if item["name"] == "bundle_sha256")
+    assert query["required"] is True
+    assert query["schema"]["pattern"] == "^[0-9a-f]{64}$"
+    assert set(operation["responses"]) >= {"200", "404", "409", "422", "503"}

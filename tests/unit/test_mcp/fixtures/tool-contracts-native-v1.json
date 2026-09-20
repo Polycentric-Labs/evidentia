@@ -1,0 +1,625 @@
+{
+  "schema_version": "catalog-native-tool-contract-v1",
+  "tools": [
+    {
+      "name": "get_catalog_native",
+      "description": "Return the exact source bundle for the requested catalog generation.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "framework_id": {
+            "type": "string",
+            "enum": [
+              "au-ism",
+              "cisa-scuba",
+              "bsi-grundschutz-plus-plus"
+            ],
+            "title": "Framework Id"
+          },
+          "bundle_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Bundle Sha256"
+          }
+        },
+        "required": [
+          "framework_id",
+          "bundle_sha256"
+        ],
+        "title": "get_catalog_nativeArguments"
+      },
+      "outputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "bundle_sha256",
+          "data"
+        ],
+        "properties": {
+          "bundle_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Bundle Sha256"
+          },
+          "data": {
+            "$ref": "#/$defs/CatalogNativeNativeData"
+          }
+        },
+        "description": "Closed NativeBundle value.",
+        "title": "CatalogNativeNativeBundle",
+        "$defs": {
+          "CatalogNativeSourceBinding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_key",
+              "role",
+              "media_type",
+              "repository",
+              "commit",
+              "upstream_path",
+              "raw_bytes",
+              "raw_sha256"
+            ],
+            "properties": {
+              "source_key": {
+                "type": "string",
+                "maxLength": 64,
+                "title": "Source Key"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "authoritative",
+                  "reference",
+                  "license",
+                  "publication_context"
+                ],
+                "title": "Role"
+              },
+              "media_type": {
+                "type": "string",
+                "enum": [
+                  "application/json",
+                  "text/markdown",
+                  "text/plain"
+                ],
+                "title": "Media Type"
+              },
+              "repository": {
+                "type": "string",
+                "maxLength": 256,
+                "title": "Repository"
+              },
+              "commit": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$",
+                "title": "Commit"
+              },
+              "upstream_path": {
+                "type": "string",
+                "maxLength": 1024,
+                "title": "Upstream Path"
+              },
+              "raw_bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8388608,
+                "title": "Raw Bytes"
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$",
+                "title": "Raw Sha256"
+              }
+            },
+            "description": "Closed SourceBinding value.",
+            "title": "CatalogNativeSourceBinding"
+          },
+          "CatalogNativeSourceDocument": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "binding",
+              "raw_utf8"
+            ],
+            "properties": {
+              "binding": {
+                "$ref": "#/$defs/CatalogNativeSourceBinding"
+              },
+              "raw_utf8": {
+                "type": "string",
+                "maxLength": 8388608,
+                "title": "Raw Utf8"
+              }
+            },
+            "description": "Closed SourceDocument value.",
+            "title": "CatalogNativeSourceDocument"
+          },
+          "CatalogNativeValueRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "document_index",
+              "byte_start",
+              "byte_end",
+              "kind",
+              "sha256"
+            ],
+            "properties": {
+              "document_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15,
+                "title": "Document Index"
+              },
+              "byte_start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8388608,
+                "title": "Byte Start"
+              },
+              "byte_end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8388608,
+                "title": "Byte End"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "json_object",
+                  "json_array",
+                  "json_string",
+                  "json_number",
+                  "json_boolean",
+                  "json_null",
+                  "markdown_block",
+                  "utf8_text"
+                ],
+                "title": "Kind"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$",
+                "title": "Sha256"
+              }
+            },
+            "description": "Closed ValueRef value.",
+            "title": "CatalogNativeValueRef"
+          },
+          "CatalogNativeFieldRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "key",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1024,
+                "title": "Name"
+              },
+              "key": {
+                "$ref": "#/$defs/CatalogNativeValueRef"
+              },
+              "value": {
+                "$ref": "#/$defs/CatalogNativeValueRef"
+              }
+            },
+            "description": "Closed FieldRef value.",
+            "title": "CatalogNativeFieldRef"
+          },
+          "CatalogNativeAbsentSelection": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "const": "absent",
+                "type": "string",
+                "title": "State"
+              }
+            },
+            "description": "Closed AbsentSelection value.",
+            "title": "CatalogNativeAbsentSelection"
+          },
+          "CatalogNativeNullSelection": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "state",
+              "refs"
+            ],
+            "properties": {
+              "state": {
+                "const": "native_null",
+                "type": "string",
+                "title": "State"
+              },
+              "refs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeValueRef"
+                },
+                "minItems": 1,
+                "maxItems": 1,
+                "title": "Refs"
+              }
+            },
+            "description": "Closed NullSelection value.",
+            "title": "CatalogNativeNullSelection"
+          },
+          "CatalogNativePresentSelection": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "state",
+              "refs"
+            ],
+            "properties": {
+              "state": {
+                "const": "present",
+                "type": "string",
+                "title": "State"
+              },
+              "refs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeValueRef"
+                },
+                "minItems": 1,
+                "maxItems": 256,
+                "title": "Refs"
+              }
+            },
+            "description": "Closed PresentSelection value.",
+            "title": "CatalogNativePresentSelection"
+          },
+          "CatalogNativeSemanticSelection": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "value"
+            ],
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "native_id",
+                  "title",
+                  "class",
+                  "statement",
+                  "guidance",
+                  "parameter",
+                  "applicability",
+                  "essential_eight_applicability",
+                  "rationale",
+                  "note",
+                  "last_modified",
+                  "implementation",
+                  "criticality",
+                  "criticality_identity",
+                  "resources",
+                  "license_requirements",
+                  "badge",
+                  "nist_mapping",
+                  "mitre_mapping",
+                  "status",
+                  "publication_time",
+                  "native_version",
+                  "schema_version",
+                  "reference_record"
+                ],
+                "title": "Role"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CatalogNativeAbsentSelection"
+                  },
+                  {
+                    "$ref": "#/$defs/CatalogNativeNullSelection"
+                  },
+                  {
+                    "$ref": "#/$defs/CatalogNativePresentSelection"
+                  }
+                ],
+                "title": "Value"
+              }
+            },
+            "description": "Closed SemanticSelection value.",
+            "title": "CatalogNativeSemanticSelection"
+          },
+          "CatalogNativeOccurrence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "index",
+              "kind",
+              "parent_index",
+              "sibling_ordinal",
+              "source",
+              "fields",
+              "selections"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4095,
+                "title": "Index"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "catalog",
+                  "metadata",
+                  "group",
+                  "control",
+                  "principle",
+                  "section",
+                  "policy",
+                  "reference_policy",
+                  "context_block"
+                ],
+                "title": "Kind"
+              },
+              "parent_index": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4095
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Parent Index"
+              },
+              "sibling_ordinal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4095,
+                "title": "Sibling Ordinal"
+              },
+              "source": {
+                "$ref": "#/$defs/CatalogNativeValueRef"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeFieldRef"
+                },
+                "maxItems": 64,
+                "title": "Fields"
+              },
+              "selections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeSemanticSelection"
+                },
+                "maxItems": 32,
+                "title": "Selections"
+              }
+            },
+            "description": "Closed Occurrence value.",
+            "title": "CatalogNativeOccurrence"
+          },
+          "CatalogNativeControlBinding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "control_id",
+              "occurrence_index",
+              "family_occurrence_index",
+              "parent_control_id",
+              "admitted_criticality"
+            ],
+            "properties": {
+              "control_id": {
+                "type": "string",
+                "maxLength": 128,
+                "title": "Control Id"
+              },
+              "occurrence_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4095,
+                "title": "Occurrence Index"
+              },
+              "family_occurrence_index": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4095
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Family Occurrence Index"
+              },
+              "parent_control_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Parent Control Id"
+              },
+              "admitted_criticality": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "SHALL",
+                      "SHOULD"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Admitted Criticality"
+              }
+            },
+            "description": "Closed ControlBinding value.",
+            "title": "CatalogNativeControlBinding"
+          },
+          "CatalogNativeDiagnostic": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "occurrence_index",
+              "refs"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "source_identity_conflict",
+                  "missing_reference_record",
+                  "source_reference_difference",
+                  "legacy_ids_retired"
+                ],
+                "title": "Code"
+              },
+              "occurrence_index": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4095
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Occurrence Index"
+              },
+              "refs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeValueRef"
+                },
+                "maxItems": 8,
+                "title": "Refs"
+              }
+            },
+            "description": "Closed Diagnostic value.",
+            "title": "CatalogNativeDiagnostic"
+          },
+          "CatalogNativeNativeData": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "schema_version",
+              "profile",
+              "catalog_id",
+              "converter_id",
+              "converter_sha256",
+              "documents",
+              "occurrences",
+              "control_bindings",
+              "context_indices",
+              "diagnostics"
+            ],
+            "properties": {
+              "schema_version": {
+                "const": "catalog-native-v1",
+                "type": "string",
+                "title": "Schema Version"
+              },
+              "profile": {
+                "type": "string",
+                "enum": [
+                  "au-ism-2026.09.4",
+                  "cisa-scuba-m365-7ef9501d",
+                  "bsi-grundschutz-plus-plus-367d7750"
+                ],
+                "title": "Profile"
+              },
+              "catalog_id": {
+                "type": "string",
+                "enum": [
+                  "au-ism",
+                  "cisa-scuba",
+                  "bsi-grundschutz-plus-plus"
+                ],
+                "title": "Catalog Id"
+              },
+              "converter_id": {
+                "const": "evidentia-open-corpora-v1",
+                "type": "string",
+                "title": "Converter Id"
+              },
+              "converter_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$",
+                "title": "Converter Sha256"
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeSourceDocument"
+                },
+                "maxItems": 16,
+                "title": "Documents"
+              },
+              "occurrences": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeOccurrence"
+                },
+                "maxItems": 4096,
+                "title": "Occurrences"
+              },
+              "control_bindings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeControlBinding"
+                },
+                "maxItems": 2048,
+                "title": "Control Bindings"
+              },
+              "context_indices": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4095
+                },
+                "maxItems": 1024,
+                "title": "Context Indices"
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CatalogNativeDiagnostic"
+                },
+                "maxItems": 512,
+                "title": "Diagnostics"
+              }
+            },
+            "description": "Closed NativeData value.",
+            "title": "CatalogNativeNativeData"
+          }
+        }
+      }
+    }
+  ]
+}

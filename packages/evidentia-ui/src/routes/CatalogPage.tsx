@@ -1,5 +1,11 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +28,13 @@ import {
   type CatalogImportPayload,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { IS_DEMO } from "@/lib/demo";
+import {
+  decodeNativeSurface,
+  type CatalogNativeExternalImportRequest,
+  type CatalogNativeImportResult,
+  type CatalogNativeCatalogStorageErrorEnvelope,
+} from "@/lib/catalog-native";
 
 /**
  * Catalog management console (`/catalog`).
@@ -73,14 +86,21 @@ function errorMessage(error: unknown): string {
 }
 
 export function CatalogPage() {
+  const health = useQuery({
+    queryKey: ["health"],
+    queryFn: () => api.health(),
+    enabled: !IS_DEMO,
+  });
+  const authGeneration =
+    health.status + ":" + health.dataUpdatedAt + ":" + health.errorUpdatedAt;
   return (
     <div className="stack-6">
       <header>
         <h1 className="page-title">Catalog</h1>
         <p className="page-sub">
-          Manage the control-catalog store: cross-walk mappings, resolve where
-          a framework comes from, inspect license terms, and import or remove
-          user catalogs.
+          Manage the control-catalog store: cross-walk mappings, resolve where a
+          framework comes from, inspect license terms, and import or remove user
+          catalogs.
         </p>
       </header>
 
@@ -88,8 +108,271 @@ export function CatalogPage() {
       <WhereSection />
       <LicenseInfoSection />
       <ImportSection />
+      <NativeImportSection
+        authGeneration={authGeneration}
+        accessReady={health.isSuccess}
+        authConfigured={health.data?.auth_configured}
+      />
       <RemoveSection />
     </div>
+  );
+}
+
+const NATIVE_FILES = [
+  ["bsi-catalog", "Grundschutz++-resolved_catalog.json"],
+  ["bsi-license", "LICENSE"],
+  ["bsi-readme", "README.md"],
+] as const;
+
+export function NativeImportSection({
+  authGeneration,
+  accessReady,
+  authConfigured,
+}: {
+  authGeneration: string;
+  accessReady: boolean;
+  authConfigured: boolean | undefined;
+}) {
+  const queries = useQueryClient();
+  const [files, setFiles] = useState<
+    Partial<Record<(typeof NATIVE_FILES)[number][0], File>>
+  >({});
+  const [confirmed, setConfirmed] = useState(false);
+  const [pendingFor, setPending] = useState<string | null>(null);
+  const pending = pendingFor === authGeneration;
+  const [error, setError] = useState<string | null>(null);
+  const [publication, setPublication] =
+    useState<CatalogNativeCatalogStorageErrorEnvelope | null>(null);
+  const [lastGood, setLastGood] = useState<CatalogNativeImportResult | null>(
+    null,
+  );
+  const operation = useRef<AbortController | null>(null);
+  const postStarted = useRef(false);
+  const generation = useRef(0);
+  const currentAuth = useRef(authGeneration);
+  const invalidate = useCallback(() => {
+    if (postStarted.current)
+      setError(
+        "The request was canceled after submission. The server may have committed it. Check the catalog before retrying.",
+      );
+    postStarted.current = false;
+    operation.current?.abort();
+    operation.current = null;
+    ++generation.current;
+    setPending(null);
+  }, []);
+  useLayoutEffect(() => {
+    const activeOperation = operation;
+    const sequence = generation;
+    currentAuth.current = authGeneration;
+    activeOperation.current?.abort();
+    activeOperation.current = null;
+    ++sequence.current;
+    return () => {
+      activeOperation.current?.abort();
+      activeOperation.current = null;
+      ++sequence.current;
+    };
+  }, [authGeneration]);
+  useEffect(() => {
+    const changed = () => invalidate();
+    window.addEventListener("focus", changed);
+    window.addEventListener("storage", changed);
+    return () => {
+      window.removeEventListener("focus", changed);
+      window.removeEventListener("storage", changed);
+    };
+  }, [invalidate]);
+
+  const submit = async () => {
+    if (IS_DEMO || !accessReady || !confirmed || operation.current) return;
+    const selected = NATIVE_FILES.map(([key, name]) => ({
+      key,
+      name,
+      file: files[key],
+    }));
+    if (
+      selected.some(({ file, name }) => !file || file.name !== name) ||
+      selected.reduce((n, row) => n + (row.file?.size ?? 0), 0) > 8_388_608
+    ) {
+      setError(
+        "Select the three exact source files, totaling no more than 8 MiB.",
+      );
+      return;
+    }
+    const controller = new AbortController();
+    operation.current = controller;
+    const ticket = ++generation.current;
+    const auth = authGeneration;
+    const current = () =>
+      operation.current === controller &&
+      generation.current === ticket &&
+      currentAuth.current === auth &&
+      !controller.signal.aborted;
+    setPending(authGeneration);
+    setError(null);
+    setPublication(null);
+    try {
+      const health = await api.health();
+      if (!current()) return;
+      if (health.auth_configured !== authConfigured)
+        throw new Error("access changed");
+      const documents: CatalogNativeExternalImportRequest["documents"] = [];
+      let bytes = 0;
+      for (const { key, file } of selected) {
+        if (!current()) return;
+        const raw = new Uint8Array(await file!.arrayBuffer());
+        if (!current()) return;
+        bytes += raw.byteLength;
+        if (raw.byteLength !== file!.size || bytes > 8_388_608)
+          throw new Error("source limit");
+        documents.push({
+          source_key: key,
+          raw_utf8: new TextDecoder("utf-8", {
+            fatal: true,
+            ignoreBOM: true,
+          }).decode(raw),
+        });
+      }
+      const payload = decodeNativeSurface(
+        "importRequest",
+        JSON.stringify({
+          profile: "bsi-grundschutz-plus-plus-367d7750",
+          documents,
+        }),
+      ) as unknown as CatalogNativeExternalImportRequest;
+      if (!current()) return;
+      postStarted.current = true;
+      const result = await api.importNativeCatalog(payload, controller.signal);
+      if (!current()) return;
+      const accepted = decodeNativeSurface(
+        "importResult",
+        JSON.stringify(result),
+      ) as unknown as CatalogNativeImportResult;
+      setLastGood(accepted);
+      void queries.invalidateQueries({ queryKey: ["frameworks"] });
+    } catch (failure) {
+      if (!current()) return;
+      if (failure instanceof ApiError && failure.payload) {
+        try {
+          setPublication(
+            decodeNativeSurface(
+              "storageError",
+              JSON.stringify(failure.payload),
+            ) as unknown as CatalogNativeCatalogStorageErrorEnvelope,
+          );
+        } catch {
+          /* A non-storage refusal has no publication claim. */
+        }
+      }
+      setError(
+        "Native import was not confirmed. Review API access, the selected files, and any publication state below before retrying.",
+      );
+    } finally {
+      if (current()) {
+        postStarted.current = false;
+        operation.current = null;
+        setPending(null);
+      }
+    }
+  };
+  return (
+    <section className="stack-3" aria-label="Native BSI import">
+      <h2 className="section-num">Native BSI source</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>Import the pinned BSI catalog</CardTitle>
+          <CardDescription>
+            Select your own catalog, license, and README from the reviewed
+            Grundschutz++ revision 367d7750. Files are sent to your Evidentia
+            server only when you submit. This form does not download source or
+            accept license terms for you.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="stack-3">
+          {IS_DEMO && <p>Native source import is unavailable in the demo.</p>}
+          <p>
+            Cancellation after submission does not undo a server commit. Check
+            the catalog before retrying an interrupted import.
+          </p>
+          {NATIVE_FILES.map(([key, name]) => (
+            <div key={key} className="stack-2">
+              <Label htmlFor={key}>{name}</Label>
+              <Input
+                id={key}
+                type="file"
+                disabled={IS_DEMO}
+                onChange={(event) => {
+                  invalidate();
+                  setError(null);
+                  setPublication(null);
+                  setFiles((prior) => ({
+                    ...prior,
+                    [key]: event.target.files?.[0],
+                  }));
+                }}
+              />
+            </div>
+          ))}
+          <Label>
+            <input
+              type="checkbox"
+              checked={confirmed}
+              disabled={IS_DEMO}
+              onChange={(event) => {
+                invalidate();
+                setConfirmed(event.target.checked);
+              }}
+            />{" "}
+            I have reviewed these files and want to send them to this server.
+          </Label>
+          <div className="row gap-2">
+            <Button
+              disabled={
+                IS_DEMO ||
+                !accessReady ||
+                !confirmed ||
+                pending ||
+                NATIVE_FILES.some(([key]) => !files[key])
+              }
+              onClick={() => void submit()}
+            >
+              {pending
+                ? "Importing native source..."
+                : "Import native BSI source"}
+            </Button>
+            <Button variant="outline" disabled={!pending} onClick={invalidate}>
+              Cancel native import
+            </Button>
+          </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Import not confirmed</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {publication && (
+            <div role="status">
+              <p>
+                Publication state: {publication.publication.publication_state}
+              </p>
+              <pre>{JSON.stringify(publication, null, 2)}</pre>
+            </div>
+          )}
+          {lastGood && (
+            <div role="status">
+              <p>
+                Last confirmed import: {lastGood.status}.{" "}
+                {lastGood.control_count} controls.
+              </p>
+              <p>
+                Bundle SHA-256: <code>{lastGood.bundle_sha256}</code>
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
@@ -185,13 +468,13 @@ function CrosswalkSection() {
           {mutation.isError && (
             <Alert variant="destructive" className="mt-4">
               <AlertTitle>Could not resolve crosswalk</AlertTitle>
-              <AlertDescription>{errorMessage(mutation.error)}</AlertDescription>
+              <AlertDescription>
+                {errorMessage(mutation.error)}
+              </AlertDescription>
             </Alert>
           )}
 
-          {mutation.isSuccess && (
-            <CrosswalkResult result={mutation.data} />
-          )}
+          {mutation.isSuccess && <CrosswalkResult result={mutation.data} />}
         </CardContent>
       </Card>
     </section>
@@ -223,7 +506,10 @@ function CrosswalkResult({ result }: { result: CatalogCrosswalkResponse }) {
           <li key={idx} className="reset">
             <Card>
               <CardContent className="text-xs" style={{ padding: "0.75rem" }}>
-                <pre className="mono" style={{ whiteSpace: "pre-wrap", margin: 0 }}>
+                <pre
+                  className="mono"
+                  style={{ whiteSpace: "pre-wrap", margin: 0 }}
+                >
                   {JSON.stringify(mapping, null, 2)}
                 </pre>
               </CardContent>
@@ -263,7 +549,9 @@ function WhereSection() {
       <h2 className="section-num">Where</h2>
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="base">Resolve where a framework lives</CardTitle>
+          <CardTitle className="base">
+            Resolve where a framework lives
+          </CardTitle>
           <CardDescription>
             Show the source (bundled vs user import), on-disk path, whether the
             catalog is shadowed, and its tier.
@@ -296,7 +584,9 @@ function WhereSection() {
           {mutation.isError && (
             <Alert variant="destructive" className="mt-4">
               <AlertTitle>Could not resolve framework</AlertTitle>
-              <AlertDescription>{errorMessage(mutation.error)}</AlertDescription>
+              <AlertDescription>
+                {errorMessage(mutation.error)}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -402,7 +692,9 @@ function LicenseInfoSection() {
           {mutation.isError && (
             <Alert variant="destructive" className="mt-4">
               <AlertTitle>Could not load license info</AlertTitle>
-              <AlertDescription>{errorMessage(mutation.error)}</AlertDescription>
+              <AlertDescription>
+                {errorMessage(mutation.error)}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -613,7 +905,9 @@ function ImportSection() {
                   ? "Import rejected (400)"
                   : "Could not import catalog"}
               </AlertTitle>
-              <AlertDescription>{errorMessage(mutation.error)}</AlertDescription>
+              <AlertDescription>
+                {errorMessage(mutation.error)}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -727,9 +1021,7 @@ function RemoveSection() {
           {mutation.isSuccess && (
             <Alert className="mt-4">
               <AlertTitle>Catalog removed</AlertTitle>
-              <AlertDescription>
-                The user import was deleted.
-              </AlertDescription>
+              <AlertDescription>The user import was deleted.</AlertDescription>
             </Alert>
           )}
         </CardContent>

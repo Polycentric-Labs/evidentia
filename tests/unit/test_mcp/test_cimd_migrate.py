@@ -223,3 +223,26 @@ class TestCIMDMigrate:
         # No .tmp file left in the directory.
         tmp_files = list(registry_file.parent.glob("*.tmp"))
         assert tmp_files == []
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_f3_native_scope_is_only_an_explicit_operator_grant(runner, registry_file, explicit) -> None:
+    before = json.loads(registry_file.read_text(encoding="utf-8"))
+    command = ["mcp", "cimd-migrate", str(registry_file)]
+    if explicit:
+        command += ["--tools", "get_catalog_native"]
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0, result.output
+    after = json.loads(registry_file.read_text(encoding="utf-8"))
+    expected = (
+        {"get_catalog_native"}
+        if explicit
+        else {"conmon_list_cadences", "conmon_next_due", "conmon_check_state", "conmon_health", "conmon_series"}
+    )
+    for identity, original in before["clients"].items():
+        current = after["clients"][identity]
+        assert set(current["scope"].split()) == set(original["scope"].split()) | expected
+        assert ("get_catalog_native" in current["scope"].split()) is explicit
+        assert {key: value for key, value in current.items() if key != "scope"} == {
+            key: value for key, value in original.items() if key != "scope"
+        }

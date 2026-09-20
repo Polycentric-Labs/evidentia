@@ -109,6 +109,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import re
@@ -207,6 +208,83 @@ CROSS_LINK_FILE_ALLOWLIST_GLOBS: list[str] = [
     "CHANGELOG.md",
     "docs/releases/reviews/security-review-v[0-9]*.md",
 ]
+
+
+# These relocated publisher documents retain their original README links.
+# Apply upstream context only to the exact reviewed bytes, line and target.
+# Changed bytes fail; other links and all other documentation checks still run.
+PINNED_SOURCE_LINK_CONTEXTS: dict[str, tuple[str, int, str, str]] = {
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/aad.md"
+    ): (
+        "ea0fe8dec93fa85ce580280b326b955c11aeb5fa24a18e840186bff05f58c415",
+        37,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/defender.md"
+    ): (
+        "5718b800e9c99ac73f0196a2665ba563e36bfe0236aaf6a54a0eccbcf97f402e",
+        38,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/exo.md"
+    ): (
+        "de6fd5151958383ecaae4f8a0d1092d5bb6d6d885d21afc8f13221dd775d80c1",
+        56,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/powerplatform.md"
+    ): (
+        "e87a2d553aa0390dcce5d9e7d4a69e1cd898080cd5cf1c519e8e72e2a1cc98e5",
+        67,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/securitysuite.md"
+    ): (
+        "55623da97cb70fbee74c0405639d14150c118e7f1446b10c4477b2b3efaf9bbf",
+        64,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/sharepoint.md"
+    ): (
+        "7ea2f414156f2d367924f8a8d5b2267cfd39a679ae65bbfbc2327cafaac2cb10",
+        26,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+    (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/"
+        "cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/teams.md"
+    ): (
+        "0b7d56dfea2f579face7fa94371f88a038c5e4cc7d795d6c3195c5a46dab2d6a",
+        59,
+        "../../../README.md#quick-start-guide",
+        "https://github.com/cisagov/ScubaGear/blob/"
+        "7ef9501d7de9804ddb9d6013af6b665cccfb39d9/README.md#quick-start-guide",
+    ),
+}
 
 
 @dataclass
@@ -479,6 +557,25 @@ def is_in_code_block(pos: int, ranges: list[tuple[int, int]]) -> bool:
     return any(start <= pos < end for start, end in ranges)
 
 
+def _pinned_source_link_context(path: Path, raw: bytes, result: CheckResult) -> tuple[int, str, str] | None:
+    context = PINNED_SOURCE_LINK_CONTEXTS.get(path.as_posix())
+    if context is None:
+        return None
+    expected, line, target, upstream = context
+    if hashlib.sha256(raw).hexdigest() != expected:
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "source_link_context",
+                path.as_posix(),
+                None,
+                "Pinned publisher bytes changed; upstream link context does not apply.",
+            )
+        )
+        return None
+    return line, target, upstream
+
+
 def check_cross_link_resolve(
     md_paths: list[Path],
     all_tracked: set[Path],
@@ -489,9 +586,11 @@ def check_cross_link_resolve(
         if matches_allowlist(path, CROSS_LINK_FILE_ALLOWLIST_GLOBS):
             continue
         try:
-            content = path.read_text(encoding="utf-8")
+            raw = path.read_bytes()
+            content = raw.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
         except (UnicodeDecodeError, OSError):
             continue
+        source_context = _pinned_source_link_context(path, raw, result)
         code_ranges = find_code_block_ranges(content)
         line_allow = CROSS_LINK_LINE_ALLOWLIST.get(path.as_posix(), set())
         for match in link_re.finditer(content):
@@ -501,6 +600,8 @@ def check_cross_link_resolve(
             if line in line_allow:
                 continue
             target = match.group(2).strip()
+            if source_context is not None and (line, target) == source_context[:2]:
+                target = source_context[2]
             if target.startswith(("http://", "https://", "mailto:", "ftp://", "#")):
                 continue
             target = target.split("#", 1)[0].rstrip("/")

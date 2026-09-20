@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia's [Model Context Protocol](https://modelcontextprotocol.io/) server exposes **14 tools** to MCP-aware AI clients (Claude Desktop, Claude Code, ChatGPT Desktop, custom clients). Tools are listed in registration order.
+Evidentia's [Model Context Protocol](https://modelcontextprotocol.io/) server exposes **15 tools** to MCP-aware AI clients (Claude Desktop, Claude Code, ChatGPT Desktop, custom clients). Tools are listed in registration order.
 
 > **Append-only contract.** Per [`docs/api-stability.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/api-stability.md) (NORMATIVE), the MCP tool surface is **append-only** within a major version: new tools may be added, but existing tool names, parameters, and return shapes are not removed or changed incompatibly before the next major release.
 
@@ -119,5 +119,13 @@ Verify an OSCAL Assessment Result file's signatures + digests.
 
 ```python
 verify_signed_artifact(ar_path: str, require_signature: bool = True, expected_sigstore_identity: str | None = None, expected_sigstore_issuer: str | None = None, verify_key_path: str | None = None, dsse_bundle_path: str | None = None) -> dict[str, Any]
+```
+
+### `get_catalog_native`
+
+Return the exact source bundle for the requested catalog generation.
+
+```python
+get_catalog_native(framework_id: Literal['au-ism', 'cisa-scuba', 'bsi-grundschutz-plus-plus'], bundle_sha256: Annotated[str, Field(pattern='^[0-9a-f]{64}$')]) -> Annotated[CallToolResult, NativeBundle]
 ```
 

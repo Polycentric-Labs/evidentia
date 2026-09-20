@@ -3,8 +3,8 @@
 The server's typed dispatch slot places this gate inside the signing wrapper.
 When a CIMD registry is configured, each call emits one authorization or denial
 with a fresh UUID4 run_id. Denials raise MCPError with code -32602 before the
-handler or signer runs. Without a registry, calls pass through without scope
-audit events.
+handler or signer runs. Without a registry, old tools pass through without scope
+audit events; get_catalog_native requires an explicit configured grant.
 
 Identity comes from the supplied request context's _meta.client_id, followed by
 --default-client-id when metadata is missing, null, or empty text. Non-string
@@ -56,7 +56,7 @@ def enforce_cimd_scope(
 
     The configured registry is captured when the gate is installed. Updates to
     that registry's clients remain visible to subsequent calls. A missing
-    registry preserves passthrough behavior without scope audit events.
+    registry preserves old-tool passthrough; get_catalog_native is denied.
 
     Args:
         server: The server constructed by build_server.
@@ -78,6 +78,20 @@ def enforce_cimd_scope(
         context: Context[Any, Any] | None = None,
     ) -> CallToolResult | InputRequiredResult:
         if cimd_registry is None:
+            if name == "get_catalog_native":
+                message = "tool call denied: get_catalog_native requires an explicit CIMD grant"
+                _log.warning(
+                    action=EventAction.AI_MCP_TOOL_DENIED,
+                    outcome=EventOutcome.FAILURE,
+                    message=message,
+                    evidentia={
+                        "run_id": uuid4().hex,
+                        "client_id": None,
+                        "tool_name": name,
+                        "scope_allowlist": None,
+                    },
+                )
+                raise MCPError(code=INVALID_PARAMS, message=message)
             return await original_call_tool(name, arguments, context)
 
         run_id = uuid4().hex
@@ -170,6 +184,22 @@ def enforce_cimd_scope(
                 "scope_allowlist": doc.scope,
             },
         )
+        if name == "get_catalog_native":
+            valid = type(arguments) is dict and all(type(key) is str for key in arguments)
+            valid = valid and set(arguments) == {"framework_id", "bundle_sha256"}
+            if valid:
+                framework = arguments["framework_id"]
+                digest = arguments["bundle_sha256"]
+                valid = (
+                    type(framework) is str
+                    and framework in ("au-ism", "cisa-scuba", "bsi-grundschutz-plus-plus")
+                    and type(digest) is str
+                    and len(digest) == 64
+                    and all(character in "0123456789abcdef" for character in digest)
+                )
+            if not valid:
+                raise MCPError(code=INVALID_PARAMS, message="invalid get_catalog_native arguments")
+
         return await original_call_tool(name, arguments, context)
 
     server._evidentia_dispatch = _gated_call_tool

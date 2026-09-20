@@ -13,7 +13,7 @@ vi.mock("@/lib/api", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
   return {
     ...actual,
-    api: { listFrameworks: vi.fn(), getFramework: vi.fn() },
+    api: { listFrameworks: vi.fn(), getFramework: vi.fn(), health: vi.fn() },
   };
 });
 
@@ -81,6 +81,11 @@ function renderPage(path = "/frameworks/sample") {
 describe("Framework currency", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedApi.health.mockResolvedValue({
+      status: "ok",
+      version: "test",
+      auth_configured: false,
+    });
     mockedApi.getFramework.mockResolvedValue(legacyCatalog());
     mockedApi.listFrameworks.mockResolvedValue({
       total: 1,
@@ -115,7 +120,10 @@ describe("Framework currency", () => {
     expect(mockedApi.getFramework).not.toHaveBeenCalled();
     await user.click(screen.getByRole("link", { name: /Sample framework/ }));
     expect(await screen.findByText("Existing control")).toBeInTheDocument();
-    expect(mockedApi.getFramework).toHaveBeenCalledWith("sample");
+    expect(mockedApi.getFramework).toHaveBeenCalledWith(
+      "sample",
+      expect.any(AbortSignal),
+    );
   });
 
   it("keeps old list and detail responses usable without assuming current status", async () => {

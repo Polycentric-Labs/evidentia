@@ -19,22 +19,25 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date
 from types import MappingProxyType
-from typing import Any, Literal, NamedTuple, Self, TypeVar
+from typing import Any, Literal, NamedTuple, Self, TypeVar, cast
 
 from pydantic import (
     ConfigDict,
     Field,
     GetJsonSchemaHandler,
+    ModelWrapValidatorHandler,
     PrivateAttr,
     SerializerFunctionWrapHandler,
     field_serializer,
     field_validator,
     model_serializer,
+    model_validator,
 )
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema
 
 from evidentia_core.models.common import EvidentiaModel, NonBlankStr
+from evidentia_core.models.open_corpora import ControlSourceRef, NativeBundle
 
 # NIST publications render enhancement IDs as ``AC-2(1)(a)`` while NIST OSCAL
 # content renders them as ``ac-2.1.a``. Both are valid. We normalize to the
@@ -350,6 +353,12 @@ class CatalogControl(EvidentiaModel):
         description="Source evidence outside control indexes, statement counts and gap denominators",
     )
 
+    native_source_ref: ControlSourceRef | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="Reference to an exact occurrence in the separately retained native source bundle",
+    )
+
 
 CatalogStatus = Literal["current", "superseded", "retired", "historical"]
 
@@ -472,6 +481,66 @@ class ControlCatalog(EvidentiaModel):
         default_factory=list,
         description="Announced revisions outside the assessed controls; dates never activate them automatically",
     )
+
+    native_source: NativeBundle | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+        description="Complete pinned native documents and source-backed projection references",
+    )
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def validate_native_catalog_input(cls, data: Any, handler: ModelWrapValidatorHandler[Self]) -> Self:
+        if type(data) is dict and data.get("native_source") is not None:
+            from evidentia_core.catalogs.loader import _restore_catalog_capture
+            from evidentia_core.catalogs.open_corpora import validate_catalog_mapping
+            from evidentia_core.models.open_corpora import native_operation
+
+            with native_operation():
+                captured = b""
+                owned: dict[str, Any] = {}
+                try:
+                    captured = validate_catalog_mapping(data)
+                    owned = _restore_catalog_capture(captured)
+                    return handler(owned)
+                finally:
+                    captured = b""
+                    owned.clear()
+        return handler(data)
+
+    @model_serializer(mode="wrap")
+    def validate_native_catalog_output(self, handler: SerializerFunctionWrapHandler) -> Any:
+        if object.__getattribute__(self, "__dict__").get("native_source") is not None:
+            from evidentia_core.catalogs.loader import _restore_catalog_capture
+            from evidentia_core.catalogs.open_corpora import catalog_model_data, validate_catalog_mapping
+            from evidentia_core.models.open_corpora import native_operation
+
+            with native_operation():
+                data = catalog_model_data(self)
+                captured = b""
+                try:
+                    captured = validate_catalog_mapping(data)
+                    # Native full output has fixed aliases and complete fields.
+                    # It never rereads a model after the authoritative check.
+                    return _restore_catalog_capture(captured)
+                finally:
+                    data.clear()
+                    captured = b""
+        return handler(self)
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
+        # Preserve one schema generator's definitions while describing the fixed
+        # model fields instead of the wrapper's Any return annotation.
+        if handler.mode == "serialization":
+            copied = dict(schema)
+            inner = copied.get("schema")
+            if type(inner) is dict and inner.get("type") == "model":
+                copied["schema"] = {name: value for name, value in inner.items() if name != "serialization"}
+            else:
+                copied.pop("serialization", None)
+            return handler(cast(CoreSchema, copied))
+        return handler(schema)
 
     # Private index for fast lookup
     _index: dict[str, CatalogControl] = PrivateAttr(default_factory=dict)
@@ -625,3 +694,33 @@ class CrosswalkDefinition(EvidentiaModel):
     def get_source_controls(self, target_control_id: str) -> list[FrameworkMapping]:
         """Get all source controls mapped to a target control (reverse lookup)."""
         return [m for m in self.mappings if m.target_control_id.upper() == target_control_id.strip().upper()]
+
+
+class _NativeCatalogControl(CatalogControl):
+    """Native projection strings retain publisher whitespace in detached models."""
+
+    model_config = ConfigDict(str_strip_whitespace=False, strict=True)
+
+    @field_validator("enhancements", mode="before")
+    @classmethod
+    def _native_children(cls, data: Any) -> list[CatalogControl]:
+        from evidentia_core.models.open_corpora import NativeSourceError
+
+        if type(data) is not list:
+            raise NativeSourceError()
+        return [_NativeCatalogControl.model_validate(child) for child in data]
+
+
+class _NativeControlCatalog(ControlCatalog):
+    """Source-verified catalog projection with unchanged ordinary field names."""
+
+    model_config = ConfigDict(str_strip_whitespace=False, strict=True)
+
+    @field_validator("controls", mode="before")
+    @classmethod
+    def _native_controls(cls, data: Any) -> list[CatalogControl]:
+        from evidentia_core.models.open_corpora import NativeSourceError
+
+        if type(data) is not list:
+            raise NativeSourceError()
+        return [_NativeCatalogControl.model_validate(child) for child in data]

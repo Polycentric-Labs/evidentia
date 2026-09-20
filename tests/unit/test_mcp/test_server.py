@@ -36,7 +36,7 @@ from evidentia_core.models.control import (
 from evidentia_core.security.paths import PathTraversalError
 from evidentia_mcp.cli import app as mcp_cli_app
 from evidentia_mcp.server import EvidentiaMCPServer, build_server
-from mcp.server.mcpserver.exceptions import UnexpectedToolError
+from mcp.server.mcpserver.exceptions import ToolError, UnexpectedToolError
 from mcp.types import CallToolResult
 from typer.testing import CliRunner
 
@@ -671,3 +671,63 @@ class TestCLI:
 
         opt_flags = {opt for p in serve_cmd.params for opt in p.opts}
         assert "--allow-root" in opt_flags
+
+
+class TestNativeCatalogTool:
+    def test_default_server_requires_explicit_native_grant(self):
+        from mcp.shared.exceptions import MCPError
+
+        with pytest.raises(MCPError, match="explicit CIMD grant"):
+            _invoke_tool(build_server(), "get_catalog_native", framework_id="au-ism", bundle_sha256="0" * 64)
+
+    def test_native_result_and_stale_digest(self, tmp_path, monkeypatch):
+        from evidentia_mcp.cimd import CIMDDocument, CIMDRegistry
+
+        monkeypatch.setenv("EVIDENTIA_CATALOG_DIR", str(tmp_path / "catalogs"))
+        registry = CIMDRegistry(
+            clients={
+                "native-reader": CIMDDocument(
+                    client_id="native-reader", client_name="Synthetic native reader", scope="get_catalog_native"
+                ),
+            }
+        )
+        server = build_server(cimd_registry=registry, default_client_id="native-reader")
+        from evidentia_core.catalogs.registry import FrameworkRegistry
+
+        selection = FrameworkRegistry().get_catalog("au-ism").native_source.bundle_sha256
+        result = _invoke_tool(server, "get_catalog_native", framework_id="au-ism", bundle_sha256=selection)
+        _assert_native_bundle_sources(result)
+        with pytest.raises(ToolError, match=r"^Error executing tool get_catalog_native: catalog_generation_changed$"):
+            _invoke_tool(server, "get_catalog_native", framework_id="au-ism", bundle_sha256="0" * 64)
+
+
+def _assert_native_bundle_sources(payload: dict[str, Any]) -> None:
+    """Compare transported source bytes with the pinned on-disk publisher inputs."""
+    import hashlib
+
+    from evidentia_core.models.open_corpora import NativeBundle
+
+    NativeBundle.model_validate(payload)
+    directory = Path(__file__).resolve().parents[3] / (
+        "packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4"
+    )
+    index = json.loads((directory / "source-index.json").read_text(encoding="utf-8"))
+    expected = []
+    for source in index["sources"]:
+        storage = source["storage"]
+        if storage["kind"] == "chunks":
+            raw = b"".join(
+                json.loads((directory / part["path"]).read_text(encoding="utf-8"))["raw_utf8"].encode("utf-8")
+                for part in storage["parts"]
+            )
+        else:
+            raw = (directory / storage["path"]).read_bytes()
+        assert len(raw) == source["binding"]["raw_bytes"]
+        assert hashlib.sha256(raw).hexdigest() == source["binding"]["raw_sha256"]
+        expected.append({"binding": source["binding"], "raw_utf8": raw.decode("utf-8")})
+    data = payload["data"]
+    assert data["catalog_id"] == "au-ism"
+    assert data["profile"] == "au-ism-2026.09.4"
+    assert data["documents"] == expected
+    compact = json.dumps(data, ensure_ascii=True, allow_nan=False, separators=(",", ":")).encode("utf-8")
+    assert hashlib.sha256(b"evidentia.catalog-native.v1\0" + compact).hexdigest() == payload["bundle_sha256"]

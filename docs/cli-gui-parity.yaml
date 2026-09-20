@@ -72,6 +72,10 @@ baseline:
 # OR listed here with a reason — a new endpoint cannot land unclassified, and a
 # stale entry (matching no live op) also fails the gate.
 api_extra:
+  - api: "POST /api/catalog/import-native"
+    reason: "Native source mode of the existing catalog import CLI leaf; the Catalog screen selects the three pinned files explicitly."
+  - api: "GET /api/frameworks/{framework_id}/native-source"
+    reason: "Native source mode of the existing catalog show CLI leaf; the Frameworks detail panel reads the exact selected bundle digest."
   # ── Chrome / health / ops (polled by the nav + status surfaces) ──
   - api: "GET /api/health"
     reason: "Chrome: backend health + version poll for the nav status pill."

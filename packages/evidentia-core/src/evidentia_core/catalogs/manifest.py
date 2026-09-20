@@ -16,10 +16,10 @@ import logging
 from datetime import date
 from functools import cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ModelWrapValidatorHandler, ValidationInfo, model_validator
 
 from evidentia_core.models.catalog import CatalogStatus, TextDepth
 
@@ -43,6 +43,29 @@ Category = Literal["control", "technique", "vulnerability", "obligation"]
 # for updates. ``manual`` = never refreshed automatically (stub catalogs
 # whose content is owned by us, e.g., SOC 2 TSC stub).
 RefreshSchedule = Literal["daily", "weekly", "monthly", "manual"]
+
+
+class NativeCatalogRegistration(BaseModel):
+    """Explicit user-only selection of the bounded native catalog reader."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    format: Literal["evidentia.catalog-native.v1"]
+    profile: Literal["bsi-grundschutz-plus-plus-367d7750"]
+    bundle_sha256: str = Field(pattern="^[0-9a-f]{64}$")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _exact_registration(cls, data: Any, info: ValidationInfo) -> Any:
+        if (
+            info.mode != "python"
+            or type(data) is not dict
+            or any(type(key) is not str for key in data)
+            or set(data) != {"format", "profile", "bundle_sha256"}
+            or any(type(value) is not str for value in data.values())
+        ):
+            raise ValueError("native_source_invalid")
+        return dict(data)
 
 
 class FrameworkManifestEntry(BaseModel):
@@ -104,6 +127,51 @@ class FrameworkManifestEntry(BaseModel):
     verified_on: date | None = Field(default=None, description="Date source currency was checked")
     superseded_by: str | None = Field(default=None, description="Successor framework ID, without implying equivalence")
 
+    native_registration: NativeCatalogRegistration | None = Field(
+        default=None, description="Internal user-catalog native reader registration"
+    )
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _native_outer_admission(cls, data: Any, handler: ModelWrapValidatorHandler[Self]) -> Self:
+        if type(data) is cls and data.native_registration is not None:
+            if object.__getattribute__(data, "__pydantic_extra__") is not None:
+                raise ValueError("native_source_invalid")
+            data = dict(object.__getattribute__(data, "__dict__"))
+        result = handler(data)
+        if result.native_registration is not None and type(data) is not dict:
+            raise ValueError("native_source_invalid")
+        return result
+
+    @model_validator(mode="before")
+    @classmethod
+    def _native_registration_before_coercion(cls, data: Any, info: ValidationInfo) -> Any:
+        if not isinstance(data, dict) or dict.get(data, "native_registration") is None:
+            return data
+        if (
+            info.mode != "python"
+            or type(data) is not dict
+            or any(type(key) is not str for key in data)
+            or set(data).difference(cls.model_fields)
+        ):
+            raise ValueError("native_source_invalid")
+        captured = dict(data)
+        native = captured["native_registration"]
+        if type(native) is NativeCatalogRegistration:
+            if object.__getattribute__(native, "__pydantic_extra__") is not None:
+                raise ValueError("native_source_invalid")
+            native = dict(object.__getattribute__(native, "__dict__"))
+        registration = NativeCatalogRegistration.model_validate(native)
+        expected = {
+            "id": "bsi-grundschutz-plus-plus",
+            "category": "control",
+            "path": f"native/bsi-grundschutz-plus-plus/{registration.bundle_sha256}/catalog.json",
+        }
+        if any(type(captured.get(key)) is not str or captured[key] != value for key, value in expected.items()):
+            raise ValueError("native_source_invalid")
+        captured["native_registration"] = registration.model_dump()
+        return captured
+
 
 class FrameworkManifest(BaseModel):
     """Root document of frameworks.yaml."""
@@ -151,6 +219,8 @@ def load_manifest(path: Path | None = None) -> FrameworkManifest:
     # `get()`; fail loud at load time instead.
     seen: dict[str, int] = {}
     for fw in manifest.frameworks:
+        if fw.native_registration is not None:
+            raise ValueError("native_source_invalid")
         seen[fw.id] = seen.get(fw.id, 0) + 1
     dups = [fid for fid, count in seen.items() if count > 1]
     if dups:

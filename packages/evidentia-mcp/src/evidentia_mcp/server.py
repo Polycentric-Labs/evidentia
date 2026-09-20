@@ -41,18 +41,21 @@ from __future__ import annotations
 import json
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Literal
 
 from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.gap_analyzer.analyzer import GapAnalyzer
 from evidentia_core.gap_analyzer.inventory import load_inventory
 from evidentia_core.gap_diff import compute_gap_diff
 from evidentia_core.models.gap import GapAnalysisReport
+from evidentia_core.models.open_corpora import NativeBundle, NativeReadRequest, NativeSourceError, native_operation
 from evidentia_core.security.paths import validate_within
 from mcp.server.mcpserver import Context, MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.streamable_http_manager import DEFAULT_MAX_SESSIONS, DEFAULT_SESSION_IDLE_TIMEOUT
 from mcp.server.transport_security import DEFAULT_MAX_REQUEST_BODY_SIZE
-from mcp.types import CallToolResult, InputRequiredResult
+from mcp.types import CallToolResult, InputRequiredResult, TextContent
+from pydantic import Field
 
 from evidentia_mcp.cimd import CIMDRegistry
 
@@ -1064,3 +1067,42 @@ def _register_tools(server: EvidentiaMCPServer, *, allow_root: Path | None = Non
         report_dict["digests_valid"] = report.digests_valid
         report_dict["has_verification_surface"] = report.has_verification_surface
         return report_dict
+
+    @server.tool()
+    def get_catalog_native(
+        framework_id: Literal["au-ism", "cisa-scuba", "bsi-grundschutz-plus-plus"],
+        bundle_sha256: Annotated[str, Field(pattern="^[0-9a-f]{64}$")],
+    ) -> Annotated[CallToolResult, NativeBundle]:
+        """Return the exact source bundle for the requested catalog generation."""
+        try:
+            with native_operation() as budget:
+                selection = NativeReadRequest.model_validate(
+                    {"framework_id": framework_id, "bundle_sha256": bundle_sha256}
+                )
+                try:
+                    catalog = FrameworkRegistry().get_catalog(selection.framework_id)
+                except (FileNotFoundError, KeyError):
+                    raise NativeSourceError("native_source_unavailable") from None
+                bundle = catalog.native_source
+                if bundle is None:
+                    raise NativeSourceError("native_source_unavailable")
+                if bundle.bundle_sha256 != selection.bundle_sha256:
+                    raise NativeSourceError("catalog_generation_changed")
+                data = bundle.model_dump(mode="json")
+                text = json.dumps(data, ensure_ascii=True, allow_nan=False, separators=(",", ":"))
+                budget.check()
+                return CallToolResult(content=[TextContent(type="text", text=text)], structured_content=data)
+        except NativeSourceError as error:
+            raise ToolError(error.code) from None
+
+    # Only this new tool declares closed arguments. Its raw argument gate runs
+    # before SDK preprocessing, and every old tool contract remains intact.
+    native_tool = server._tool_manager.get_tool("get_catalog_native")
+    if native_tool is None:
+        raise RuntimeError("Native catalog tool registration failed")
+    native_tool.fn_metadata.arg_model.model_config = {
+        **native_tool.fn_metadata.arg_model.model_config,
+        "extra": "forbid",
+    }
+    native_tool.fn_metadata.arg_model.model_rebuild(force=True)
+    native_tool.parameters = native_tool.fn_metadata.arg_model.model_json_schema(by_alias=True)

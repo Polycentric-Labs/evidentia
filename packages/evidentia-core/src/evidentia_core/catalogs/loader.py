@@ -25,14 +25,19 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import re
+import stat
 import warnings
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast, overload
 
 import yaml
 
 from evidentia_core.catalogs.manifest import load_manifest
 from evidentia_core.models.catalog import CatalogControl, ControlCatalog
+from evidentia_core.models.open_corpora import NativeBudget, NativeSourceError, native_operation
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +82,426 @@ def resolve_framework_id_alias(framework_id: str) -> str:
 _MAX_NEST_DEPTH = 100
 
 
-def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
+@dataclass(frozen=True, slots=True)
+class CatalogJsonNumber:
+    """A native JSON number retains its exact source spelling."""
+
+    lexeme: str
+
+
+@dataclass(frozen=True, slots=True)
+class CatalogJsonToken:
+    kind: str
+    start: int
+    end: int
+    value: Any = None
+    members: tuple[tuple[CatalogJsonToken, CatalogJsonToken], ...] = ()
+    items: tuple[CatalogJsonToken, ...] = ()
+
+    def native(self) -> Any:
+        if self.kind == "json_object":
+            return {key.value: value.native() for key, value in self.members}
+        if self.kind == "json_array":
+            return [value.native() for value in self.items]
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedNativeCatalog:
+    raw: bytes
+    root: CatalogJsonToken
+
+    @property
+    def data(self) -> dict[str, Any]:
+        return cast(dict[str, Any], self.root.native())
+
+
+class _NativeCatalogParser:
+    def __init__(self, raw: bytes, mode: str, budget: NativeBudget) -> None:
+        self.raw = raw
+        self.mode = mode
+        self.budget = budget
+        self.position = 0
+        self.nodes = 0
+        self.members = 0
+        self.elements = 0
+        self.text_bytes = 0
+        self.next_poll = 0
+        self.owned: list[list[Any]] = []
+        self.depth_limit = 4 if mode == "packaging_json" else 64 if mode == "wire_json" else 32
+        self.node_limit = 32 if mode == "packaging_json" else 262144 if mode == "wire_json" else 100000
+
+    def poll(self) -> None:
+        if self.position >= self.next_poll:
+            self.budget.check()
+            self.next_poll = self.position + 4096
+
+    def whitespace(self) -> None:
+        while self.position < len(self.raw) and self.raw[self.position] in b" \t\r\n":
+            self.position += 1
+            self.poll()
+
+    def string(self, *, key: bool = False, owner_key: str | None = None) -> CatalogJsonToken:
+        start = self.position
+        cursor = start + 1
+        token_bytes = b""
+        decoded = None
+        try:
+            while True:
+                boundary = min(cursor + 4096, len(self.raw))
+                quote = self.raw.find(b'"', cursor, boundary)
+                self.budget.check()
+                if quote < 0:
+                    if boundary == len(self.raw):
+                        raise NativeSourceError()
+                    cursor = boundary
+                    continue
+                slash = quote - 1
+                while slash > start and self.raw[slash] == 92:
+                    slash -= 1
+                if (quote - slash - 1) % 2:
+                    cursor = quote + 1
+                    continue
+                self.position = quote + 1
+                break
+            token_bytes = self.raw[start : self.position]
+            decoded = json.loads(token_bytes)
+            if type(decoded) is not str:
+                raise NativeSourceError()
+            size = len(decoded.encode("utf8"))
+            limit = 1024 if key else 262144
+            if owner_key == "raw_utf8" and self.mode != "source_json":
+                limit = 1572864 if self.mode == "packaging_json" else 8388608
+            self.text_bytes += size
+            if size > limit or self.text_bytes > (16777216 if self.mode == "wire_json" else 8388608):
+                raise NativeSourceError()
+            self.budget.check()
+            return CatalogJsonToken("json_string", start, self.position, decoded)
+        except NativeSourceError:
+            raise
+        except (UnicodeError, ValueError):
+            raise NativeSourceError() from None
+        finally:
+            token_bytes = b""
+            decoded = None
+
+    def value(self, depth: int = 0, owner_key: str | None = None) -> CatalogJsonToken:
+        self.whitespace()
+        self.nodes += self.mode != "wire_json" or self.position >= len(self.raw) or self.raw[self.position] != 123
+        self.poll()
+        if depth > self.depth_limit or self.nodes > self.node_limit or self.position >= len(self.raw):
+            raise NativeSourceError()
+        start = self.position
+        leading = self.raw[start]
+        if leading == 34:
+            return self.string(owner_key=owner_key)
+        if leading == 123:
+            self.position += 1
+            fields: list[tuple[CatalogJsonToken, CatalogJsonToken]] = []
+            self.owned.append(fields)
+            names: set[str] = set()
+            self.whitespace()
+            if self.position < len(self.raw) and self.raw[self.position] == 125:
+                self.position += 1
+                return CatalogJsonToken("json_object", start, self.position)
+            while True:
+                self.whitespace()
+                if self.position >= len(self.raw) or self.raw[self.position] != 34:
+                    raise NativeSourceError()
+                name = self.string(key=True)
+                if name.value in names:
+                    raise NativeSourceError()
+                names.add(name.value)
+                self.members += 1
+                if len(names) > 64 or (self.mode != "wire_json" and self.members > self.node_limit):
+                    raise NativeSourceError()
+                self.whitespace()
+                if self.position >= len(self.raw) or self.raw[self.position] != 58:
+                    raise NativeSourceError()
+                self.position += 1
+                fields.append((name, self.value(depth + 1, name.value)))
+                self.whitespace()
+                if self.position >= len(self.raw):
+                    raise NativeSourceError()
+                delimiter = self.raw[self.position]
+                self.position += 1
+                if delimiter == 125:
+                    return CatalogJsonToken("json_object", start, self.position, members=tuple(fields))
+                if delimiter != 44:
+                    raise NativeSourceError()
+        if leading == 91:
+            self.position += 1
+            items: list[CatalogJsonToken] = []
+            self.owned.append(items)
+            self.whitespace()
+            if self.position < len(self.raw) and self.raw[self.position] == 93:
+                self.position += 1
+                return CatalogJsonToken("json_array", start, self.position)
+            while True:
+                items.append(self.value(depth + 1))
+                self.elements += 1
+                if len(items) > (262144 if self.mode == "wire_json" else 4096) or self.elements > self.node_limit:
+                    raise NativeSourceError()
+                self.whitespace()
+                if self.position >= len(self.raw):
+                    raise NativeSourceError()
+                delimiter = self.raw[self.position]
+                self.position += 1
+                if delimiter == 93:
+                    return CatalogJsonToken("json_array", start, self.position, items=tuple(items))
+                if delimiter != 44:
+                    raise NativeSourceError()
+        for literal, kind, value in (
+            (b"true", "json_boolean", True),
+            (b"false", "json_boolean", False),
+            (b"null", "json_null", None),
+        ):
+            if self.raw.startswith(literal, start):
+                self.position += len(literal)
+                return CatalogJsonToken(kind, start, self.position, value)
+        end = start
+        while end < len(self.raw) and self.raw[end] not in b" \t\r\n,]}":
+            end += 1
+            if end - start > 128:
+                raise NativeSourceError()
+        spelling = self.raw[start:end]
+        if re.fullmatch(rb"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?", spelling) is None:
+            raise NativeSourceError()
+        self.position = end
+        lexeme = spelling.decode("ascii")
+        number: Any = CatalogJsonNumber(lexeme)
+        if self.mode != "source_json" and not any(char in lexeme for char in ".eE"):
+            number = int(lexeme)
+        return CatalogJsonToken("json_number", start, end, number)
+
+    def parse(self) -> ParsedNativeCatalog:
+        node = None
+        try:
+            self.raw.decode("utf8")
+            node = self.value()
+            self.whitespace()
+            self.budget.check()
+            if node.kind != "json_object" or self.position != len(self.raw):
+                raise NativeSourceError()
+            return ParsedNativeCatalog(self.raw, node)
+        except UnicodeError:
+            raise NativeSourceError() from None
+        finally:
+            node = None
+            self.raw = b""
+            for container in self.owned:
+                container.clear()
+            self.owned.clear()
+
+
+def _restore_catalog_capture(raw: bytes) -> dict[str, Any]:
+    """Restore owned canonical wire; external file admission keeps token validation."""
+    from evidentia_core.models.open_corpora import _preflight
+
+    def integer(spelling: str) -> int:
+        if len(spelling) > 128:
+            raise NativeSourceError()
+        return int(spelling)
+
+    def refuse_number(spelling: str) -> Any:
+        raise NativeSourceError()
+
+    with native_operation() as budget:
+        data: dict[str, Any] = {}
+        decoded: Any = None
+        value: Any = None
+        pending: list[tuple[Any, str | None]] = []
+        text = ""
+        encoded = b""
+        try:
+            if type(raw) is not bytes or len(raw) > 16_777_216:
+                raise NativeSourceError()
+            budget.check()
+            decoded = json.loads(raw, parse_int=integer, parse_float=refuse_number, parse_constant=refuse_number)
+            if type(decoded) is not dict:
+                raise NativeSourceError()
+            data = decoded
+            budget.check()
+            _preflight(data)
+            pending.append((data, None))
+            elements = 0
+            visited = 0
+            while pending:
+                value, owner = pending.pop()
+                visited += 1
+                if visited % 256 == 0:
+                    budget.check()
+                if type(value) is str:
+                    if len(value.encode("utf8")) > (8_388_608 if owner == "raw_utf8" else 262_144):
+                        raise NativeSourceError()
+                elif type(value) is dict:
+                    pending.extend((item, key) for key, item in value.items())
+                elif type(value) is list:
+                    elements += len(value)
+                    if elements > 262_144:
+                        raise NativeSourceError()
+                    pending.extend((item, None) for item in value)
+            text = json.dumps(data, ensure_ascii=True, allow_nan=False, separators=(",", ":"))
+            encoded = text.encode("utf8")
+            budget.check()
+            if encoded != raw:
+                raise NativeSourceError()
+            return data
+        except (UnicodeError, ValueError, RecursionError) as error:
+            data.clear()
+            if isinstance(error, NativeSourceError):
+                raise
+            raise NativeSourceError() from None
+        except BaseException:
+            data.clear()
+            raise
+        finally:
+            pending.clear()
+            decoded = None
+            value = None
+            text = ""
+            encoded = b""
+            raw = b""
+
+
+def _native_path(path: Path, *, directory: bool = False) -> tuple[Path, os.stat_result]:
+    if type(path) is not type(Path()) or ".." in path.parts or path.drive.startswith("\\\\"):
+        raise NativeSourceError()
+    absolute = path.absolute()
+    for parent in reversed(absolute.parents):
+        observed = parent.lstat()
+        if (
+            stat.S_ISLNK(observed.st_mode)
+            or getattr(observed, "st_file_attributes", 0) & 1024
+            or not stat.S_ISDIR(observed.st_mode)
+        ):
+            raise NativeSourceError()
+    observed = absolute.lstat()
+    expected = stat.S_ISDIR if directory else stat.S_ISREG
+    if (
+        stat.S_ISLNK(observed.st_mode)
+        or getattr(observed, "st_file_attributes", 0) & 1024
+        or not expected(observed.st_mode)
+    ):
+        raise NativeSourceError()
+    return absolute, observed
+
+
+def _native_stat_identity(observed: os.stat_result) -> tuple[int, ...]:
+    return (
+        observed.st_dev,
+        observed.st_ino,
+        observed.st_mode,
+        observed.st_size,
+        observed.st_mtime_ns,
+        observed.st_ctime_ns,
+        observed.st_nlink,
+    )
+
+
+def _same_native_snapshot(path_info: os.stat_result, descriptor_info: os.stat_result) -> bool:
+    # Windows path and descriptor ctime can denote different timestamp kinds.
+    # Compare each ctime with its own initial snapshot after reading.
+    def common(info: os.stat_result) -> tuple[int, ...]:
+        return (
+            info.st_dev,
+            info.st_ino,
+            info.st_mode,
+            info.st_size,
+            info.st_mtime_ns,
+            info.st_nlink,
+            getattr(info, "st_birthtime_ns", 0),
+        )
+
+    return common(path_info) == common(descriptor_info) and (
+        os.name == "nt" or path_info.st_ctime_ns == descriptor_info.st_ctime_ns
+    )
+
+
+def _read_native_catalog(path: Path, limit: int, budget: NativeBudget) -> bytes:
+    if type(limit) is not int or not 0 <= limit <= 16777216:
+        raise NativeSourceError()
+    chunks: list[bytes] = []
+    chunk = b""
+    descriptor: int | None = None
+    primary: BaseException | None = None
+    total = 0
+    try:
+        budget.check()
+        absolute, before = _native_path(path)
+        parents = tuple(
+            (parent, (info.st_dev, info.st_ino, info.st_mode))
+            for parent in absolute.parents
+            for info in (parent.lstat(),)
+        )
+        if before.st_size > limit:
+            raise NativeSourceError()
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        descriptor = os.open(absolute, flags)
+        opened = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or getattr(opened, "st_file_attributes", 0) & 1024
+            or not _same_native_snapshot(before, opened)
+        ):
+            raise NativeSourceError()
+        while True:
+            budget.check()
+            chunk = os.read(descriptor, min(4096, limit + 1 - total))
+            if type(chunk) is not bytes:
+                raise NativeSourceError()
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+            if total > limit:
+                raise NativeSourceError()
+        budget.check()
+        _, after = _native_path(absolute)
+        if (
+            total != before.st_size
+            or _native_stat_identity(os.fstat(descriptor)) != _native_stat_identity(opened)
+            or _native_stat_identity(after) != _native_stat_identity(before)
+        ):
+            raise NativeSourceError()
+        for parent, identity in parents:
+            observed = parent.lstat()
+            if (observed.st_dev, observed.st_ino, observed.st_mode) != identity or getattr(
+                observed, "st_file_attributes", 0
+            ) & 1024:
+                raise NativeSourceError()
+        return b"".join(chunks)
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        chunks.clear()
+        chunk = b""
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except BaseException as cleanup:
+                if primary is not None:
+                    raise primary from cleanup
+                raise
+
+
+@overload
+def _load_catalog_data(catalog_path: Path) -> dict[str, Any]: ...
+
+
+@overload
+def _load_catalog_data(
+    catalog_path: Path | None,
+    *,
+    raw_bytes: bytes | None = None,
+    mode: Literal["source_json", "packaging_json", "wire_json"],
+) -> ParsedNativeCatalog: ...
+
+
+def _load_catalog_data(
+    catalog_path: Path | None, *, raw_bytes: bytes | None = None, mode: str = "legacy"
+) -> dict[str, Any] | ParsedNativeCatalog:
     """Read a catalog file and return its parsed dict.
 
     Dispatches on file extension: ``.json`` → :func:`json.load`,
@@ -94,6 +518,28 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
     Raises ``ValueError`` for unsupported extensions, ``yaml.YAMLError``
     or ``json.JSONDecodeError`` for malformed content.
     """
+    if type(mode) is not str:
+        raise NativeSourceError()
+    if mode != "legacy":
+        if mode not in {"source_json", "packaging_json", "wire_json"}:
+            raise NativeSourceError()
+        with native_operation() as budget:
+            budget.check()
+            limit = 2097152 if mode == "packaging_json" else 16777216 if mode == "wire_json" else 8388608
+            if raw_bytes is not None:
+                if catalog_path is not None or type(raw_bytes) is not bytes or len(raw_bytes) > limit:
+                    raise NativeSourceError()
+                raw = raw_bytes
+            else:
+                if catalog_path is None:
+                    raise NativeSourceError()
+                raw = _read_native_catalog(catalog_path, limit, budget)
+            try:
+                return _NativeCatalogParser(raw, mode, budget).parse()
+            finally:
+                raw = b""
+    if raw_bytes is not None or catalog_path is None:
+        raise ValueError("legacy catalog loading requires a path")
     suffix = catalog_path.suffix.lower()
     text = catalog_path.read_text(encoding="utf-8")
     try:
@@ -128,6 +574,8 @@ def _load_catalog_data(catalog_path: Path) -> dict[str, Any]:
         raise ValueError(
             f"{suffix} catalog {catalog_path.name} top-level must be a mapping (got {type(data).__name__})"
         )
+    if "native_source" in data or "native_source_package" in data:
+        raise NativeSourceError()
     return data
 
 
@@ -344,6 +792,36 @@ def _detect_framework_id(path: Path, metadata: dict[str, Any]) -> str:
     return stem
 
 
+def _packaged_native_path(catalog_path: Path) -> bool:
+    # These are the two ratified bundled locations. Legacy paths keep their
+    # existing parser and identifier behavior.
+    return tuple(catalog_path.parts[-2:]) in {("international", "au-ism.json"), ("cisa", "scuba.json")}
+
+
+def load_native_wire_catalog(catalog_path: Path) -> ControlCatalog:
+    """Load a complete native catalog through strict bounded file admission.
+
+    Native generations select this mode explicitly. Generic legacy loading
+    refuses native markers instead of discarding their source authority.
+    """
+    from evidentia_core.models.catalog import _NativeControlCatalog
+
+    with native_operation() as budget:
+        parsed: ParsedNativeCatalog | None = None
+        data: dict[str, Any] = {}
+        try:
+            parsed = _load_catalog_data(catalog_path, mode="wire_json")
+            data = parsed.data
+            if type(data.get("native_source")) is not dict or "native_source_package" in data:
+                raise NativeSourceError()
+            result = _NativeControlCatalog.model_validate(data)
+            budget.check()
+            return result
+        finally:
+            data.clear()
+            parsed = None
+
+
 def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
     """Load a Evidentia-format framework catalog.
 
@@ -352,6 +830,10 @@ def load_evidentia_catalog(catalog_path: Path) -> ControlCatalog:
     Evidentia format with a simplified structure. Accepts JSON or YAML
     (v0.10.3+) — file extension dispatches via :func:`_load_catalog_data`.
     """
+    if _packaged_native_path(catalog_path):
+        from evidentia_core.catalogs.open_corpora import load_packaged_catalog
+
+        return load_packaged_catalog(catalog_path)
     data = _load_catalog_data(catalog_path)
 
     controls = [CatalogControl(**c) for c in data.get("controls", [])]
@@ -437,6 +919,11 @@ def load_catalog(framework_id: str, custom_path: Path | None = None) -> ControlC
     if not path.exists():
         raise FileNotFoundError(f"Catalog file not found: {path}")
 
+    if _packaged_native_path(path):
+        from evidentia_core.catalogs.open_corpora import load_packaged_catalog
+
+        return load_packaged_catalog(path)
+
     data = _load_catalog_data(path)
 
     # Auto-detect format: OSCAL (control-only) vs. Evidentia.
@@ -481,6 +968,11 @@ def load_any_catalog(framework_id: str, custom_path: Path | None = None) -> obje
 
     if not path.exists():
         raise FileNotFoundError(f"Catalog file not found: {path}")
+
+    if _packaged_native_path(path):
+        from evidentia_core.catalogs.open_corpora import load_packaged_catalog
+
+        return load_packaged_catalog(path)
 
     data = _load_catalog_data(path)
 

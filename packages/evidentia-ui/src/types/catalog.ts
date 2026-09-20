@@ -2,10 +2,15 @@
  *  evidentia_core.models.catalog. */
 
 import type { components } from "@/types/openapi";
+import type {
+  NativeBundle,
+  CatalogNativeControlSourceRef,
+} from "@/lib/catalog-native";
 
 export type CatalogSourceRow = components["schemas"]["CatalogSourceRow"];
 
 export interface CatalogControl {
+  native_source_ref?: CatalogNativeControlSourceRef | null;
   id: string;
   title: string;
   description: string;
@@ -57,6 +62,7 @@ export interface CatalogPublicationNotice {
 }
 
 export interface ControlCatalog {
+  native_source?: NativeBundle | null;
   framework_id: string;
   framework_name: string;
   version: string;

@@ -97,3 +97,33 @@ tests/fixtures/scap/oval-5.8-native.xml text eol=lf
 tests/fixtures/scap/source-index.json text eol=lf
 tests/fixtures/scap/xccdf-1.2-native.expected.json text eol=lf
 tests/fixtures/scap/xccdf-1.2-native.xml text eol=lf
+
+# Native catalog source, chunk and descriptor hashes bind exact LF bytes.
+packages/evidentia-core/src/evidentia_core/catalogs/data/cisa/scuba.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/international/au-ism.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/notices/ism.txt text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/notices/scuba.txt text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4/ISM_catalog.part-000.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4/ISM_catalog.part-001.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4/README.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4/legacy-ids.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/au-ism/2026.09.4/source-index.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/LICENSE.txt text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/ScubaBaselines.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/aad.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/defender.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/exo.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/powerbi.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/powerplatform.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/scubabaselineschema.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/securitysuite.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/sharepoint.md text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/source-index.json text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/data/sources/cisa-scuba-m365/7ef9501d7de9804ddb9d6013af6b665cccfb39d9/teams.md text eol=lf
+scripts/catalogs/open_corpora_sources.json text eol=lf
+
+# Keep the raw converter manifest stable across native Git checkouts.
+packages/evidentia-core/src/evidentia_core/models/open_corpora.py text eol=lf
+packages/evidentia-core/src/evidentia_core/models/catalog.py text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/loader.py text eol=lf
+packages/evidentia-core/src/evidentia_core/catalogs/open_corpora.py text eol=lf

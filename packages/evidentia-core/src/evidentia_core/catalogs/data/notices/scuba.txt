@@ -1,0 +1,7 @@
+CISA M365 SCuBA source snapshot at commit 7ef9501d7de9804ddb9d6013af6b665cccfb39d9.
+The eight authoritative Markdown documents provide 128 policy identities.
+The unchanged reference JSON contains 127 records and remains separate.
+Repository CC0 and Microsoft-adapted CC BY 4.0 notices are retained verbatim.
+Per-document attribution and product-license prerequisites remain source data.
+The SECURITYSUITE.7.2v1 criticality comment names a different identity;
+its admitted criticality is null. No checks are executed by this catalog.
