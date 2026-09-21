@@ -28,7 +28,7 @@ dependencies = [
 [project.optional-dependencies]
 aws = ["boto3>=1.43.46"]
 # S3 signing uses the reviewed SDK helper contract; XML parsing stays optional.
-retention = ["botocore==1.43.96", "defusedxml>=0.7.1"]
+retention = ["botocore==1.43.97", "defusedxml>=0.7.1"]
 registries = ["defusedxml>=0.7.1", "signxml==5.1.0"]
 github = ["pygithub>=2.4"]
 okta = ["okta>=3.4.4"]
@@ -78,7 +78,7 @@ ocsf = ["py-ocsf-models>=0.9.0,<0.11.0"]
 scan = ["defusedxml>=0.7.1"]
 all = [
     "boto3>=1.43.46",
-    "botocore==1.43.96",
+    "botocore==1.43.97",
     "pygithub>=2.4",
     "okta>=3.4.4",
     "psycopg[binary]>=3.3.4",
