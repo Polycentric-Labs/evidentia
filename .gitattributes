@@ -127,3 +127,8 @@ packages/evidentia-core/src/evidentia_core/models/open_corpora.py text eol=lf
 packages/evidentia-core/src/evidentia_core/models/catalog.py text eol=lf
 packages/evidentia-core/src/evidentia_core/catalogs/loader.py text eol=lf
 packages/evidentia-core/src/evidentia_core/catalogs/open_corpora.py text eol=lf
+
+tests/fixtures/cyclonedx/bom-1.6.schema.json text eol=lf
+tests/fixtures/cyclonedx/bom-1.7.schema.json text eol=lf
+tests/fixtures/cyclonedx/source-index.json text eol=lf
+tests/fixtures/cyclonedx/LICENSE-2.0.txt text eol=lf

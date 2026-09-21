@@ -14,10 +14,9 @@ v0.10.5 Phase 7: ``ocsf-detection`` emits OCSF Detection Finding
 ``ocsf`` (Compliance Finding 2003). Splunk / Elastic / Microsoft
 Sentinel / Datadog ingest 2004 natively.
 
-v0.10.5 Phase 8: ``cyclonedx-vex`` emits CycloneDX 1.6 VEX — the
-supply-chain VEX surface complementing Evidentia's CycloneDX SBOM emit.
-Federal supply-chain mandates (EO 14028, SEC 2026 supply-chain
-enforcement) drive CycloneDX VEX adoption.
+The ``cyclonedx-vex`` format defaults to CycloneDX 1.6 and accepts explicit
+1.7 selection. It preserves control-gap observations without inferring
+vulnerability impact or component applicability.
 """
 
 from __future__ import annotations
@@ -33,6 +32,8 @@ from evidentia_core.models.gap import GapAnalysisReport
 if TYPE_CHECKING:
     from evidentia_core.models.finding import SecurityFinding
     from evidentia_core.models.tprm import Vendor
+
+_VEX_VERSION_UNSET = object()
 
 OutputFormat = Literal[
     "json",
@@ -59,6 +60,7 @@ def export_report(
     sigstore_bundle_path: str | Path | None = None,
     sigstore_identity_token: str | None = None,
     key_sign_path: str | Path | None = None,
+    vex_spec_version: object = _VEX_VERSION_UNSET,
 ) -> Path:
     """Export a gap analysis report in the specified format.
 
@@ -72,7 +74,11 @@ def export_report(
         One of ``json``, ``csv``, ``markdown``, ``oscal-ar``, ``sarif``,
         ``ocsf`` (OCSF Compliance Finding 2003, v0.10.4), ``ocsf-detection``
         (OCSF Detection Finding 2004, v0.10.5 — SIEM-target), or
-        ``cyclonedx-vex`` (CycloneDX 1.6 VEX, v0.10.5 — supply-chain).
+        ``cyclonedx-vex`` (CycloneDX 1.6 by default, or explicit 1.7).
+    vex_spec_version:
+        Exact native string ``1.6`` or ``1.7`` for VEX. Omission selects
+        1.6 for VEX and preserves other formats. Any explicit value on
+        another format is invalid, including 1.6 and None.
     findings:
         Optional :class:`SecurityFinding` list for the ``oscal-ar`` format.
         Each finding becomes a hashed OSCAL back-matter resource and is
@@ -104,6 +110,11 @@ def export_report(
         Air-gap-clean: no gpg binary, no network. Encrypted keys: set
         ``$EVIDENTIA_SIGNING_KEY_PASSPHRASE``. Ignored by non-OSCAL formats.
     """
+    version = "1.6"
+    if vex_spec_version is not _VEX_VERSION_UNSET:
+        if type(vex_spec_version) is not str or vex_spec_version not in ("1.6", "1.7") or format != "cyclonedx-vex":
+            raise ValueError("Invalid CycloneDX VEX specification selection")
+        version = vex_spec_version
     path = Path(output_path)
 
     if format == "json":
@@ -132,7 +143,7 @@ def export_report(
     if format == "ocsf-detection":
         return _export_ocsf_detection(report, path)
     if format == "cyclonedx-vex":
-        return _export_cyclonedx_vex(report, path)
+        return _export_cyclonedx_vex(report, path, spec_version=version)
 
     raise ValueError(f"Unsupported format: {format}")
 
@@ -368,23 +379,10 @@ def _export_ocsf_detection(report: GapAnalysisReport, path: Path) -> Path:
     return path
 
 
-def _export_cyclonedx_vex(report: GapAnalysisReport, path: Path) -> Path:
-    """Export the gap report as a CycloneDX 1.6 VEX document
-    (v0.10.5 Phase 8).
-
-    Each ControlGap becomes one CycloneDX ``vulnerability`` entry
-    with the analysis state mapped from the gap's ``implementation_status``
-    and ``status`` (GapStatus). Federal supply-chain mandates
-    (EO 14028, SEC 2026 supply-chain enforcement) are driving
-    CycloneDX VEX adoption — Dependency-Track and other CycloneDX-
-    aware tooling consume this surface directly.
-
-    CycloneDX is already used in Evidentia's SBOM emit (the release
-    workflow ships ``evidentia-sbom.cdx.json``), so VEX is an additive
-    surface over the existing supply-chain artifact stack.
-    """
+def _export_cyclonedx_vex(report: GapAnalysisReport, path: Path, *, spec_version: str = "1.6") -> Path:
+    """Write the selected CycloneDX representation of control-gap observations."""
     from evidentia_core.gap_analyzer.vex import gap_report_to_cyclonedx_vex
 
-    vex_doc = gap_report_to_cyclonedx_vex(report)
+    vex_doc = gap_report_to_cyclonedx_vex(report, spec_version=spec_version)
     path.write_text(json.dumps(vex_doc, indent=2), encoding="utf-8")
     return path

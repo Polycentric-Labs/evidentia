@@ -6921,6 +6921,13 @@ export interface components {
              * @description gap_store SHA-16 key of a saved report to export instead.
              */
             report_key?: string | null;
+            /**
+             * Vex Spec Version
+             * @description CycloneDX version for cyclonedx-vex only. Omit for other formats.
+             * @default 1.6
+             * @enum {string}
+             */
+            vex_spec_version: "1.6" | "1.7";
         };
         /**
          * GapSeverity

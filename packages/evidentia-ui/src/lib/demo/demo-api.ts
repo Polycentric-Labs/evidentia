@@ -39,6 +39,7 @@ import type {
   MilestoneUpdatePayload,
   GapExportResult,
   GapExportFormat,
+  VexSpecVersion,
   ChallengeListResponse,
   EffectiveChallenge,
   Metric,
@@ -1674,15 +1675,27 @@ export const demoApi = {
 };
 
 /**
- * Demo replacement for `exportGapReport` — serializes the report to a JSON
- * `Blob` in-browser (no `/api/gap/export` round-trip). Only the `json` format
- * is materialized; other formats fall back to the JSON body so the download
- * still succeeds offline.
+ * Demo replacement for `exportGapReport`. VEX requires the backend exporter
+ * and is unavailable here. Other formats retain the existing native JSON
+ * fallback and never call the API.
  */
 export function demoExportGapReport(
   report: GapAnalysisReport,
   format: GapExportFormat,
+  vexSpecVersion?: VexSpecVersion,
 ): Promise<GapExportResult> {
+  if (
+    vexSpecVersion !== undefined &&
+    (format !== "cyclonedx-vex" ||
+      (vexSpecVersion !== "1.6" && vexSpecVersion !== "1.7"))
+  ) {
+    return Promise.reject(new TypeError("Invalid VEX version selection"));
+  }
+  if (format === "cyclonedx-vex") {
+    return Promise.reject(
+      new Error("CycloneDX VEX export is unavailable in demo mode."),
+    );
+  }
   const blob = new Blob([JSON.stringify(report, null, 2)], {
     type: "application/json",
   });

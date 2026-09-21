@@ -8,6 +8,7 @@ import {
   exportGapReport,
   GAP_EXPORT_FORMATS,
   type GapExportFormat,
+  type VexSpecVersion,
 } from "@/lib/api";
 import { triggerBlobDownload } from "@/lib/download";
 import type { GapAnalysisReport } from "@/types/api";
@@ -23,14 +24,22 @@ import type { GapAnalysisReport } from "@/types/api";
  */
 export function GapExportControl({ report }: { report: GapAnalysisReport }) {
   const [format, setFormat] = useState<GapExportFormat>("json");
+  const [vexSpecVersion, setVexSpecVersion] = useState<VexSpecVersion>("1.6");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const onDownload = async () => {
+    const selectedFormat = format;
+    const selectedVersion =
+      selectedFormat === "cyclonedx-vex" ? vexSpecVersion : undefined;
     setBusy(true);
     setError(null);
     try {
-      const { blob, filename } = await exportGapReport(report, format);
+      const { blob, filename } = await exportGapReport(
+        report,
+        selectedFormat,
+        selectedVersion,
+      );
       triggerBlobDownload(blob, filename);
     } catch (e) {
       if (e instanceof ApiError) {
@@ -66,6 +75,25 @@ export function GapExportControl({ report }: { report: GapAnalysisReport }) {
             ))}
           </select>
         </div>
+        {format === "cyclonedx-vex" && (
+          <div className="stack gap-1">
+            <Label htmlFor="gap-export-vex-version" className="text-xs">
+              CycloneDX version
+            </Label>
+            <select
+              id="gap-export-vex-version"
+              className="select"
+              value={vexSpecVersion}
+              onChange={(e) =>
+                setVexSpecVersion(e.target.value as VexSpecVersion)
+              }
+              disabled={busy}
+            >
+              <option value="1.6">1.6 (default)</option>
+              <option value="1.7">1.7</option>
+            </select>
+          </div>
+        )}
         <Button
           type="button"
           variant="outline"

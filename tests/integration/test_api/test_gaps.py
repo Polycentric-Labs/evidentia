@@ -6,10 +6,20 @@ a realistic fixture. No LLM calls; pure gap-arithmetic pipeline.
 
 from __future__ import annotations
 
+import json
+import tempfile
+from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
+from unittest.mock import Mock
 
 import pytest
+from evidentia_core.gap_analyzer.reporter import export_report
+from evidentia_core.models.gap import GapAnalysisReport
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from jsonschema import Draft7Validator
+from referencing import Registry
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 MERIDIAN_V2 = REPO_ROOT / "examples" / "meridian-fintech-v2"
@@ -102,7 +112,7 @@ class TestGapReports:
 class TestGapExport:
     """Coverage for POST /api/gap/export — reuses the CLI emitters."""
 
-    def _analyze(self, api_client: TestClient, meridian_inventory: str) -> dict:
+    def _analyze(self, api_client: TestClient, meridian_inventory: str) -> dict[str, Any]:
         r = api_client.post(
             "/api/gap/analyze",
             json={
@@ -111,7 +121,7 @@ class TestGapExport:
             },
         )
         assert r.status_code == 200, r.text
-        return r.json()
+        return cast(dict[str, Any], r.json())
 
     def test_rejects_unknown_format(self, api_client: TestClient, meridian_inventory: str) -> None:
         report = self._analyze(api_client, meridian_inventory)
@@ -279,3 +289,271 @@ class TestGapsOpenApiErrorDocs:
             responses = schema["paths"][path][method]["responses"]
             for status in statuses:
                 assert status in responses, f"{method.upper()} {path} missing {status}"
+
+
+@pytest.fixture
+def synthetic_vex_report() -> GapAnalysisReport:
+    """An empty control-gap report with a fixed, offset-bearing source clock."""
+    return GapAnalysisReport(
+        id="synthetic-vex-surface",
+        organization="Synthetic VEX Review",
+        frameworks_analyzed=["soc2-tsc"],
+        analyzed_at=datetime.fromisoformat("2026-01-01T00:00:00+05:30"),
+        total_controls_required=0,
+        total_controls_in_inventory=0,
+        total_gaps=0,
+        critical_gaps=0,
+        high_gaps=0,
+        medium_gaps=0,
+        low_gaps=0,
+        coverage_percentage=100,
+        gaps=[],
+    )
+
+
+class TestVexVersionExport:
+    @pytest.mark.parametrize("version", [None, "1.6", "1.7"])
+    @pytest.mark.parametrize("stored", [False, True])
+    def test_real_export_bytes_version_and_cleanup(
+        self,
+        api_client: TestClient,
+        synthetic_vex_report: GapAnalysisReport,
+        monkeypatch: pytest.MonkeyPatch,
+        version: str | None,
+        stored: bool,
+    ) -> None:
+        from evidentia_api.routers import gaps as routes
+        from evidentia_core.gap_store import save_report
+
+        original = synthetic_vex_report.model_dump(mode="json")
+        body: dict[str, Any] = {"format": "cyclonedx-vex"}
+        if stored:
+            path = save_report(synthetic_vex_report)
+            body["report_key"] = path.stem
+        else:
+            body["report"] = original
+        if version is not None:
+            body["vex_spec_version"] = version
+        captured: list[tuple[Path, bytes]] = []
+        real_export = export_report
+
+        def record_export(*args: Any, **kwargs: Any) -> Path:
+            result = real_export(*args, **kwargs)
+            captured.append((result, result.read_bytes()))
+            return result
+
+        monkeypatch.setattr(routes, "export_report", record_export)
+        response = api_client.post("/api/gap/export", json=body)
+        assert response.status_code == 200, response.text
+        assert len(captured) == 1
+        assert response.content == captured[0][1]
+        assert not captured[0][0].exists()
+        assert response.headers["content-type"] == "application/vnd.cyclonedx+json"
+        assert response.headers["content-disposition"] == 'attachment; filename="Synthetic-VEX-Review.vex.cdx.json"'
+        document = response.json()
+        assert document["bomFormat"] == "CycloneDX"
+        assert document["specVersion"] == (version or "1.6")
+        assert document["metadata"]["timestamp"] == "2025-12-31T18:30:00.000000Z"
+        assert document["vulnerabilities"] == []
+        assert synthetic_vex_report.model_dump(mode="json") == original
+        schema = json.loads(
+            (REPO_ROOT / "tests/fixtures/cyclonedx" / f"bom-{version or '1.6'}.schema.json").read_bytes()
+        )
+        Draft7Validator(schema, registry=Registry()).validate(document)
+
+    @pytest.mark.parametrize("value", ["1.5", "1.8", " 1.7", "1.7 ", "", None, True, 1.7, [], {}])
+    def test_invalid_typed_selector_precedes_endpoint_effects(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        value: Any,
+    ) -> None:
+        from evidentia_api.routers import gaps as routes
+
+        effects = Mock(side_effect=AssertionError("endpoint effect before validation"))
+        monkeypatch.setattr(routes, "load_report_by_key", effects)
+        monkeypatch.setattr(tempfile, "NamedTemporaryFile", effects)
+        response = api_client.post(
+            "/api/gap/export",
+            json={
+                "format": "cyclonedx-vex",
+                "report_key": "0123456789abcdef",
+                "vex_spec_version": value,
+            },
+        )
+        assert response.status_code == 422
+        effects.assert_not_called()
+
+    @pytest.mark.parametrize("version", ["1.6", "1.7"])
+    def test_cross_format_presence_refuses_before_store_or_temp(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        version: str,
+    ) -> None:
+        from evidentia_api.routers import gaps as routes
+
+        effects = Mock(side_effect=AssertionError("cross-format effect"))
+        monkeypatch.setattr(routes, "load_report_by_key", effects)
+        monkeypatch.setattr(tempfile, "NamedTemporaryFile", effects)
+        response = api_client.post(
+            "/api/gap/export",
+            json={
+                "format": "json",
+                "report_key": "0123456789abcdef",
+                "vex_spec_version": version,
+            },
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"]["error"] == "invalid_body"
+        assert "vex_spec_version" in response.json()["detail"]["message"]
+        effects.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "format,error,fragment",
+        [
+            ("bad", "unsupported_format", "Unsupported format"),
+            ("json", "invalid_body", "exactly one"),
+        ],
+    )
+    def test_format_and_xor_precedence(
+        self,
+        api_client: TestClient,
+        format: str,
+        error: str,
+        fragment: str,
+    ) -> None:
+        body: dict[str, Any] = {"format": format, "vex_spec_version": "1.7"}
+        response = api_client.post("/api/gap/export", json=body)
+        assert response.status_code == 400
+        assert response.json()["detail"]["error"] == error
+        assert fragment in response.json()["detail"]["message"]
+
+    def test_both_sources_keep_xor_precedence(
+        self,
+        api_client: TestClient,
+        synthetic_vex_report: GapAnalysisReport,
+    ) -> None:
+        response = api_client.post(
+            "/api/gap/export",
+            json={
+                "format": "json",
+                "vex_spec_version": "1.7",
+                "report_key": "0123456789abcdef",
+                "report": synthetic_vex_report.model_dump(mode="json"),
+            },
+        )
+        assert response.status_code == 400
+        assert "exactly one" in response.json()["detail"]["message"]
+
+    @pytest.mark.parametrize(
+        "timestamp", ["2026-01-01T00:00:00", "0001-01-01T00:00:00+01:00", "9999-12-31T23:59:59-01:00"]
+    )
+    def test_invalid_source_clock_is_fixed_body_error_and_temp_is_removed(
+        self,
+        api_client: TestClient,
+        synthetic_vex_report: GapAnalysisReport,
+        monkeypatch: pytest.MonkeyPatch,
+        timestamp: str,
+    ) -> None:
+        real_temp = tempfile.NamedTemporaryFile
+        paths: list[Path] = []
+
+        def capture_temp(*args: Any, **kwargs: Any) -> Any:
+            result = real_temp(*args, **kwargs)
+            paths.append(Path(result.name))
+            return result
+
+        monkeypatch.setattr(tempfile, "NamedTemporaryFile", capture_temp)
+        source = synthetic_vex_report.model_dump(mode="json")
+        source["analyzed_at"] = timestamp
+        response = api_client.post("/api/gap/export", json={"format": "cyclonedx-vex", "report": source})
+        assert response.status_code == 400
+        assert response.json()["detail"]["error"] == "invalid_body"
+        assert response.json()["detail"]["message"] == "VEX requires an aware timestamp representable in UTC"
+        assert len(paths) == 1 and not paths[0].exists()
+
+    def test_unknown_field_and_auth_remain_before_export(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        from evidentia_api.routers import gaps as routes
+        from evidentia_core.plugins.auth._base import AuthResult
+
+        effects = Mock(side_effect=AssertionError("unexpected export effect"))
+        monkeypatch.setattr(routes, "load_report_by_key", effects)
+        response = api_client.post("/api/gap/export", json={"unknown_vex_option": "1.7"})
+        assert response.status_code == 422
+        provider = Mock()
+        provider.authenticate.return_value = AuthResult(authenticated=False, reason="synthetic denial")
+        provider.name.return_value = "synthetic"
+        cast(FastAPI, api_client.app).state.auth_provider = provider
+        response = api_client.post("/api/gap/export", json={"vex_spec_version": None})
+        assert response.status_code == 401
+        provider.authenticate.assert_called_once()
+        effects.assert_not_called()
+
+    def test_schema_is_nonnullable_closed_default_with_presence_metadata(self) -> None:
+        from evidentia_api.schemas import GapExportRequest
+
+        schema = GapExportRequest.model_json_schema()
+        value = schema["properties"]["vex_spec_version"]
+        assert value["type"] == "string"
+        assert value["enum"] == ["1.6", "1.7"]
+        assert value["default"] == "1.6"
+        assert "vex_spec_version" not in schema.get("required", [])
+        assert schema["additionalProperties"] is False
+        assert "vex_spec_version" not in GapExportRequest().model_fields_set
+        assert "vex_spec_version" in GapExportRequest(vex_spec_version="1.6").model_fields_set
+
+    @pytest.mark.parametrize(
+        "key,status,error",
+        [("../outside", 400, "invalid_id"), ("0123456789abcdef", 404, "not_found")],
+    )
+    def test_vex_stored_key_errors_precede_export_file(
+        self,
+        api_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        key: str,
+        status: int,
+        error: str,
+    ) -> None:
+        effects = Mock(side_effect=AssertionError("temporary file before stored-report validation"))
+        monkeypatch.setattr(tempfile, "NamedTemporaryFile", effects)
+        response = api_client.post(
+            "/api/gap/export",
+            json={"format": "cyclonedx-vex", "vex_spec_version": "1.7", "report_key": key},
+        )
+        assert response.status_code == status
+        assert response.json()["detail"]["error"] == error
+        effects.assert_not_called()
+
+    @pytest.mark.parametrize("format", ["ocsf", "ocsf-detection"])
+    def test_non_vex_optional_feature_refusal_retains_cleanup(
+        self,
+        api_client: TestClient,
+        synthetic_vex_report: GapAnalysisReport,
+        monkeypatch: pytest.MonkeyPatch,
+        format: str,
+    ) -> None:
+        from evidentia_api.routers import gaps as routes
+        from evidentia_core.ocsf.finding_mapping import OCSFMappingError
+
+        paths: list[Path] = []
+
+        def unavailable(_report: GapAnalysisReport, path: Path, **kwargs: Any) -> Path:
+            assert kwargs == {"format": format}
+            assert path.exists()
+            paths.append(path)
+            raise OCSFMappingError("synthetic optional dependency absence")
+
+        monkeypatch.setattr(routes, "export_report", unavailable)
+        response = api_client.post(
+            "/api/gap/export",
+            json={"format": format, "report": synthetic_vex_report.model_dump(mode="json")},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"]["error"] == "feature_unavailable"
+        assert response.json()["detail"]["format"] == format
+        assert len(paths) == 1 and not paths[0].exists()

@@ -283,6 +283,13 @@ async def export(payload: GapExportRequest) -> Response:
             "Provide exactly one of 'report' or 'report_key'.",
         )
 
+    if "vex_spec_version" in payload.model_fields_set and fmt != "cyclonedx-vex":
+        raise api_error(
+            400,
+            "invalid_body",
+            "vex_spec_version is only valid for cyclonedx-vex.",
+        )
+
     report: GapAnalysisReport
     if payload.report is not None:
         report = payload.report
@@ -317,7 +324,10 @@ async def export(payload: GapExportRequest) -> Response:
     tmp_path = validate_within(Path(fd.name), tmp_root)
     try:
         try:
-            export_report(report, tmp_path, format=fmt)  # type: ignore[arg-type]
+            if fmt == "cyclonedx-vex":
+                export_report(report, tmp_path, format="cyclonedx-vex", vex_spec_version=payload.vex_spec_version)
+            else:
+                export_report(report, tmp_path, format=fmt)  # type: ignore[arg-type]
         except OCSFMappingError as exc:
             # Raised by the OCSF emitters when the optional [ocsf] extra
             # (py-ocsf-models) is not installed on the server. Surface a

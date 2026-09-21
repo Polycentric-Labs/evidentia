@@ -51,8 +51,13 @@ def analyze(
         help=(
             "Output format: json, csv, markdown, oscal-ar, sarif, ocsf, "
             "ocsf-detection (v0.10.5 — OCSF class_uid 2004, SIEM-target), "
-            "cyclonedx-vex (v0.10.5 — CycloneDX 1.6 VEX, supply-chain)."
+            "cyclonedx-vex (control-gap observations; CycloneDX 1.6 by default)."
         ),
+    ),
+    vex_spec_version: str | None = typer.Option(
+        None,
+        "--vex-spec-version",
+        help="CycloneDX version: 1.6 (default) or 1.7. Only valid with --format cyclonedx-vex.",
     ),
     show_efficiency_opportunities: bool = typer.Option(
         True,
@@ -174,6 +179,12 @@ def analyze(
     ),
 ) -> None:
     """Run gap analysis against one or more frameworks."""
+    if vex_spec_version is not None:
+        if vex_spec_version not in ("1.6", "1.7"):
+            raise typer.BadParameter("Expected exactly 1.6 or 1.7.", param_hint="--vex-spec-version")
+        if format != "cyclonedx-vex":
+            raise typer.BadParameter("Only valid with --format cyclonedx-vex.", param_hint="--vex-spec-version")
+
     # v0.2.1: resolve inputs via the config-aware precedence chain:
     # CLI flag > evidentia.yaml > required-or-error.
     from evidentia_core.config import EvidentiaConfig, get_default
@@ -333,6 +344,9 @@ def analyze(
         sign_with_key = None
 
     # Export
+    vex_options: dict[str, Any] = {}
+    if vex_spec_version is not None:
+        vex_options["vex_spec_version"] = vex_spec_version
     out_path = export_report(
         report,
         output,
@@ -344,6 +358,7 @@ def analyze(
         sigstore_bundle_path=sigstore_bundle,
         sigstore_identity_token=sigstore_identity_token,
         key_sign_path=sign_with_key,
+        **vex_options,
     )
     console.print(f"[green]Report exported:[/green] [bold]{out_path}[/bold] ({format})")
     if sign_with_gpg:
