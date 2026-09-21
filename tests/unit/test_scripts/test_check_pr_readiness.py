@@ -1136,3 +1136,26 @@ def test_windows_native_catalog_condition_requires_step_evidence(
     row = job(snapshot, f"pytest (windows-latest, Python {version})")
     row["steps"] = [item for item in row["steps"] if item["name"] != name]
     reject(checker, policy, snapshot, "Missing source workflow step identities")
+
+
+@pytest.mark.parametrize("outcome", ["failure", "cancelled", "skipped", "neutral", None])
+def test_container_login_must_pass_for_relevant_changes(
+    checker: Any, policy: Any, snapshot: ROW, outcome: object
+) -> None:
+    step(snapshot, "Build + smoke test", "Log in to Docker Hardened Images")["conclusion"] = outcome
+    reject(checker, policy, snapshot, "Mandatory step not successful")
+
+
+def test_container_login_evidence_cannot_be_missing(checker: Any, policy: Any, snapshot: ROW) -> None:
+    row = job(snapshot, "Build + smoke test")
+    row["steps"] = [item for item in row["steps"] if item["name"] != "Log in to Docker Hardened Images"]
+    reject(checker, policy, snapshot, "Missing container step evidence")
+
+
+def test_irrelevant_change_cannot_hide_a_failed_container_login(checker: Any, policy: Any, snapshot: ROW) -> None:
+    change_files(snapshot, [{"filename": "docs/example.md", "status": "modified"}])
+    for row in job(snapshot, "Build + smoke test")["steps"]:
+        if row["name"] in checker.CONTAINER_STEPS:
+            row["conclusion"] = "skipped"
+    step(snapshot, "Build + smoke test", "Log in to Docker Hardened Images")["conclusion"] = "failure"
+    reject(checker, policy, snapshot, "Step not successful")
