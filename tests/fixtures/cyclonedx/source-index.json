@@ -1,0 +1,210 @@
+{
+  "schema_version": "cyclonedx-test-sources-v1",
+  "publisher": "CycloneDX",
+  "purpose": "Pinned derived validation fixtures for CycloneDX control-gap exports.",
+  "schema_dialect": "http://json-schema.org/draft-07/schema#",
+  "publisher_repository": "https://github.com/CycloneDX/specification",
+  "publisher_commit": "595d98f16159bdf7463adc140509ded479130b8b",
+  "license": {
+    "identifier": "Apache-2.0",
+    "path": "LICENSE-2.0.txt",
+    "source_url": "https://github.com/CycloneDX/specification/blob/595d98f16159bdf7463adc140509ded479130b8b/LICENSE",
+    "git_blob_sha": "0808751c23d827d483dc3673d6e3f49514e49d1f",
+    "bytes": 11341,
+    "sha256": "6c29f22a4a7385285c6f579ec9f33c5e989f00739d6b257243a0b082ec9447ae",
+    "attribution": "Copyright OWASP Foundation",
+    "modifications": "None. Preserve the publisher license bytes and appendix attribution."
+  },
+  "notice_inventory": {
+    "status": "No NOTICE-named entries in the captured complete root and schema directories.",
+    "root_entries": 9,
+    "schema_entries": 28,
+    "scope": "These exact ancestor directories and the two matched schema objects at the pinned commit only."
+  },
+  "fixtures": [
+    {
+      "path": "bom-1.6.schema.json",
+      "kind": "derived validation fixture",
+      "specification_version": "1.6",
+      "bytes": 265683,
+      "sha256": "4cb5659bb51fd3c52b90e3da325ea7998309bab0aeeef5cafaf75ccb12740ad2",
+      "hosted_original": {
+        "url": "https://cyclonedx.org/schema/bom-1.6.schema.json",
+        "retrieved_at": "2026-09-12T22:20:09.724360+00:00",
+        "bytes": 190498,
+        "sha256": "1ebcb88a2c845ecb6ff7bee7aeabdff9422cb0347f3d6875b241bd444b7e098f"
+      },
+      "pinned_repository_source": {
+        "path": "schema/bom-1.6.schema.json",
+        "url": "https://github.com/CycloneDX/specification/blob/595d98f16159bdf7463adc140509ded479130b8b/schema/bom-1.6.schema.json",
+        "git_blob_sha": "b6c096a999d6ee9e408a9c3ae6c6227d6981c9ba",
+        "sha256": "18f57f7482593bad9f21b4feed09084640cbeff419d62ad5090c5ceccca5b37d",
+        "parsed_json_equal_to_hosted": true,
+        "byte_identical_to_hosted": false
+      },
+      "modifications": {
+        "removed_annotations": [
+          {
+            "pointer": "/definitions/dependency/description",
+            "value_sha256": "050562eb6dc42f186fc9c3c39fae56452f43b30256a5d9eceac8642f7e54f3d4"
+          },
+          {
+            "pointer": "/properties/declarations/properties/attestations/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/claims/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/evidence/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/affirmation/properties/signatories/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/affirmation/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/component/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/service/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/compositions/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/annotations/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/standard/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          }
+        ],
+        "added_notice_pointer": "/x-evidentia-modification",
+        "publisher_license_annotation_pointer": "/$comment",
+        "publisher_license_annotation_preserved": true,
+        "validation_rules_and_references_unchanged": true
+      }
+    },
+    {
+      "path": "bom-1.7.schema.json",
+      "kind": "derived validation fixture",
+      "specification_version": "1.7",
+      "bytes": 318516,
+      "sha256": "04dfc1351f9c4b30777db4b7b4cef774993cad36c9d6ef482bcaa40f594a15aa",
+      "hosted_original": {
+        "url": "https://cyclonedx.org/schema/bom-1.7.schema.json",
+        "retrieved_at": "2026-09-12T22:20:10.004398+00:00",
+        "bytes": 229588,
+        "sha256": "71152f97948eeeca2fd4a1434a9d29aab35d377be11828b504d029dfeeb1925a"
+      },
+      "pinned_repository_source": {
+        "path": "schema/bom-1.7.schema.json",
+        "url": "https://github.com/CycloneDX/specification/blob/595d98f16159bdf7463adc140509ded479130b8b/schema/bom-1.7.schema.json",
+        "git_blob_sha": "1ca17a2e3f1f684dfcbe66b4f182d6ea21464278",
+        "sha256": "73308edec3ab2d38bfffd993e96a042b594314143b6971a6e9ed98bbb6bd76ce",
+        "parsed_json_equal_to_hosted": true,
+        "byte_identical_to_hosted": false
+      },
+      "modifications": {
+        "removed_annotations": [
+          {
+            "pointer": "/definitions/dependency/description",
+            "value_sha256": "050562eb6dc42f186fc9c3c39fae56452f43b30256a5d9eceac8642f7e54f3d4"
+          },
+          {
+            "pointer": "/definitions/externalReference/properties/type/meta:enum/patent",
+            "value_sha256": "e4c1e012da8d95037afcd93e29e9caa25f199366a996cabd7bba9d77be7d83d8"
+          },
+          {
+            "pointer": "/definitions/externalReference/properties/type/meta:enum/patent-family",
+            "value_sha256": "1d87de3512a777d6dc0dec9141e29cf57bc226dcaa02e0c6f3e8ee723a914b22"
+          },
+          {
+            "pointer": "/properties/declarations/properties/attestations/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/claims/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/evidence/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/affirmation/properties/signatories/items/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/affirmation/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/declarations/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/component/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/service/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/compositions/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/annotations/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/standard/properties/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          },
+          {
+            "pointer": "/definitions/signature/description",
+            "value_sha256": "f72cd1061e126a0ea4b76630905d2ca0aa296f9665a28b806c45eec0b9b84e42"
+          }
+        ],
+        "added_notice_pointer": "/x-evidentia-modification",
+        "publisher_license_annotation_pointer": "/$comment",
+        "publisher_license_annotation_preserved": true,
+        "validation_rules_and_references_unchanged": true
+      }
+    }
+  ],
+  "validation_limits": [
+    "Validation does not establish vulnerability applicability, exploitability, remediation or a compliance verdict.",
+    "No automatic network retrieval is permitted for external schema references. Unresolved references fail unless an exact local schema is explicitly supplied.",
+    "Preserved references do not establish that their targets are bundled or that every possible CycloneDX document was validated."
+  ],
+  "distribution": "Distribute this source index and the exact adjacent publisher license with these derived schema fixtures."
+}

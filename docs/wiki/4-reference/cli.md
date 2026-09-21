@@ -782,7 +782,8 @@ Run gap analysis against one or more frameworks.
 | `--inventory, -i` | Path to control inventory (YAML, CSV, or JSON). |
 | `--frameworks, -f` | Comma-separated framework IDs, e.g. 'nist-800-53-mod,soc2-tsc'. Defaults to `frameworks:` list in evidentia.yaml when omitted. |
 | `--output, -o` | Output file path for the report. |
-| `--format` | Output format: json, csv, markdown, oscal-ar, sarif, ocsf, ocsf-detection (v0.10.5 — OCSF class_uid 2004, SIEM-target), cyclonedx-vex (v0.10.5 — CycloneDX 1.6 VEX, supply-chain). |
+| `--format` | Output format: json, csv, markdown, oscal-ar, sarif, ocsf, ocsf-detection (v0.10.5 — OCSF class_uid 2004, SIEM-target), cyclonedx-vex (control-gap observations; CycloneDX 1.6 by default). |
+| `--vex-spec-version` | CycloneDX version: 1.6 (default) or 1.7. Only valid with --format cyclonedx-vex. |
 | `--show-efficiency-opportunities, --no-efficiency` | Include cross-framework efficiency analysis. |
 | `--min-efficiency-frameworks` | Minimum frameworks for an efficiency opportunity. |
 | `--organization, -O` | Override the organization name in the loaded inventory. Useful for CSV inputs (which have no org field) or when the inventory file's org name doesn't match the report recipient. |

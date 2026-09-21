@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Explicit CycloneDX 1.7 exports (V13-26).** Gap-report VEX exports retain
+  version 1.6 by default and accept an explicit 1.7 selection in the CLI, API
+  and console. Both versions preserve control-gap source fields. Corrected
+  output uses a deterministic UUID URN, tool `publisher` metadata and the
+  source analysis instant in canonical UTC. Detail-only lifecycle observations
+  replace unsupported vulnerability-impact assertions; no component applicability
+  or exploitability conclusion is inferred. Invalid and cross-format selectors
+  refuse before export effects. Static demo VEX export is explicitly unavailable.
+  Historical files remain unchanged. See the
+  [CycloneDX export guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/wiki/2-guides/emit-cyclonedx-vex.md).
+
 - **Native catalog sources (V13-08).** Australian ISM and CISA Microsoft 365
   SCuBA retain pinned source documents, ordered native context, exact identifiers
   and projection references. An external-only BSI Grundschutz++ importer accepts

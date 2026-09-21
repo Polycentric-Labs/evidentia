@@ -134,4 +134,100 @@ describe("GapExportControl", () => {
     expect(alert.textContent).toContain("ocsf extra");
     expect(downloadSpy).not.toHaveBeenCalled();
   });
+
+  it.each(["1.6", "1.7"])(
+    "captures VEX %s and disables both selectors during the request",
+    async (version) => {
+      const user = userEvent.setup();
+      let complete!: (value: unknown) => void;
+      fetchMock.mockReturnValue(
+        new Promise((resolve) => {
+          complete = resolve;
+        }),
+      );
+      render(<GapExportControl report={REPORT} />);
+      expect(screen.queryByLabelText("CycloneDX version")).toBeNull();
+      await user.selectOptions(
+        screen.getByLabelText("Export format"),
+        "cyclonedx-vex",
+      );
+      expect(screen.getByLabelText("CycloneDX version")).toHaveValue("1.6");
+      await user.selectOptions(
+        screen.getByLabelText("CycloneDX version"),
+        version,
+      );
+      await user.click(screen.getByRole("button", { name: "Download" }));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+        format: "cyclonedx-vex",
+        report: REPORT,
+        vex_spec_version: version,
+      });
+      expect(screen.getByLabelText("Export format")).toBeDisabled();
+      expect(screen.getByLabelText("CycloneDX version")).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Exporting..." }),
+      ).toBeDisabled();
+      const blob = new Blob(["exact synthetic server bytes"]);
+      complete({
+        ok: true,
+        headers: new Headers({
+          "content-disposition":
+            'attachment; filename="synthetic.vex.cdx.json"',
+        }),
+        blob: async () => blob,
+      });
+      await waitFor(() =>
+        expect(downloadSpy).toHaveBeenCalledWith(
+          blob,
+          "synthetic.vex.cdx.json",
+        ),
+      );
+      expect(screen.getByLabelText("Export format")).toBeEnabled();
+      expect(screen.getByLabelText("CycloneDX version")).toBeEnabled();
+    },
+  );
+
+  it("omits the VEX option after switching back to another format", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      headers: new Headers(),
+      blob: async () => new Blob(["native report"]),
+    });
+    render(<GapExportControl report={REPORT} />);
+    await user.selectOptions(
+      screen.getByLabelText("Export format"),
+      "cyclonedx-vex",
+    );
+    await user.selectOptions(screen.getByLabelText("CycloneDX version"), "1.7");
+    await user.selectOptions(screen.getByLabelText("Export format"), "json");
+    expect(screen.queryByLabelText("CycloneDX version")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Download" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      format: "json",
+      report: REPORT,
+    });
+  });
+
+  it("retains the chosen VEX version after an error without downloading", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(
+      jsonResponse({ detail: { message: "synthetic VEX refusal" } }, 400),
+    );
+    render(<GapExportControl report={REPORT} />);
+    await user.selectOptions(
+      screen.getByLabelText("Export format"),
+      "cyclonedx-vex",
+    );
+    await user.selectOptions(screen.getByLabelText("CycloneDX version"), "1.7");
+    await user.click(screen.getByRole("button", { name: "Download" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "synthetic VEX refusal",
+    );
+    expect(screen.getByLabelText("CycloneDX version")).toHaveValue("1.7");
+    expect(screen.getByLabelText("CycloneDX version")).toBeEnabled();
+    expect(downloadSpy).not.toHaveBeenCalled();
+  });
 });

@@ -9,6 +9,7 @@ flow through without an API-layer edit.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from evidentia_core.models.gap import GapAnalysisReport
 from pydantic import BaseModel, ConfigDict, Field
@@ -127,6 +128,10 @@ class GapExportRequest(BaseModel):
             "OCSF formats (ocsf, ocsf-detection) require the server's "
             "[ocsf] extra; cyclonedx-vex / oscal-ar are always available."
         ),
+    )
+    vex_spec_version: Literal["1.6", "1.7"] = Field(
+        default="1.6",
+        description="CycloneDX version for cyclonedx-vex only. Omit for other formats.",
     )
     report: GapAnalysisReport | None = Field(
         default=None,

@@ -1,103 +1,121 @@
-# Emit CycloneDX VEX for supply-chain workflows
+# Export control-gap observations as CycloneDX
 
-`evidentia gap analyze --format cyclonedx-vex` renders a gap report as a
-CycloneDX 1.6 VEX (Vulnerability Exploitability eXchange) document. VEX lets you
-communicate the *analysis state* of each finding to supply-chain tooling —
-Dependency-Track and other CycloneDX-aware consumers read this surface directly.
+`evidentia gap analyze --format=cyclonedx-vex` exports a gap report using
+CycloneDX 1.6 by default. Select 1.7 explicitly when needed. Both versions use
+the same supported fields and retain each gap's source values.
 
-This format slots into the same CycloneDX toolchain Evidentia already uses for
-its release SBOM, so VEX is an additive artifact over an existing supply-chain
-stack rather than a new format to bolt on.
+These exports describe control-gap lifecycle observations. The `analysis`
+object contains only `detail`; it does not assert vulnerability impact,
+component applicability, vulnerable-code presence or exploitability. Accepting
+a control risk, marking a control not applicable, or remediating a control gap
+does not establish any of those software conclusions.
 
-## Why VEX
+## Before you start
 
-Federal and regulatory supply-chain mandates (Executive Order 14028 and the 2026
-SEC supply-chain enforcement wave among them) are driving CycloneDX VEX adoption.
-VEX answers the question a raw vulnerability list cannot: *for this finding, what
-is our analysis state* — is it being worked, accepted, not applicable, resolved?
-Emitting your gap report as VEX puts that judgment into a machine-readable,
-standards-conformant document your downstream tooling can act on.
+Install Evidentia and prepare a control inventory as described in
+[Run a gap analysis](run-gap-analysis.md). Exporting needs no additional
+CycloneDX tool or network access. Check the selected schema version and your
+consumer's handling of gap observations before using the file in another
+system. Schema validation alone does not establish VEX applicability or
+interoperability with a particular consumer.
 
-## Prerequisites
+## Export the default version
 
-- Evidentia installed, plus a control inventory (see
-  [Run a gap analysis](run-gap-analysis.md)).
-- A CycloneDX-aware consumer if you intend to ingest the output (for example
-  Dependency-Track). The emit itself needs no extra install.
+The following commands write CycloneDX 1.6 JSON to `gap-vex.cdx.json`.
 
-## Step 1 — Emit the VEX document
-
-**Bash / Linux / macOS**
+**Bash**
 
 ```bash
 evidentia gap analyze \
   --inventory=my-controls.yaml \
-  --frameworks=nist-800-53-rev5-moderate \
+  --frameworks=nist-800-53-mod \
   --format=cyclonedx-vex \
   --output=gap-vex.cdx.json
 ```
 
-**PowerShell (Windows)**
+**PowerShell**
 
 ```powershell
 evidentia gap analyze `
   --inventory=my-controls.yaml `
-  --frameworks=nist-800-53-rev5-moderate `
+  --frameworks=nist-800-53-mod `
   --format=cyclonedx-vex `
   --output=gap-vex.cdx.json
 ```
 
-`cyclonedx-vex` is a first-class `--format` value. The output is a CycloneDX 1.6
-document in which each `ControlGap` becomes one `vulnerability` entry. The entry's
-analysis `state` is derived from the gap's `implementation_status` and its
-`GapStatus` — so a gap you have marked remediated, accepted, or not applicable
-carries that state into the VEX record.
+You can also pass `--vex-spec-version=1.6` explicitly. Omitting the option
+retains the 1.6 default.
 
-## Step 2 — Compose with your SBOM
+## Select CycloneDX 1.7
 
-Evidentia's release workflow ships an SBOM (`evidentia-sbom.cdx.json`), and the
-VEX document is the companion analysis surface. Because both are CycloneDX, you
-compose them with standard CycloneDX tooling rather than anything
-Evidentia-specific — for example, uploading the SBOM and the VEX together to
-Dependency-Track, or merging them with the CycloneDX CLI for distribution to a
-downstream consumer.
-
-The general shape:
-
-**Bash / Linux / macOS**
+**Bash**
 
 ```bash
-# Illustrative — use your CycloneDX tool of choice to associate the
-# VEX analysis with the SBOM's component inventory.
-cyclonedx merge --input-files evidentia-sbom.cdx.json gap-vex.cdx.json \
-  --output-file combined.cdx.json
+evidentia gap analyze \
+  --inventory=my-controls.yaml \
+  --frameworks=nist-800-53-mod \
+  --format=cyclonedx-vex \
+  --vex-spec-version=1.7 \
+  --output=gap-vex-1.7.cdx.json
 ```
 
-**PowerShell (Windows)**
+**PowerShell**
 
 ```powershell
-# Illustrative — use your CycloneDX tool of choice to associate the
-# VEX analysis with the SBOM's component inventory.
-cyclonedx merge --input-files evidentia-sbom.cdx.json gap-vex.cdx.json `
-  --output-file combined.cdx.json
+evidentia gap analyze `
+  --inventory=my-controls.yaml `
+  --frameworks=nist-800-53-mod `
+  --format=cyclonedx-vex `
+  --vex-spec-version=1.7 `
+  --output=gap-vex-1.7.cdx.json
 ```
 
-(The exact `cyclonedx` invocation depends on which CycloneDX CLI/version you use;
-the point is that the VEX document is portable, standards-conformant input to it.)
+Only the exact values `1.6` and `1.7` are accepted. An invalid value or an
+explicit version used with another export format exits with status 2 before
+inventory loading, analysis, output, report saving or signing. The CLI's input
+path checks can run before this option check.
 
-## What's next
+## API and console
 
-- **CI-gate the same gaps**: [Emit SARIF](emit-sarif.md) for Code Scanning.
-- **SIEM ingest**: [Emit OCSF Detection](emit-ocsf-detection.md).
-- **Verify Evidentia's own supply-chain artifacts**: the release SBOM, PEP 740
-  attestations, and cosign signatures are covered in
-  [Project → Verification](../6-project/verification.md).
+The gap export API accepts the optional JSON member `vex_spec_version` for
+`format: "cyclonedx-vex"`. Omission selects 1.6; explicit `"1.6"` and `"1.7"`
+select those versions. Invalid typed values, `null` and unknown request members
+produce HTTP 422. An explicitly supplied valid version with another format
+produces HTTP 400 after the existing format and report-source checks, before
+loading a stored report or creating an export file. A successful VEX response
+retains the `application/vnd.cyclonedx+json` content type and `.vex.cdx.json`
+download suffix.
 
-## Got stuck?
+In the console, choose **CycloneDX VEX**, then use **CycloneDX version**. The
+selector starts at 1.6. A download captures the chosen format and version; both
+selectors and the export button stay disabled while it runs. Static demo mode
+reports that VEX export is unavailable instead of downloading native report
+JSON under a VEX filename. Other demo export formats retain their existing
+behavior.
 
-- A consumer rejects the file: confirm it supports CycloneDX 1.6 and that you are
-  feeding it the `--output` file (not the console summary).
-- The analysis states look wrong: they are derived from each gap's
-  `implementation_status` + `status` (GapStatus). Update the gap statuses (for
-  example via [Manage POA&M](manage-poam.md)) and re-emit.
-- Need the full flag list: [CLI reference → `evidentia gap analyze`](../4-reference/cli.md).
+## Output compatibility
+
+Each control gap still produces one `vulnerability` entry with its existing
+identifier, source, severity, description, recommendation and source properties.
+The lifecycle details remain literal observations. The export does not add
+`analysis.state`, `analysis.justification`, `analysis.response` or an `affects`
+relationship inferred from those observations.
+
+The serial number is a deterministic UUID URN derived from the report ID and
+the original analysis timestamp representation. Re-exporting that report in
+either version retains the serial. It is not a content digest, and a different
+offset representation can produce a different serial for the same instant.
+This reuse deliberately differs from the publisher's recommendation for a
+fresh serial per BOM. Consumers must not treat the serial as proof of identical
+content.
+
+Tool metadata uses `publisher`. The metadata timestamp is the report's analysis
+instant normalized to UTC with six fractional digits, not the time of export.
+Naive timestamps, undefined offsets and UTC conversion outside the supported
+calendar range are refused without substituting the current time. These
+corrections apply to new exports in both versions. Previously written files
+are not rewritten.
+
+For the full option list, see the [CLI reference](../4-reference/cli.md).
+Other export workflows are covered in [Emit SARIF](emit-sarif.md) and
+[Emit OCSF Detection](emit-ocsf-detection.md).

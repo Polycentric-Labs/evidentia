@@ -394,12 +394,17 @@ export const GAP_EXPORT_FORMATS = [
     label: "OCSF Detection",
     hint: "OCSF Detection Finding (2004, SIEM)",
   },
-  { id: "cyclonedx-vex", label: "CycloneDX VEX", hint: "CycloneDX 1.6 VEX" },
+  {
+    id: "cyclonedx-vex",
+    label: "CycloneDX VEX",
+    hint: "CycloneDX 1.6 or 1.7 control-gap observations",
+  },
   { id: "csv", label: "CSV", hint: "One row per gap" },
   { id: "markdown", label: "Markdown", hint: "Human-readable report" },
 ] as const;
 
 export type GapExportFormat = (typeof GAP_EXPORT_FORMATS)[number]["id"];
+export type VexSpecVersion = "1.6" | "1.7";
 
 export interface GapExportResult {
   blob: Blob;
@@ -835,11 +840,23 @@ export type ConmonSeriesResponse = components["schemas"]["SeriesResponse"];
 async function realExportGapReport(
   report: GapAnalysisReport,
   format: GapExportFormat,
+  vexSpecVersion?: VexSpecVersion,
 ): Promise<GapExportResult> {
+  if (
+    vexSpecVersion !== undefined &&
+    (format !== "cyclonedx-vex" ||
+      (vexSpecVersion !== "1.6" && vexSpecVersion !== "1.7"))
+  ) {
+    throw new TypeError("Invalid VEX version selection");
+  }
+  const selection =
+    format === "cyclonedx-vex"
+      ? { vex_spec_version: vexSpecVersion ?? "1.6" }
+      : {};
   const response = await fetch("/api/gap/export", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ format, report }),
+    body: JSON.stringify({ format, report, ...selection }),
   });
 
   if (!response.ok) {
@@ -863,9 +880,9 @@ async function realExportGapReport(
 }
 
 /**
- * Request a gap-report export. In a `VITE_DEMO` build this serializes the
- * report client-side (no `/api/gap/export` call); otherwise it round-trips to
- * the backend exporter.
+ * Request a gap-report export. Demo VEX export is explicitly unavailable;
+ * other demo formats keep their existing local behavior. Normal builds
+ * return the backend exporter's artifact.
  */
 export const exportGapReport = IS_DEMO
   ? demoExportGapReport
