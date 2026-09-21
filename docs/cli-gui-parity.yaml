@@ -204,6 +204,11 @@ commands:
     gui: "/collect"
     status: full
     reason: "Explicit local XML, profile and assessment selection retain the full native result, completion provenance and nullable artifact across CLI, API and console."
+  - cli: "collect release-cadence"
+    api: "POST /api/collect/release-cadence"
+    gui: "/collect"
+    status: full
+    reason: "Full public-release facts, bounded traversal and explicit persistence outcomes share the CLI, API and console contract."
   - cli: "collect registry"
     api: "POST /api/collectors/registry"
     gui: "/collect"
@@ -597,6 +602,11 @@ commands:
     gui: null
     status: exempt
     reason: "Launches the web UI server itself; not a feature surfaced within the UI."
+  - cli: "conmon release-series"
+    api: "POST /api/conmon/release-series"
+    gui: "/conmon"
+    status: full
+    reason: "Offline local publication families use the same explicit UTC window, exact gap arithmetic and full result on every surface."
   - cli: "conmon watch"
     api: null
     gui: null

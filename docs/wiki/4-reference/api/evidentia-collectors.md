@@ -29,6 +29,7 @@ Public submodules + subpackages of `evidentia_collectors` (import directly, e.g.
 - `evidentia_collectors.ocsf`
 - `evidentia_collectors.okta`
 - `evidentia_collectors.registries`
+- `evidentia_collectors.release_cadence`
 - `evidentia_collectors.retention`
 - `evidentia_collectors.scap`
 - `evidentia_collectors.securityscorecard`

@@ -20,6 +20,14 @@ import {
   type CatalogNativeExternalImportRequest,
   type CatalogNativeImportResult,
 } from "@/lib/catalog-native";
+import {
+  readReleasePollResponse,
+  readReleaseSeriesResponse,
+  snapshotReleasePollRequest,
+  snapshotReleaseSeriesRequest,
+  type ReleasePollRequest,
+  type ReleaseSeriesRequest,
+} from "@/lib/release-cadence";
 import { demoApi, demoExportGapReport } from "@/lib/demo/demo-api";
 import { IS_DEMO } from "@/lib/demo";
 import {
@@ -1685,6 +1693,38 @@ const realApi = {
       throw new ApiError("Enterprise collection failed", response.status, null);
     }
     return readEnterpriseRetentionResponse(response, expected);
+  },
+  collectReleaseCadence: async (
+    body: ReleasePollRequest,
+    options?: { signal?: AbortSignal },
+  ) => {
+    const expected = snapshotReleasePollRequest(body);
+    const response = await fetch("/api/collect/release-cadence", {
+      method: "POST",
+      body: JSON.stringify(expected),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      signal: options?.signal,
+    });
+    return readReleasePollResponse(response, expected);
+  },
+  releaseSeries: async (
+    body: ReleaseSeriesRequest,
+    options?: { signal?: AbortSignal },
+  ) => {
+    const expected = snapshotReleaseSeriesRequest(body);
+    const response = await fetch("/api/conmon/release-series", {
+      method: "POST",
+      body: JSON.stringify(expected),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      signal: options?.signal,
+    });
+    return readReleaseSeriesResponse(response, expected);
   },
   collectStorageRetention: async (body: StorageRetentionCollectRequest) => {
     const expected = snapshotStorageRetentionRequest(body);

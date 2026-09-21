@@ -62,8 +62,11 @@ import logging
 import os
 import tempfile
 from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
 from platformdirs import user_data_dir
@@ -299,6 +302,51 @@ def _note_evidence_cleanup_failure(primary: BaseException, message: str) -> None
         return
 
 
+@contextmanager
+def _atomic_evidence_publication(
+    payload: str,
+    lineage_dir: Path,
+    out_path: Path,
+) -> Iterator[Literal["created", "collided"]]:
+    """Keep the unique temporary owned until the caller handles the link result."""
+    descriptor, temporary_name = tempfile.mkstemp(dir=lineage_dir, prefix=f".{out_path.name}.", suffix=".tmp")
+    try:
+        try:
+            tmp_path = Path(temporary_name)
+            stream = os.fdopen(descriptor, "w", encoding="utf-8")
+        except BaseException as primary:
+            try:
+                os.close(descriptor)
+            except BaseException:
+                _note_evidence_cleanup_failure(primary, "Closing the owned evidence descriptor also failed.")
+            raise
+        try:
+            stream.write(payload)
+        except BaseException as primary:
+            try:
+                stream.close()
+            except BaseException:
+                _note_evidence_cleanup_failure(primary, "Closing the temporary evidence stream also failed.")
+            raise
+        else:
+            stream.close()
+        try:
+            os.link(tmp_path, out_path)
+        except FileExistsError:
+            state: Literal["created", "collided"] = "collided"
+        else:
+            state = "created"
+        yield state
+    except BaseException as primary:
+        try:
+            os.unlink(temporary_name)
+        except BaseException:
+            _note_evidence_cleanup_failure(primary, "Removing the owned temporary evidence file also failed.")
+        raise
+    else:
+        os.unlink(temporary_name)
+
+
 def save_evidence(
     artifact: EvidenceArtifact,
     evidence_store_dir: Path | None = None,
@@ -371,44 +419,14 @@ def save_evidence(
         )
 
     payload = artifact.model_dump_json(indent=2)
-    descriptor, temporary_name = tempfile.mkstemp(dir=lineage_dir, prefix=f".{out_path.name}.", suffix=".tmp")
-    try:
-        try:
-            tmp_path = Path(temporary_name)
-            stream = os.fdopen(descriptor, "w", encoding="utf-8")
-        except BaseException as primary:
-            try:
-                os.close(descriptor)
-            except BaseException:
-                _note_evidence_cleanup_failure(primary, "Closing the owned evidence descriptor also failed.")
-            raise
-        try:
-            stream.write(payload)
-        except BaseException as primary:
-            try:
-                stream.close()
-            except BaseException:
-                _note_evidence_cleanup_failure(primary, "Closing the temporary evidence stream also failed.")
-            raise
-        else:
-            stream.close()
-        try:
-            os.link(tmp_path, out_path)
-        except FileExistsError:
+    with _atomic_evidence_publication(payload, lineage_dir, out_path) as state:
+        if state == "collided":
             head = _chain_head_version(canonical_lineage, store)
             raise EvidenceWORMViolation(
                 lineage_id=canonical_lineage,
                 attempted_version=artifact.version,
                 next_version=head + 1,
             ) from None
-    except BaseException as primary:
-        try:
-            os.unlink(temporary_name)
-        except BaseException:
-            _note_evidence_cleanup_failure(primary, "Removing the owned temporary evidence file also failed.")
-        raise
-    else:
-        os.unlink(temporary_name)
     logger.debug(
         "Saved evidence v%d for lineage %s: %s",
         artifact.version,
@@ -447,6 +465,79 @@ def save_evidence(
             )
 
     return out_path
+
+
+@dataclass(frozen=True)
+class EvidenceVersionOneSaveResult:
+    """Local link disposition; this does not assert readback or mirror success."""
+
+    state: Literal["created", "collided"]
+    path: Path
+
+
+def save_evidence_version_one(
+    artifact: EvidenceArtifact,
+    evidence_store_dir: Path | None = None,
+) -> EvidenceVersionOneSaveResult:
+    """Create a canonical version-one root without reading lineage history.
+
+    The caller separately verifies stored content. A collision never mirrors.
+    Cleanup or mirror failure can raise after the complete local file exists.
+    """
+    if type(artifact) is not EvidenceArtifact:
+        raise ValueError("Version-one storage requires an exact EvidenceArtifact.")
+    data = object.__getattribute__(artifact, "__dict__")
+    if type(data) is not dict or set(data) != set(EvidenceArtifact.model_fields):
+        raise ValueError("Version-one storage requires complete model fields.")
+    identifier = data["id"]
+    lineage = data["lineage_id"]
+    if (
+        type(identifier) is not str
+        or type(lineage) is not str
+        or identifier != lineage
+        or type(data["version"]) is not int
+        or data["version"] != 1
+        or data["predecessor_id"] is not None
+        or _validate_id_shape(identifier) != identifier
+    ):
+        raise ValueError("Version-one storage requires a canonical root identity.")
+    canonical_lineage = identifier
+    store = get_evidence_store_dir(evidence_store_dir)
+    lineage_dir = _lineage_dir(canonical_lineage, store)
+    lineage_dir.mkdir(parents=True, exist_ok=True)
+    out_path = _version_path(canonical_lineage, 1, store)
+    if out_path.exists():
+        return EvidenceVersionOneSaveResult("collided", out_path)
+    payload = EvidenceArtifact.model_dump_json(artifact, indent=2)
+    with _atomic_evidence_publication(payload, lineage_dir, out_path) as state:
+        if state == "collided":
+            return EvidenceVersionOneSaveResult("collided", out_path)
+    mirror_config = _resolve_auto_mirror_backend()
+    if mirror_config is not None:
+        backend, retention_metadata = mirror_config
+        try:
+            from evidentia_core.evidence_store_worm import mirror_to_worm
+
+            mirror_to_worm(artifact, backend, retention_metadata)  # type: ignore[arg-type]
+            logger.debug(
+                "Auto-mirrored evidence v%d for lineage %s to WORM backend",
+                artifact.version,
+                canonical_lineage,
+            )
+        except Exception:
+            # Non-fatal: the local-store write already succeeded
+            # + the WORM record is the optional durability layer.
+            # Operators wanting fail-fast on mirror failure raise
+            # the exception in their factory function rather than
+            # catching it here.
+            logger.warning(
+                "Auto-mirror to WORM backend failed for lineage %s v%d; local-store write succeeded.",
+                canonical_lineage,
+                artifact.version,
+                exc_info=True,
+            )
+
+    return EvidenceVersionOneSaveResult("created", out_path)
 
 
 def _chain_head_version(
@@ -570,6 +661,7 @@ def list_lineages(
 
 __all__ = [
     "EVIDENCE_STORE_ENV_VAR",
+    "EvidenceVersionOneSaveResult",
     "EvidenceWORMViolation",
     "InvalidEvidenceIdError",
     "PathTraversalError",
@@ -578,6 +670,7 @@ __all__ = [
     "list_lineages",
     "load_evidence_version",
     "save_evidence",
+    "save_evidence_version_one",
 ]
 
 

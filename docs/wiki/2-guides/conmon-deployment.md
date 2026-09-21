@@ -8,6 +8,20 @@ ships a **read-only cadence library** plus a `evidentia conmon` CLI that answers
 emits audit events on transitions. This guide covers the cadence library, the
 CLI verbs, and both deployment patterns.
 
+## Recorded release publication spacing
+
+`evidentia conmon release-series` evaluates publication records already saved by
+`collect release-cadence --persist`. It uses an explicit UTC window, interval and
+tolerance, makes no provider call, and does not write to the store. The console
+provides the same operation under **CONMON > Release series**.
+
+This operation does not read the YAML cadence state file below or mark an
+obligation complete. Zero or one eligible publication yields `insufficient`; with
+at least two, the result includes leading, adjacent and trailing gaps in exact
+microseconds. A `continuous` result describes recorded upstream publications,
+not installed patches or compliance. See the [release-cadence guide](release-cadence.md)
+for commands, result states and uncertain-persistence handling.
+
 ## The bundled cadence library
 
 Evidentia bundles **7 cadences** covering the major federal frameworks. Each

@@ -1,0 +1,90 @@
+{
+  "id": "6c57538c-991b-5d55-8e7d-90a4a05d185a",
+  "title": "GitHub release publication",
+  "description": "Recorded upstream release publication. This does not show patch installation or remediation.",
+  "evidence_type": "repository_metadata",
+  "source_system": "github-release-cadence",
+  "collected_at": "2000-01-01T00:00:00Z",
+  "collected_by": "github-public-releases-2026-03-10",
+  "content": {
+    "schema_version": "release-publication-content-v1",
+    "record_kind": "release_publication",
+    "source_profile": "github-public-releases-2026-03-10",
+    "api_version": "2026-03-10",
+    "event_key": {
+      "identity_version": "evidentia.release-publication.v1",
+      "source_host": "api.github.com",
+      "canonical_owner": "example",
+      "canonical_repository": "synthetic",
+      "release_id": 101
+    },
+    "event_key_sha256": "36468894872317e8b9f2911d63ece483be4e733b425a6276432f926a2ef11f41",
+    "event_id": "6c57538c-991b-5d55-8e7d-90a4a05d185a",
+    "selected_facts": {
+      "id": 101,
+      "node_id": "SYNTHETIC_RELEASE_101",
+      "url": "https://api.github.com/repos/Example/Synthetic/releases/101",
+      "html_url": "https://github.com/Example/Synthetic/releases/tag/synthetic-v1",
+      "tag_name": "synthetic-v1",
+      "target_commitish": "synthetic-main",
+      "name": null,
+      "draft": false,
+      "prerelease": false,
+      "created_at": "1999-12-31T12:00:00Z",
+      "published_at": "2000-01-01T00:00:00Z"
+    },
+    "selected_facts_sha256": "d466e0c62b55d9fe0b742fe9b52c326dee744595b5818f1a80749b37c0a7df84",
+    "publication_time": {
+      "source_literal": "2000-01-01T00:00:00Z",
+      "classification": "normalized",
+      "normalized_utc": "2000-01-01T00:00:00.000000Z"
+    },
+    "first_observation": {
+      "poll_id": "00000000-0000-4000-8000-000000000001",
+      "request_sha256": "25f5e0a63bc512d087dc14b299493eab15bb30e53d7b70ddc95ee78e9c6b3ba7",
+      "requested_owner": "Example",
+      "requested_repository": "Synthetic",
+      "channel": "all_published",
+      "page_ordinal": 1,
+      "page_number": 1,
+      "record_index": 0,
+      "retrieved_at": "2000-01-03T00:00:00.000000Z",
+      "traversal_completed_at": "2000-01-03T00:00:00.000100Z",
+      "response_raw_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e",
+      "response_decoded_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e"
+    }
+  },
+  "content_hash": "8c32cae3e485f8d80a562ec32345c20a54a1a6bae2d22238672ea39bbf4d2636",
+  "content_format": "json",
+  "file_path": null,
+  "file_size_bytes": null,
+  "control_mappings": [],
+  "sufficiency": "unknown",
+  "sufficiency_rationale": null,
+  "missing_elements": [],
+  "validator_confidence": null,
+  "validated_at": null,
+  "validated_by": null,
+  "expires_at": null,
+  "tags": [
+    "upstream-release",
+    "publication"
+  ],
+  "metadata": {
+    "evidentia_domain": "release-cadence",
+    "schema_version": "release-evidence-metadata-v1",
+    "record_kind": "release_publication",
+    "source_profile": "github-public-releases-2026-03-10",
+    "api_version": "2026-03-10",
+    "source_host": "api.github.com",
+    "canonical_owner": "example",
+    "canonical_repository": "synthetic",
+    "release_id": 101,
+    "event_id": "6c57538c-991b-5d55-8e7d-90a4a05d185a",
+    "selected_facts_sha256": "d466e0c62b55d9fe0b742fe9b52c326dee744595b5818f1a80749b37c0a7df84",
+    "clock_kind": "source_publication"
+  },
+  "version": 1,
+  "lineage_id": "6c57538c-991b-5d55-8e7d-90a4a05d185a",
+  "predecessor_id": null
+}

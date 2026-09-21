@@ -41,6 +41,7 @@ Public submodules + subpackages of `evidentia_core` (import directly, e.g. `from
 - `evidentia_core.poam`
 - `evidentia_core.poam_store`
 - `evidentia_core.rbac`
+- `evidentia_core.release_cadence`
 - `evidentia_core.retention`
 - `evidentia_core.retention_metadata_store`
 - `evidentia_core.risk_quant`

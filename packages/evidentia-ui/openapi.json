@@ -1031,7 +1031,7 @@
           },
           "gaps": {
             "items": {
-              "$ref": "#/components/schemas/SeriesGap"
+              "$ref": "#/components/schemas/evidentia_core__conmon__series__SeriesGap"
             },
             "title": "Gaps",
             "type": "array"
@@ -4556,6 +4556,203 @@
         "title": "DirectiveRule",
         "type": "object"
       },
+      "DiscoveryResult": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_files_read": {
+            "maximum": 16386.0,
+            "minimum": 0.0,
+            "title": "Canonical Files Read",
+            "type": "integer"
+          },
+          "child_entries_observed": {
+            "maximum": 32770.0,
+            "minimum": 0.0,
+            "title": "Child Entries Observed",
+            "type": "integer"
+          },
+          "inventory_sha256": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventory Sha256"
+          },
+          "meaning": {
+            "const": "bounded_recorded_store_observation",
+            "title": "Meaning",
+            "type": "string"
+          },
+          "passes": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Passes",
+            "type": "integer"
+          },
+          "raw_file_bytes_observed": {
+            "maximum": 67108865.0,
+            "minimum": 0.0,
+            "title": "Raw File Bytes Observed",
+            "type": "integer"
+          },
+          "release_records_observed": {
+            "maximum": 2049.0,
+            "minimum": 0.0,
+            "title": "Release Records Observed",
+            "type": "integer"
+          },
+          "root_entries_observed": {
+            "maximum": 8194.0,
+            "minimum": 0.0,
+            "title": "Root Entries Observed",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "unavailable",
+              "changed",
+              "limit_exceeded",
+              "record_invalid",
+              "identity_conflict",
+              "deadline_exceeded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "passes",
+          "root_entries_observed",
+          "child_entries_observed",
+          "canonical_files_read",
+          "raw_file_bytes_observed",
+          "release_records_observed",
+          "inventory_sha256",
+          "meaning"
+        ],
+        "title": "DiscoveryResult",
+        "type": "object"
+      },
+      "DiscoverySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_files_read": {
+            "maximum": 16386.0,
+            "minimum": 0.0,
+            "title": "Canonical Files Read",
+            "type": "integer"
+          },
+          "child_entries_observed": {
+            "maximum": 32770.0,
+            "minimum": 0.0,
+            "title": "Child Entries Observed",
+            "type": "integer"
+          },
+          "conflicting_events": {
+            "anyOf": [
+              {
+                "maximum": 1024.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflicting Events"
+          },
+          "inventory_sha256": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventory Sha256"
+          },
+          "passes": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Passes",
+            "type": "integer"
+          },
+          "raw_file_bytes_observed": {
+            "maximum": 67108865.0,
+            "minimum": 0.0,
+            "title": "Raw File Bytes Observed",
+            "type": "integer"
+          },
+          "release_record_reads_observed": {
+            "maximum": 2049.0,
+            "minimum": 0.0,
+            "title": "Release Record Reads Observed",
+            "type": "integer"
+          },
+          "root_entries_observed": {
+            "maximum": 8194.0,
+            "minimum": 0.0,
+            "title": "Root Entries Observed",
+            "type": "integer"
+          },
+          "selected_scope_records": {
+            "anyOf": [
+              {
+                "maximum": 1024.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Scope Records"
+          },
+          "status": {
+            "enum": [
+              "not_requested",
+              "not_started",
+              "complete",
+              "unavailable",
+              "changed",
+              "limit_exceeded",
+              "record_invalid",
+              "identity_conflict",
+              "deadline_exceeded",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "passes",
+          "root_entries_observed",
+          "child_entries_observed",
+          "canonical_files_read",
+          "raw_file_bytes_observed",
+          "release_record_reads_observed",
+          "inventory_sha256",
+          "selected_scope_records",
+          "conflicting_events"
+        ],
+        "title": "DiscoverySummary",
+        "type": "object"
+      },
       "DomainTarget": {
         "additionalProperties": false,
         "properties": {
@@ -6172,6 +6369,159 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "EventGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "blocks_all_published": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocks All Published"
+          },
+          "blocks_full_releases": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocks Full Releases"
+          },
+          "current_vs_parent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactComparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "event_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_index": {
+            "maximum": 999.0,
+            "minimum": 0.0,
+            "title": "Event Index",
+            "type": "integer"
+          },
+          "known_observation_count": {
+            "anyOf": [
+              {
+                "maximum": 1023.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Known Observation Count"
+          },
+          "observation_outcome_index": {
+            "anyOf": [
+              {
+                "maximum": 1999.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observation Outcome Index"
+          },
+          "occurrence_count": {
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Occurrence Count",
+            "type": "integer"
+          },
+          "publication_outcome_index": {
+            "anyOf": [
+              {
+                "maximum": 1999.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Outcome Index"
+          },
+          "release_id": {
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Release Id",
+            "type": "integer"
+          },
+          "representative_row_index": {
+            "maximum": 999.0,
+            "minimum": 0.0,
+            "title": "Representative Row Index",
+            "type": "integer"
+          },
+          "stored_state": {
+            "enum": [
+              "not_observed",
+              "absent",
+              "verified",
+              "conflict",
+              "unavailable"
+            ],
+            "title": "Stored State",
+            "type": "string"
+          },
+          "stored_union_change_codes": {
+            "items": {
+              "enum": [
+                "non_cadence_facts_changed",
+                "publication_literal_changed",
+                "node_id_changed",
+                "publication_instant_changed",
+                "publication_time_unqualified",
+                "draft_changed_to_true",
+                "prerelease_changed"
+              ],
+              "type": "string"
+            },
+            "maxItems": 7,
+            "minItems": 0,
+            "title": "Stored Union Change Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_index",
+          "event_id",
+          "release_id",
+          "representative_row_index",
+          "occurrence_count",
+          "stored_state",
+          "known_observation_count",
+          "current_vs_parent",
+          "stored_union_change_codes",
+          "blocks_full_releases",
+          "blocks_all_published",
+          "publication_outcome_index",
+          "observation_outcome_index"
+        ],
+        "title": "EventGroup",
+        "type": "object"
+      },
       "EventSelection": {
         "additionalProperties": false,
         "properties": {
@@ -6945,6 +7295,69 @@
         ],
         "title": "FIPS199Impact",
         "type": "string"
+      },
+      "FactComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "blocks_all_published": {
+            "title": "Blocks All Published",
+            "type": "boolean"
+          },
+          "blocks_full_releases": {
+            "title": "Blocks Full Releases",
+            "type": "boolean"
+          },
+          "change_codes": {
+            "items": {
+              "enum": [
+                "non_cadence_facts_changed",
+                "publication_literal_changed",
+                "node_id_changed",
+                "publication_instant_changed",
+                "publication_time_unqualified",
+                "draft_changed_to_true",
+                "prerelease_changed"
+              ],
+              "type": "string"
+            },
+            "maxItems": 7,
+            "minItems": 0,
+            "title": "Change Codes",
+            "type": "array"
+          },
+          "changed_fields": {
+            "items": {
+              "enum": [
+                "id",
+                "node_id",
+                "url",
+                "html_url",
+                "tag_name",
+                "target_commitish",
+                "name",
+                "draft",
+                "prerelease",
+                "immutable",
+                "created_at",
+                "published_at",
+                "updated_at"
+              ],
+              "type": "string"
+            },
+            "maxItems": 13,
+            "minItems": 0,
+            "title": "Changed Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "changed_fields",
+          "change_codes",
+          "blocks_full_releases",
+          "blocks_all_published"
+        ],
+        "title": "FactComparison",
+        "type": "object"
       },
       "FairMcQuantifyResponse": {
         "additionalProperties": false,
@@ -9157,6 +9570,144 @@
         "title": "LlmStatusResponse",
         "type": "object"
       },
+      "LocalSaveOutcome": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_selected_facts_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Candidate Selected Facts Sha256",
+            "type": "string"
+          },
+          "event_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "local_state": {
+            "enum": [
+              "local_verified",
+              "local_absent",
+              "local_conflict",
+              "local_indeterminate",
+              "not_attempted"
+            ],
+            "title": "Local State",
+            "type": "string"
+          },
+          "mirror_outcome": {
+            "const": "unobserved",
+            "title": "Mirror Outcome",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "created",
+              "already_saved",
+              "existing_different_facts",
+              "present_after_uncertain_save",
+              "not_applicable",
+              "not_attempted",
+              "failed",
+              "indeterminate",
+              "conflict"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "planned_action": {
+            "enum": [
+              "reuse_publication",
+              "create_publication",
+              "create_observation",
+              "conditional_observation"
+            ],
+            "title": "Planned Action",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "publication_not_eligible",
+                  "observation_not_needed",
+                  "known_parent_absent",
+                  "save_failed",
+                  "save_readback_mismatch",
+                  "store_record_invalid",
+                  "store_identity_conflict",
+                  "store_digest_conflict",
+                  "store_parent_missing",
+                  "store_parent_conflict",
+                  "store_changed",
+                  "store_unavailable",
+                  "store_limit_exceeded",
+                  "deadline_exceeded",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "record_kind": {
+            "enum": [
+              "release_publication",
+              "release_source_observation"
+            ],
+            "title": "Record Kind",
+            "type": "string"
+          },
+          "save_call": {
+            "enum": [
+              "not_called",
+              "returned_created",
+              "returned_collided",
+              "raised"
+            ],
+            "title": "Save Call",
+            "type": "string"
+          },
+          "verified_record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoredRecordReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "record_kind",
+          "event_id",
+          "candidate_id",
+          "candidate_selected_facts_sha256",
+          "planned_action",
+          "save_call",
+          "outcome",
+          "local_state",
+          "verified_record",
+          "mirror_outcome",
+          "reason"
+        ],
+        "title": "LocalSaveOutcome",
+        "type": "object"
+      },
       "MarkCompletedRequest": {
         "properties": {
           "slug": {
@@ -10662,6 +11213,78 @@
         "title": "OutcomeCountRow",
         "type": "object"
       },
+      "OutcomeCounts": {
+        "additionalProperties": false,
+        "properties": {
+          "already_saved": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Already Saved",
+            "type": "integer"
+          },
+          "conflict": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Conflict",
+            "type": "integer"
+          },
+          "created": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Created",
+            "type": "integer"
+          },
+          "existing_different_facts": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Existing Different Facts",
+            "type": "integer"
+          },
+          "failed": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Failed",
+            "type": "integer"
+          },
+          "indeterminate": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Indeterminate",
+            "type": "integer"
+          },
+          "not_applicable": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Not Applicable",
+            "type": "integer"
+          },
+          "not_attempted": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Not Attempted",
+            "type": "integer"
+          },
+          "present_after_uncertain_save": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Present After Uncertain Save",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "created",
+          "already_saved",
+          "existing_different_facts",
+          "present_after_uncertain_save",
+          "not_applicable",
+          "not_attempted",
+          "failed",
+          "indeterminate",
+          "conflict"
+        ],
+        "title": "OutcomeCounts",
+        "type": "object"
+      },
       "OutcomeOccurrence": {
         "additionalProperties": false,
         "properties": {
@@ -10864,6 +11487,330 @@
         ],
         "title": "POAMState",
         "type": "string"
+      },
+      "PageLedger": {
+        "additionalProperties": false,
+        "properties": {
+          "admitted": {
+            "title": "Admitted",
+            "type": "boolean"
+          },
+          "decoded_body_complete": {
+            "title": "Decoded Body Complete",
+            "type": "boolean"
+          },
+          "decoded_body_sha256": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decoded Body Sha256"
+          },
+          "decoded_bytes_observed": {
+            "maximum": 4259840.0,
+            "minimum": 0.0,
+            "title": "Decoded Bytes Observed",
+            "type": "integer"
+          },
+          "decoded_row_count": {
+            "anyOf": [
+              {
+                "maximum": 131071.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decoded Row Count"
+          },
+          "first_page": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Page"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "maximum": 599.0,
+                "minimum": 100.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "json_depth_observed": {
+            "anyOf": [
+              {
+                "maximum": 65.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json Depth Observed"
+          },
+          "json_value_key_occurrences": {
+            "anyOf": [
+              {
+                "maximum": 131073.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json Value Key Occurrences"
+          },
+          "last_page": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Page"
+          },
+          "link_state": {
+            "enum": [
+              "absent",
+              "valid",
+              "invalid",
+              "unavailable"
+            ],
+            "title": "Link State",
+            "type": "string"
+          },
+          "link_values_sha256": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Values Sha256"
+          },
+          "next_page": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Page"
+          },
+          "page_index": {
+            "maximum": 9.0,
+            "minimum": 0.0,
+            "title": "Page Index",
+            "type": "integer"
+          },
+          "page_number": {
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Page Number",
+            "type": "integer"
+          },
+          "page_ordinal": {
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Page Ordinal",
+            "type": "integer"
+          },
+          "previous_page": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Page"
+          },
+          "raw_body_complete": {
+            "title": "Raw Body Complete",
+            "type": "boolean"
+          },
+          "raw_body_sha256": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Body Sha256"
+          },
+          "raw_bytes_observed": {
+            "maximum": 4259840.0,
+            "minimum": 0.0,
+            "title": "Raw Bytes Observed",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "offline_refused",
+                  "destination_refused",
+                  "dns_failure",
+                  "tls_failure",
+                  "connection_failure",
+                  "timeout",
+                  "cleanup_failure",
+                  "dependency_unavailable",
+                  "dependency_broken",
+                  "invalid_response",
+                  "unsupported_media",
+                  "unsupported_encoding",
+                  "unsupported_link",
+                  "page_limit",
+                  "row_limit",
+                  "raw_limit",
+                  "decoded_limit",
+                  "json_syntax",
+                  "json_depth",
+                  "json_count",
+                  "json_scalar",
+                  "source_field",
+                  "source_conflict",
+                  "selected_limit",
+                  "result_limit",
+                  "clock_invalid",
+                  "deadline_exceeded",
+                  "cancelled",
+                  "redirect_refused",
+                  "upstream_unauthorized",
+                  "upstream_forbidden",
+                  "upstream_not_found",
+                  "upstream_rate_limited",
+                  "upstream_server_error",
+                  "upstream_http_error",
+                  "store_record_invalid",
+                  "store_identity_conflict",
+                  "store_digest_conflict",
+                  "store_parent_missing",
+                  "store_parent_conflict",
+                  "store_changed",
+                  "store_unavailable",
+                  "store_limit_exceeded",
+                  "publication_not_eligible",
+                  "observation_not_needed",
+                  "known_parent_absent",
+                  "save_failed",
+                  "save_readback_mismatch"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "maxLength": 27,
+                "minLength": 27,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved At"
+          },
+          "row_count": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "row_start": {
+            "anyOf": [
+              {
+                "maximum": 1000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Start"
+          }
+        },
+        "required": [
+          "page_index",
+          "page_ordinal",
+          "page_number",
+          "http_status",
+          "retrieved_at",
+          "raw_bytes_observed",
+          "decoded_bytes_observed",
+          "raw_body_complete",
+          "decoded_body_complete",
+          "raw_body_sha256",
+          "decoded_body_sha256",
+          "link_state",
+          "link_values_sha256",
+          "first_page",
+          "previous_page",
+          "next_page",
+          "last_page",
+          "json_value_key_occurrences",
+          "json_depth_observed",
+          "decoded_row_count",
+          "admitted",
+          "row_start",
+          "row_count",
+          "reason"
+        ],
+        "title": "PageLedger",
+        "type": "object"
       },
       "PagerDutyMapping": {
         "additionalProperties": false,
@@ -11077,6 +12024,539 @@
           }
         },
         "title": "PaginationContext",
+        "type": "object"
+      },
+      "PersistenceSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "attempted_calls": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Attempted Calls",
+            "type": "integer"
+          },
+          "last_attempted_slot": {
+            "anyOf": [
+              {
+                "maximum": 1999.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Attempted Slot"
+          },
+          "mirror_outcome": {
+            "const": "unobserved",
+            "title": "Mirror Outcome",
+            "type": "string"
+          },
+          "outcome_counts": {
+            "$ref": "#/components/schemas/OutcomeCounts"
+          },
+          "planned_slots": {
+            "maximum": 2000.0,
+            "minimum": 0.0,
+            "title": "Planned Slots",
+            "type": "integer"
+          },
+          "requested": {
+            "title": "Requested",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "not_requested",
+              "not_started",
+              "complete",
+              "partial",
+              "indeterminate"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "stop_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "offline_refused",
+                  "destination_refused",
+                  "dns_failure",
+                  "tls_failure",
+                  "connection_failure",
+                  "timeout",
+                  "cleanup_failure",
+                  "dependency_unavailable",
+                  "dependency_broken",
+                  "invalid_response",
+                  "unsupported_media",
+                  "unsupported_encoding",
+                  "unsupported_link",
+                  "page_limit",
+                  "row_limit",
+                  "raw_limit",
+                  "decoded_limit",
+                  "json_syntax",
+                  "json_depth",
+                  "json_count",
+                  "json_scalar",
+                  "source_field",
+                  "source_conflict",
+                  "selected_limit",
+                  "result_limit",
+                  "clock_invalid",
+                  "deadline_exceeded",
+                  "cancelled",
+                  "redirect_refused",
+                  "upstream_unauthorized",
+                  "upstream_forbidden",
+                  "upstream_not_found",
+                  "upstream_rate_limited",
+                  "upstream_server_error",
+                  "upstream_http_error",
+                  "store_record_invalid",
+                  "store_identity_conflict",
+                  "store_digest_conflict",
+                  "store_parent_missing",
+                  "store_parent_conflict",
+                  "store_changed",
+                  "store_unavailable",
+                  "store_limit_exceeded",
+                  "publication_not_eligible",
+                  "observation_not_needed",
+                  "known_parent_absent",
+                  "save_failed",
+                  "save_readback_mismatch"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Reason"
+          }
+        },
+        "required": [
+          "requested",
+          "state",
+          "planned_slots",
+          "attempted_calls",
+          "last_attempted_slot",
+          "outcome_counts",
+          "stop_reason",
+          "mirror_outcome"
+        ],
+        "title": "PersistenceSummary",
+        "type": "object"
+      },
+      "PollCounters": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "decoded_entity_bytes_observed": {
+            "maximum": 16842752.0,
+            "minimum": 0.0,
+            "title": "Decoded Entity Bytes Observed",
+            "type": "integer"
+          },
+          "pages_admitted": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Pages Admitted",
+            "type": "integer"
+          },
+          "raw_entity_bytes_observed": {
+            "maximum": 16842752.0,
+            "minimum": 0.0,
+            "title": "Raw Entity Bytes Observed",
+            "type": "integer"
+          },
+          "rows_admitted": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Rows Admitted",
+            "type": "integer"
+          },
+          "selected_ccompact_bytes_admitted": {
+            "maximum": 8388608.0,
+            "minimum": 0.0,
+            "title": "Selected Ccompact Bytes Admitted",
+            "type": "integer"
+          },
+          "targeted_raw_bytes_observed": {
+            "maximum": 67108865.0,
+            "minimum": 0.0,
+            "title": "Targeted Raw Bytes Observed",
+            "type": "integer"
+          },
+          "targeted_record_reads": {
+            "maximum": 4000.0,
+            "minimum": 0.0,
+            "title": "Targeted Record Reads",
+            "type": "integer"
+          },
+          "total_store_raw_bytes_observed": {
+            "maximum": 67108865.0,
+            "minimum": 0.0,
+            "title": "Total Store Raw Bytes Observed",
+            "type": "integer"
+          },
+          "unique_source_events": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Unique Source Events",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attempts",
+          "pages_admitted",
+          "rows_admitted",
+          "unique_source_events",
+          "raw_entity_bytes_observed",
+          "decoded_entity_bytes_observed",
+          "selected_ccompact_bytes_admitted",
+          "targeted_record_reads",
+          "targeted_raw_bytes_observed",
+          "total_store_raw_bytes_observed"
+        ],
+        "title": "PollCounters",
+        "type": "object"
+      },
+      "PollRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "enum": [
+              "full_releases",
+              "all_published"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "owner": {
+            "maxLength": 39,
+            "minLength": 0,
+            "pattern": "^[\\x00-\\x7f]*$",
+            "title": "Owner",
+            "type": "string"
+          },
+          "persist": {
+            "title": "Persist",
+            "type": "boolean"
+          },
+          "repository": {
+            "maxLength": 100,
+            "minLength": 0,
+            "pattern": "^[\\x00-\\x7f]*$",
+            "title": "Repository",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "release-poll-request-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_profile": {
+            "const": "github-public-releases-2026-03-10",
+            "title": "Source Profile",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source_profile",
+          "owner",
+          "repository",
+          "channel",
+          "persist"
+        ],
+        "title": "PollRequest",
+        "type": "object"
+      },
+      "PollResult": {
+        "additionalProperties": false,
+        "properties": {
+          "clocks": {
+            "$ref": "#/components/schemas/RunClocks"
+          },
+          "collection_state": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Collection State",
+            "type": "string"
+          },
+          "counters": {
+            "$ref": "#/components/schemas/PollCounters"
+          },
+          "discovery": {
+            "$ref": "#/components/schemas/DiscoverySummary"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventGroup"
+            },
+            "maxItems": 1000,
+            "minItems": 0,
+            "title": "Events",
+            "type": "array"
+          },
+          "meaning": {
+            "const": "visible_upstream_release_observation",
+            "title": "Meaning",
+            "type": "string"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/LocalSaveOutcome"
+            },
+            "maxItems": 2000,
+            "minItems": 0,
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/PageLedger"
+            },
+            "maxItems": 10,
+            "minItems": 0,
+            "title": "Pages",
+            "type": "array"
+          },
+          "persistence": {
+            "$ref": "#/components/schemas/PersistenceSummary"
+          },
+          "reasons": {
+            "items": {
+              "enum": [
+                "offline_refused",
+                "destination_refused",
+                "dns_failure",
+                "tls_failure",
+                "connection_failure",
+                "timeout",
+                "cleanup_failure",
+                "dependency_unavailable",
+                "dependency_broken",
+                "invalid_response",
+                "unsupported_media",
+                "unsupported_encoding",
+                "unsupported_link",
+                "page_limit",
+                "row_limit",
+                "raw_limit",
+                "decoded_limit",
+                "json_syntax",
+                "json_depth",
+                "json_count",
+                "json_scalar",
+                "source_field",
+                "source_conflict",
+                "selected_limit",
+                "result_limit",
+                "clock_invalid",
+                "deadline_exceeded",
+                "cancelled",
+                "redirect_refused",
+                "upstream_unauthorized",
+                "upstream_forbidden",
+                "upstream_not_found",
+                "upstream_rate_limited",
+                "upstream_server_error",
+                "upstream_http_error",
+                "store_record_invalid",
+                "store_identity_conflict",
+                "store_digest_conflict",
+                "store_parent_missing",
+                "store_parent_conflict",
+                "store_changed",
+                "store_unavailable",
+                "store_limit_exceeded",
+                "publication_not_eligible",
+                "observation_not_needed",
+                "known_parent_absent",
+                "save_failed",
+                "save_readback_mismatch"
+              ],
+              "type": "string"
+            },
+            "maxItems": 32,
+            "minItems": 0,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "request": {
+            "$ref": "#/components/schemas/PollRequest"
+          },
+          "request_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Request Sha256",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RowOccurrence"
+            },
+            "maxItems": 1000,
+            "minItems": 0,
+            "title": "Rows",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "release-poll-result-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/PollScope"
+          },
+          "terminal_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "offline_refused",
+                  "destination_refused",
+                  "dns_failure",
+                  "tls_failure",
+                  "connection_failure",
+                  "timeout",
+                  "cleanup_failure",
+                  "dependency_unavailable",
+                  "dependency_broken",
+                  "invalid_response",
+                  "unsupported_media",
+                  "unsupported_encoding",
+                  "unsupported_link",
+                  "page_limit",
+                  "row_limit",
+                  "raw_limit",
+                  "decoded_limit",
+                  "json_syntax",
+                  "json_depth",
+                  "json_count",
+                  "json_scalar",
+                  "source_field",
+                  "source_conflict",
+                  "selected_limit",
+                  "result_limit",
+                  "clock_invalid",
+                  "deadline_exceeded",
+                  "cancelled",
+                  "redirect_refused",
+                  "upstream_unauthorized",
+                  "upstream_forbidden",
+                  "upstream_not_found",
+                  "upstream_rate_limited",
+                  "upstream_server_error",
+                  "upstream_http_error",
+                  "store_record_invalid",
+                  "store_identity_conflict",
+                  "store_digest_conflict",
+                  "store_parent_missing",
+                  "store_parent_conflict",
+                  "store_changed",
+                  "store_unavailable",
+                  "store_limit_exceeded",
+                  "publication_not_eligible",
+                  "observation_not_needed",
+                  "known_parent_absent",
+                  "save_failed",
+                  "save_readback_mismatch"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminal Reason"
+          }
+        },
+        "required": [
+          "schema_version",
+          "request",
+          "request_sha256",
+          "scope",
+          "clocks",
+          "collection_state",
+          "terminal_reason",
+          "reasons",
+          "counters",
+          "discovery",
+          "persistence",
+          "rows",
+          "pages",
+          "events",
+          "outcomes",
+          "meaning"
+        ],
+        "title": "PollResult",
+        "type": "object"
+      },
+      "PollScope": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_owner": {
+            "maxLength": 39,
+            "minLength": 0,
+            "pattern": "^[\\x00-\\x7f]*$",
+            "title": "Canonical Owner",
+            "type": "string"
+          },
+          "canonical_repository": {
+            "maxLength": 100,
+            "minLength": 0,
+            "pattern": "^[\\x00-\\x7f]*$",
+            "title": "Canonical Repository",
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "full_releases",
+              "all_published"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "identity_version": {
+            "const": "evidentia.release-publication.v1",
+            "title": "Identity Version",
+            "type": "string"
+          },
+          "source_host": {
+            "const": "api.github.com",
+            "title": "Source Host",
+            "type": "string"
+          },
+          "source_profile": {
+            "const": "github-public-releases-2026-03-10",
+            "title": "Source Profile",
+            "type": "string"
+          }
+        },
+        "required": [
+          "identity_version",
+          "source_profile",
+          "source_host",
+          "canonical_owner",
+          "canonical_repository",
+          "channel"
+        ],
+        "title": "PollScope",
         "type": "object"
       },
       "PracticeComplianceSummary": {
@@ -11458,6 +12938,76 @@
           "target"
         ],
         "title": "RDAPRequest",
+        "type": "object"
+      },
+      "RecordReference": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "content_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "event_index": {
+            "maximum": 2047.0,
+            "minimum": 0.0,
+            "title": "Event Index",
+            "type": "integer"
+          },
+          "first_observed_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "First Observed At",
+            "type": "string"
+          },
+          "record_kind": {
+            "enum": [
+              "release_publication",
+              "release_source_observation"
+            ],
+            "title": "Record Kind",
+            "type": "string"
+          },
+          "selected_facts_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Selected Facts Sha256",
+            "type": "string"
+          },
+          "stored_file_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Stored File Sha256",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "record_kind",
+          "event_index",
+          "version",
+          "selected_facts_sha256",
+          "content_sha256",
+          "stored_file_sha256",
+          "first_observed_at"
+        ],
+        "title": "RecordReference",
         "type": "object"
       },
       "RegisterAcquisitionRequest": {
@@ -12360,6 +13910,239 @@
         "title": "RegulatoryClassification",
         "type": "string"
       },
+      "ReleaseError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "invalid_request",
+              "request_limit_exceeded",
+              "result_limit_exceeded",
+              "unsupported_media",
+              "support_unavailable",
+              "support_broken",
+              "authority_unavailable",
+              "operation_failed",
+              "persistence_outcome_unavailable"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "enum": [
+              "The release request is invalid.",
+              "The release request exceeds its limit.",
+              "The release result exceeds its limit.",
+              "The release request media type is unsupported.",
+              "Release support is unavailable.",
+              "Release support failed.",
+              "Release authority is unavailable.",
+              "The release operation failed.",
+              "The release deadline expired after a save was attempted. Persistence may have occurred. Inspect local records before retrying."
+            ],
+            "title": "Message",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "release-error-v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "code",
+          "message"
+        ],
+        "title": "ReleaseError",
+        "type": "object"
+      },
+      "ReleaseSeriesRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "enum": [
+              "full_releases",
+              "all_published"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "interval_days": {
+            "maximum": 3660.0,
+            "minimum": 1.0,
+            "title": "Interval Days",
+            "type": "integer"
+          },
+          "owner": {
+            "maxLength": 39,
+            "minLength": 1,
+            "title": "Owner",
+            "type": "string"
+          },
+          "repository": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Repository",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "release-series-request-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_profile": {
+            "const": "github-public-releases-2026-03-10",
+            "title": "Source Profile",
+            "type": "string"
+          },
+          "tolerance_days": {
+            "maximum": 3660.0,
+            "minimum": 0.0,
+            "title": "Tolerance Days",
+            "type": "integer"
+          },
+          "window_end": {
+            "maxLength": 27,
+            "minLength": 20,
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "maxLength": 27,
+            "minLength": 20,
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source_profile",
+          "owner",
+          "repository",
+          "channel",
+          "window_start",
+          "window_end",
+          "interval_days",
+          "tolerance_days"
+        ],
+        "title": "ReleaseSeriesRequest",
+        "type": "object"
+      },
+      "ReleaseSeriesResult": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Completed At",
+            "type": "string"
+          },
+          "discovery": {
+            "$ref": "#/components/schemas/DiscoveryResult"
+          },
+          "evaluation_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Evaluation At",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesEvent"
+            },
+            "maxItems": 2048,
+            "title": "Events",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/evidentia_core__release_cadence___contracts__SeriesGap"
+            },
+            "maxItems": 2049,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "meaning": {
+            "const": "recorded_upstream_publication_spacing",
+            "title": "Meaning",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "enum": [
+                "gap_exceeds_allowed",
+                "insufficient_events",
+                "source_conflict",
+                "store_unavailable",
+                "store_changed",
+                "store_limit_exceeded",
+                "store_record_invalid",
+                "store_identity_conflict",
+                "deadline_exceeded"
+              ],
+              "type": "string"
+            },
+            "maxItems": 32,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/RecordReference"
+            },
+            "maxItems": 2048,
+            "title": "Records",
+            "type": "array"
+          },
+          "request": {
+            "$ref": "#/components/schemas/ReleaseSeriesRequest"
+          },
+          "request_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Request Sha256",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "release-series-result-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/SeriesScope"
+          },
+          "state": {
+            "enum": [
+              "continuous",
+              "gapped",
+              "insufficient",
+              "unavailable",
+              "conflict"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "request",
+          "request_sha256",
+          "scope",
+          "evaluation_at",
+          "completed_at",
+          "discovery",
+          "state",
+          "reasons",
+          "records",
+          "events",
+          "gaps",
+          "meaning"
+        ],
+        "title": "ReleaseSeriesResult",
+        "type": "object"
+      },
       "RetentionClassification": {
         "description": "Regulator-aligned record-retention classifications.\n\nThe default-cadence column on each entry is the canonical\nregulator-stated minimum; operators may extend per institution\npolicy via the explicit ``retention_period_days`` field.",
         "enum": [
@@ -12707,6 +14490,139 @@
           "scenarios"
         ],
         "title": "RiskQuantifyRequest",
+        "type": "object"
+      },
+      "RowMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "eligibility_reasons": {
+            "items": {
+              "enum": [
+                "draft",
+                "prerelease_excluded",
+                "publication_time_absent",
+                "publication_time_unsupported",
+                "publication_time_future"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 0,
+            "title": "Eligibility Reasons",
+            "type": "array"
+          },
+          "event_index": {
+            "maximum": 999.0,
+            "minimum": 0.0,
+            "title": "Event Index",
+            "type": "integer"
+          },
+          "initial_publication_eligible": {
+            "title": "Initial Publication Eligible",
+            "type": "boolean"
+          },
+          "page_index": {
+            "maximum": 9.0,
+            "minimum": 0.0,
+            "title": "Page Index",
+            "type": "integer"
+          },
+          "record_index": {
+            "maximum": 99.0,
+            "minimum": 0.0,
+            "title": "Record Index",
+            "type": "integer"
+          },
+          "row_index": {
+            "maximum": 999.0,
+            "minimum": 0.0,
+            "title": "Row Index",
+            "type": "integer"
+          },
+          "selected_facts_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Selected Facts Sha256",
+            "type": "string"
+          },
+          "source_time": {
+            "$ref": "#/components/schemas/SourceTimeView"
+          }
+        },
+        "required": [
+          "row_index",
+          "page_index",
+          "record_index",
+          "event_index",
+          "selected_facts_sha256",
+          "source_time",
+          "initial_publication_eligible",
+          "eligibility_reasons"
+        ],
+        "title": "RowMetadata",
+        "type": "object"
+      },
+      "RowOccurrence": {
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/RowMetadata"
+          },
+          "selected": {
+            "$ref": "#/components/schemas/SelectedReleaseFacts"
+          }
+        },
+        "required": [
+          "metadata",
+          "selected"
+        ],
+        "title": "RowOccurrence",
+        "type": "object"
+      },
+      "RunClocks": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Completed At",
+            "type": "string"
+          },
+          "poll_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Poll Id",
+            "type": "string"
+          },
+          "started_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Started At",
+            "type": "string"
+          },
+          "traversal_completed_at": {
+            "anyOf": [
+              {
+                "maxLength": 27,
+                "minLength": 27,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Traversal Completed At"
+          }
+        },
+        "required": [
+          "poll_id",
+          "started_at",
+          "traversal_completed_at",
+          "completed_at"
+        ],
+        "title": "RunClocks",
         "type": "object"
       },
       "S3Target": {
@@ -14062,6 +15978,119 @@
         "title": "SelectedRecordProjection",
         "type": "object"
       },
+      "SelectedReleaseFacts": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "maxLength": 128,
+            "minLength": 0,
+            "title": "Created At",
+            "type": "string"
+          },
+          "draft": {
+            "title": "Draft",
+            "type": "boolean"
+          },
+          "html_url": {
+            "maxLength": 16384,
+            "minLength": 0,
+            "title": "Html Url",
+            "type": "string"
+          },
+          "id": {
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Id",
+            "type": "integer"
+          },
+          "immutable": {
+            "title": "Immutable",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 16384,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "node_id": {
+            "maxLength": 16384,
+            "minLength": 0,
+            "title": "Node Id",
+            "type": "string"
+          },
+          "prerelease": {
+            "title": "Prerelease",
+            "type": "boolean"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "tag_name": {
+            "maxLength": 16384,
+            "minLength": 0,
+            "title": "Tag Name",
+            "type": "string"
+          },
+          "target_commitish": {
+            "maxLength": 16384,
+            "minLength": 0,
+            "title": "Target Commitish",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 0,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "url": {
+            "maxLength": 16384,
+            "minLength": 0,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "node_id",
+          "url",
+          "html_url",
+          "tag_name",
+          "target_commitish",
+          "name",
+          "draft",
+          "prerelease",
+          "created_at",
+          "published_at"
+        ],
+        "title": "SelectedReleaseFacts",
+        "type": "object"
+      },
       "SelectionFilter": {
         "additionalProperties": false,
         "properties": {
@@ -14116,48 +16145,88 @@
         "title": "SelectionFilter",
         "type": "object"
       },
-      "SeriesGap": {
+      "SeriesEvent": {
         "additionalProperties": false,
-        "description": "A spacing that exceeded the allowed interval.",
         "properties": {
-          "after": {
-            "description": "Start of the gap: an observation, or the window start.",
-            "format": "date-time",
-            "title": "After",
+          "eligibility": {
+            "enum": [
+              "eligible",
+              "channel_excluded",
+              "conflict"
+            ],
+            "title": "Eligibility",
             "type": "string"
           },
-          "allowed_days": {
-            "description": "Interval plus tolerance.",
-            "minimum": 0.0,
-            "title": "Allowed Days",
-            "type": "integer"
-          },
-          "before": {
-            "description": "End of the gap: the next observation, or the window end.",
-            "format": "date-time",
-            "title": "Before",
+          "event_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Event Id",
             "type": "string"
           },
-          "boundary": {
-            "default": false,
-            "description": "True when one side of the gap is a window edge.",
-            "title": "Boundary",
+          "in_window": {
+            "title": "In Window",
             "type": "boolean"
           },
-          "days": {
-            "description": "Whole days between the two instants.",
+          "observation_count": {
+            "maximum": 2047.0,
             "minimum": 0.0,
-            "title": "Days",
+            "title": "Observation Count",
+            "type": "integer"
+          },
+          "publication_record_index": {
+            "maximum": 2047.0,
+            "minimum": 0.0,
+            "title": "Publication Record Index",
+            "type": "integer"
+          },
+          "published_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Published At",
+            "type": "string"
+          },
+          "published_at_literal": {
+            "maxLength": 128,
+            "minLength": 0,
+            "title": "Published At Literal",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "enum": [
+                "prerelease_excluded",
+                "node_id_changed",
+                "publication_instant_changed",
+                "publication_time_unqualified",
+                "draft_changed_to_true",
+                "prerelease_changed"
+              ],
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "release_id": {
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Release Id",
             "type": "integer"
           }
         },
         "required": [
-          "after",
-          "before",
-          "days",
-          "allowed_days"
+          "event_id",
+          "release_id",
+          "publication_record_index",
+          "observation_count",
+          "published_at_literal",
+          "published_at",
+          "in_window",
+          "eligibility",
+          "reasons"
         ],
-        "title": "SeriesGap",
+        "title": "SeriesEvent",
         "type": "object"
       },
       "SeriesObservation": {
@@ -14271,6 +16340,52 @@
           "description"
         ],
         "title": "SeriesResponse",
+        "type": "object"
+      },
+      "SeriesScope": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_owner": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[a-z0-9._-]{1,256}$",
+            "title": "Canonical Owner",
+            "type": "string"
+          },
+          "canonical_repository": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[a-z0-9._-]{1,256}$",
+            "title": "Canonical Repository",
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "full_releases",
+              "all_published"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "source_host": {
+            "const": "api.github.com",
+            "title": "Source Host",
+            "type": "string"
+          },
+          "source_profile": {
+            "const": "github-public-releases-2026-03-10",
+            "title": "Source Profile",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_profile",
+          "source_host",
+          "canonical_owner",
+          "canonical_repository",
+          "channel"
+        ],
+        "title": "SeriesScope",
         "type": "object"
       },
       "SeriesVerdict": {
@@ -14840,6 +16955,44 @@
           "normalization"
         ],
         "title": "SourceTimeObservation",
+        "type": "object"
+      },
+      "SourceTimeView": {
+        "additionalProperties": false,
+        "properties": {
+          "classification": {
+            "enum": [
+              "absent",
+              "unsupported_syntax",
+              "unsupported_year",
+              "invalid_calendar",
+              "unsupported_leap_second",
+              "unsupported_precision",
+              "utc_out_of_range",
+              "normalized"
+            ],
+            "title": "Classification",
+            "type": "string"
+          },
+          "normalized_utc": {
+            "anyOf": [
+              {
+                "maxLength": 27,
+                "minLength": 27,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Utc"
+          }
+        },
+        "required": [
+          "classification",
+          "normalized_utc"
+        ],
+        "title": "SourceTimeView",
         "type": "object"
       },
       "SplunkCollectResult": {
@@ -15581,6 +17734,122 @@
           "components"
         ],
         "title": "StorageRetentionResourceResult",
+        "type": "object"
+      },
+      "StoredRecordReference": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "artifact_semantic_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Artifact Semantic Sha256",
+            "type": "string"
+          },
+          "collected_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Collected At",
+            "type": "string"
+          },
+          "content_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "event_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "first_observation_poll_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "title": "First Observation Poll Id",
+            "type": "string"
+          },
+          "first_observed_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "First Observed At",
+            "type": "string"
+          },
+          "record_kind": {
+            "enum": [
+              "release_publication",
+              "release_source_observation"
+            ],
+            "title": "Record Kind",
+            "type": "string"
+          },
+          "relative_path": {
+            "maxLength": 44,
+            "minLength": 44,
+            "pattern": "^[0-9a-f-]{36}/v1\\.json$",
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "selected_facts_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Selected Facts Sha256",
+            "type": "string"
+          },
+          "stored_file_bytes": {
+            "maximum": 131072.0,
+            "minimum": 1.0,
+            "title": "Stored File Bytes",
+            "type": "integer"
+          },
+          "stored_file_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Stored File Sha256",
+            "type": "string"
+          },
+          "verified_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Verified At",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "record_kind",
+          "artifact_id",
+          "event_id",
+          "version",
+          "relative_path",
+          "content_sha256",
+          "selected_facts_sha256",
+          "artifact_semantic_sha256",
+          "stored_file_sha256",
+          "stored_file_bytes",
+          "collected_at",
+          "first_observation_poll_id",
+          "verified_at",
+          "first_observed_at"
+        ],
+        "title": "StoredRecordReference",
         "type": "object"
       },
       "TLSRequest": {
@@ -18654,6 +20923,130 @@
         "title": "_FindingData",
         "type": "object"
       },
+      "evidentia_core__conmon__series__SeriesGap": {
+        "additionalProperties": false,
+        "description": "A spacing that exceeded the allowed interval.",
+        "properties": {
+          "after": {
+            "description": "Start of the gap: an observation, or the window start.",
+            "format": "date-time",
+            "title": "After",
+            "type": "string"
+          },
+          "allowed_days": {
+            "description": "Interval plus tolerance.",
+            "minimum": 0.0,
+            "title": "Allowed Days",
+            "type": "integer"
+          },
+          "before": {
+            "description": "End of the gap: the next observation, or the window end.",
+            "format": "date-time",
+            "title": "Before",
+            "type": "string"
+          },
+          "boundary": {
+            "default": false,
+            "description": "True when one side of the gap is a window edge.",
+            "title": "Boundary",
+            "type": "boolean"
+          },
+          "days": {
+            "description": "Whole days between the two instants.",
+            "minimum": 0.0,
+            "title": "Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "after",
+          "before",
+          "days",
+          "allowed_days"
+        ],
+        "title": "SeriesGap",
+        "type": "object"
+      },
+      "evidentia_core__release_cadence___contracts__SeriesGap": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_microseconds": {
+            "maximum": 632448000000000.0,
+            "minimum": 86400000000.0,
+            "title": "Allowed Microseconds",
+            "type": "integer"
+          },
+          "boundary": {
+            "enum": [
+              "start",
+              "between",
+              "end"
+            ],
+            "title": "Boundary",
+            "type": "string"
+          },
+          "elapsed_microseconds": {
+            "maximum": 3162240000000000.0,
+            "minimum": 0.0,
+            "title": "Elapsed Microseconds",
+            "type": "integer"
+          },
+          "end_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "End At",
+            "type": "string"
+          },
+          "exceeds_allowed": {
+            "title": "Exceeds Allowed",
+            "type": "boolean"
+          },
+          "left_event_index": {
+            "anyOf": [
+              {
+                "maximum": 2047.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left Event Index"
+          },
+          "right_event_index": {
+            "anyOf": [
+              {
+                "maximum": 2047.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Right Event Index"
+          },
+          "start_at": {
+            "maxLength": 27,
+            "minLength": 27,
+            "title": "Start At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_at",
+          "end_at",
+          "left_event_index",
+          "right_event_index",
+          "boundary",
+          "elapsed_microseconds",
+          "allowed_microseconds",
+          "exceeds_allowed"
+        ],
+        "title": "SeriesGap",
+        "type": "object"
+      },
       "pydantic__types__JsonValue": {}
     }
   },
@@ -20233,6 +22626,141 @@
         "summary": "Remove Catalog",
         "tags": [
           "catalog"
+        ]
+      }
+    },
+    "/api/collect/release-cadence": {
+      "post": {
+        "operationId": "collect_release_cadence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "channel": {
+                    "enum": [
+                      "full_releases",
+                      "all_published"
+                    ],
+                    "title": "Channel",
+                    "type": "string"
+                  },
+                  "owner": {
+                    "maxLength": 39,
+                    "minLength": 0,
+                    "pattern": "^[\\x00-\\x7f]*$",
+                    "title": "Owner",
+                    "type": "string"
+                  },
+                  "persist": {
+                    "title": "Persist",
+                    "type": "boolean"
+                  },
+                  "repository": {
+                    "maxLength": 100,
+                    "minLength": 0,
+                    "pattern": "^[\\x00-\\x7f]*$",
+                    "title": "Repository",
+                    "type": "string"
+                  },
+                  "schema_version": {
+                    "const": "release-poll-request-v1",
+                    "title": "Schema Version",
+                    "type": "string"
+                  },
+                  "source_profile": {
+                    "const": "github-public-releases-2026-03-10",
+                    "title": "Source Profile",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "schema_version",
+                  "source_profile",
+                  "owner",
+                  "repository",
+                  "channel",
+                  "persist"
+                ],
+                "title": "PollRequest",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Existing authentication middleware response."
+          },
+          "403": {
+            "description": "Configured authentication and granted read/write permission are required."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          }
+        },
+        "summary": "Collect Release Cadence",
+        "tags": [
+          "release-cadence"
         ]
       }
     },
@@ -24493,6 +27021,162 @@
         "summary": "Compute Next Due",
         "tags": [
           "conmon"
+        ]
+      }
+    },
+    "/api/conmon/release-series": {
+      "post": {
+        "operationId": "evaluate_release_series",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "channel": {
+                    "enum": [
+                      "full_releases",
+                      "all_published"
+                    ],
+                    "title": "Channel",
+                    "type": "string"
+                  },
+                  "interval_days": {
+                    "maximum": 3660.0,
+                    "minimum": 1.0,
+                    "title": "Interval Days",
+                    "type": "integer"
+                  },
+                  "owner": {
+                    "maxLength": 39,
+                    "minLength": 1,
+                    "title": "Owner",
+                    "type": "string"
+                  },
+                  "repository": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "title": "Repository",
+                    "type": "string"
+                  },
+                  "schema_version": {
+                    "const": "release-series-request-v1",
+                    "title": "Schema Version",
+                    "type": "string"
+                  },
+                  "source_profile": {
+                    "const": "github-public-releases-2026-03-10",
+                    "title": "Source Profile",
+                    "type": "string"
+                  },
+                  "tolerance_days": {
+                    "maximum": 3660.0,
+                    "minimum": 0.0,
+                    "title": "Tolerance Days",
+                    "type": "integer"
+                  },
+                  "window_end": {
+                    "maxLength": 27,
+                    "minLength": 20,
+                    "title": "Window End",
+                    "type": "string"
+                  },
+                  "window_start": {
+                    "maxLength": 27,
+                    "minLength": 20,
+                    "title": "Window Start",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "schema_version",
+                  "source_profile",
+                  "owner",
+                  "repository",
+                  "channel",
+                  "window_start",
+                  "window_end",
+                  "interval_days",
+                  "tolerance_days"
+                ],
+                "title": "ReleaseSeriesRequest",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseSeriesResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Existing authentication middleware response."
+          },
+          "403": {
+            "description": "Configured authentication and granted read/write permission are required."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseError"
+                }
+              }
+            },
+            "description": "A fixed bounded release refusal."
+          }
+        },
+        "summary": "Evaluate Release Series",
+        "tags": [
+          "release-cadence"
         ]
       }
     },

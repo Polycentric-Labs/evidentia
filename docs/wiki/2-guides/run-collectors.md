@@ -29,6 +29,21 @@ timestamp. Saving is a separate action, and source references remain inert.
 The [SCAP operator guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/scap-collectors.md)
 explains assertions, CLI flags, API authentication, downloads and finite limits.
 
+## Observe public release publications
+
+The **Collect > Release cadence** tab and `collect release-cadence` observe
+public GitHub release metadata with no GitHub credential. Choose an owner,
+repository and `full_releases` or `all_published` channel. The default poll
+returns the full bounded result without opening the evidence store; saving
+requires an explicit request and write permission.
+
+Use **CONMON > Release series** or `conmon release-series` to evaluate local
+recorded publication spacing. This is upstream-release evidence, not proof of
+installed patches or remediation. The [release-cadence guide](release-cadence.md)
+explains exact commands, authentication, persistence outcomes, source limits and
+offline series states. Unlike provider-specific collectors with transport
+overrides, this profile fixes the public GitHub destination and refuses redirects.
+
 ## What this surface is for
 
 - **Pull live posture** from a source system and turn it into control-mapped

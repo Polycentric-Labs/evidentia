@@ -443,6 +443,18 @@ Look up one selected public registry identity with explicit source limits.
 | `--request-file` | Named regular JSON request file, at most 65536 bytes; stdin is not accepted. |
 | `--output` | Atomically write full result JSON; omitted means stdout. |
 
+### `evidentia collect release-cadence`
+
+Observe upstream releases; publication is not evidence of patch installation.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--owner` | Public GitHub repository owner. |
+| `--repository` | Repository name, without the owner. |
+| `--channel` | full_releases or all_published. |
+| `--persist` | Explicitly save verified local release records. |
+| `--evidence-store` | Operator-owned local evidence base. |
+
 ### `evidentia collect retention`
 
 Read retention configuration for explicitly selected storage resources.
@@ -602,6 +614,21 @@ Compute the next-due date for a registered cadence.
 | `SLUG` | — |
 | `--last-completed` | ISO-8601 date of the last completed cycle. |
 | `--json` | Emit JSON instead of human form. |
+
+### `evidentia conmon release-series`
+
+Evaluate recorded upstream publication spacing without a provider call.
+
+| Flag / argument | Description |
+| --- | --- |
+| `--owner` | Recorded public GitHub repository owner. |
+| `--repository` | Repository name, without the owner. |
+| `--channel` | full_releases or all_published. |
+| `--window-start` | Explicit UTC observation-window start. |
+| `--window-end` | Explicit UTC observation-window end. |
+| `--interval-days` | — |
+| `--tolerance-days` | — |
+| `--evidence-store` | Operator-owned local evidence base. |
 
 ### `evidentia conmon series`
 

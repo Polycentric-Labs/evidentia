@@ -22,6 +22,7 @@ import type {
   SecurityFinding,
 } from "@/lib/api";
 import { CollectPage } from "@/routes/CollectPage";
+import { RELEASE_DEMO_FIXTURES } from "@/lib/demo/release-cadence-fixtures";
 import { scapDemoSource, scapDemoResponse } from "@/lib/demo/scap-fixtures";
 import {
   DEMO_ENTRA_M365_PARTIAL,
@@ -54,6 +55,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
       collectEntraM365: vi.fn(),
       collectIncidentClock: vi.fn(),
       collectScap: vi.fn(),
+      collectReleaseCadence: vi.fn(),
+      releaseSeries: vi.fn(),
       collectConvert: vi.fn(),
       collectorsStatus: vi.fn(),
     },
@@ -964,5 +967,82 @@ describe("SCAP collection tab", () => {
       ).toBeEnabled(),
     );
     expect(api.collectScap).not.toHaveBeenCalled();
+  });
+});
+
+describe("CollectPage release cadence integration", () => {
+  const fixture = RELEASE_DEMO_FIXTURES.find(
+    (row) => row.id === "poll-observed",
+  )!;
+  beforeEach(async () => {
+    vi.stubGlobal(
+      "crypto",
+      (await vi.importActual<{ webcrypto: Crypto }>("node:crypto")).webcrypto,
+    );
+    healthMock.mockReset().mockResolvedValue(healthValue(true));
+    vi.mocked(api.collectReleaseCadence)
+      .mockReset()
+      .mockResolvedValue({
+        rawJson: fixture.rawJson,
+        result: JSON.parse(fixture.rawJson),
+      });
+    vi.mocked(api.releaseSeries).mockReset();
+  });
+  afterEach(() => vi.unstubAllGlobals());
+  async function openReleaseTab() {
+    const user = userEvent.setup();
+    renderWithClient(<CollectPage />);
+    await user.click(screen.getByRole("tab", { name: "Release cadence" }));
+    return user;
+  }
+  function fillRelease() {
+    fireEvent.change(screen.getByLabelText("GitHub owner"), {
+      target: { value: fixture.request.owner },
+    });
+    fireEvent.change(screen.getByLabelText("GitHub repository"), {
+      target: { value: fixture.request.repository },
+    });
+  }
+  it("exposes the release action without starting observation or saving", async () => {
+    await openReleaseTab();
+    expect(screen.getByText("Observe upstream releases")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Save release evidence locally"),
+    ).not.toBeChecked();
+    expect(api.collectReleaseCadence).not.toHaveBeenCalled();
+    expect(api.releaseSeries).not.toHaveBeenCalled();
+  });
+  it("refreshes authentication before an explicit observation", async () => {
+    const user = await openReleaseTab();
+    const button = screen.getByRole("button", { name: "Observe releases" });
+    await waitFor(() => expect(button).toBeEnabled());
+    fillRelease();
+    const priorHealthCalls = healthMock.mock.calls.length;
+    await user.click(button);
+    await screen.findByLabelText("Accepted release result");
+    expect(healthMock.mock.calls.length).toBe(priorHealthCalls + 1);
+    expect(api.collectReleaseCadence).toHaveBeenCalledWith(fixture.request, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(api.releaseSeries).not.toHaveBeenCalled();
+  });
+  it("refuses observation when the action-time auth refresh fails", async () => {
+    const user = await openReleaseTab();
+    const button = screen.getByRole("button", { name: "Observe releases" });
+    await waitFor(() => expect(button).toBeEnabled());
+    fillRelease();
+    healthMock.mockResolvedValue(healthValue(false));
+    await user.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    expect(api.collectReleaseCadence).not.toHaveBeenCalled();
+  });
+  it("keeps the release action disabled without configured authentication", async () => {
+    healthMock.mockResolvedValue(healthValue(false));
+    await openReleaseTab();
+    await waitFor(() => expect(healthMock).toHaveBeenCalled());
+    expect(
+      screen.getByRole("button", { name: "Observe releases" }),
+    ).toBeDisabled();
+    expect(api.collectReleaseCadence).not.toHaveBeenCalled();
   });
 });

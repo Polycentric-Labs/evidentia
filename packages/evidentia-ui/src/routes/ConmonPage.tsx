@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ReleaseSeriesAction } from "@/routes/ReleaseSeriesAction";
 import {
   api,
   ApiError,
@@ -960,6 +961,23 @@ function DedupListPanel() {
  * null values as a muted em-dash.
  */
 export function ConmonPage() {
+  const health = useQuery({
+    queryKey: ["health"],
+    queryFn: () => api.health(),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnMount: "always",
+  });
+  const freshAuth =
+    health.isSuccess &&
+    !health.isStale &&
+    !health.isFetching &&
+    health.data.auth_configured === true;
+  const verifyReleaseAuth = async () => {
+    const current = await health.refetch();
+    return current.isSuccess && current.data.auth_configured === true;
+  };
+
   const [framework, setFramework] = useState("");
 
   // The endpoint accepts an exact `framework` filter; only send it once the
@@ -1006,6 +1024,13 @@ export function ConmonPage() {
           <SeriesPanel />
           <MarkCompletedPanel />
         </div>
+        <ReleaseSeriesAction
+          freshAuth={freshAuth}
+          authInvalidated={
+            !health.isSuccess || health.data.auth_configured !== true
+          }
+          verifyAuth={verifyReleaseAuth}
+        />
         <DedupListPanel />
       </section>
 

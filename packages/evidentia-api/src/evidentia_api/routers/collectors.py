@@ -2177,6 +2177,8 @@ async def collectors_status() -> dict[str, Any]:
     Never returns token values — only ``configured: bool`` + the env var
     name the token was sourced from.
     """
+    from evidentia_api.routers import release_cadence
+
     # These legacy status flags mean importable, not proven genuine feature absence.
     aws_installed = _status_modules_importable("evidentia_collectors.aws")
     github_installed = _status_modules_importable("evidentia_collectors.github")
@@ -2230,6 +2232,7 @@ async def collectors_status() -> dict[str, Any]:
         "enterprise_retention": enterprise_retention.configuration_status(),
         "registry": registry.configuration_status(),
         "incident_clock": incident_clock.configuration_status(),
+        "release_cadence": release_cadence.configuration_status(),
         "google-workspace": {
             "installed": google_workspace_installed,
             "credentials_hint": (
