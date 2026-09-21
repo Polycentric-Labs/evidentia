@@ -138,7 +138,7 @@ No install: a self-hosted [asciinema](https://asciinema.org/) recording of `doct
 
 **v0.11.2 (2026-08-17)** — *Day-N dependency sweep on a fresh hardened base*. **README brand refresh**, a Polycentric Labs family visual identity: a light/dark `<picture>` banner and purpose-tiered, federal-blue-accented badges, from the new Evidentia brand kit committed under `docs/brand/`.
 
-Release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
+Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 
 ## Community & Governance
 
