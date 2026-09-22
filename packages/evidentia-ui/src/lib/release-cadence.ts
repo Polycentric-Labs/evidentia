@@ -1906,14 +1906,29 @@ export const RELEASE_SCHEMAS: Readonly<Record<string, Schema>> = freeze({
         type: "integer",
       },
       owner: {
+        allOf: [
+          {
+            pattern:
+              "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$(?![\\s\\S])",
+          },
+        ],
         maxLength: 39,
         minLength: 1,
+        pattern:
+          "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
         title: "Owner",
         type: "string",
       },
       repository: {
+        allOf: [
+          {
+            pattern: "^[A-Za-z0-9_.-]+$(?![\\s\\S])",
+          },
+        ],
         maxLength: 100,
         minLength: 1,
+        pattern:
+          "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
         title: "Repository",
         type: "string",
       },
@@ -2479,16 +2494,28 @@ export const RELEASE_SCHEMAS: Readonly<Record<string, Schema>> = freeze({
     additionalProperties: false,
     properties: {
       canonical_owner: {
+        allOf: [
+          {
+            pattern: "^[a-z0-9._-]{1,256}$(?![\\s\\S])",
+          },
+        ],
         maxLength: 256,
         minLength: 1,
-        pattern: "^[a-z0-9._-]{1,256}$",
+        pattern:
+          "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
         title: "Canonical Owner",
         type: "string",
       },
       canonical_repository: {
+        allOf: [
+          {
+            pattern: "^[a-z0-9._-]{1,256}$(?![\\s\\S])",
+          },
+        ],
         maxLength: 256,
         minLength: 1,
-        pattern: "^[a-z0-9._-]{1,256}$",
+        pattern:
+          "[^\\s\\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
         title: "Canonical Repository",
         type: "string",
       },
