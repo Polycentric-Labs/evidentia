@@ -30,8 +30,14 @@ def test_exact_module_absence_is_independently_proved(monkeypatch, missing, spec
         calls.append(name)
         raise ModuleNotFoundError("synthetic missing module", name=missing)
 
-    monkeypatch.setattr(route.importlib, "import_module", importing)
-    monkeypatch.setattr(route.importlib.util, "find_spec", lambda name: None if spec_absent else object())
+    monkeypatch.setattr(
+        route,
+        "importlib",
+        SimpleNamespace(
+            import_module=importing,
+            util=SimpleNamespace(find_spec=lambda name: None if spec_absent else object()),
+        ),
+    )
     result = TestClient(app).post(POLL, json=request_value())
     assert (result.status_code, result.json()["code"]) == expected
     assert calls == ["evidentia_collectors.release_cadence.collector"]
@@ -55,7 +61,7 @@ def test_broken_exports_never_become_unavailable(monkeypatch, fault):
             raise fault
         return fault
 
-    monkeypatch.setattr(route.importlib, "import_module", importing)
+    monkeypatch.setattr(route, "importlib", SimpleNamespace(import_module=importing))
     result = TestClient(app).post(POLL, json=request_value())
     assert result.status_code == 500 and result.json()["code"] == "support_broken"
 
