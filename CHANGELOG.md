@@ -421,6 +421,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restore three altered lines in the root Apache 2.0 license text to the
+  standard terms while preserving the project copyright notice.
+- Report a fixed strict failure when the documentation audit cannot start
+  the GitHub CLI, retaining the existing authentication and success paths.
+
 - **Container registry authentication.** Authenticate required container builds
   to `dhi.io` with a dedicated public-image-read-only token. Missing access
   fails the build. Keep fork credentials unavailable, log out after the job,
