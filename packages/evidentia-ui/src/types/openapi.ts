@@ -9540,9 +9540,9 @@ export interface components {
             /** Interval Days */
             interval_days: number;
             /** Owner */
-            owner: string;
+            owner: string & unknown;
             /** Repository */
-            repository: string;
+            repository: string & unknown;
             /**
              * Schema Version
              * @constant
@@ -10479,9 +10479,9 @@ export interface components {
         /** SeriesScope */
         SeriesScope: {
             /** Canonical Owner */
-            canonical_owner: string;
+            canonical_owner: string & unknown;
             /** Canonical Repository */
-            canonical_repository: string;
+            canonical_repository: string & unknown;
             /**
              * Channel
              * @enum {string}
@@ -16127,9 +16127,9 @@ export interface operations {
                     /** Interval Days */
                     interval_days: number;
                     /** Owner */
-                    owner: string;
+                    owner: string & unknown;
                     /** Repository */
-                    repository: string;
+                    repository: string & unknown;
                     /**
                      * Schema Version
                      * @constant

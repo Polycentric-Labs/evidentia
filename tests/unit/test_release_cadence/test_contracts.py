@@ -272,3 +272,25 @@ def test_selected_schema_is_closed_at_its_own_export(mode):
     assert set(schema["required"]) == set(SELECTED)
     assert schema["properties"]["id"]["minimum"] == 1
     assert schema["properties"]["id"]["maximum"] == 9_007_199_254_740_991
+
+
+@pytest.mark.parametrize("mode", ["validation", "serialization"])
+@pytest.mark.parametrize(
+    ("model_name", "field_name", "valid", "invalid"),
+    [
+        ("ReleaseSeriesRequest", "owner", "Example-Org", ["-example", "example_", "a/", "a" * 40]),
+        ("ReleaseSeriesRequest", "repository", "Example.Repo-1", ["a/", "a b", "a" * 101]),
+        ("SeriesScope", "canonical_owner", "example-org", ["Example", "a/", "a" * 257]),
+        ("SeriesScope", "canonical_repository", "example.repo-1", ["Example", "a b", "a" * 257]),
+    ],
+)
+def test_series_schema_rejects_blank_and_invalid_repository_tokens(mode, model_name, field_name, valid, invalid):
+    from evidentia_core.release_cadence import _contracts
+    from jsonschema import Draft202012Validator
+
+    model = getattr(_contracts, model_name)
+    schema = model.model_json_schema(mode=mode)["properties"][field_name]
+    validator = Draft202012Validator(schema)
+    assert validator.is_valid(valid)
+    for value in ["", " ", "\t\n", "\u0085", "\u00a0", "\u3000", valid + "\n", valid + "\r\n", *invalid]:
+        assert not validator.is_valid(value), repr(value)

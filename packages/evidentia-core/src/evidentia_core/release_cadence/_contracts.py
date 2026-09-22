@@ -24,6 +24,7 @@ from pydantic import (
     model_validator,
 )
 
+from ..models.common import NON_BLANK_PATTERN
 from ._json import _string_size, canonical_bytes, detach, load_json
 from ._limits import ERRORS, RESULT_BYTES, ReleaseFailure, integer, text_value
 from ._source import SELECTED_FIELDS, canonical_repository, selected_facts
@@ -2289,7 +2290,15 @@ class ReleaseSeriesRequest(ClosedModel):
         Field(
             min_length=1,
             max_length=39,
-            json_schema_extra=partial(_schema_constraints, {"minLength": 1, "maxLength": 39}),
+            json_schema_extra=partial(
+                _schema_constraints,
+                {
+                    "minLength": 1,
+                    "maxLength": 39,
+                    "pattern": NON_BLANK_PATTERN,
+                    "allOf": [{"pattern": r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$(?![\s\S])"}],
+                },
+            ),
         ),
     ]
     repository: Annotated[
@@ -2298,7 +2307,15 @@ class ReleaseSeriesRequest(ClosedModel):
         Field(
             min_length=1,
             max_length=100,
-            json_schema_extra=partial(_schema_constraints, {"minLength": 1, "maxLength": 100}),
+            json_schema_extra=partial(
+                _schema_constraints,
+                {
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": NON_BLANK_PATTERN,
+                    "allOf": [{"pattern": r"^[A-Za-z0-9_.-]+$(?![\s\S])"}],
+                },
+            ),
         ),
     ]
     channel: ReleaseChannel
@@ -2322,8 +2339,28 @@ class SeriesScope(ClosedModel):
         BeforeValidator(partial(_literal, "github-public-releases-2026-03-10")),
     ]
     source_host: Annotated[Literal["api.github.com"], BeforeValidator(partial(_literal, "api.github.com"))]
-    canonical_owner: CanonicalRepositoryToken256
-    canonical_repository: CanonicalRepositoryToken256
+    canonical_owner: CanonicalRepositoryToken256 = Field(
+        json_schema_extra=partial(
+            _schema_constraints,
+            {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": NON_BLANK_PATTERN,
+                "allOf": [{"pattern": r"^[a-z0-9._-]{1,256}$(?![\s\S])"}],
+            },
+        ),
+    )
+    canonical_repository: CanonicalRepositoryToken256 = Field(
+        json_schema_extra=partial(
+            _schema_constraints,
+            {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": NON_BLANK_PATTERN,
+                "allOf": [{"pattern": r"^[a-z0-9._-]{1,256}$(?![\s\S])"}],
+            },
+        ),
+    )
     channel: ReleaseChannel
 
 
