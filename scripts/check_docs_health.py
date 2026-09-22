@@ -1090,20 +1090,39 @@ def check_git_tag_message_audit(config: PhraseConfig, result: CheckResult) -> No
             result.add(f)
 
 
+def _run_release_audit_command(args: list[str], result: CheckResult) -> subprocess.CompletedProcess[str] | None:
+    """Report a fixed failure if the GitHub CLI cannot start."""
+    try:
+        return subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            check=False,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError:
+        result.add(
+            Finding(
+                Severity.FAIL,
+                "release_body_audit",
+                "<gh>",
+                None,
+                "Cannot start GitHub CLI; verify its installation and PATH, then rerun.",
+            )
+        )
+        return None
+
+
 def check_github_release_body_audit(config: PhraseConfig, result: CheckResult) -> None:
     """Scan the latest GitHub Release body for forbidden phrases.
 
-    Uses ``gh api``. Advisory: WARNs if gh is unavailable/unauthenticated
-    or the release body is empty.
+    A CLI launch failure is a FAIL. Authentication and empty release
+    responses retain their advisory WARN results.
     """
-    auth_status = subprocess.run(
-        ["gh", "auth", "status"],
-        capture_output=True,
-        text=True,
-        check=False,
-        encoding="utf-8",
-        errors="replace",  # SF-8: cp1252-safe on Windows
-    )
+    auth_status = _run_release_audit_command(["gh", "auth", "status"], result)
+    if auth_status is None:
+        return
     if auth_status.returncode != 0:
         result.add(
             Finding(
@@ -1116,14 +1135,9 @@ def check_github_release_body_audit(config: PhraseConfig, result: CheckResult) -
         )
         return
 
-    latest = subprocess.run(
-        ["gh", "release", "view", "--json", "tagName,body"],
-        capture_output=True,
-        text=True,
-        check=False,
-        encoding="utf-8",
-        errors="replace",  # SF-8: cp1252-safe on Windows
-    )
+    latest = _run_release_audit_command(["gh", "release", "view", "--json", "tagName,body"], result)
+    if latest is None:
+        return
     if latest.returncode != 0:
         result.add(
             Finding(
