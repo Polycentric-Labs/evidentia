@@ -1,9 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ConmonPage } from "@/routes/ConmonPage";
+import { RELEASE_DEMO_FIXTURES } from "@/lib/demo/release-cadence-fixtures";
 
 // Mock the API module. The ConMon screen lists cadences (read) and reaches
 // REST parity with the `evidentia conmon` verbs: next/check/health (read-only
@@ -16,6 +23,9 @@ vi.mock("@/lib/api", async () => {
     ...actual,
     api: {
       listConmonCadences: vi.fn(),
+      health: vi.fn(),
+      releaseSeries: vi.fn(),
+      collectReleaseCadence: vi.fn(),
       conmonNext: vi.fn(),
       conmonCheck: vi.fn(),
       conmonHealth: vi.fn(),
@@ -78,6 +88,11 @@ function renderPage() {
 describe("ConmonPage", () => {
   beforeEach(() => {
     listConmonCadences.mockReset();
+    vi.mocked(api.health).mockReset().mockResolvedValue({
+      status: "ok",
+      version: "0.13.0",
+      auth_configured: false,
+    });
     conmonNext.mockReset();
     conmonCheck.mockReset();
     conmonHealth.mockReset();
@@ -399,5 +414,87 @@ describe("ConmonPage", () => {
     // The dedup entry renders, including its humanized field labels.
     expect(await screen.findByText("overdue")).toBeInTheDocument();
     expect(screen.getByText("Cadence Slug")).toBeInTheDocument();
+  });
+});
+
+describe("ConmonPage recorded release integration", () => {
+  const fixture = RELEASE_DEMO_FIXTURES.find((row) => row.id === "series-two")!;
+  const health = (configured: boolean) => ({
+    status: "ok",
+    version: "0.13.0",
+    auth_configured: configured,
+  });
+  beforeEach(async () => {
+    vi.stubGlobal(
+      "crypto",
+      (await vi.importActual<{ webcrypto: Crypto }>("node:crypto")).webcrypto,
+    );
+    listConmonCadences.mockReset().mockResolvedValue([]);
+    vi.mocked(api.health).mockReset().mockResolvedValue(health(true));
+    vi.mocked(api.releaseSeries)
+      .mockReset()
+      .mockResolvedValue({
+        rawJson: fixture.rawJson,
+        result: JSON.parse(fixture.rawJson),
+      });
+    vi.mocked(api.collectReleaseCadence).mockReset();
+  });
+  afterEach(() => vi.unstubAllGlobals());
+  function fillSeries() {
+    const request = fixture.request;
+    if (!("window_start" in request))
+      throw new Error("Expected the recorded-series fixture");
+    for (const [label, value] of Object.entries({
+      "GitHub owner": request.owner,
+      "GitHub repository": request.repository,
+      "Release channel": request.channel,
+      "Window start (UTC)": request.window_start,
+      "Window end (UTC)": request.window_end,
+      "Interval days": String(request.interval_days),
+      "Tolerance days": String(request.tolerance_days),
+    }))
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  }
+  it("keeps evaluation explicit and reads recorded releases after fresh authentication", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const button = screen.getByRole("button", {
+      name: "Evaluate release spacing",
+    });
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(api.releaseSeries).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText("Save release evidence locally")).toBeNull();
+    fillSeries();
+    const priorHealthCalls = vi.mocked(api.health).mock.calls.length;
+    await user.click(button);
+    await screen.findByLabelText("Accepted release result");
+    expect(vi.mocked(api.health).mock.calls.length).toBe(priorHealthCalls + 1);
+    expect(api.releaseSeries).toHaveBeenCalledWith(fixture.request, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(api.collectReleaseCadence).not.toHaveBeenCalled();
+  });
+  it("does not evaluate after authentication is revoked", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const button = screen.getByRole("button", {
+      name: "Evaluate release spacing",
+    });
+    await waitFor(() => expect(button).toBeEnabled());
+    fillSeries();
+    vi.mocked(api.health).mockResolvedValue(health(false));
+    await user.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    expect(api.releaseSeries).not.toHaveBeenCalled();
+    expect(api.collectReleaseCadence).not.toHaveBeenCalled();
+  });
+  it("keeps recorded-release evaluation disabled without authentication", async () => {
+    vi.mocked(api.health).mockResolvedValue(health(false));
+    renderPage();
+    await waitFor(() => expect(api.health).toHaveBeenCalled());
+    expect(
+      screen.getByRole("button", { name: "Evaluate release spacing" }),
+    ).toBeDisabled();
+    expect(api.releaseSeries).not.toHaveBeenCalled();
   });
 });

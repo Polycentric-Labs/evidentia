@@ -221,11 +221,14 @@ def create_app(
     from evidentia_core.rbac import DEFAULT_POLICY, load_rbac_policy_auto
 
     rbac_policy: object = DEFAULT_POLICY
+    release_policy_provenance = "default"
     rbac_policy_file_env = os.environ.get("EVIDENTIA_RBAC_POLICY_FILE", "").strip()
     if rbac_policy_file_env:
         try:
             rbac_policy = load_rbac_policy_auto(Path(rbac_policy_file_env))
+            release_policy_provenance = "loaded"
         except (FileNotFoundError, ValueError) as exc:
+            release_policy_provenance = "failed"
             logger.error(
                 "RBAC policy load failed (%s); falling back to default permissive policy",
                 exc,
@@ -368,6 +371,9 @@ def create_app(
     app.state.security_headers = security_headers
     app.state.trust_proxy_headers = trust_proxy_headers
     app.state.rbac_policy = rbac_policy
+    from evidentia_api._release_cadence_authority import _record_policy
+
+    _record_policy(app, rbac_policy, release_policy_provenance)
 
     # Register routers. Each router is a focused module - see routers/*.py.
     # Imports are deferred so module-load errors in one router don't take
@@ -458,6 +464,9 @@ def create_app(
     app.include_router(integrations_router.router, prefix="/api", tags=["integrations"])
     app.include_router(collectors_router.router, prefix="/api", tags=["collectors"])
     app.include_router(scap_router.router, prefix="/api", tags=["collectors"])
+    from evidentia_api.routers import release_cadence as release_cadence_router
+
+    app.include_router(release_cadence_router.router, prefix="/api", tags=["release-cadence"])
     app.include_router(tprm_router.router, prefix="/api", tags=["tprm"])
     app.include_router(model_risk_router.router, prefix="/api", tags=["model-risk"])
     app.include_router(poam_router.router, prefix="/api", tags=["poam"])

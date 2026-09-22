@@ -132,3 +132,12 @@ tests/fixtures/cyclonedx/bom-1.6.schema.json text eol=lf
 tests/fixtures/cyclonedx/bom-1.7.schema.json text eol=lf
 tests/fixtures/cyclonedx/source-index.json text eol=lf
 tests/fixtures/cyclonedx/LICENSE-2.0.txt text eol=lf
+
+# Release cadence source and identity fixtures preserve exact LF bytes.
+tests/fixtures/release_cadence/source-index.json text eol=lf
+tests/fixtures/release_cadence/page-1.json text eol=lf
+tests/fixtures/release_cadence/page-2.json text eol=lf
+tests/fixtures/release_cadence/expected-source-facts.json text eol=lf
+tests/fixtures/release_cadence/expected-identities.json text eol=lf
+tests/fixtures/release_cadence/publication-v1.json text eol=lf
+tests/fixtures/release_cadence/observation-v1.json text eol=lf

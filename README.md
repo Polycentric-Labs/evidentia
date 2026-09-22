@@ -41,9 +41,9 @@
 
 ## What is Evidentia?
 
-Evidentia ingests NIST OSCAL catalogs and analyzes gaps against your evidence. Its Python library, CLI and REST API emit OSCAL Assessment Results, SARIF for CI gates, OCSF Compliance + Detection Findings for SIEMs, and CycloneDX VEX for supply-chain workflows.
+Evidentia analyzes evidence against ingested NIST OSCAL catalogs. Its Python library, CLI and REST API emit OSCAL Assessment Results, SARIF for CI gates, OCSF Compliance + Detection Findings for SIEMs, and CycloneDX VEX for supply-chain workflows.
 
-Built for compliance engineers, GRC teams, and CISOs who want to:
+For compliance engineers, GRC teams and CISOs:
 
 - Ship audit-grade evidence with cryptographic provenance (Sigstore + PEP 740 + SLSA Provenance v1).
 - Map controls across **107 bundled catalogs**.
@@ -55,7 +55,7 @@ Built for compliance engineers, GRC teams, and CISOs who want to:
 pip install evidentia
 ```
 
-For the full workspace (AI risk-statements, REST API, all collectors, MCP server):
+Workspace (AI risk-statements, REST API, all collectors, MCP server):
 
 ```bash
 pip install 'evidentia[ai,api,collectors,mcp]'
@@ -63,11 +63,11 @@ pip install 'evidentia[ai,api,collectors,mcp]'
 
 Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.12.1` (cosign keyless OIDC + SLSA Provenance v1 verified).
 
-See the [Getting Started wiki section](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) for air-gapped install, virtualenv setup, and full extras matrix.
+[Getting Started](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) covers air-gapped install, virtualenv setup and all extras.
 
 ## Quickstart (60 Seconds)
 
-For `evidentia gap analyze`, `--inventory` supplies the controls you have and `--frameworks` selects catalogs to measure against. The wheel includes a sample inventory.
+`evidentia gap analyze` compares your `--inventory` controls with `--frameworks` catalogs. The wheel includes a sample inventory.
 
 ```bash
 # 1. List bundled framework catalogs
@@ -87,11 +87,11 @@ evidentia gap analyze \
   --output assessment-results.json --format oscal-ar
 ```
 
-Full 5-minute walk-through: [Quickstart wiki page](https://github.com/Polycentric-Labs/evidentia/wiki/Quickstart).
+5-minute guide: [Quickstart](https://github.com/Polycentric-Labs/evidentia/wiki/Quickstart).
 
 ### Live Demo
 
-See it first, no install — a self-hosted [asciinema](https://asciinema.org/) recording of the exact `doctor → catalog list → gap analyze → oscal verify` sequence on the Meridian Financial sample, plus a clickable, backend-free demo console:
+No install: a self-hosted [asciinema](https://asciinema.org/) recording of `doctor → catalog list → gap analyze → oscal verify` on the Meridian Financial sample, and a clickable, backend-free demo console:
 
 [**▶ Watch the CLI demo**](https://demo.evidentiagrc.com/#/demo) · [**Click through the demo console**](https://demo.evidentiagrc.com/)
 
@@ -101,10 +101,11 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - **FedRAMP CR26 machine-readable SDR emission** — `evidentia conmon ksi` emits the CR26 Security Decision Record `keySecurityIndicators` block (10 families / 46 KSIs) conformant to FedRAMP's official 2026-06-24 schemas (vendored at pinned upstream SHAs, drift-watched weekly) — the first production-grade open-source emitter of the CR26 SDR format.
 - **Cryptographic evidence chain** — Sigstore keyless signing on Assessment Results; PEP 740 attestations on every published wheel; SLSA Provenance v1 on the container; CycloneDX 1.7 SBOM on every GitHub Release.
 - **107 framework catalogs + 16 crosswalks**: 36 catalogs carry statement text for every non-withdrawn entry; 71 carry headings only. Coverage includes NIST 800-53 Rev 5 (full 1,196 controls + Low/Moderate/High/Privacy baselines), CSF 2.0, FedRAMP (Rev 5 baselines + CR26 Key Security Indicators + the 180 provider-facing CR26 Requirements), CMMC 2.0 L1/L2, OpenSSF OSPS Baseline (Maturity 1/2/3 + first public OSCAL serialization), ISO 27001:2022, EU AI Act, DORA, NIS2, GDPR, all 15 comprehensive US state privacy laws, FFIEC IT Examination Handbook booklets, CMS ARS 5.2 and the CJIS 6.1 requirements companion, OCC Bulletin 2026-13 / FRB SR 26-2.
-- **19 credentialed evidence collectors**: AWS; GitHub (OSPS conformance helpers); Postgres, MySQL, Oracle, SQLite, MS-SQL; Snowflake; Databricks; Okta; Google Workspace; Entra ID / Microsoft 365; storage retention (S3, Azure Blob, GCS); enterprise retention (Google Vault, Splunk Enterprise, Elasticsearch ILM); incident clocks (ServiceNow, Jira Cloud, PagerDuty); Vanta, Drata, BitSight and SecurityScorecard. Findings align with OCSF. Entra/M365 and retention preserve source coverage. Public registries offer 11 selectors with outcome, traversal and freshness; compliance stays unknown and SSL Labs live access is disabled. Incident clocks preserve native events and exact elapsed seconds under profile grants, without determining legal notification deadlines.
+- **19 credentialed evidence collectors**: AWS; GitHub (OSPS conformance helpers); Postgres, MySQL, Oracle, SQLite, MS-SQL; Snowflake; Databricks; Okta; Google Workspace; Entra ID / Microsoft 365; storage retention (S3, Azure Blob, GCS); enterprise retention (Google Vault, Splunk Enterprise, Elasticsearch ILM); incident clocks (ServiceNow, Jira Cloud, PagerDuty); Vanta, Drata, BitSight and SecurityScorecard. Findings align with OCSF. Entra/M365 and retention preserve source coverage. Public registries: 11 selectors with outcome, traversal and freshness; compliance unknown, SSL Labs live access disabled. Incident clocks preserve native events and exact elapsed seconds under profile grants; legal notification deadlines remain undetermined.
 - **SCAP imports**: [CLI, API and console](docs/scap-collectors.md) preserve XCCDF/OVAL native results, source hashes, completion provenance and explicit artifact eligibility.
-- **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX 1.6 VEX via `--format cyclonedx-vex`.
-- **15 MCP tools** — Drive Evidentia from Claude Desktop, Claude Code, or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
+- **Release cadence**: [Public GitHub releases and offline spacing](docs/wiki/2-guides/release-cadence.md). Explicit saving; no proof of installed patches.
+- **OCSF-aligned findings** — OCSF Compliance Finding (class_uid 2003) via `--format ocsf`; OCSF Detection Finding (class_uid 2004) via `--format ocsf-detection`. SARIF 2.1.0 for CI gates via `--format sarif`. CycloneDX VEX defaults to 1.6; select 1.7 explicitly with `--format cyclonedx-vex --vex-spec-version 1.7`.
+- **15 MCP tools**: Use Evidentia from Claude Desktop, Claude Code or any MCP host. Append-only tool contract per [`docs/api-stability.md`](docs/api-stability.md) (NORMATIVE). Signed output envelopes (CIMD) per [`docs/evidence-integrity.md`](docs/evidence-integrity.md).
 - **OSPS Baseline conformance** — First public open-source project to ship a machine-readable per-control OSPS Baseline conformance attestation ([`OSPS-CONFORMANCE.md`](docs/OSPS-CONFORMANCE.md)) with a CI gate that re-validates every evidence link on push/PR/cron.
 
 ## What's in the Box
@@ -127,7 +128,7 @@ See it first, no install — a self-hosted [asciinema](https://asciinema.org/) r
 - [`OSPS-CONFORMANCE.md`](docs/OSPS-CONFORMANCE.md) — OpenSSF OSPS Baseline self-attestation + CI gate
 - [`docs/verification.md`](docs/verification.md) — consumer-side recipes for PEP 740 + cosign + osv-scanner + SLSA Provenance v1
 - [`EOL.md`](docs/EOL.md) — version support windows + cessation comms policy
-- [`docs/engineering-practices.md`](docs/engineering-practices.md) — how Evidentia is built, tested, and shipped: the safeguard stack and the candid failures that shaped it
+- [`docs/engineering-practices.md`](docs/engineering-practices.md) — Evidentia build, test and shipping practices: safeguards and the failures that shaped them
 
 ## Recent Releases
 
@@ -153,7 +154,7 @@ This project was developed alongside AI platforms.
 
 Custom infrastructure and integrations built in-house.
 
-Details, including the tools used: [`docs/ai-assistance.md`](docs/ai-assistance.md).
+Tools and details: [`docs/ai-assistance.md`](docs/ai-assistance.md).
 
 ## License
 

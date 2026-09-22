@@ -1,0 +1,53 @@
+{
+  "schema_version": "release-cadence-synthetic-fixtures-v1",
+  "provenance": "Explicitly authored synthetic fixtures. No publisher response, live clock or product output is an oracle.",
+  "source_profile": "github-public-releases-2026-03-10",
+  "page_scenarios": {
+    "page-1.json": "Initial publication poll containing three releases.",
+    "page-2.json": "A separate subsequent poll observing changed facts for release 101."
+  },
+  "response_payload_rule": "For these two page fixtures only, remove exactly one final packaging LF before supplying the synthetic HTTP response. This reconstructs the previously sealed raw-response bytes and their unchanged provenance hashes. The two pages are different polls, not consecutive pages of one traversal.",
+  "series_reason_adoption": {
+    "eligible": [],
+    "channel_excluded": [
+      "prerelease_excluded"
+    ],
+    "basis_sha256": "73493643add2037985706bd6c517b2daf09c1df6d6e018c0597d30412dbf01ff"
+  },
+  "files": [
+    {
+      "path": "page-1.json",
+      "bytes": 1121,
+      "sha256": "e7704aebc50e5a1be3482c07509a6218df9801a70e2cf8e12cad2200770cbdb7",
+      "response_bytes": 1120,
+      "response_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e"
+    },
+    {
+      "path": "page-2.json",
+      "bytes": 418,
+      "sha256": "a942b375b73ccd29a1f0aa1c0be5129ff34f68f32ffddddaf6d2aed53ac6082e",
+      "response_bytes": 417,
+      "response_sha256": "aa0678ecc57bdc9fd8fd00a15d469649c67f43f423fd1dbd4826b823914b67b2"
+    },
+    {
+      "path": "publication-v1.json",
+      "bytes": 3528,
+      "sha256": "f123fb6f9fcc629794c436698065bab06246ae2567780a07925d057ac9b37d69"
+    },
+    {
+      "path": "observation-v1.json",
+      "bytes": 4082,
+      "sha256": "2c64256bc2337f10c3729026467b66af3e9d5f88fc582ba707b0a45462327c95"
+    },
+    {
+      "path": "expected-identities.json",
+      "bytes": 21634,
+      "sha256": "7dd4d36f493f84af89f0a5cc62abb313a58c4d9695bda7928e57af72cf05a879"
+    },
+    {
+      "path": "expected-source-facts.json",
+      "bytes": 5537,
+      "sha256": "7d85956feff816cc0077840fc19b6f954182beaa9148f5c9fc79634018676f42"
+    }
+  ]
+}

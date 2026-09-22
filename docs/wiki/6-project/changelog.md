@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Upstream release publication cadence (V13-28).** `collect release-cadence`,
+  its API and the Collect screen observe the fixed public GitHub Releases
+  profile. Full results retain native selected facts, source occurrence and
+  time provenance, bounded traversal, duplicate conflicts and explicit save
+  outcomes. Persistence is opt-in and preserves version-one publication and
+  source-observation records without overwriting prior evidence.
+  `conmon release-series`, its API and the CONMON screen evaluate verified local
+  publication families in an explicit UTC window using exact microsecond gaps.
+  Zero or one eligible event is insufficient; source conflicts remain explicit.
+  These results describe upstream publication spacing, not installed patches,
+  remediation or compliance. See the [release-cadence guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/wiki/2-guides/release-cadence.md).
+
 - **Explicit CycloneDX 1.7 exports (V13-26).** Gap-report VEX exports retain
   version 1.6 by default and accept an explicit 1.7 selection in the CLI, API
   and console. Both versions preserve control-gap source fields. Corrected

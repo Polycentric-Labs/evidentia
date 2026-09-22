@@ -463,6 +463,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/collect/release-cadence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Collect Release Cadence */
+        post: operations["collect_release_cadence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/collectors/aws/collect": {
         parameters: {
             query?: never;
@@ -1634,6 +1651,23 @@ export interface paths {
          * @description Compute the next-due date for a registered cadence.
          */
         post: operations["compute_next_due_api_conmon_next_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conmon/release-series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate Release Series */
+        post: operations["evaluate_release_series"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3970,7 +4004,7 @@ export interface components {
             /** Frequency */
             frequency?: string | null;
             /** Gaps */
-            gaps?: components["schemas"]["SeriesGap"][];
+            gaps?: components["schemas"]["evidentia_core__conmon__series__SeriesGap"][];
             /** Interval Days */
             interval_days?: number | null;
             /** Observations */
@@ -5627,6 +5661,59 @@ export interface components {
             outcome: "true" | "false" | "unknown" | "error" | "not evaluated" | "not applicable";
             reported: components["schemas"]["DefaultedBoolean"];
         };
+        /** DiscoveryResult */
+        DiscoveryResult: {
+            /** Canonical Files Read */
+            canonical_files_read: number;
+            /** Child Entries Observed */
+            child_entries_observed: number;
+            /** Inventory Sha256 */
+            inventory_sha256: string | null;
+            /**
+             * Meaning
+             * @constant
+             */
+            meaning: "bounded_recorded_store_observation";
+            /** Passes */
+            passes: number;
+            /** Raw File Bytes Observed */
+            raw_file_bytes_observed: number;
+            /** Release Records Observed */
+            release_records_observed: number;
+            /** Root Entries Observed */
+            root_entries_observed: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "complete" | "unavailable" | "changed" | "limit_exceeded" | "record_invalid" | "identity_conflict" | "deadline_exceeded";
+        };
+        /** DiscoverySummary */
+        DiscoverySummary: {
+            /** Canonical Files Read */
+            canonical_files_read: number;
+            /** Child Entries Observed */
+            child_entries_observed: number;
+            /** Conflicting Events */
+            conflicting_events: number | null;
+            /** Inventory Sha256 */
+            inventory_sha256: string | null;
+            /** Passes */
+            passes: number;
+            /** Raw File Bytes Observed */
+            raw_file_bytes_observed: number;
+            /** Release Record Reads Observed */
+            release_record_reads_observed: number;
+            /** Root Entries Observed */
+            root_entries_observed: number;
+            /** Selected Scope Records */
+            selected_scope_records: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "not_requested" | "not_started" | "complete" | "unavailable" | "changed" | "limit_exceeded" | "record_invalid" | "identity_conflict" | "deadline_exceeded" | "cancelled";
+        };
         /** DomainTarget */
         DomainTarget: {
             /** Domain */
@@ -6168,6 +6255,37 @@ export interface components {
         ErrorEnvelope: {
             detail: components["schemas"]["ErrorDetail"];
         };
+        /** EventGroup */
+        EventGroup: {
+            /** Blocks All Published */
+            blocks_all_published: boolean | null;
+            /** Blocks Full Releases */
+            blocks_full_releases: boolean | null;
+            current_vs_parent: components["schemas"]["FactComparison"] | null;
+            /** Event Id */
+            event_id: string;
+            /** Event Index */
+            event_index: number;
+            /** Known Observation Count */
+            known_observation_count: number | null;
+            /** Observation Outcome Index */
+            observation_outcome_index: number | null;
+            /** Occurrence Count */
+            occurrence_count: number;
+            /** Publication Outcome Index */
+            publication_outcome_index: number | null;
+            /** Release Id */
+            release_id: number;
+            /** Representative Row Index */
+            representative_row_index: number;
+            /**
+             * Stored State
+             * @enum {string}
+             */
+            stored_state: "not_observed" | "absent" | "verified" | "conflict" | "unavailable";
+            /** Stored Union Change Codes */
+            stored_union_change_codes: ("non_cadence_facts_changed" | "publication_literal_changed" | "node_id_changed" | "publication_instant_changed" | "publication_time_unqualified" | "draft_changed_to_true" | "prerelease_changed")[];
+        };
         /** EventSelection */
         EventSelection: {
             /** Candidate Event Ids */
@@ -6554,6 +6672,17 @@ export interface components {
          * @enum {string}
          */
         FIPS199Impact: "low" | "moderate" | "high";
+        /** FactComparison */
+        FactComparison: {
+            /** Blocks All Published */
+            blocks_all_published: boolean;
+            /** Blocks Full Releases */
+            blocks_full_releases: boolean;
+            /** Change Codes */
+            change_codes: ("non_cadence_facts_changed" | "publication_literal_changed" | "node_id_changed" | "publication_instant_changed" | "publication_time_unqualified" | "draft_changed_to_true" | "prerelease_changed")[];
+            /** Changed Fields */
+            changed_fields: ("id" | "node_id" | "url" | "html_url" | "tag_name" | "target_commitish" | "name" | "draft" | "prerelease" | "immutable" | "created_at" | "published_at" | "updated_at")[];
+        };
         /**
          * FairMcQuantifyResponse
          * @description Response for method='fair-mc' — one SimulationResult per scenario.
@@ -7558,6 +7687,48 @@ export interface components {
                 [key: string]: components["schemas"]["LlmProviderState"];
             };
         };
+        /** LocalSaveOutcome */
+        LocalSaveOutcome: {
+            /** Candidate Id */
+            candidate_id: string;
+            /** Candidate Selected Facts Sha256 */
+            candidate_selected_facts_sha256: string;
+            /** Event Id */
+            event_id: string;
+            /**
+             * Local State
+             * @enum {string}
+             */
+            local_state: "local_verified" | "local_absent" | "local_conflict" | "local_indeterminate" | "not_attempted";
+            /**
+             * Mirror Outcome
+             * @constant
+             */
+            mirror_outcome: "unobserved";
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "created" | "already_saved" | "existing_different_facts" | "present_after_uncertain_save" | "not_applicable" | "not_attempted" | "failed" | "indeterminate" | "conflict";
+            /**
+             * Planned Action
+             * @enum {string}
+             */
+            planned_action: "reuse_publication" | "create_publication" | "create_observation" | "conditional_observation";
+            /** Reason */
+            reason: ("publication_not_eligible" | "observation_not_needed" | "known_parent_absent" | "save_failed" | "save_readback_mismatch" | "store_record_invalid" | "store_identity_conflict" | "store_digest_conflict" | "store_parent_missing" | "store_parent_conflict" | "store_changed" | "store_unavailable" | "store_limit_exceeded" | "deadline_exceeded" | "cancelled") | null;
+            /**
+             * Record Kind
+             * @enum {string}
+             */
+            record_kind: "release_publication" | "release_source_observation";
+            /**
+             * Save Call
+             * @enum {string}
+             */
+            save_call: "not_called" | "returned_created" | "returned_collided" | "raised";
+            verified_record: components["schemas"]["StoredRecordReference"] | null;
+        };
         /** MarkCompletedRequest */
         MarkCompletedRequest: {
             /**
@@ -8395,6 +8566,27 @@ export interface components {
              */
             native_result: "pass" | "fail" | "error" | "unknown" | "notapplicable" | "informational" | "fixed" | "notchecked" | "notselected" | "true" | "false" | "not evaluated" | "not applicable";
         };
+        /** OutcomeCounts */
+        OutcomeCounts: {
+            /** Already Saved */
+            already_saved: number;
+            /** Conflict */
+            conflict: number;
+            /** Created */
+            created: number;
+            /** Existing Different Facts */
+            existing_different_facts: number;
+            /** Failed */
+            failed: number;
+            /** Indeterminate */
+            indeterminate: number;
+            /** Not Applicable */
+            not_applicable: number;
+            /** Not Attempted */
+            not_attempted: number;
+            /** Present After Uncertain Save */
+            present_after_uncertain_save: number;
+        };
         /** OutcomeOccurrence */
         OutcomeOccurrence: {
             /**
@@ -8513,6 +8705,60 @@ export interface components {
          * @enum {string}
          */
         POAMState: "planned" | "in_progress" | "overdue" | "completed" | "verified";
+        /** PageLedger */
+        PageLedger: {
+            /** Admitted */
+            admitted: boolean;
+            /** Decoded Body Complete */
+            decoded_body_complete: boolean;
+            /** Decoded Body Sha256 */
+            decoded_body_sha256: string | null;
+            /** Decoded Bytes Observed */
+            decoded_bytes_observed: number;
+            /** Decoded Row Count */
+            decoded_row_count: number | null;
+            /** First Page */
+            first_page: number | null;
+            /** Http Status */
+            http_status: number | null;
+            /** Json Depth Observed */
+            json_depth_observed: number | null;
+            /** Json Value Key Occurrences */
+            json_value_key_occurrences: number | null;
+            /** Last Page */
+            last_page: number | null;
+            /**
+             * Link State
+             * @enum {string}
+             */
+            link_state: "absent" | "valid" | "invalid" | "unavailable";
+            /** Link Values Sha256 */
+            link_values_sha256: string | null;
+            /** Next Page */
+            next_page: number | null;
+            /** Page Index */
+            page_index: number;
+            /** Page Number */
+            page_number: number;
+            /** Page Ordinal */
+            page_ordinal: number;
+            /** Previous Page */
+            previous_page: number | null;
+            /** Raw Body Complete */
+            raw_body_complete: boolean;
+            /** Raw Body Sha256 */
+            raw_body_sha256: string | null;
+            /** Raw Bytes Observed */
+            raw_bytes_observed: number;
+            /** Reason */
+            reason: ("offline_refused" | "destination_refused" | "dns_failure" | "tls_failure" | "connection_failure" | "timeout" | "cleanup_failure" | "dependency_unavailable" | "dependency_broken" | "invalid_response" | "unsupported_media" | "unsupported_encoding" | "unsupported_link" | "page_limit" | "row_limit" | "raw_limit" | "decoded_limit" | "json_syntax" | "json_depth" | "json_count" | "json_scalar" | "source_field" | "source_conflict" | "selected_limit" | "result_limit" | "clock_invalid" | "deadline_exceeded" | "cancelled" | "redirect_refused" | "upstream_unauthorized" | "upstream_forbidden" | "upstream_not_found" | "upstream_rate_limited" | "upstream_server_error" | "upstream_http_error" | "store_record_invalid" | "store_identity_conflict" | "store_digest_conflict" | "store_parent_missing" | "store_parent_conflict" | "store_changed" | "store_unavailable" | "store_limit_exceeded" | "publication_not_eligible" | "observation_not_needed" | "known_parent_absent" | "save_failed" | "save_readback_mismatch") | null;
+            /** Retrieved At */
+            retrieved_at: string | null;
+            /** Row Count */
+            row_count: number;
+            /** Row Start */
+            row_start: number | null;
+        };
         /** PagerDutyMapping */
         PagerDutyMapping: {
             /**
@@ -8586,6 +8832,142 @@ export interface components {
              * @description Total pages in the result set when computable from API response; None for cursor-based pagination where total is unknown
              */
             total_pages?: number | null;
+        };
+        /** PersistenceSummary */
+        PersistenceSummary: {
+            /** Attempted Calls */
+            attempted_calls: number;
+            /** Last Attempted Slot */
+            last_attempted_slot: number | null;
+            /**
+             * Mirror Outcome
+             * @constant
+             */
+            mirror_outcome: "unobserved";
+            outcome_counts: components["schemas"]["OutcomeCounts"];
+            /** Planned Slots */
+            planned_slots: number;
+            /** Requested */
+            requested: boolean;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "not_requested" | "not_started" | "complete" | "partial" | "indeterminate";
+            /** Stop Reason */
+            stop_reason: ("offline_refused" | "destination_refused" | "dns_failure" | "tls_failure" | "connection_failure" | "timeout" | "cleanup_failure" | "dependency_unavailable" | "dependency_broken" | "invalid_response" | "unsupported_media" | "unsupported_encoding" | "unsupported_link" | "page_limit" | "row_limit" | "raw_limit" | "decoded_limit" | "json_syntax" | "json_depth" | "json_count" | "json_scalar" | "source_field" | "source_conflict" | "selected_limit" | "result_limit" | "clock_invalid" | "deadline_exceeded" | "cancelled" | "redirect_refused" | "upstream_unauthorized" | "upstream_forbidden" | "upstream_not_found" | "upstream_rate_limited" | "upstream_server_error" | "upstream_http_error" | "store_record_invalid" | "store_identity_conflict" | "store_digest_conflict" | "store_parent_missing" | "store_parent_conflict" | "store_changed" | "store_unavailable" | "store_limit_exceeded" | "publication_not_eligible" | "observation_not_needed" | "known_parent_absent" | "save_failed" | "save_readback_mismatch") | null;
+        };
+        /** PollCounters */
+        PollCounters: {
+            /** Attempts */
+            attempts: number;
+            /** Decoded Entity Bytes Observed */
+            decoded_entity_bytes_observed: number;
+            /** Pages Admitted */
+            pages_admitted: number;
+            /** Raw Entity Bytes Observed */
+            raw_entity_bytes_observed: number;
+            /** Rows Admitted */
+            rows_admitted: number;
+            /** Selected Ccompact Bytes Admitted */
+            selected_ccompact_bytes_admitted: number;
+            /** Targeted Raw Bytes Observed */
+            targeted_raw_bytes_observed: number;
+            /** Targeted Record Reads */
+            targeted_record_reads: number;
+            /** Total Store Raw Bytes Observed */
+            total_store_raw_bytes_observed: number;
+            /** Unique Source Events */
+            unique_source_events: number;
+        };
+        /** PollRequest */
+        PollRequest: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "full_releases" | "all_published";
+            /** Owner */
+            owner: string;
+            /** Persist */
+            persist: boolean;
+            /** Repository */
+            repository: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "release-poll-request-v1";
+            /**
+             * Source Profile
+             * @constant
+             */
+            source_profile: "github-public-releases-2026-03-10";
+        };
+        /** PollResult */
+        PollResult: {
+            clocks: components["schemas"]["RunClocks"];
+            /**
+             * Collection State
+             * @enum {string}
+             */
+            collection_state: "complete" | "partial" | "unavailable";
+            counters: components["schemas"]["PollCounters"];
+            discovery: components["schemas"]["DiscoverySummary"];
+            /** Events */
+            events: components["schemas"]["EventGroup"][];
+            /**
+             * Meaning
+             * @constant
+             */
+            meaning: "visible_upstream_release_observation";
+            /** Outcomes */
+            outcomes: components["schemas"]["LocalSaveOutcome"][];
+            /** Pages */
+            pages: components["schemas"]["PageLedger"][];
+            persistence: components["schemas"]["PersistenceSummary"];
+            /** Reasons */
+            reasons: ("offline_refused" | "destination_refused" | "dns_failure" | "tls_failure" | "connection_failure" | "timeout" | "cleanup_failure" | "dependency_unavailable" | "dependency_broken" | "invalid_response" | "unsupported_media" | "unsupported_encoding" | "unsupported_link" | "page_limit" | "row_limit" | "raw_limit" | "decoded_limit" | "json_syntax" | "json_depth" | "json_count" | "json_scalar" | "source_field" | "source_conflict" | "selected_limit" | "result_limit" | "clock_invalid" | "deadline_exceeded" | "cancelled" | "redirect_refused" | "upstream_unauthorized" | "upstream_forbidden" | "upstream_not_found" | "upstream_rate_limited" | "upstream_server_error" | "upstream_http_error" | "store_record_invalid" | "store_identity_conflict" | "store_digest_conflict" | "store_parent_missing" | "store_parent_conflict" | "store_changed" | "store_unavailable" | "store_limit_exceeded" | "publication_not_eligible" | "observation_not_needed" | "known_parent_absent" | "save_failed" | "save_readback_mismatch")[];
+            request: components["schemas"]["PollRequest"];
+            /** Request Sha256 */
+            request_sha256: string;
+            /** Rows */
+            rows: components["schemas"]["RowOccurrence"][];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "release-poll-result-v1";
+            scope: components["schemas"]["PollScope"];
+            /** Terminal Reason */
+            terminal_reason: ("offline_refused" | "destination_refused" | "dns_failure" | "tls_failure" | "connection_failure" | "timeout" | "cleanup_failure" | "dependency_unavailable" | "dependency_broken" | "invalid_response" | "unsupported_media" | "unsupported_encoding" | "unsupported_link" | "page_limit" | "row_limit" | "raw_limit" | "decoded_limit" | "json_syntax" | "json_depth" | "json_count" | "json_scalar" | "source_field" | "source_conflict" | "selected_limit" | "result_limit" | "clock_invalid" | "deadline_exceeded" | "cancelled" | "redirect_refused" | "upstream_unauthorized" | "upstream_forbidden" | "upstream_not_found" | "upstream_rate_limited" | "upstream_server_error" | "upstream_http_error" | "store_record_invalid" | "store_identity_conflict" | "store_digest_conflict" | "store_parent_missing" | "store_parent_conflict" | "store_changed" | "store_unavailable" | "store_limit_exceeded" | "publication_not_eligible" | "observation_not_needed" | "known_parent_absent" | "save_failed" | "save_readback_mismatch") | null;
+        };
+        /** PollScope */
+        PollScope: {
+            /** Canonical Owner */
+            canonical_owner: string;
+            /** Canonical Repository */
+            canonical_repository: string;
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "full_releases" | "all_published";
+            /**
+             * Identity Version
+             * @constant
+             */
+            identity_version: "evidentia.release-publication.v1";
+            /**
+             * Source Host
+             * @constant
+             */
+            source_host: "api.github.com";
+            /**
+             * Source Profile
+             * @constant
+             */
+            source_profile: "github-public-releases-2026-03-10";
         };
         /**
          * PracticeComplianceSummary
@@ -8812,6 +9194,31 @@ export interface components {
             /** Scope Label */
             scope_label?: string | null;
             target: components["schemas"]["DomainTarget"];
+        };
+        /** RecordReference */
+        RecordReference: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Event Index */
+            event_index: number;
+            /** First Observed At */
+            first_observed_at: string;
+            /**
+             * Record Kind
+             * @enum {string}
+             */
+            record_kind: "release_publication" | "release_source_observation";
+            /** Selected Facts Sha256 */
+            selected_facts_sha256: string;
+            /** Stored File Sha256 */
+            stored_file_sha256: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
         };
         /**
          * RegisterAcquisitionRequest
@@ -9105,6 +9512,89 @@ export interface components {
          * @enum {string}
          */
         RegulatoryClassification: "custody" | "clearing" | "model" | "data_processor" | "critical_third_party";
+        /** ReleaseError */
+        ReleaseError: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "invalid_request" | "request_limit_exceeded" | "result_limit_exceeded" | "unsupported_media" | "support_unavailable" | "support_broken" | "authority_unavailable" | "operation_failed" | "persistence_outcome_unavailable";
+            /**
+             * Message
+             * @enum {string}
+             */
+            message: "The release request is invalid." | "The release request exceeds its limit." | "The release result exceeds its limit." | "The release request media type is unsupported." | "Release support is unavailable." | "Release support failed." | "Release authority is unavailable." | "The release operation failed." | "The release deadline expired after a save was attempted. Persistence may have occurred. Inspect local records before retrying.";
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "release-error-v1";
+        };
+        /** ReleaseSeriesRequest */
+        ReleaseSeriesRequest: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "full_releases" | "all_published";
+            /** Interval Days */
+            interval_days: number;
+            /** Owner */
+            owner: string & unknown;
+            /** Repository */
+            repository: string & unknown;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "release-series-request-v1";
+            /**
+             * Source Profile
+             * @constant
+             */
+            source_profile: "github-public-releases-2026-03-10";
+            /** Tolerance Days */
+            tolerance_days: number;
+            /** Window End */
+            window_end: string;
+            /** Window Start */
+            window_start: string;
+        };
+        /** ReleaseSeriesResult */
+        ReleaseSeriesResult: {
+            /** Completed At */
+            completed_at: string;
+            discovery: components["schemas"]["DiscoveryResult"];
+            /** Evaluation At */
+            evaluation_at: string;
+            /** Events */
+            events: components["schemas"]["SeriesEvent"][];
+            /** Gaps */
+            gaps: components["schemas"]["evidentia_core__release_cadence___contracts__SeriesGap"][];
+            /**
+             * Meaning
+             * @constant
+             */
+            meaning: "recorded_upstream_publication_spacing";
+            /** Reasons */
+            reasons: ("gap_exceeds_allowed" | "insufficient_events" | "source_conflict" | "store_unavailable" | "store_changed" | "store_limit_exceeded" | "store_record_invalid" | "store_identity_conflict" | "deadline_exceeded")[];
+            /** Records */
+            records: components["schemas"]["RecordReference"][];
+            request: components["schemas"]["ReleaseSeriesRequest"];
+            /** Request Sha256 */
+            request_sha256: string;
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: "release-series-result-v1";
+            scope: components["schemas"]["SeriesScope"];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "continuous" | "gapped" | "insufficient" | "unavailable" | "conflict";
+        };
         /**
          * RetentionClassification
          * @description Regulator-aligned record-retention classifications.
@@ -9322,6 +9812,40 @@ export interface components {
              * @description Random seed for deterministic Monte Carlo runs (only used when method='fair-mc'). Pass an explicit int for reproducible bands.
              */
             seed?: number | null;
+        };
+        /** RowMetadata */
+        RowMetadata: {
+            /** Eligibility Reasons */
+            eligibility_reasons: ("draft" | "prerelease_excluded" | "publication_time_absent" | "publication_time_unsupported" | "publication_time_future")[];
+            /** Event Index */
+            event_index: number;
+            /** Initial Publication Eligible */
+            initial_publication_eligible: boolean;
+            /** Page Index */
+            page_index: number;
+            /** Record Index */
+            record_index: number;
+            /** Row Index */
+            row_index: number;
+            /** Selected Facts Sha256 */
+            selected_facts_sha256: string;
+            source_time: components["schemas"]["SourceTimeView"];
+        };
+        /** RowOccurrence */
+        RowOccurrence: {
+            metadata: components["schemas"]["RowMetadata"];
+            selected: components["schemas"]["SelectedReleaseFacts"];
+        };
+        /** RunClocks */
+        RunClocks: {
+            /** Completed At */
+            completed_at: string;
+            /** Poll Id */
+            poll_id: string;
+            /** Started At */
+            started_at: string;
+            /** Traversal Completed At */
+            traversal_completed_at: string | null;
         };
         /** S3Target */
         S3Target: {
@@ -9833,6 +10357,35 @@ export interface components {
             /** Record Id */
             record_id: string;
         };
+        /** SelectedReleaseFacts */
+        SelectedReleaseFacts: {
+            /** Created At */
+            created_at: string;
+            /** Draft */
+            draft: boolean;
+            /** Html Url */
+            html_url: string;
+            /** Id */
+            id: number;
+            /** Immutable */
+            immutable?: boolean;
+            /** Name */
+            name: string | null;
+            /** Node Id */
+            node_id: string;
+            /** Prerelease */
+            prerelease: boolean;
+            /** Published At */
+            published_at: string | null;
+            /** Tag Name */
+            tag_name: string;
+            /** Target Commitish */
+            target_commitish: string;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Url */
+            url: string;
+        };
         /** SelectionFilter */
         SelectionFilter: {
             /** Definition Sha256 */
@@ -9847,39 +10400,29 @@ export interface components {
             /** Request */
             request: components["schemas"]["ServiceNowRequest"] | components["schemas"]["JiraRequest"] | components["schemas"]["PagerDutyRequest"];
         };
-        /**
-         * SeriesGap
-         * @description A spacing that exceeded the allowed interval.
-         */
-        SeriesGap: {
+        /** SeriesEvent */
+        SeriesEvent: {
             /**
-             * After
-             * Format: date-time
-             * @description Start of the gap: an observation, or the window start.
+             * Eligibility
+             * @enum {string}
              */
-            after: string;
-            /**
-             * Allowed Days
-             * @description Interval plus tolerance.
-             */
-            allowed_days: number;
-            /**
-             * Before
-             * Format: date-time
-             * @description End of the gap: the next observation, or the window end.
-             */
-            before: string;
-            /**
-             * Boundary
-             * @description True when one side of the gap is a window edge.
-             * @default false
-             */
-            boundary: boolean;
-            /**
-             * Days
-             * @description Whole days between the two instants.
-             */
-            days: number;
+            eligibility: "eligible" | "channel_excluded" | "conflict";
+            /** Event Id */
+            event_id: string;
+            /** In Window */
+            in_window: boolean;
+            /** Observation Count */
+            observation_count: number;
+            /** Publication Record Index */
+            publication_record_index: number;
+            /** Published At */
+            published_at: string;
+            /** Published At Literal */
+            published_at_literal: string;
+            /** Reasons */
+            reasons: ("prerelease_excluded" | "node_id_changed" | "publication_instant_changed" | "publication_time_unqualified" | "draft_changed_to_true" | "prerelease_changed")[];
+            /** Release Id */
+            release_id: number;
         };
         /**
          * SeriesObservation
@@ -9932,6 +10475,28 @@ export interface components {
             /** Description */
             description: string;
             series: components["schemas"]["CadenceSeries"];
+        };
+        /** SeriesScope */
+        SeriesScope: {
+            /** Canonical Owner */
+            canonical_owner: string & unknown;
+            /** Canonical Repository */
+            canonical_repository: string & unknown;
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "full_releases" | "all_published";
+            /**
+             * Source Host
+             * @constant
+             */
+            source_host: "api.github.com";
+            /**
+             * Source Profile
+             * @constant
+             */
+            source_profile: "github-public-releases-2026-03-10";
         };
         /**
          * SeriesVerdict
@@ -10170,6 +10735,16 @@ export interface components {
             /** Scope Node Index */
             scope_node_index: number;
             value_ref: components["schemas"]["NativeValueRef"];
+        };
+        /** SourceTimeView */
+        SourceTimeView: {
+            /**
+             * Classification
+             * @enum {string}
+             */
+            classification: "absent" | "unsupported_syntax" | "unsupported_year" | "invalid_calendar" | "unsupported_leap_second" | "unsupported_precision" | "utc_out_of_range" | "normalized";
+            /** Normalized Utc */
+            normalized_utc: string | null;
         };
         /** SplunkCollectResult */
         SplunkCollectResult: {
@@ -10428,6 +11003,43 @@ export interface components {
             status: "complete" | "partial" | "unavailable";
             /** Target */
             target: components["schemas"]["S3Target"] | components["schemas"]["AzureTarget"] | components["schemas"]["GcsTarget"];
+        };
+        /** StoredRecordReference */
+        StoredRecordReference: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Artifact Semantic Sha256 */
+            artifact_semantic_sha256: string;
+            /** Collected At */
+            collected_at: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Event Id */
+            event_id: string;
+            /** First Observation Poll Id */
+            first_observation_poll_id: string;
+            /** First Observed At */
+            first_observed_at: string;
+            /**
+             * Record Kind
+             * @enum {string}
+             */
+            record_kind: "release_publication" | "release_source_observation";
+            /** Relative Path */
+            relative_path: string;
+            /** Selected Facts Sha256 */
+            selected_facts_sha256: string;
+            /** Stored File Bytes */
+            stored_file_bytes: number;
+            /** Stored File Sha256 */
+            stored_file_sha256: string;
+            /** Verified At */
+            verified_at: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
         };
         /** TLSRequest */
         TLSRequest: {
@@ -11718,6 +12330,62 @@ export interface components {
         evidentia_collectors__registries___contracts___FindingData: {
             observation: components["schemas"]["RegistryObservation"];
         };
+        /**
+         * SeriesGap
+         * @description A spacing that exceeded the allowed interval.
+         */
+        evidentia_core__conmon__series__SeriesGap: {
+            /**
+             * After
+             * Format: date-time
+             * @description Start of the gap: an observation, or the window start.
+             */
+            after: string;
+            /**
+             * Allowed Days
+             * @description Interval plus tolerance.
+             */
+            allowed_days: number;
+            /**
+             * Before
+             * Format: date-time
+             * @description End of the gap: the next observation, or the window end.
+             */
+            before: string;
+            /**
+             * Boundary
+             * @description True when one side of the gap is a window edge.
+             * @default false
+             */
+            boundary: boolean;
+            /**
+             * Days
+             * @description Whole days between the two instants.
+             */
+            days: number;
+        };
+        /** SeriesGap */
+        evidentia_core__release_cadence___contracts__SeriesGap: {
+            /** Allowed Microseconds */
+            allowed_microseconds: number;
+            /**
+             * Boundary
+             * @enum {string}
+             */
+            boundary: "start" | "between" | "end";
+            /** Elapsed Microseconds */
+            elapsed_microseconds: number;
+            /** End At */
+            end_at: string;
+            /** Exceeds Allowed */
+            exceeds_allowed: boolean;
+            /** Left Event Index */
+            left_event_index: number | null;
+            /** Right Event Index */
+            right_event_index: number | null;
+            /** Start At */
+            start_at: string;
+        };
         pydantic__types__JsonValue: unknown;
     };
     responses: never;
@@ -12874,6 +13542,111 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CatalogNativeCatalogStorageErrorEnvelope"];
+                };
+            };
+        };
+    };
+    collect_release_cadence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Channel
+                     * @enum {string}
+                     */
+                    channel: "full_releases" | "all_published";
+                    /** Owner */
+                    owner: string;
+                    /** Persist */
+                    persist: boolean;
+                    /** Repository */
+                    repository: string;
+                    /**
+                     * Schema Version
+                     * @constant
+                     */
+                    schema_version: "release-poll-request-v1";
+                    /**
+                     * Source Profile
+                     * @constant
+                     */
+                    source_profile: "github-public-releases-2026-03-10";
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PollResult"];
+                };
+            };
+            /** @description Existing authentication middleware response. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Configured authentication and granted read/write permission are required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A fixed bounded release refusal. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
                 };
             };
         };
@@ -15332,6 +16105,117 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluate_release_series: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Channel
+                     * @enum {string}
+                     */
+                    channel: "full_releases" | "all_published";
+                    /** Interval Days */
+                    interval_days: number;
+                    /** Owner */
+                    owner: string & unknown;
+                    /** Repository */
+                    repository: string & unknown;
+                    /**
+                     * Schema Version
+                     * @constant
+                     */
+                    schema_version: "release-series-request-v1";
+                    /**
+                     * Source Profile
+                     * @constant
+                     */
+                    source_profile: "github-public-releases-2026-03-10";
+                    /** Tolerance Days */
+                    tolerance_days: number;
+                    /** Window End */
+                    window_end: string;
+                    /** Window Start */
+                    window_start: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseSeriesResult"];
+                };
+            };
+            /** @description Existing authentication middleware response. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Configured authentication and granted read/write permission are required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A fixed bounded release refusal. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
+                };
+            };
+            /** @description A fixed bounded release refusal. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseError"];
                 };
             };
         };

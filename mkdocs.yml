@@ -117,6 +117,7 @@ nav:
       - 2-guides/index.md
       - Run a gap analysis: 2-guides/run-gap-analysis.md
       - Run evidence collectors: 2-guides/run-collectors.md
+      - Observe release publication cadence: 2-guides/release-cadence.md
       - Explain a control: 2-guides/explain-controls.md
       - Browse and manage framework catalogs: 2-guides/manage-catalogs.md
       - Serve the local web UI: 2-guides/serve-the-web-ui.md

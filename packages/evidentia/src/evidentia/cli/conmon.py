@@ -81,8 +81,11 @@ from evidentia_core.conmon.series import (
     DEFAULT_LOOKBACK_DAYS,
 )
 from evidentia_core.evidence_store import get_evidence_store_dir, iter_artifacts
+from evidentia_core.release_cadence._limits import _start_invocation
 from rich.console import Console
 from rich.table import Table
+
+from evidentia.cli._rbac import require_role_cli
 
 app = typer.Typer(help="Continuous Monitoring cycle calendar (v0.9.0 P3).")
 console = Console()
@@ -1567,3 +1570,39 @@ def conmon_series(
     console.print(series.describe())
     if emit_findings is not None:
         console.print(f"[dim]Wrote finding array to {emit_findings}[/dim]")
+
+
+@app.command("release-series")
+@require_role_cli("read")
+def conmon_release_series(
+    owner: str = typer.Option(..., "--owner", help="Recorded public GitHub repository owner."),
+    repository: str = typer.Option(..., "--repository", help="Repository name, without the owner."),
+    channel: str = typer.Option(..., "--channel", help="full_releases or all_published."),
+    window_start: str = typer.Option(..., "--window-start", help="Explicit UTC observation-window start."),
+    window_end: str = typer.Option(..., "--window-end", help="Explicit UTC observation-window end."),
+    interval_days: int = typer.Option(..., "--interval-days", min=1, max=3660),
+    tolerance_days: int = typer.Option(..., "--tolerance-days", min=0, max=3660),
+    evidence_store: Path | None = typer.Option(None, "--evidence-store", help="Operator-owned local evidence base."),
+) -> None:
+    """Evaluate recorded upstream publication spacing without a provider call."""
+    try:
+        clock = _start_invocation()
+    except Exception:
+        typer.echo("The release operation failed.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        from evidentia.cli._release_cadence_io import run_release_series
+    except Exception:
+        typer.echo("Release support failed.", err=True)
+        raise typer.Exit(1) from None
+    run_release_series(
+        _clock=clock,
+        owner=owner,
+        repository=repository,
+        channel=channel,
+        window_start=window_start,
+        window_end=window_end,
+        interval_days=interval_days,
+        tolerance_days=tolerance_days,
+        evidence_store=evidence_store,
+    )

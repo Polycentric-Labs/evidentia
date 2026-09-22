@@ -11,6 +11,12 @@
  * persist changes across a reload.
  */
 
+import {
+  snapshotReleasePollRequest,
+  snapshotReleaseSeriesRequest,
+  type ReleasePollRequest,
+  type ReleaseSeriesRequest,
+} from "@/lib/release-cadence";
 import { incidentDemoResponse } from "@/lib/demo/incident-clock-fixtures";
 import { SCAP_DEMO_CASES } from "@/lib/demo/scap-demo-cases";
 import {
@@ -732,6 +738,42 @@ const DEMO_INTEGRATION_RESULT: Record<string, unknown> = {
 };
 
 export const demoApi = {
+  collectReleaseCadence: async (
+    body: ReleasePollRequest,
+    options?: { signal?: AbortSignal },
+  ) => {
+    const expected = snapshotReleasePollRequest(body);
+    if (options?.signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+    const fixtures = await import("@/lib/demo/release-cadence-fixtures");
+    if (options?.signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+    const result = await fixtures.demoCollectReleaseCadence(expected);
+    if (options?.signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+    return result;
+  },
+  releaseSeries: async (
+    body: ReleaseSeriesRequest,
+    options?: { signal?: AbortSignal },
+  ) => {
+    const expected = snapshotReleaseSeriesRequest(body);
+    if (options?.signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+    const fixtures = await import("@/lib/demo/release-cadence-fixtures");
+    if (options?.signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+    const result = await fixtures.demoReleaseSeries(expected);
+    if (options?.signal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+    return result;
+  },
   // ── Probe / identity ──────────────────────────────────────────────────
   health: (): Promise<HealthResponse> => Promise.resolve(clone(DEMO_HEALTH)),
   version: (): Promise<VersionResponse> => Promise.resolve(clone(DEMO_VERSION)),

@@ -30,6 +30,7 @@ from typing import BinaryIO, Self
 
 import typer
 from evidentia_core.models.finding import SecurityFinding
+from evidentia_core.release_cadence._limits import _start_invocation
 from rich.console import Console
 from rich.table import Table
 
@@ -2345,4 +2346,34 @@ def collect_scap(
         asserted_by=asserted_by,
         output=output,
         output_view=output_view,
+    )
+
+
+@app.command("release-cadence")
+@require_role_cli("read")
+def collect_release_cadence(
+    owner: str = typer.Option(..., "--owner", help="Public GitHub repository owner."),
+    repository: str = typer.Option(..., "--repository", help="Repository name, without the owner."),
+    channel: str = typer.Option(..., "--channel", help="full_releases or all_published."),
+    persist: bool = typer.Option(False, "--persist", help="Explicitly save verified local release records."),
+    evidence_store: Path | None = typer.Option(None, "--evidence-store", help="Operator-owned local evidence base."),
+) -> None:
+    """Observe upstream releases; publication is not evidence of patch installation."""
+    try:
+        clock = _start_invocation()
+    except Exception:
+        typer.echo("The release operation failed.", err=True)
+        raise typer.Exit(1) from None
+    try:
+        from evidentia.cli._release_cadence_io import run_release_cadence
+    except Exception:
+        typer.echo("Release support failed.", err=True)
+        raise typer.Exit(1) from None
+    run_release_cadence(
+        _clock=clock,
+        owner=owner,
+        repository=repository,
+        channel=channel,
+        persist=persist,
+        evidence_store=evidence_store,
     )

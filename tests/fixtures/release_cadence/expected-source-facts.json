@@ -1,0 +1,140 @@
+{
+  "publication-101": {
+    "selected": {
+      "id": 101,
+      "node_id": "SYNTHETIC_RELEASE_101",
+      "url": "https://api.github.com/repos/Example/Synthetic/releases/101",
+      "html_url": "https://github.com/Example/Synthetic/releases/tag/synthetic-v1",
+      "tag_name": "synthetic-v1",
+      "target_commitish": "synthetic-main",
+      "name": null,
+      "draft": false,
+      "prerelease": false,
+      "created_at": "1999-12-31T12:00:00Z",
+      "published_at": "2000-01-01T00:00:00Z"
+    },
+    "publication_time": {
+      "source_literal": "2000-01-01T00:00:00Z",
+      "classification": "normalized",
+      "normalized_utc": "2000-01-01T00:00:00.000000Z"
+    },
+    "first_observation": {
+      "poll_id": "00000000-0000-4000-8000-000000000001",
+      "request_sha256": "25f5e0a63bc512d087dc14b299493eab15bb30e53d7b70ddc95ee78e9c6b3ba7",
+      "requested_owner": "Example",
+      "requested_repository": "Synthetic",
+      "channel": "all_published",
+      "page_ordinal": 1,
+      "page_number": 1,
+      "record_index": 0,
+      "retrieved_at": "2000-01-03T00:00:00.000000Z",
+      "traversal_completed_at": "2000-01-03T00:00:00.000100Z",
+      "response_raw_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e",
+      "response_decoded_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e"
+    }
+  },
+  "publication-102": {
+    "selected": {
+      "id": 102,
+      "node_id": "SYNTHETIC_RELEASE_102",
+      "url": "https://api.github.com/repos/Example/Synthetic/releases/102",
+      "html_url": "https://github.com/Example/Synthetic/releases/tag/synthetic-v2",
+      "tag_name": "synthetic-v2",
+      "target_commitish": "synthetic-main",
+      "name": null,
+      "draft": false,
+      "prerelease": false,
+      "created_at": "1999-12-31T12:00:00Z",
+      "published_at": "2000-01-02T00:00:00Z"
+    },
+    "publication_time": {
+      "source_literal": "2000-01-02T00:00:00Z",
+      "classification": "normalized",
+      "normalized_utc": "2000-01-02T00:00:00.000000Z"
+    },
+    "first_observation": {
+      "poll_id": "00000000-0000-4000-8000-000000000001",
+      "request_sha256": "25f5e0a63bc512d087dc14b299493eab15bb30e53d7b70ddc95ee78e9c6b3ba7",
+      "requested_owner": "Example",
+      "requested_repository": "Synthetic",
+      "channel": "all_published",
+      "page_ordinal": 1,
+      "page_number": 1,
+      "record_index": 1,
+      "retrieved_at": "2000-01-03T00:00:00.000000Z",
+      "traversal_completed_at": "2000-01-03T00:00:00.000100Z",
+      "response_raw_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e",
+      "response_decoded_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e"
+    }
+  },
+  "publication-103-prerelease": {
+    "selected": {
+      "id": 103,
+      "node_id": "SYNTHETIC_RELEASE_103",
+      "url": "https://api.github.com/repos/Example/Synthetic/releases/103",
+      "html_url": "https://github.com/Example/Synthetic/releases/tag/synthetic-preview",
+      "tag_name": "synthetic-preview",
+      "target_commitish": "synthetic-main",
+      "name": null,
+      "draft": false,
+      "prerelease": true,
+      "created_at": "1999-12-31T12:00:00Z",
+      "published_at": "2000-01-01T00:00:00Z"
+    },
+    "publication_time": {
+      "source_literal": "2000-01-01T00:00:00Z",
+      "classification": "normalized",
+      "normalized_utc": "2000-01-01T00:00:00.000000Z"
+    },
+    "first_observation": {
+      "poll_id": "00000000-0000-4000-8000-000000000001",
+      "request_sha256": "25f5e0a63bc512d087dc14b299493eab15bb30e53d7b70ddc95ee78e9c6b3ba7",
+      "requested_owner": "Example",
+      "requested_repository": "Synthetic",
+      "channel": "all_published",
+      "page_ordinal": 1,
+      "page_number": 1,
+      "record_index": 2,
+      "retrieved_at": "2000-01-03T00:00:00.000000Z",
+      "traversal_completed_at": "2000-01-03T00:00:00.000100Z",
+      "response_raw_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e",
+      "response_decoded_sha256": "6ef8b690e455549472f76ada5eb09e79fe38e89416cd42777b38e1a15796218e"
+    }
+  },
+  "observation-101": {
+    "selected": {
+      "id": 101,
+      "node_id": "SYNTHETIC_RELEASE_101",
+      "url": "https://api.github.com/repos/Example/Synthetic/releases/101",
+      "html_url": "https://github.com/Example/Synthetic/releases/tag/synthetic-v1",
+      "tag_name": "synthetic-v1",
+      "target_commitish": "synthetic-main",
+      "name": "Synthetic é",
+      "draft": false,
+      "prerelease": false,
+      "created_at": "1999-12-31T12:00:00Z",
+      "published_at": "2000-01-01T00:00:00Z",
+      "immutable": false,
+      "updated_at": null
+    },
+    "publication_time": {
+      "source_literal": "2000-01-01T00:00:00Z",
+      "classification": "normalized",
+      "normalized_utc": "2000-01-01T00:00:00.000000Z"
+    },
+    "first_observation": {
+      "poll_id": "00000000-0000-4000-8000-000000000002",
+      "request_sha256": "25f5e0a63bc512d087dc14b299493eab15bb30e53d7b70ddc95ee78e9c6b3ba7",
+      "requested_owner": "Example",
+      "requested_repository": "Synthetic",
+      "channel": "all_published",
+      "page_ordinal": 1,
+      "page_number": 1,
+      "record_index": 0,
+      "retrieved_at": "2000-01-04T00:00:00.123456Z",
+      "traversal_completed_at": "2000-01-04T00:00:00.123457Z",
+      "response_raw_sha256": "aa0678ecc57bdc9fd8fd00a15d469649c67f43f423fd1dbd4826b823914b67b2",
+      "response_decoded_sha256": "aa0678ecc57bdc9fd8fd00a15d469649c67f43f423fd1dbd4826b823914b67b2"
+    }
+  }
+}

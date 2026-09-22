@@ -43,6 +43,7 @@ import { StorageRetentionTab } from "@/routes/StorageRetentionTab";
 import { RegistryCollectAction } from "@/routes/RegistryCollectAction";
 import { IncidentClockCollectAction } from "@/routes/IncidentClockCollectAction";
 import { ScapCollectAction } from "@/routes/ScapCollectAction";
+import { ReleaseCadenceCollectAction } from "@/routes/ReleaseCadenceCollectAction";
 
 /**
  * Collectors console (/collect) — Wave-4 HIGH-risk surface.
@@ -139,6 +140,7 @@ export function CollectPage() {
           </TabsTrigger>
           <TabsTrigger value="registries">Public registries</TabsTrigger>
           <TabsTrigger value="incident-clock">Incident clock</TabsTrigger>
+          <TabsTrigger value="release-cadence">Release cadence</TabsTrigger>
           <TabsTrigger value="scap">SCAP</TabsTrigger>
           <TabsTrigger value="ocsf">OCSF ingest</TabsTrigger>
           <TabsTrigger value="nessus">Nessus scan</TabsTrigger>
@@ -178,6 +180,16 @@ export function CollectPage() {
             verifyAuth={verifyEntraAuth}
           />
         </TabsContent>
+        <TabsContent value="release-cadence">
+          <ReleaseCadenceCollectAction
+            freshAuth={freshAuth}
+            authInvalidated={
+              !health.isSuccess || health.data.auth_configured !== true
+            }
+            verifyAuth={verifyEntraAuth}
+          />
+        </TabsContent>
+
         <TabsContent value="scap">
           <ScapCollectAction
             freshAuth={freshAuth}
