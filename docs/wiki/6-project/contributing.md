@@ -110,7 +110,7 @@ project's own disclosure in [`docs/ai-assistance.md`](https://github.com/Polycen
 ## Reporting security issues
 
 **Security issues do not belong in public bug reports.** See
-[`SECURITY.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) for the private vulnerability
+[`SECURITY.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) for the private vulnerability
 disclosure process — GitHub Private Vulnerability Reporting is
 the preferred channel; email is documented as a backup.
 

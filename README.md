@@ -144,7 +144,7 @@ Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https:/
 
 - [`GOVERNANCE.md`](GOVERNANCE.md) — project governance + decision-making
 - [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) — how to contribute (issues, PRs, catalogs)
-- [`SECURITY.md`](SECURITY.md) — vulnerability reporting policy (private via [GHSA](https://github.com/Polycentric-Labs/evidentia/security/advisories/new))
+- [`SECURITY.md`](.github/SECURITY.md) — vulnerability reporting policy (private via [GHSA](https://github.com/Polycentric-Labs/evidentia/security/advisories/new))
 - [Code of Conduct](.github/CODE_OF_CONDUCT.md)
 - [FAQ (wiki)](https://github.com/Polycentric-Labs/evidentia/wiki/Project) — frequent operator questions
 

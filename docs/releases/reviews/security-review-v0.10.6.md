@@ -271,7 +271,7 @@ plus a skill-side Step 5.D new-PyPI-project pending-publisher sub-check
 - Structural model: [docs/security-review-v0.10.4.md](security-review-v0.10.4.md)
 - Prior cycle: [docs/security-review-v0.10.5.md](security-review-v0.10.5.md) (deferred Phases 1-5 originate there)
 - Forward direction: [docs/security-review-v0.10.7.md](security-review-v0.10.7.md) (closes the §12.3 maintenance follow-up via `gen_osps_crosswalks.py`; promotes the workflow-permissions audit to a blocking gate; crosswalk hand-verification)
-- Security policy + lifecycle: [SECURITY.md](../../../SECURITY.md), [EOL.md](../../../EOL.md), [docs/verification.md](../../verification.md)
+- Security policy + lifecycle: [SECURITY.md](../../../.github/SECURITY.md), [EOL.md](../../../EOL.md), [docs/verification.md](../../verification.md)
 - Conformance: [OSPS-CONFORMANCE.md](../../../OSPS-CONFORMANCE.md)
 - Threat-model addition: [docs/threat-model.md](../../threat-model.md) (the conformance-gate token-scope + rate-limit note)
 - Per-run JSON (audit trail): **does not exist for v0.10.6** - the run directory `.local/pre-release-review/runs/` skips from `2026-05-24...v0.10.4` to `2026-05-31...v0.10.7`; the Step-7 ship record is in private memory

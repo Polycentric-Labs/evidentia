@@ -367,7 +367,7 @@ release while fixing one.
 
 If the bad release is a **security** issue in Evidentia's own code, run
 the standard ladder (§4) **and** the disclosure flow from
-[`SECURITY.md`](../../SECURITY.md):
+[`SECURITY.md`](../../.github/SECURITY.md):
 
 1. **Draft a GitHub Security Advisory** at
    `https://github.com/Polycentric-Labs/evidentia/security/advisories/new`
@@ -467,7 +467,7 @@ Immutable Releases is on (§1) · yank ≠ delete and preserves provenance
   container from local wheels; pre-publish smoke).
 - [`release-checklist.md`](../release-checklist.md) — Step 8 (tag/push +
   re-trigger notes), Step 10 (yank note).
-- [`SECURITY.md`](../../SECURITY.md) — vulnerability reporting, supported
+- [`SECURITY.md`](../../.github/SECURITY.md) — vulnerability reporting, supported
   versions (single supported patch), 90-day disclosure window.
 - [`engineering-practices.md`](../engineering-practices.md) — the
   safeguard-stack narrative the atomic-release change belongs to.

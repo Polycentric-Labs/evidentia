@@ -13,7 +13,7 @@
 # storage-repo setup); without it each batch run starts from the
 # in-repo tests/fuzz/corpus/ seeds.
 #
-# Ref: https://google.github.io/clusterfuzzlite/running-clusterfuzzlite/github-actions/
+# Ref: https://github.com/google/clusterfuzzlite
 name: cflite-batch
 
 on:

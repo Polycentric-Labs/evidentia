@@ -2,7 +2,7 @@ header:
   schema-version: 2.2.0
   last-updated: '2026-07-10'
   last-reviewed: '2026-07-10'
-  url: https://github.com/Polycentric-Labs/evidentia/raw/main/security-insights.yml
+  url: https://github.com/Polycentric-Labs/evidentia/raw/main/.github/security-insights.yml
   comment: |
     Single-repository OpenSSF Security Insights manifest for Evidentia, an
     open-source Python GRC / compliance-as-code tool. This is a machine-readable
@@ -24,7 +24,7 @@ project:
     code-of-conduct: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CODE_OF_CONDUCT.md
     release-process: https://github.com/Polycentric-Labs/evidentia/blob/main/docs/release-checklist.md
     support-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/docs/EOL.md
-    signature-verification: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+    signature-verification: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md
   repositories:
     - name: evidentia
       url: https://github.com/Polycentric-Labs/evidentia
@@ -38,7 +38,7 @@ project:
       name: Allen Byrd
       email: allen@allenfbyrd.com
       primary: true
-    policy: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+    policy: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md
     comment: |
       Preferred channel is GitHub Private Vulnerability Reporting:
       https://github.com/Polycentric-Labs/evidentia/security/advisories/new
@@ -60,7 +60,7 @@ repository:
   documentation:
     contributing-guide: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md
     governance: https://github.com/Polycentric-Labs/evidentia/blob/main/GOVERNANCE.md
-    security-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+    security-policy: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md
   license:
     url: https://github.com/Polycentric-Labs/evidentia/blob/main/LICENSE
     expression: Apache-2.0
@@ -84,7 +84,8 @@ repository:
       - name: osv-scanner
         type: SCA
         rulesets:
-          - osv-scanner.toml (repo-root allowlist; every IgnoredVulns entry carries a security-review-traceable reason + ignoreUntil expiry)
+          - osv-scanner.toml (repo-root allowlist; every IgnoredVulns entry carries a
+            security-review-traceable reason + ignoreUntil expiry)
         integration:
           adhoc: false
           ci: true

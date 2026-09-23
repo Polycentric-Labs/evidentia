@@ -107,7 +107,7 @@ project's own disclosure in [`docs/ai-assistance.md`](../docs/ai-assistance.md):
 ## Reporting security issues
 
 **Security issues do not belong in public bug reports.** See
-[`SECURITY.md`](../SECURITY.md) for the private vulnerability
+[`SECURITY.md`](SECURITY.md) for the private vulnerability
 disclosure process — GitHub Private Vulnerability Reporting is
 the preferred channel; email is documented as a backup.
 

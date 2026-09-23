@@ -341,6 +341,6 @@ the maintainer's.
 For the authoritative pledge text, see CISA's
 [Secure by Design Pledge](https://www.cisa.gov/securebydesign/pledge). For
 Evidentia's broader security posture, see
-[`SECURITY.md`](../SECURITY.md), [`docs/threat-model.md`](threat-model.md),
+[`SECURITY.md`](../.github/SECURITY.md), [`docs/threat-model.md`](threat-model.md),
 [`docs/engineering-practices.md`](engineering-practices.md), and
 [`OSPS-CONFORMANCE.md`](OSPS-CONFORMANCE.md).

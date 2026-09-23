@@ -1,4 +1,4 @@
-# Citation File Format 1.2.0 — https://citation-file-format.github.io/
+# Citation File Format 1.2.0: https://github.com/citation-file-format/citation-file-format/blob/main/README.md
 #
 # Renders as a "Cite this repository" widget on the GitHub repo
 # sidebar and integrates with Zenodo (when the user opts in to

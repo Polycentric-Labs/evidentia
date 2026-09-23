@@ -16,7 +16,7 @@ Project meta: roadmap, changelog, API stability, versioning, governance, securit
 
 - **[Governance](governance.md)** — mirror of [`GOVERNANCE.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/GOVERNANCE.md).
 
-- **[Security](security.md)** — mirror of [`SECURITY.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md).
+- **[Security](security.md)** — mirror of [`SECURITY.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md).
 
 - **[Contributing](contributing.md)** — mirror of [`CONTRIBUTING.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/CONTRIBUTING.md).
 

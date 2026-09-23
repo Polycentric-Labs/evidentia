@@ -21,6 +21,6 @@
 
 ## Source + contributions
 
-Wiki source lives in-repo at `docs/wiki/`. Edits go through normal PR review. The wiki is built with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) from the markdown source; see [the canonical mkdocs.yml](https://github.com/Polycentric-Labs/evidentia/blob/main/mkdocs.yml) at repo root for build config.
+Wiki source lives in-repo at `docs/wiki/`. Edits go through normal PR review. The wiki is built with [Material for MkDocs](https://github.com/squidfunk/mkdocs-material) from the markdown source; see [the canonical mkdocs.yml](https://github.com/Polycentric-Labs/evidentia/blob/main/mkdocs.yml) at repo root for build config.
 
 To contribute: PR to `docs/wiki/<section>/<page>.md`. New pages must include an entry in their section's index.md.

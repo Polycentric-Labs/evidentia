@@ -200,7 +200,7 @@ An auditor or successor verifying the assurance case should:
 If any verification step fails, file an issue on
 [`https://github.com/polycentric-labs/evidentia/issues`](https://github.com/polycentric-labs/evidentia/issues)
 or contact the maintainer per
-[`SECURITY.md`](../SECURITY.md).
+[`SECURITY.md`](../.github/SECURITY.md).
 
 ## Plan maintenance
 

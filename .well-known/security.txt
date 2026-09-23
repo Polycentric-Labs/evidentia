@@ -5,4 +5,4 @@ Encryption: https://github.com/allenfbyrd.gpg
 Acknowledgments: https://github.com/Polycentric-Labs/evidentia/security/advisories
 Preferred-Languages: en
 Canonical: https://github.com/Polycentric-Labs/evidentia/blob/main/.well-known/security.txt
-Policy: https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md
+Policy: https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md
