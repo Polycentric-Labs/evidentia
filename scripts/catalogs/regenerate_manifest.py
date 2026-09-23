@@ -1,7 +1,7 @@
 """Regenerate frameworks.yaml by scanning bundled catalog JSONs on disk.
 
-This makes the manifest truthful by construction — the contents of
-data/<tier>/ ARE the manifest. No hand-maintained sync required.
+Catalog files determine the inventory. The two native projections use
+reviewed registration metadata tied to their upstream source identities.
 
 Two columns are derived rather than copied: ``text_depth`` is computed by
 loading every catalog through the same loaders the runtime uses, and
@@ -17,7 +17,6 @@ Run this script whenever catalogs are added/removed/modified
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import yaml
@@ -27,6 +26,7 @@ from evidentia_core.catalogs.loader import (
     load_non_control_catalog,
     load_oscal_catalog,
 )
+from evidentia_core.catalogs.manifest import FrameworkManifest
 
 # Member catalog id -> family id. A crosswalk keyed on the family applies to
 # every member (see evidentia_core.catalogs.crosswalk). The NIST baselines
@@ -64,13 +64,47 @@ TIER_DIRS: dict[str, tuple[str, str]] = {
     # dir_name: (default_tier_guess, default_category_guess)
     "us-federal": ("A", "control"),
     "international": ("A", "control"),
+    "cisa": ("A", "control"),
     "state-privacy": ("D", "obligation"),
     "stubs": ("C", "control"),
     "threats": ("B", "technique"),
 }
 
 # Preferred ordering to keep the YAML readable
-TIER_ORDER = ["us-federal", "international", "state-privacy", "threats", "stubs"]
+TIER_ORDER = ["us-federal", "international", "cisa", "state-privacy", "threats", "stubs"]
+
+# These projections deliberately leave redistribution metadata to their
+# registrations. A changed source identity requires a fresh metadata review.
+NATIVE_REGISTRATIONS = {
+    "international/au-ism.json": {
+        "identity": (
+            "au-ism",
+            "2026.09.4",
+            "AustralianCyberSecurityCentre/ism-oscal@9f77120a7f8671c73da02431cdc299fac264edab",
+        ),
+        "metadata": {
+            "tier": "A",
+            "source_url": "https://github.com/AustralianCyberSecurityCentre/ism-oscal/tree/9f77120a7f8671c73da02431cdc299fac264edab",
+            "license": "See notices/ism.txt and the preserved upstream README.",
+            "refresh": "manual",
+            "notes": "1143 controls; 49 principles remain native context. The 24 old heading IDs are retired without aliases.",
+        },
+    },
+    "cisa/scuba.json": {
+        "identity": (
+            "cisa-scuba",
+            "7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+            "cisagov/ScubaGear@7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+        ),
+        "metadata": {
+            "tier": "A",
+            "source_url": "https://github.com/cisagov/ScubaGear/tree/7ef9501d7de9804ddb9d6013af6b665cccfb39d9",
+            "license": "See notices/scuba.txt, the preserved license file and each source document's attribution.",
+            "refresh": "manual",
+            "notes": "128 policies from eight authoritative documents; the unchanged reference JSON contains 127 records.",
+        },
+    },
+}
 
 
 def infer_refresh(tier: str, category: str) -> str:
@@ -104,7 +138,7 @@ def scan_dir(subdir: str) -> list[dict]:
     # v0.10.6 P1: skip OSCAL-Catalog sidecar artifacts (`*.oscal.json` /
     # `*.oscal.yaml`). These are downstream-consumption artifacts (e.g.,
     # `osps-baseline.oscal.json` is the OSCAL Catalog 1.2.1 serialization
-    # of the OSPS Baseline) and are NOT Evidentia framework catalogs —
+    # of the OSPS Baseline) and are NOT Evidentia framework catalogs ;
     # they don't carry `framework_id` and shouldn't appear as a separate
     # manifest entry. The companion Evidentia YAMLs (e.g.
     # `osps-baseline-m1.yaml`) are the manifest-registered entries.
@@ -114,22 +148,12 @@ def scan_dir(subdir: str) -> list[dict]:
             text = path.read_text(encoding="utf-8")
             if path.suffix.lower() in (".yaml", ".yml"):
                 data = yaml.safe_load(text)
-                if not isinstance(data, dict):
-                    raise ValueError(f"YAML top-level must be a mapping, got {type(data).__name__}")
             else:
                 data = json.loads(text)
+            if not isinstance(data, dict):
+                raise ValueError(f"Catalog top-level must be a mapping, got {type(data).__name__}")
         except (OSError, json.JSONDecodeError, yaml.YAMLError, ValueError) as exc:
-            # Surface the skip explicitly (stderr, not stdout, so it
-            # doesn't pollute the manifest summary going to a pipe).
-            # Silent drops would otherwise produce a smaller frameworks.yaml
-            # that only the catalog-refresh.yml workflow's pytest step
-            # would notice (via test_all_bundled.py's count assertion) —
-            # devs running the script locally see nothing without this.
-            print(
-                f"WARN: skipped malformed catalog file {path}: {exc!r}",
-                file=sys.stderr,
-            )
-            continue
+            raise ValueError(f"Malformed catalog file {path}: {exc}") from exc
 
         entry = {
             "id": data.get("framework_id", path.stem),
@@ -139,7 +163,7 @@ def scan_dir(subdir: str) -> list[dict]:
             "category": data.get("category", category_default),
             "path": f"{subdir}/{path.name}",
         }
-        # Optional fields — only emit when present so YAML stays readable
+        # Optional fields ; only emit when present so YAML stays readable
         for src_field, dst_field in [
             ("source", "source_url"),
             ("license_terms", "license"),
@@ -157,17 +181,27 @@ def scan_dir(subdir: str) -> list[dict]:
         if data.get("placeholder"):
             entry["placeholder"] = True
         entry["refresh"] = infer_refresh(entry["tier"], entry["category"])
+        registration = NATIVE_REGISTRATIONS.get(entry["path"])
+        if registration is not None:
+            identity = tuple(data.get(key) for key in ("framework_id", "version", "source"))
+            if identity != registration["identity"]:
+                raise ValueError(f"Native registration source identity changed: {entry['path']}")
         entry["text_depth"] = derive_text_depth(path, data)
         family = CROSSWALK_FAMILIES.get(entry["id"])
         if family is not None:
             entry["crosswalk_family"] = family
+        if registration is not None:
+            entry.update(registration["metadata"])
+            # Keep the reviewed manifest's field order without changing values.
+            for field in ("refresh", "text_depth", "notes"):
+                entry[field] = entry.pop(field)
         entries.append(entry)
 
     # v0.10.4 P3 collision guard: assert no two entries in the same
     # tier directory share a framework_id. The realistic failure mode
     # is a contributor converting `foo.json` -> `foo.yaml` for the
     # YAML-format affordance (v0.10.3+) without deleting the JSON
-    # — both would land here, both would resolve to the same
+    # ; both would land here, both would resolve to the same
     # framework_id at load time, and the resulting manifest would
     # carry a duplicate row that confuses the loader's path-resolution
     # precedence. Fail loud at manifest-regen time so the drift is
@@ -193,17 +227,34 @@ def main() -> None:
     for subdir in TIER_ORDER:
         all_entries.extend(scan_dir(subdir))
 
+    # Keep the two native registrations adjacent, as in the reviewed manifest.
+    native_paths = [entry["path"] for entry in all_entries]
+    if "international/au-ism.json" in native_paths and "cisa/scuba.json" in native_paths:
+        scuba = all_entries.pop(native_paths.index("cisa/scuba.json"))
+        au_index = next(i for i, entry in enumerate(all_entries) if entry["path"] == "international/au-ism.json")
+        all_entries.insert(au_index + 1, scuba)
+
     manifest = {
         "version": 1,
         "frameworks": all_entries,
     }
 
+    validated = FrameworkManifest.model_validate(manifest)
+    seen: set[str] = set()
+    by_tier: dict[str, int] = {}
+    for entry in validated.frameworks:
+        if entry.id in seen:
+            raise ValueError(f"Duplicate framework ID across catalog directories: {entry.id}")
+        seen.add(entry.id)
+        by_tier[entry.tier] = by_tier.get(entry.tier, 0) + 1
+    summary = [f"  Tier {tier}: {by_tier[tier]}" for tier in sorted(by_tier)]
+
     out_path = DATA_ROOT / "frameworks.yaml"
 
     # Write the YAML with a header comment preserved
-    header = """# Evidentia framework manifest — single source of truth for bundled catalogs.
+    header = """# Evidentia framework manifest \u2014 single source of truth for bundled catalogs.
 #
-# GENERATED BY scripts/catalogs/regenerate_manifest.py — do not hand-edit.
+# GENERATED BY scripts/catalogs/regenerate_manifest.py \u2014 do not hand-edit.
 # To add/remove a framework: change the JSON in data/<tier-dir>/ then re-run the
 # regeneration script. The manifest reflects what is on disk.
 #
@@ -246,11 +297,8 @@ def main() -> None:
         f.write(body)
 
     print(f"Wrote manifest with {len(all_entries)} frameworks to {out_path}")
-    by_tier: dict[str, int] = {}
-    for e in all_entries:
-        by_tier[e["tier"]] = by_tier.get(e["tier"], 0) + 1
-    for tier in sorted(by_tier):
-        print(f"  Tier {tier}: {by_tier[tier]}")
+    for line in summary:
+        print(line)
 
 
 if __name__ == "__main__":

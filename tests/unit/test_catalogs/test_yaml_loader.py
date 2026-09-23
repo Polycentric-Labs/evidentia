@@ -69,7 +69,7 @@ def test_load_catalog_data_rejects_unsupported_extension(tmp_path: Path) -> None
 
 
 def test_load_catalog_data_rejects_no_extension(tmp_path: Path) -> None:
-    """Operator drag-and-drops a catalog file without an extension —
+    """Operator drag-and-drops a catalog file without an extension ;
     the loader should refuse with a clear, self-resolving error that
     names the case and tells the operator the fix (rename to
     .yaml / .yml / .json). v0.10.4 P2 polish landed the explicit
@@ -84,7 +84,7 @@ def test_load_catalog_data_rejects_no_extension(tmp_path: Path) -> None:
 
 def test_load_catalog_data_rejects_non_mapping_yaml(tmp_path: Path) -> None:
     """A YAML file whose root is a list (or scalar) is rejected with
-    a clear error — catalogs MUST be mappings."""
+    a clear error ; catalogs MUST be mappings."""
     path = tmp_path / "list-root.yaml"
     path.write_text("- one\n- two\n", encoding="utf-8")
     with pytest.raises(ValueError, match="top-level must be a mapping"):
@@ -99,7 +99,7 @@ def test_bundled_iso_27017_yaml_loads_via_registry() -> None:
     registry = FrameworkRegistry()
     catalog = registry.get_catalog("iso-27017-2015")
     assert catalog.framework_id == "iso-27017-2015"
-    assert catalog.framework_name == "ISO/IEC 27017:2015 — Cloud services"
+    assert catalog.framework_name == "ISO/IEC 27017:2015 \u2014 Cloud services"
     assert catalog.tier == "C"
     assert catalog.placeholder is True
     # All 7 controls present.
@@ -115,7 +115,7 @@ def test_bundled_iso_27017_yaml_loads_via_registry() -> None:
 
 def test_yaml_and_json_load_to_identical_catalogs(tmp_path: Path) -> None:
     """A catalog defined identically in JSON and YAML produces the same
-    ControlCatalog when loaded — proves the YAML support is a pure
+    ControlCatalog when loaded ; proves the YAML support is a pure
     format addition, not a semantic change."""
     content = {
         "framework_id": "round-trip-test",
@@ -153,7 +153,7 @@ def test_yaml_and_json_round_trip_preserves_multi_line_fields(
     tmp_path: Path,
 ) -> None:
     """v0.10.4 P4 hardening: round-trip equivalence holds for the
-    fields YAML hand-authoring actually targets — multi-line
+    fields YAML hand-authoring actually targets ; multi-line
     ``description`` blocks, multi-element ``assessment_objectives``
     lists, and populated ``parameters`` dicts.
 
@@ -351,3 +351,122 @@ def test_regenerate_manifest_scan_dir_rejects_framework_id_collision(
 
     with pytest.raises(ValueError, match=r"framework_id collision in stubs/"):
         rm.scan_dir("stubs")
+
+
+@pytest.fixture
+def manifest_generator(monkeypatch: pytest.MonkeyPatch):
+    """Import the script without leaking its helper module into other tests."""
+    import importlib.util
+    import sys
+
+    scripts = Path(__file__).resolve().parents[3] / "scripts" / "catalogs"
+    monkeypatch.syspath_prepend(str(scripts))
+    helper_spec = importlib.util.spec_from_file_location("_generators", scripts / "_generators.py")
+    assert helper_spec is not None and helper_spec.loader is not None
+    helper = importlib.util.module_from_spec(helper_spec)
+    monkeypatch.setitem(sys.modules, "_generators", helper)
+    helper_spec.loader.exec_module(helper)
+    spec = importlib.util.spec_from_file_location("regenerate_manifest", scripts / "regenerate_manifest.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class TestManifestRegeneration:
+    @pytest.mark.parametrize("existing_manifest", [True, False])
+    def test_full_regeneration_preserves_reviewed_inventory(
+        self, manifest_generator, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_manifest: bool
+    ) -> None:
+        import shutil
+
+        original = manifest_generator.DATA_ROOT
+        expected = (original / "frameworks.yaml").read_text(encoding="utf-8")
+        expected_rows = yaml.safe_load(expected)["frameworks"]
+        assert len(expected_rows) == 107
+        data = tmp_path / "data"
+        shutil.copytree(original, data)
+        manifest = data / "frameworks.yaml"
+        if not existing_manifest:
+            manifest.unlink()
+        protected = {p.relative_to(data): p.read_bytes() for p in data.rglob("*") if p.is_file() and p != manifest}
+        monkeypatch.setattr(manifest_generator, "DATA_ROOT", data)
+
+        manifest_generator.main()
+
+        actual = manifest.read_text(encoding="utf-8")
+        actual_rows = yaml.safe_load(actual)["frameworks"]
+        assert actual_rows == expected_rows
+        assert [list(row) for row in actual_rows] == [list(row) for row in expected_rows]
+        assert actual == expected
+        assert {
+            p.relative_to(data): p.read_bytes() for p in data.rglob("*") if p.is_file() and p != manifest
+        } == protected
+
+    @pytest.mark.parametrize("relative", ["international/au-ism.json", "cisa/scuba.json"])
+    def test_native_registration_matches_reviewed_manifest(self, manifest_generator, relative: str) -> None:
+        expected = yaml.safe_load((manifest_generator.DATA_ROOT / "frameworks.yaml").read_text(encoding="utf-8"))
+        expected_row = next(row for row in expected["frameworks"] if row["path"] == relative)
+        rows = manifest_generator.scan_dir(relative.split("/")[0])
+        assert next(row for row in rows if row["path"] == relative) == expected_row
+
+    @pytest.mark.parametrize("field", ["framework_id", "version", "source"])
+    def test_native_source_change_requires_review(
+        self, manifest_generator, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+    ) -> None:
+        relative = "cisa/scuba.json"
+        data = json.loads((manifest_generator.DATA_ROOT / relative).read_text(encoding="utf-8"))
+        data[field] = "unreviewed-change"
+        target = tmp_path / relative
+        target.parent.mkdir()
+        target.write_text(json.dumps(data), encoding="utf-8")
+        manifest = tmp_path / "frameworks.yaml"
+        manifest.write_bytes(b"keep the prior manifest\n")
+        monkeypatch.setattr(manifest_generator, "DATA_ROOT", tmp_path)
+
+        with pytest.raises(ValueError, match="Native registration source identity changed"):
+            manifest_generator.main()
+        assert manifest.read_bytes() == b"keep the prior manifest\n"
+
+    @pytest.mark.parametrize("problem", ["null-tier", "duplicate", "malformed-json", "non-mapping-yaml"])
+    def test_invalid_inventory_preserves_output(
+        self, manifest_generator, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, problem: str
+    ) -> None:
+        payload = {
+            "framework_id": "test-framework",
+            "framework_name": "Test framework",
+            "version": "1.0",
+            "tier": None if problem == "null-tier" else "C",
+            "category": "control",
+            "controls": [],
+        }
+        stubs = tmp_path / "stubs"
+        stubs.mkdir()
+        (stubs / "test.json").write_text(json.dumps(payload), encoding="utf-8")
+        expected_error = "tier"
+        if problem == "duplicate":
+            other = tmp_path / "international"
+            other.mkdir()
+            (other / "duplicate.json").write_text(json.dumps(payload), encoding="utf-8")
+            expected_error = "Duplicate framework ID across catalog directories"
+        elif problem == "malformed-json":
+            (stubs / "broken.json").write_text("{", encoding="utf-8")
+            expected_error = "Malformed catalog file"
+        elif problem == "non-mapping-yaml":
+            (stubs / "broken.yaml").write_text("- item\n", encoding="utf-8")
+            expected_error = "Malformed catalog file"
+        manifest = tmp_path / "frameworks.yaml"
+        manifest.write_bytes(b"keep the prior manifest\n")
+        monkeypatch.setattr(manifest_generator, "DATA_ROOT", tmp_path)
+
+        with pytest.raises(ValueError, match=expected_error):
+            manifest_generator.main()
+        assert manifest.read_bytes() == b"keep the prior manifest\n"
+
+    def test_missing_native_files_do_not_create_registrations(
+        self, manifest_generator, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(manifest_generator, "DATA_ROOT", tmp_path)
+        manifest_generator.main()
+        actual = yaml.safe_load((tmp_path / "frameworks.yaml").read_text(encoding="utf-8"))
+        assert actual == {"version": 1, "frameworks": []}
