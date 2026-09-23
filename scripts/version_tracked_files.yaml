@@ -282,7 +282,7 @@ frozen:
   # ── Root-level historical / governance / config files ──────────────────
   - path: "CHANGELOG.md"
     desc: "Every shipped release block — the canonical historical record."
-  - path: "SECURITY.md"
+  - path: ".github/SECURITY.md"
     desc: "Supported-version table + historical CVE-disposition narrative."
   - path: "docs/archive/RENAMED.md"
     desc: >-
@@ -352,7 +352,7 @@ frozen:
 #   after its WS1-B reword, so it needs no anchor.
 anchors:
   # ── SECURITY.md (frozen wholesale) ─────────────────────────────────────
-  - path: "SECURITY.md"
+  - path: ".github/SECURITY.md"
     line_contains: "Latest patch"
     desc: >-
       Supported-versions table row 1 ("| **`X.Y.Z`** | Supported | Latest
@@ -360,7 +360,7 @@ anchors:
       WS1-B so the row carries exactly ONE in-family literal (the
       `docs/security-review-*.md` glob has no version); the deprecated row no
       longer says "Latest patch", so this marker is single-line.
-  - path: "SECURITY.md"
+  - path: ".github/SECURITY.md"
     line_contains: "py3-none-any.whl"
     desc: >-
       The `pypi-attestations verify pypi "pypi:evidentia-X.Y.Z-py3-none-any.whl"`

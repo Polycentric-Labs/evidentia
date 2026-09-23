@@ -19,7 +19,7 @@
 # repo secret with write access to it, and uncomment the `storage-repo*`
 # lines in both steps below.
 #
-# Ref: https://google.github.io/clusterfuzzlite/running-clusterfuzzlite/github-actions/
+# Ref: https://github.com/google/clusterfuzzlite
 name: cflite-pr
 
 on:

@@ -22,7 +22,7 @@
 # Reclaimable vendor-preview subdomains (e.g. *.vercel.app) can be taken over
 # by an unrelated party once the originating deployment is deleted
 # (dangling-subdomain / link-takeover). Real incident (2026-06-17): the
-# README's "Live Demo" linked evidentia-demo.vercel.app, which had been
+# A retired preview hostname in the README's "Live Demo" link had been
 # reclaimed and was serving a DIFFERENT company — caught only in a manual
 # pre-send review. This gate makes any such host in a tracked .md file a
 # blocking FAIL. Use owned domains instead (evidentiagrc.com,
@@ -75,7 +75,7 @@ forbidden_patterns:
   #     pages.yml, the generated wiki API pages). Owned by us.
   #   * squidfunk.github.io — the canonical docs homepage of the Material for
   #     MkDocs upstream tool the wiki is built with (a maintained OSS project's
-  #     own page, not a reclaimable deploy-preview). Cited in docs/wiki/index.md.
+  #     own page, not a reclaimable deploy-preview). This existing allowance remains.
   # The negative lookahead allowlists exactly those two hosts and flags every
   # other github.io host. (Deploy-preview hosts like *.vercel.app have no such
   # legitimate-upstream-citation case, so they carry no allowlist.)

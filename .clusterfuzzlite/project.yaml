@@ -6,7 +6,7 @@
 # governs the base image / runner selection); the bugs we hunt are
 # uncaught Python exceptions in the parse surfaces.
 #
-# Ref: https://google.github.io/clusterfuzzlite/build-integration/
+# Ref: https://github.com/google/clusterfuzzlite
 language: python
 fuzzing_engines:
   - libfuzzer

@@ -2,7 +2,7 @@
 
 Thanks for taking the time to report a security concern. Evidentia
 takes its supply-chain posture seriously — see the per-release
-hardening in [`docs/enterprise-grade.md`](docs/enterprise-grade.md)
+hardening in [`docs/enterprise-grade.md`](../docs/enterprise-grade.md)
 and the supply-chain provenance section of every release on
 [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases).
 
@@ -70,9 +70,9 @@ a vulnerability in Evidentia's own code.
 
 | Version | Status | Reason |
 |---------|--------|--------|
-| **`0.12.1`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](CHANGELOG.md) and the latest `docs/releases/reviews/security-review-*.md` for what shipped and the CVE posture at this release. |
+| **`0.12.1`** | ✅ **Supported** | Latest patch. See the [CHANGELOG](../CHANGELOG.md) and the latest `docs/releases/reviews/security-review-*.md` for what shipped and the CVE posture at this release. |
 | Earlier patches | ❌ Deprecated | Pre-v1.0 single-supported-patch policy; upgrade to the latest patch. |
-| Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](docs/archive/RENAMED.md). |
+| Legacy `controlbridge*` packages | ❌ Yanked from PyPI | Every version of every legacy package was yanked at the v0.6.0 rename. Upgrade path documented in [`RENAMED.md`](../docs/archive/RENAMED.md). |
 
 **Read this strictly**: an older patch — even one shipped less than
 24 hours before its successor — is deprecated the moment a successor
@@ -126,7 +126,7 @@ Out of scope:
 - **Vulnerabilities in third-party dependencies**. Report those to
   the upstream maintainer. Once a fix is published upstream, our
   Dependabot configuration
-  ([`.github/dependabot.yml`](.github/dependabot.yml)) opens an
+  ([`.github/dependabot.yml`](dependabot.yml)) opens an
   auto-PR within the next weekly cycle, or sooner for critical
   advisories. Recent example:
   [PR #8](https://github.com/Polycentric-Labs/evidentia/pull/8) closed
@@ -184,17 +184,17 @@ artifact is itself a security incident.
 Machine- and human-readable attestations of the project's security
 posture:
 
-- [`docs/SECURE-BY-DESIGN-PLEDGE.md`](docs/SECURE-BY-DESIGN-PLEDGE.md)
+- [`docs/SECURE-BY-DESIGN-PLEDGE.md`](../docs/SECURE-BY-DESIGN-PLEDGE.md)
   — voluntary self-assessed alignment with the CISA Secure by Design
   Pledge's seven goals (an alignment statement, not a signatory claim).
-- [`docs/slsa-source-track.md`](docs/slsa-source-track.md) — honest SLSA
+- [`docs/slsa-source-track.md`](../docs/slsa-source-track.md) — honest SLSA
   v1.2 Source Track self-assessment: the Source L3 technical controls are
   enforced and independently verifiable; the L4 two-party-review gap is
   disclosed (single maintainer).
-- [`docs/runbooks/ghsa-cve-issuance.md`](docs/runbooks/ghsa-cve-issuance.md)
+- [`docs/runbooks/ghsa-cve-issuance.md`](../docs/runbooks/ghsa-cve-issuance.md)
   — maintainer runbook for publishing a GitHub Security Advisory and
   issuing a CVE via GitHub-as-CNA.
-- [`docs/runbooks/release-rollback.md`](docs/runbooks/release-rollback.md)
+- [`docs/runbooks/release-rollback.md`](../docs/runbooks/release-rollback.md)
   — release rollback / yank / recovery decision tree (PEP 592 yank
   semantics; release tags are immutable server-side).
 - [`security-insights.yml`](security-insights.yml) — OpenSSF Security

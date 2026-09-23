@@ -5,7 +5,7 @@
 # SAME image + harnesses graduate to OSS-Fuzz later (the OSS-Fuzz
 # project Dockerfile is this file with a `git clone` instead of COPY).
 #
-# Ref: https://google.github.io/clusterfuzzlite/build-integration/python-lang/
+# Ref: https://github.com/google/clusterfuzzlite
 FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:bb4b09f7376cd0f2188344e8b293428b8d2ee54c81b596fa0ef1cd7f8b29d1a1
 
 # Digest-pinned (OpenSSF Scorecard Pinned-Dependencies). base-builder-python

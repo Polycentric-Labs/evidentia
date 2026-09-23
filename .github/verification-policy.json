@@ -1161,7 +1161,7 @@
   ],
   "workflow_sources": {
     ".github/workflows/action-smoke-test.yml": "bdd161e6b7a9ea5b5bf405185640cba569f7f8e4d046c8a06956f8a48317c154",
-    ".github/workflows/cflite-pr.yml": "3746e04a0f1b58591f4912958972aa897bdc65f6775c58e8c099822ef4399cd9",
+    ".github/workflows/cflite-pr.yml": "2b1c4503bbfcc6b30bd261fb0a42652cd7a08dea87a35adf9bc12df123472486",
     ".github/workflows/codeql.yml": "3cd755f47df072ebccef50e3b1416b6010ab0af68740647f11095506e337bc96",
     ".github/workflows/codspeed.yml": "6d535663fc99986758209bb5d477a9ce2714a6201fb480373557beacb077cff7",
     ".github/workflows/consistency.yml": "67d99768345b7052ae46bb0da2c8cd1ae2e72e8905423f3bf8db14c7afc71618",
@@ -1174,7 +1174,7 @@
     ".github/workflows/secret-scan.yml": "4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23",
     ".github/workflows/test.yml": "ada989cedd452f3da02d6c082f7256842fbed9cbac70b244c01792f29911b89b",
     ".github/workflows/verify-changelog.yml": "264df97c1f6edd7863e30e82670988792279fd02f0114303c91c0cb313b7c59f",
-    ".github/workflows/verify-osps-conformance.yml": "1e072be9855d60f2ab9fd70ba471c92e9b21e828a044c1e092e52bffce96e778",
+    ".github/workflows/verify-osps-conformance.yml": "91cb5eecbd1b68497ff3a3cddbf3695cdca57a67a3876135e3a9fc21636ab621",
     ".github/workflows/verify-workflow-perms.yml": "3da76a441f4b0ba854de3723b7d4f32ad3170df2df77559c20869ecd0886d9c2",
     ".github/workflows/zizmor.yml": "34b86b6d43a8a1d19237b042b95c9b7f5355b419d07ca1d9795dc170dd6e03fc"
   },

@@ -21,7 +21,7 @@ Evidentia is currently a single-maintainer project. The maintainer
 - **Release authority** — who can cut a tag, sign a release, and
   publish to PyPI / GHCR.
 - **Security disclosure handling** — triage, fix coordination, CVE
-  assignment, advisory publication (per [`SECURITY.md`](SECURITY.md)).
+  assignment, advisory publication (per [`SECURITY.md`](.github/SECURITY.md)).
 - **Code of Conduct enforcement** — see [`CODE_OF_CONDUCT.md`](.github/CODE_OF_CONDUCT.md).
 
 This is the BDFL ("benevolent dictator for life") pattern, common for
@@ -43,7 +43,7 @@ and search:
   and the per-release plan files. Quarterly and per-release updates
   are committed to the repo so the history of intent is visible.
 - **Security decisions** — handled per the disclosure policy in
-  [`SECURITY.md`](SECURITY.md) using GitHub Private Vulnerability
+  [`SECURITY.md`](.github/SECURITY.md) using GitHub Private Vulnerability
   Reporting + the per-release [`docs/release-checklist.md`](docs/release-checklist.md)
   security gate. Every release gets a review sized to its change
   surface via the `/pre-release-review` right-sizing rubric: a full

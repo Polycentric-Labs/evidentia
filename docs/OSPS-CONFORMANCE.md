@@ -85,12 +85,12 @@ for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 | OSPS-BR-02.01 | Assign Unique Version Identifiers (release identifier) | ✅ PASS | [v0.10.5](https://github.com/Polycentric-Labs/evidentia/releases/tag/v0.10.5) |
 | OSPS-BR-02.02 | Assign Unique Version Identifiers (per-asset) | ✅ PASS | [v0.10.5](https://github.com/Polycentric-Labs/evidentia/releases/tag/v0.10.5) |
 | OSPS-BR-03.01 | Use Encrypted Channels (project channels) | ✅ PASS | [README.md](https://github.com/Polycentric-Labs/evidentia/blob/main/README.md) |
-| OSPS-BR-03.02 | Use Encrypted Channels (distribution AITM-protection) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
+| OSPS-BR-03.02 | Use Encrypted Channels (distribution AITM-protection) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
 | OSPS-BR-04.01 | Publish Change Log With Release | ✅ PASS | [CHANGELOG.md](https://github.com/Polycentric-Labs/evidentia/blob/main/CHANGELOG.md) |
 | OSPS-BR-05.01 | Use Standardized Dependency Management Tools | ✅ PASS | [pyproject.toml](https://github.com/Polycentric-Labs/evidentia/blob/main/pyproject.toml) |
-| OSPS-BR-06.01 | Include Signatures and Hashes With Release | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
+| OSPS-BR-06.01 | Include Signatures and Hashes With Release | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
 | OSPS-BR-07.01 | Secure Secrets and Credentials (prevent commit) | ✅ PASS | [secret_scanning.yml](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/secret_scanning.yml) |
-| OSPS-BR-07.02 | Secure Secrets and Credentials (rotation policy) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
+| OSPS-BR-07.02 | Secure Secrets and Credentials (rotation policy) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
 
 ### OSPS-DO (Documentation)
 
@@ -98,10 +98,10 @@ for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 |---|---|---|---|
 | OSPS-DO-01.01 | Publish User Guides for Basic Functionality | ✅ PASS | [README.md](https://github.com/Polycentric-Labs/evidentia/blob/main/README.md) |
 | OSPS-DO-02.01 | Provide Mechanisms for Reporting Defects | ✅ PASS | [CONTRIBUTING.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/CONTRIBUTING.md) |
-| OSPS-DO-03.01 | Publish Provenance Verification Instructions (integrity/authenticity) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
-| OSPS-DO-03.02 | Publish Provenance Verification Instructions (signer identity) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
-| OSPS-DO-04.01 | Publish Support Scope and Duration | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
-| OSPS-DO-05.01 | Document Security Update Scope and Duration | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
+| OSPS-DO-03.01 | Publish Provenance Verification Instructions (integrity/authenticity) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
+| OSPS-DO-03.02 | Publish Provenance Verification Instructions (signer identity) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
+| OSPS-DO-04.01 | Publish Support Scope and Duration | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
+| OSPS-DO-05.01 | Document Security Update Scope and Duration | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
 | OSPS-DO-06.01 | Publish Dependency Management Policy | ✅ PASS | [dependabot.yml](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/dependabot.yml) |
 | OSPS-DO-07.01 | Provide Instructions on How to Build From Source | ✅ PASS | [README.md](https://github.com/Polycentric-Labs/evidentia/blob/main/README.md) |
 
@@ -157,12 +157,12 @@ for HTTP 200 via `gh api`; HTTP 404 on any link fails the workflow.
 
 | Control | Title | Verdict | Evidence |
 |---|---|---|---|
-| OSPS-VM-01.01 | Publish Coordinated Vulnerability Disclosure Policy | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
-| OSPS-VM-02.01 | Publish Contacts and Process for Reporting Vulnerabilities | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
-| OSPS-VM-03.01 | Maintain Private Vulnerability Reporting Process | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
+| OSPS-VM-01.01 | Publish Coordinated Vulnerability Disclosure Policy | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
+| OSPS-VM-02.01 | Publish Contacts and Process for Reporting Vulnerabilities | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
+| OSPS-VM-03.01 | Maintain Private Vulnerability Reporting Process | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
 | OSPS-VM-04.01 | Publish Discovered Vulnerabilities | ✅ PASS | [advisories](https://github.com/Polycentric-Labs/evidentia/security/advisories) |
 | OSPS-VM-04.02 | Publish Discovered Vulnerabilities (VEX for non-affecting deps) | ⚠ HONEST_GAP | (see Honest gaps below) |
-| OSPS-VM-05.01 | Publish and Enforce a Dependency Remediation Policy (SCA threshold) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/SECURITY.md) |
+| OSPS-VM-05.01 | Publish and Enforce a Dependency Remediation Policy (SCA threshold) | ✅ PASS | [SECURITY.md](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/SECURITY.md) |
 | OSPS-VM-05.02 | Publish and Enforce a Dependency Remediation Policy (pre-release SCA) | ✅ PASS | [release-checklist.md](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/release-checklist.md) |
 | OSPS-VM-05.03 | Publish and Enforce a Dependency Remediation Policy (block in CI) | ⚠ HONEST_GAP | (see Honest gaps below) |
 | OSPS-VM-06.01 | Publish and Enforce an Application Security Testing Policy (SAST threshold) | ✅ PASS | [codeql.yml](https://github.com/Polycentric-Labs/evidentia/blob/main/.github/workflows/codeql.yml) |
@@ -247,7 +247,7 @@ fresh clones — that's expected).
 - SOC 2 Type I + second-maintainer onboarding milestones:
   [`docs/v1.0-transition.md`](v1.0-transition.md).
 - Security policy (CVD + GHSA Private Vulnerability Reporting):
-  [`SECURITY.md`](../SECURITY.md) + [`.well-known/security.txt`](../.well-known/security.txt).
+  [`SECURITY.md`](../.github/SECURITY.md) + [`.well-known/security.txt`](../.well-known/security.txt).
 - Project governance (roles, contribution process, DCO posture):
   [`GOVERNANCE.md`](../GOVERNANCE.md).
 - Threat model (workflow guards for the verify-osps-conformance.yml

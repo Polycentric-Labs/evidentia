@@ -6,7 +6,7 @@
 # `compile_python_fuzzer` (provided by the OSS-Fuzz Python base image —
 # it wraps PyInstaller + atheris and emits an $OUT/<name> executable).
 #
-# Ref: https://google.github.io/clusterfuzzlite/build-integration/python-lang/
+# Ref: https://github.com/google/clusterfuzzlite
 
 # ── Install the harnessed packages ───────────────────────────────────────
 # pip-install (not uv) so the OSS-Fuzz build env resolves cleanly. The

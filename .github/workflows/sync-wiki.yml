@@ -67,7 +67,7 @@ on:
       - "docs/api-stability.md"
       - "docs/deprecation-calendar.md"
       - "GOVERNANCE.md"
-      - "SECURITY.md"
+      - ".github/SECURITY.md"
       - ".github/CONTRIBUTING.md"
       - "docs/EOL.md"
       - "docs/verification.md"

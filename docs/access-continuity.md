@@ -237,7 +237,7 @@ An OpenSSF auditor or successor seeking to verify the private-
 side designation exists can:
 
 - Contact the maintainer directly (see
-  [`SECURITY.md`](../SECURITY.md) for the disclosure channel) for
+  [`SECURITY.md`](../.github/SECURITY.md) for the disclosure channel) for
   in-person / video confirmation.
 - Verify by inspection that the maintainer's password manager
   and emergency-contact designation are operational.
