@@ -207,7 +207,7 @@
     ],
     "Meridian gap diff": [
       "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-      "Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+      "Run astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4",
       "Sync workspace (dogfood the local build, not pip)",
       "Analyze head",
       "Restore baseline",
@@ -636,7 +636,7 @@
       ],
       "steps": [
         "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-        "Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+        "Run astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4",
         "Sync workspace (dogfood the local build, not pip)",
         "Analyze head",
         "Restore baseline",
@@ -647,7 +647,7 @@
       ],
       "mandatory_steps": [
         "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
-        "Run astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d",
+        "Run astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4",
         "Sync workspace (dogfood the local build, not pip)",
         "Analyze head",
         "Restore baseline",
@@ -1160,23 +1160,23 @@
     }
   ],
   "workflow_sources": {
-    ".github/workflows/action-smoke-test.yml": "bdd161e6b7a9ea5b5bf405185640cba569f7f8e4d046c8a06956f8a48317c154",
+    ".github/workflows/action-smoke-test.yml": "c804ac66c9f1eef900affd5ec43030594925e636b394e5dc89679ed50d614da2",
     ".github/workflows/cflite-pr.yml": "2b1c4503bbfcc6b30bd261fb0a42652cd7a08dea87a35adf9bc12df123472486",
-    ".github/workflows/codeql.yml": "3cd755f47df072ebccef50e3b1416b6010ab0af68740647f11095506e337bc96",
-    ".github/workflows/codspeed.yml": "6d535663fc99986758209bb5d477a9ce2714a6201fb480373557beacb077cff7",
-    ".github/workflows/consistency.yml": "67d99768345b7052ae46bb0da2c8cd1ae2e72e8905423f3bf8db14c7afc71618",
+    ".github/workflows/codeql.yml": "a63ab0448bca5b80e9da09cd1934872e55e1c0fefd0f315f3884b6947b96b08b",
+    ".github/workflows/codspeed.yml": "1a95b177e488c0ee7d187c7644d89313f18ec452606cd9a7eaa2af69ef4f431c",
+    ".github/workflows/consistency.yml": "14f948381b0a874a564bc4fb3a19b053d8392237e301455cc8a52abe30aae336",
     ".github/workflows/container-build.yml": "87e7e35393727a7a0496565a8dbc9ba6eebd184049ffdaa348ba02c558ef8991",
-    ".github/workflows/dast.yml": "9df39643384162572848a46929896a2146058f989b686de77bf3156de8fde7c9",
+    ".github/workflows/dast.yml": "42c96860260a7255c68eda4899c10388dc39a6d3bd9dcff643ce360149b9abbc",
     ".github/workflows/dependabot-auto-merge.yml": "ea85f822d63763aacd80a89776b4385f2d82dd141fdc963a713bb0ab1e41a508",
     ".github/workflows/dependency-review.yml": "a130cb411d3d1a462840924c4b025330758b1b813573b4aae9a67fd6ee883694",
-    ".github/workflows/evidentia.yml": "dd4ef1e122f4c1dfc005298f8b97e05e22bb97f3edb4ad2c7a3c0f097b217f12",
-    ".github/workflows/parity.yml": "d96e6d4e861bd674f25ac024a9f500b75b4bf8444eb0b96883151b8a8dffb6fb",
+    ".github/workflows/evidentia.yml": "e462bcd80ac500dce1605f4861d776fb0c10fa3b0e02ddbf87451d107a34d5ea",
+    ".github/workflows/parity.yml": "6196ca4575e5451cb35d0810c800e05bd91d5c897a7dc13b56557d92e1e3e1f9",
     ".github/workflows/secret-scan.yml": "4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23",
-    ".github/workflows/test.yml": "ada989cedd452f3da02d6c082f7256842fbed9cbac70b244c01792f29911b89b",
+    ".github/workflows/test.yml": "1bfbe7b898674d24e9382fb7ef34715fb8772bbe103b03a6263640100ef3b7bb",
     ".github/workflows/verify-changelog.yml": "264df97c1f6edd7863e30e82670988792279fd02f0114303c91c0cb313b7c59f",
     ".github/workflows/verify-osps-conformance.yml": "91cb5eecbd1b68497ff3a3cddbf3695cdca57a67a3876135e3a9fc21636ab621",
-    ".github/workflows/verify-workflow-perms.yml": "3da76a441f4b0ba854de3723b7d4f32ad3170df2df77559c20869ecd0886d9c2",
-    ".github/workflows/zizmor.yml": "34b86b6d43a8a1d19237b042b95c9b7f5355b419d07ca1d9795dc170dd6e03fc"
+    ".github/workflows/verify-workflow-perms.yml": "b57687c5dca12a3cb31254b729edfb1ca3fe61c6e796c70b281bc47896d0c0d5",
+    ".github/workflows/zizmor.yml": "ec06aa8451675477d9b8f3894f3c4a275d8b5d2f23848d1121116eccc92d8846"
   },
   "codspeed_linkage": {
     "minimum_commit_prefix_length": 7,
