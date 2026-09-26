@@ -165,9 +165,9 @@ boto3==1.43.96 \
     --hash=sha256:30fb2b5467ef5175ed48f43c06c435eec5da841594a5d7653c4da679df0740fc \
     --hash=sha256:73f0386fcc412ce5ad3ae4245e2a405e69e889988dd77e91b82e3b66404f3fee
     # via litellm
-botocore==1.43.96 \
-    --hash=sha256:3ef7c8c40738bb42a40eb0ac3dc2d9f1698946541874ae9b505e49f289272805 \
-    --hash=sha256:c21153a07b97e8497f4ffa83e340a055f3f479b074e6eedf7d0562a9bc861cac
+botocore==1.43.97 \
+    --hash=sha256:6b2beefd4f515aa7bfc614c945493a19315577ff31b464abbc9e33b7aff5112c \
+    --hash=sha256:7c0e18686367e98de49826d8ac9ae951ce0915c172969a5d96b768c9afa9e979
     # via
     #   boto3
     #   s3transfer
