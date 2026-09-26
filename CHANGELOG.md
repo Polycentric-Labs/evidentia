@@ -262,6 +262,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Prettier to 3.9.8 and the Vitest family together to 5.0.1. Complete missing
   registry metadata for unchanged lockfile entries and retain their exact versions.
 
+- **Final Python dependency follow-up.** Update Schemathesis to 4.27.3 and
+  the Databricks SDK to 0.139.0. Keep all other resolved package versions
+  unchanged. Offline compatibility checks cover the affected local paths.
+
 - **Python dependency updates.** Align boto3 and botocore at 1.43.96 while
   retaining the exact retention-signing version guard. Update Azure Blob
   Storage, LibCST, mutmut, Ruff, Schemathesis, platformdirs and Snowflake,
