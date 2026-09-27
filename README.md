@@ -61,7 +61,8 @@ Workspace (AI risk-statements, REST API, all collectors, MCP server):
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.12.1` (cosign keyless OIDC + SLSA Provenance v1 verified).
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.13.0`
+(cosign keyless OIDC + SLSA Provenance v1).
 
 [Getting Started](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) covers air-gapped install, virtualenv setup and all extras.
 
@@ -132,11 +133,11 @@ No install: a self-hosted [asciinema](https://asciinema.org/) recording of `doct
 
 ## Recent Releases
 
+**v0.13.0 (2026-09-20)** — *Evidence provenance and native imports*. **Upstream release publication cadence (V13-28).** `collect release-cadence`, its API and the Collect screen observe the fixed public GitHub Releases profile.
+
 **v0.12.1 (2026-09-05)** — *Container rebuild on a fresh hardened base (day-N CVE response), carrying the v0.13 cycle's opening batch*. **Python 3.14 support** (closes #212): `requires-python` lifted to `>=3.12,<3.15` across the workspace after litellm 1.98.x raised its own ceiling (the documented removal trigger), with 3.13/3.14 trove classifiers and 3.14 pytest legs on all three OSes.
 
 **v0.12.0 (2026-08-22)** — *Pre-1.0 hardening — the project's promises become enforceable*. **`conmon ksi` now emits the SDR's `fedRampRequirements` block (SDR-CSO-FRR); new `fedramp-frr-2026` catalog, 97 bundled catalogs.** The v0.12 plan gated the "FRR statements" extra on a cheapness re-verify against the post-08-14 schema set.
-
-**v0.11.2 (2026-08-17)** — *Day-N dependency sweep on a fresh hardened base*. **README brand refresh**, a Polycentric Labs family visual identity: a light/dark `<picture>` banner and purpose-tiered, federal-blue-accented badges, from the new Evidentia brand kit committed under `docs/brand/`.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 

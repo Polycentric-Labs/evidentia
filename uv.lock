@@ -934,7 +934,7 @@ wheels = [
 
 [[package]]
 name = "evidentia"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia" }
 dependencies = [
     { name = "click" },
@@ -984,7 +984,7 @@ provides-extras = ["gui", "worm-s3", "worm-azure", "worm-gcs", "mcp"]
 
 [[package]]
 name = "evidentia-ai"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-ai" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1010,7 +1010,7 @@ provides-extras = ["eval-faithfulness"]
 
 [[package]]
 name = "evidentia-api"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-api" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -1033,7 +1033,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-collectors"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-collectors" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1147,7 +1147,7 @@ provides-extras = ["aws", "retention", "registries", "github", "okta", "sql-post
 
 [[package]]
 name = "evidentia-core"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-core" }
 dependencies = [
     { name = "cryptography" },
@@ -1209,7 +1209,7 @@ provides-extras = ["sigstore", "xlsx", "worm-s3", "worm-azure", "worm-gcs", "ocs
 
 [[package]]
 name = "evidentia-eval"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-eval" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1231,7 +1231,7 @@ provides-extras = ["faithfulness-semantic"]
 
 [[package]]
 name = "evidentia-integrations"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-integrations" }
 dependencies = [
     { name = "evidentia-core" },
@@ -1275,7 +1275,7 @@ provides-extras = ["jira", "servicenow", "tableau", "powerbi", "all"]
 
 [[package]]
 name = "evidentia-mcp"
-version = "0.12.1"
+version = "0.13.0"
 source = { editable = "packages/evidentia-mcp" }
 dependencies = [
     { name = "evidentia-ai" },
@@ -1294,7 +1294,7 @@ requires-dist = [
 
 [[package]]
 name = "evidentia-workspace"
-version = "0.12.1"
+version = "0.13.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]

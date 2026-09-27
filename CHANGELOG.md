@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-20
+
+**Theme**: *Evidence provenance and native imports*.
+
+**Release summary**: Retention and incident observations, public registry evidence,
+SCAP and native catalog imports, release-cadence analysis and explicit CycloneDX
+1.7 exports preserve their source limitations. FINOS CCC remains excluded pending
+owner legal review.
+
 ### Added
 
 - **Upstream release publication cadence (V13-28).** `collect release-cadence`,
@@ -425,6 +434,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Include the project Apache 2.0 license text in all eight Python wheels and
+  source archives, with explicit license-file metadata and drift checks.
 - Restore three altered lines in the root Apache 2.0 license text to the
   standard terms while preserving the project copyright notice.
 - Report a fixed strict failure when the documentation audit cannot start

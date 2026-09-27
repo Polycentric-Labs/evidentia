@@ -3,10 +3,10 @@
 > Step-6 deliverable from the v0.7.0 comprehensive pre-tag review
 > (compiled 2026-04-25). Comprehensive per-release update list to
 > ensure future consistency and uniformity in accordance with best
-> GRC and DevSecOps practice. Run this checklist for every release —
+> GRC and DevSecOps practice. Run this checklist for every release -
 > patch, minor, or major.
 >
-> **This checklist is self-referential** — Step 0 below is "review
+> **This checklist is self-referential** - Step 0 below is "review
 > and update this checklist itself" so it stays current as the
 > project evolves.
 >
@@ -15,11 +15,11 @@
 > (the quality bar), [capability-matrix.md](capability-matrix.md)
 > (last release's test snapshot), [ROADMAP.md](ROADMAP.md) (the
 > current dev cycle and its scope; the top PLANNED entry links the
-> active `docs/v<x>-plan.md` when one exists for the cycle).
+> active `docs/releases/plans/v<x>-plan.md` when one exists for the cycle).
 
 ---
 
-## Step 0 — Review this checklist
+## Step 0 - Review this checklist
 
 Before doing anything else: **scan this document end-to-end** and
 update any item that is now stale (new package added, new doc
@@ -30,30 +30,31 @@ If the project has changed materially since the last release (new
 package, new collector, new top-level config, new workflow), add
 the corresponding new checklist items here.
 
-**Last self-update**: 2026-05-27 — added Step 2.A (LL-V105-1 prevention).
+**Last self-update**: 2026-09-20. Reconciled package counts, publisher readiness,
+container validation, protected delivery and immutable-tag recovery for v0.13.
 
 ---
 
-## Step 1 — Pre-release scope confirmation
+## Step 1 - Pre-release scope confirmation
 
 Before writing any code for a release:
 
-- [ ] Read `docs/<X.Y.Z>-plan.md` (or `docs/ROADMAP.md` if no plan
+- [ ] Read `docs/releases/plans/v<X.Y>-plan.md` (or `docs/ROADMAP.md` if no plan
       doc exists for this release). Confirm scope is locked.
 - [ ] Verify any required design decisions for this release are
       decided (e.g., v0.7.1 had 4 design decisions D1-D4).
 - [ ] Confirm any deferred items from the prior release's
       `capability-matrix.md` HIGH bucket are scheduled or explicitly
       re-deferred.
-- [ ] Open a release tracking issue on GitHub describing scope.
+- [ ] Prepare a release tracking issue if needed; create it only with publication authority.
 
 ---
 
-## Step 2 — Version bumps + dependency pins
+## Step 2 - Version bumps + dependency pins
 
 For every release (patch / minor / major):
 
-- [ ] Bump `version = "X.Y.Z"` in **all 8** pyproject.toml files:
+- [ ] Bump `version = "X.Y.Z"` in **all 9** pyproject.toml files (the workspace root and eight packages):
   - `pyproject.toml` (workspace root)
   - `packages/evidentia/pyproject.toml`
   - `packages/evidentia-core/pyproject.toml`
@@ -62,22 +63,22 @@ For every release (patch / minor / major):
   - `packages/evidentia-integrations/pyproject.toml`
   - `packages/evidentia-api/pyproject.toml`
   - `packages/evidentia-mcp/pyproject.toml`
+  - `packages/evidentia-eval/pyproject.toml`
 - [ ] Bump `"version": "X.Y.Z"` in `packages/evidentia-ui/package.json`.
-- [ ] **Bump inter-package dep pins** atomically. Pattern:
-      `>=PREV.0,<X.0` → `>=X.0,<NEXT.0` across:
-  - `packages/evidentia/pyproject.toml` (5 pins: evidentia-core,
-    -ai, -collectors, -integrations, -api in `[gui]` extra)
-  - `packages/evidentia-api/pyproject.toml` (2 pins: -core, -ai)
-  - `packages/evidentia-ai/pyproject.toml` (1 pin: -core)
-  - `packages/evidentia-collectors/pyproject.toml` (1 pin: -core)
-  - `packages/evidentia-integrations/pyproject.toml` (1 pin: -core)
+- [ ] **Bump inter-package dependency constraints** using the canonical
+      version manifest. Inspect every Evidentia dependency in package manifests,
+      including extras, and preserve the intended compatibility upper bounds.
+      Verify that a clean install resolves the release packages together.
 - [ ] **Why this matters**: Step 3 of the v0.7.0 review caught a real
       bug where `version = "..."` was bumped but inter-package pins
       were not, producing a within-release version mismatch for raw
       pip users (commit `25ccca8`).
-- [ ] Run `uv sync --all-extras --all-packages` to regenerate `uv.lock`.
-- [ ] Verify with `git diff packages/*/pyproject.toml` that 9 pin
-      lines changed (not just 7 version lines).
+- [ ] Use `scripts/bump_version.py --to X.Y.Z --dry-run` to inspect the
+      canonical version manifest, then apply the reviewed version change.
+- [ ] Regenerate and review `uv.lock` and the npm lock in an isolated checkout.
+      Verify every workspace version and inter-package constraint. Reuse qualified
+      dependencies only within their recorded scope.
+- [ ] Run `scripts/check_version_consistency.py` and inspect the complete diff.
 - [ ] **At Pydantic major-version upgrades** (v0.9.5 F-V94-S11 INFO):
       audit the AI-gov idempotency body-hash. The hash is computed
       via `hashlib.sha256(json.dumps(model.model_dump(mode="json"),
@@ -95,31 +96,40 @@ For every release (patch / minor / major):
 
 ---
 
-## Step 2.A — Pre-publish credential readiness check (LL-V105-1)
+## Step 2.A - Pre-publish credential readiness check (LL-V105-1)
 
 > Added v0.10.6 per the v0.10.5 partial-publish lesson-learned
 > (LL-V105-1). For every release that introduces a new PyPI-published
 > workspace package, the pending publisher MUST be configured on PyPI
-> BEFORE tagging — Trusted Publishers cannot create new projects.
+> BEFORE tagging. A configured pending publisher can create its project on the
+> first successful authorized upload.
 
 For every release:
 
 - [ ] Identify any workspace packages new to this release:
+
   ```bash
   diff <(git ls-tree HEAD packages/ --name-only) <(git ls-tree <prev-tag> packages/ --name-only)
   ```
+
 - [ ] For each new package, check whether it exists on PyPI:
+
   ```bash
   for pkg in $new_packages; do
     curl -sI "https://pypi.org/pypi/${pkg}/json" -o /dev/null -w "${pkg}: %{http_code}\n"
   done
   ```
+
 - [ ] If any package returns 404, the release MUST NOT tag until a pending publisher is configured at:
   https://pypi.org/manage/account/publishing/
   Configure with: PyPI Project Name = `<package>`, Owner = `Polycentric-Labs`,
   Repository name = `evidentia`, Workflow name = `release.yml`,
   Environment name = `pypi`.
-- [ ] After configuring, re-check via the curl loop above; only proceed when all packages return 200.
+- [ ] For an existing project, verify its Trusted Publisher configuration. For a
+      new project, verify the pending publisher in the authorized owner account.
+      HTTP 404 alone neither proves nor disproves pending-publisher readiness.
+      A pending publisher does not reserve the project name. See the
+      [PyPI pending-publisher documentation](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/).
 
 **Failure mode this prevents**: partial PyPI publish chain halt. v0.10.5's
 publish step bailed at `evidentia-eval-0.10.5-py3-none-any.whl` because
@@ -129,7 +139,7 @@ re-run. See `.local/pre-release-review/lessons-learned.yaml` LL-V105-1.
 
 ---
 
-## Step 3 — CHANGELOG
+## Step 3 - CHANGELOG
 
 - [ ] Rename `## [Unreleased]` → `## [X.Y.Z] - YYYY-MM-DD`.
 - [ ] Add a fresh `## [Unreleased]` block above with
@@ -145,19 +155,20 @@ re-run. See `.local/pre-release-review/lessons-learned.yaml` LL-V105-1.
 
 ---
 
-## Step 4 — Documentation refresh
+## Step 4 - Documentation refresh
 
 - [ ] Update `docs/ROADMAP.md`:
-  - Mark this release as SHIPPED with a 1-paragraph summary.
-  - Add a "vX.Y.Z+1 — NEXT" section pointing at
-    `docs/<next-version>-plan.md`.
+  - Prepare the release summary and mark it ready for tag approval once verified.
+    Mark it SHIPPED only after publication and post-release verification.
+  - Add a "vX.Y.Z+1 - NEXT" section pointing at
+    `docs/releases/plans/v<next-version>-plan.md`.
   - Update the `**Last updated:**` line in the header.
 - [ ] Update `docs/enterprise-grade.md` if any BLOCKER / HIGH /
       MEDIUM / LOW items moved status. Refresh the BLOCKER score.
 - [ ] Verify `README.md` "Current status" section reflects the new
       version. Update version-callout banners.
 - [ ] If a `docs/positioning-and-value.md` re-sync is due (quarterly
-      cadence — see the `evidentia_positioning_and_value` MEMORY entry):
+      cadence - see the `evidentia_positioning_and_value` MEMORY entry):
   - Re-run the 7 research streams per the recipe in MEMORY.md
   - Snapshot the prior version as `docs/positioning-and-value-YYYY-Q[N].md`
   - Promote new synthesis to canonical `docs/positioning-and-value.md`
@@ -177,7 +188,7 @@ re-run. See `.local/pre-release-review/lessons-learned.yaml` LL-V105-1.
 
 ---
 
-## Step 5 — Test gate
+## Step 5 - Test gate
 
 Run from a clean worktree:
 
@@ -189,51 +200,46 @@ uv run --no-sync python -m mypy \
   packages/evidentia-core packages/evidentia-collectors \
   packages/evidentia-api packages/evidentia-ai \
   packages/evidentia-integrations packages/evidentia \
-  packages/evidentia-mcp
+  packages/evidentia-mcp packages/evidentia-eval
 uv run --no-sync python -m pytest -q --cov=packages
 uv build --all-packages
 uvx twine check dist/*
-# v0.9.9 — supply-chain gate. Generates the CycloneDX SBOM and scans
+# v0.9.9 - supply-chain gate. Generates the CycloneDX SBOM and scans
 # it with osv-scanner: surfaces transitive + DISPUTED advisories the
 # Dependabot alert feed suppresses. Requires osv-scanner on PATH (the
 # pinned v2.4.0 binary from github.com/google/osv-scanner/releases, or
 # `brew install osv-scanner`). This is the SAME shared script CI's
-# `osv-scan` job runs — gate and CI stay in lockstep by construction.
+# `osv-scan` job runs - gate and CI stay in lockstep by construction.
 uv run --no-sync python scripts/run_osv_scan.py
-# v0.10.7 — workflow least-privilege gate. Fails (exit 2) if any
+# v0.10.7 - workflow least-privilege gate. Fails (exit 2) if any
 # .github/workflows/*.yml grants a top-level `write` scope without a
 # `# JUSTIFIED: <reason>` comment on the line above its `permissions:`
 # key. JUSTIFIED workflows (issue-opening bot, PR-comment smoke tests)
 # are accepted exceptions. Same `--strict` check CI's
-# `verify-workflow-perms.yml` job runs — gate and CI stay in lockstep.
+# `verify-workflow-perms.yml` job runs - gate and CI stay in lockstep.
 uv run --no-sync python scripts/audit_workflow_permissions.py --strict
 ```
 
-**For releases that touch `Dockerfile` or
-`.github/workflows/container-build.yml`** — also run a local
-Docker build BEFORE tag. The tag-triggered `release.yml` doesn't
-exercise the Dockerfile, and the PR-triggered
-`container-build.yml` only fires after push-to-main with
-Dockerfile changes — meaning a broken `Dockerfile` will only
-surface in CI AFTER the tag has shipped. Added to the checklist
-in v0.7.4 after the v0.7.3 ship surfaced exactly this gap (3
-wrong CLI invocations in the Dockerfile + smoke-test workflow
-that the pre-tag gates didn't catch).
+**For releases that touch the container or release dependency closure**,
+validate the container before tag approval. The current `release.yml` builds
+and checks wheels, SBOMs and a container from local wheels before either
+publish job. The required container smoke workflow also runs for PRs and
+merge groups, using its step-level relevance policy.
 
-```bash
-docker build -t evidentia:rc .
-docker run --rm evidentia:rc version          # expect "Evidentia vX.Y.Z"
-docker run --rm evidentia:rc catalog list     # expect framework table
-docker rmi evidentia:rc
-```
+Use the reviewed release preflight in Step 5.6 when authorized, or the
+equivalent isolated local build and smoke checks. Check the exact platform,
+version, non-root user and `/api/health` response. Preserve failed attempts.
+Container execution and any workflow dispatch still require their applicable
+authority; this checklist does not grant it.
 
 Acceptance:
 
 - [ ] ruff: `All checks passed!`
 - [ ] ruff format: `N files already formatted`, no `Would reformat` line
 - [ ] mypy: `Success: no issues found in N source files`
-- [ ] pytest: ≥ 857 passed (the v0.7.0 baseline; will grow over
-      time), ≤ 8 skipped, 16 benign Tier-C warnings
+- [ ] Record current pytest totals, failures, skips, warnings and platform
+      scope. Every required suite must pass; explain each skip and preserve
+      any exact owner-approved exception. Historical counts are not acceptance.
 - [ ] `uv build --all-packages`: 8 evidentia-* wheels + sdists at the
       new version (no shim wheels)
 - [ ] `uvx twine check dist/*`: every distribution PASSED
@@ -254,12 +260,12 @@ Acceptance:
       `evidentia catalog list` return expected output
 - [ ] (v0.7.5+) Dockerfile pin updated to current release version
       (`pip install evidentia[gui]==X.Y.Z`); local `docker build` AND
-      in-image HEALTHCHECK against `/api/health` (NOT `/health` —
+      in-image HEALTHCHECK against `/api/health` (NOT `/health` -
       the SPA fallback would mask a broken API) succeed
 
 ---
 
-## Step 5.5 — Doc consistency sweep (v0.7.12+)
+## Step 5.5 - Doc consistency sweep (v0.7.12+)
 
 Per Allen's 2026-05-04 directive ("ensure documentation is
 comprehensively updated for consistency across the board, and
@@ -274,39 +280,38 @@ Cross-doc invariants to verify (pre-tag):
 - [ ] **Test count** consistent across README, CHANGELOG, recent
       docs: bump to current release's pytest count
 - [ ] **Source-file count** consistent ("across N source files")
-- [ ] **Bundled catalog count** consistent (canonical via
-      `evidentia_core.catalogs.registry.FRAMEWORK_METADATA` —
-      currently 89 post-v0.7.9)
-- [ ] **Package count** consistent (6 Python wheels at PyPI:
-      evidentia + evidentia-core + evidentia-ai +
-      evidentia-collectors + evidentia-integrations + evidentia-api;
-      evidentia-ui is a Vite project, NOT a Python wheel)
+- [ ] **Bundled catalog count** consistent with the current registry and
+      verified CLI/API output. Do not reuse a historical count.
+- [ ] **Package count** consistent: eight Python distributions, evidentia,
+      evidentia-core, evidentia-ai, evidentia-collectors, evidentia-integrations,
+      evidentia-api, evidentia-mcp and evidentia-eval. The workspace root is
+      virtual; evidentia-ui is a Vite project, not a Python distribution.
 - [ ] **Latest version references** match the current release
       (no straggler "v0.7.X" where X is one or more behind)
-- [ ] **Cross-doc links resolve** — every `[link](other.md)`
+- [ ] **Cross-doc links resolve** - each relative Markdown link
       points at an existing file
-- [ ] **Feature-claim consistency** — same feature described
+- [ ] **Feature-claim consistency** - same feature described
       same way across README + docs/positioning-and-value.md +
       docs/capability-matrix.md
-- [ ] **Capability-matrix freshness** — surfaces tested count +
+- [ ] **Capability-matrix freshness** - surfaces tested count +
       revalidation date current
 - [ ] **Claim-bearing deltas are verifier-sourced (G28 inversion;
-      added 2026-07-19)** — every NEW claim-bearing sentence in the
+      added 2026-07-19)** - every NEW claim-bearing sentence in the
       capability-matrix / threat-model deltas is written FROM a
       `doc-runtime-verifier` PASS (or an equivalently exercised
-      behavior), BEFORE the release-prep commit — never drafted from
+      behavior), BEFORE the release-prep commit - never drafted from
       memory during release-prep. Rationale: all three v0.11.0
       self-inflicted doc overclaims (F-V0110-4/6/7), and prior cycles'
       G28 findings, were introduced at release-prep time from memory.
       Scope: claim-bearing prose only (mechanisms, gates, active
       behavior); CHANGELOG narrative is exempt.
-- [ ] **threat-model.md delta** — append a v{X.Y.Z}-delta sub-
+- [ ] **threat-model.md delta** - append a v{X.Y.Z}-delta sub-
       section covering any new public surface
-- [ ] **enterprise-grade.md** — every BLOCKER / HIGH / MEDIUM /
+- [ ] **enterprise-grade.md** - every BLOCKER / HIGH / MEDIUM /
       LOW row reflects current shipped state
-- [ ] **ROADMAP.md** — current release marked SHIPPED; next
-      release promoted to NEXT
-- [ ] **AI-assistance acknowledgment** in README — Allen's
+- [ ] **ROADMAP.md** reflects the actual release boundary. Mark the release
+      SHIPPED after verified publication, and then promote the next release.
+- [ ] **AI-assistance acknowledgment** in README - Allen's
       per-release manual update; flag if missing
 
 Apply via Grep/Edit; commit as a single
@@ -314,20 +319,20 @@ Apply via Grep/Edit; commit as a single
 
 ---
 
-## Step 5.6 — Release preflight dry-run (optional pre-tag validation, v0.10.17+)
+## Step 5.6 - Release preflight dry-run (optional pre-tag validation, v0.10.17+)
 
-For a higher-fidelity pre-tag check than the local Step-5 gate — especially
-when `release.yml`, the `Dockerfile`, or the dependency closure changed — run
+For a higher-fidelity pre-tag check than the local Step-5 gate - especially
+when `release.yml`, the `Dockerfile`, or the dependency closure changed - run
 the **release preflight**: a `workflow_dispatch` on `release.yml` that executes
 the FULL pre-publish path on a runner (the SSOT gate suite + wheels + per-package
 SBOMs + the reproducible-build double-build + the container-built-FROM-LOCAL-WHEELS
-+ all the image smoke tests) **without publishing anything**. It catches the
-classes that historically surfaced only at tag time — a base/dep regression, a
+and all the image smoke tests) **without publishing anything**. It catches the
+classes that historically surfaced only at tag time - a base/dep regression, a
 `uvx` exit-127, a `pip-compile` hash mismatch (the v0.10.14 / v0.10.15 ghost-tag
 failures).
 
 ```bash
-# Run the preflight on the branch you're about to tag from (usually main):
+# After explicit dispatch approval, run on the verified release candidate:
 gh workflow run release.yml --ref main
 # then watch it:
 gh run watch "$(gh run list --workflow release.yml --event workflow_dispatch \
@@ -335,8 +340,8 @@ gh run watch "$(gh run list --workflow release.yml --event workflow_dispatch \
 ```
 
 Publish-safe by construction: `tag-guard` and both publish jobs require
-`github.event_name == 'push'`, so a dispatch — even one selected on a `v*` tag
-ref — yields `publishable=false` and `publish-pypi` / `publish-container` SKIP.
+`github.event_name == 'push'`, so a dispatch - even one selected on a `v*` tag
+ref - yields `publishable=false` and `publish-pypi` / `publish-container` SKIP.
 The `pypi` / `ghcr` deployment environments are independently restricted to `v*`
 **tag** refs (with required reviewers), a second, platform-level belt.
 
@@ -344,12 +349,12 @@ Acceptance:
 
 - [ ] The preflight dispatch run is GREEN through `build` (gate + build +
       reproducible-build check + container smoke all pass)
-- [ ] `publish-pypi` and `publish-container` show **skipped** — confirm nothing
+- [ ] `publish-pypi` and `publish-container` show **skipped** - confirm nothing
       published on the dispatch
 
 ---
 
-## Step 6 — Inconsistency scour
+## Step 6 - Inconsistency scour
 
 Per the testing-playbook 3-pass scour pattern:
 
@@ -363,7 +368,7 @@ grep -ri "controlbridge"
 grep -ri "PREV.X.Y"
 grep -ri "X.Y-1.0"
 
-# Pass 3: current-version coverage (should appear in 7 pyproject.toml
+# Pass 3: current-version coverage (should appear in 9 pyproject.toml
 # + package.json + CHANGELOG + ROADMAP + enterprise-grade.md +
 # capability-matrix.md as the current release)
 grep -ri "X.Y.Z"
@@ -379,7 +384,7 @@ git log --all --format="%ae" | sort -u | grep "@allenfbyrd.com$" || echo "OK: ze
 
 ---
 
-## Step 7 — External repo + service review
+## Step 7 - External repo + service review
 
 ```bash
 gh repo view polycentric-labs/evidentia --json name,description,isArchived,defaultBranchRef
@@ -392,7 +397,7 @@ gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  
 - [ ] **Repo About description is managed as code** (no stale
       "Previously: ..." text). The source of truth is
       [`.github/repo-description.txt`](../.github/repo-description.txt)
-      (single line, no version literal — so it is NOT part of per-version
+      (single line, no version literal - so it is NOT part of per-version
       bumping; `.github/**` is in the `frozen` list of
       [`scripts/version_tracked_files.yaml`](../scripts/version_tracked_files.yaml),
       so `check_version_consistency.py` does not flag it). Re-assert the
@@ -405,39 +410,38 @@ gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  
       ```
 
       This is a **Tier-4 action requiring Allen's approval** (it mutates
-      public GitHub state) — surface the exact command and wait for
+      public GitHub state) - surface the exact command and wait for
       explicit approval before running it. If the About copy itself needs
       to change, edit `.github/repo-description.txt` first (in its own
       commit), then re-assert from the file.
 - [ ] PyPI environment exists.
-- [ ] PyPI Trusted Publisher entries exist for all 6 published packages
+- [ ] PyPI Trusted Publisher entries exist for all eight published packages
       (verify via `https://pypi.org/manage/project/<name>/settings/publishing/`).
 - [ ] Zero `allen@allenfbyrd.com` commits across all owned repos.
 - [ ] **`main` PR-flow ruleset still active** (v0.10.14). Confirm the
-      repository ruleset `main — PR flow (required checks + merge queue)` is
+      repository ruleset `main - PR flow (required checks + merge queue)` is
       `enforcement: active` with `bypass_actors: []`, a `pull_request` rule, a
       `required_status_checks` rule listing the full meaningful set, a
       `merge_queue` rule (`merge_method: SQUASH`), and
       `required_linear_history`. The org `polycentric-labs-default-branch-baseline`
       ruleset additionally enforces signatures / non-FF / deletion. Classic
       branch protection was intentionally removed (the ruleset is the single
-      source of truth). If the ruleset has been removed/weakened, re-apply it
-      (see the "PR flow via merge queue" section below) before tagging.
+      source of truth). If protection has changed or weakened, stop release
+      preparation, document the discrepancy and obtain explicit authority
+      before changing protections.
 - [ ] **`pypi` environment branch policy correct**: with branch
       protection in place,
       `deployment_branch_policy.custom_branch_policies` should be
-      `true` and the policy should include both `main` and `v*`
-      (the tag-triggered release path needs to deploy from a tag,
-      not just a branch). If only `main` is allowed, tag pushes will
-      block at the deployment-protection gate.
-- [ ] **Dependabot review** — check the open Dependabot PR queue
-      (`gh pr list --label dependencies --state open`). For the
-      week-of-ship batch, either roll the PRs in (security updates +
-      low-risk patch bumps) or defer them to the next release with
-      a documented reason. Don't ship next to a security advisory
-      that has an open auto-PR.
-- [ ] **SECURITY.md vulnerability-coordination flow** — confirm
-      `SECURITY.md` is current: SLA still accurate (3 business days
+      `true`, with the approved `v*` tag policy and required reviewer.
+      The release publish jobs use tag refs; do not add a `main` branch
+      policy as a workaround. Verify both `pypi` and `ghcr` environments.
+- [ ] **Dependabot review** - check the open Dependabot PR queue
+      (`gh pr list --label dependencies --state open`). Resolve in-scope updates
+      through signed commits, required checks and the protected merge queue.
+      Any deferral must be documented and consistent with the owner-approved
+      release scope. Keep unresolved security advisories visible at the gate.
+- [ ] **Security vulnerability-coordination flow**: confirm
+      [`.github/SECURITY.md`](../.github/SECURITY.md) is current: SLA still accurate (3 business days
       initial / 10 business days triage), 90-day disclosure timeline
       still applies, supported-versions table reflects the
       single-supported-patch policy as of this release. If a CVE
@@ -445,17 +449,18 @@ gh search commits --author-email allen@allenfbyrd.com --owner polycentric-labs  
 
 ### Repo secret rotation (v0.9.4 P4.6)
 
-If rotating `CODECOV_TOKEN` (or any other repo secret) during the
-ship cycle, use one of these two forms — `gh secret set` does NOT
+Credential rotation is an owner-operated, separately approved action. Keep
+secret values out of chat, tool arguments and captured output. If the owner
+rotates `CODECOV_TOKEN` (or another repo secret), use one of these two forms - `gh secret set` does NOT
 have a `--body-file` flag (common mis-recall; only `-b/--body
 string`, `-f/--env-file file`, or stdin work):
 
 ```bash
-# Option A — dotenv format (file has KEY=value lines)
+# Option A - dotenv format (file has KEY=value lines)
 gh secret set -R polycentric-labs/evidentia \
     -f C:\Users\allen\.secrets\codecov-polycentric-labs-evidentia.env
 
-# Option B — stdin pipe (file has bare value only)
+# Option B - stdin pipe (file has bare value only)
 Get-Content C:\Users\allen\.secrets\codecov-token-raw.txt \
   | gh secret set CODECOV_TOKEN -R polycentric-labs/evidentia
 ```
@@ -467,14 +472,14 @@ the README badge URL to bust the cache (same workaround as v0.8.2
 
 ---
 
-## Step 8 — Tag and push (the irreversible step)
+## Step 8 - Tag and push (the irreversible step)
 
 **STOP for explicit user approval before proceeding.** Surface a
 comprehensive pre-tag overview including:
 
 - Commit list since the prior release tag
 - Test results (passed / skipped / warnings)
-- Build artifacts (6 wheels + 6 sdists at new version)
+- Build artifacts (eight wheels and eight sdists at the new version)
 - Scour findings (zero stale references)
 - External services state (PyPI publishers, GitHub repo)
 - Known deferrals (HIGH-bucket items deferred to next release)
@@ -482,17 +487,17 @@ comprehensive pre-tag overview including:
 After explicit approval:
 
 ```bash
-git tag -a vX.Y.Z -m "Release vX.Y.Z — <one-line summary>"
-git push origin main          # if main has unpushed commits
-git push origin vX.Y.Z         # the tag triggers release.yml
+git tag -s vX.Y.Z <verified-main-commit> -m "Release vX.Y.Z: <one-line summary>"
+git verify-tag vX.Y.Z
+git push origin refs/tags/vX.Y.Z  # the approved tag triggers release.yml
 gh run watch                   # monitor the release workflow
 ```
 
-> **v0.10.17+ — deployment approval gate.** The `pypi` and `ghcr` deployment
+> **v0.10.17+ - deployment approval gate.** The `pypi` and `ghcr` deployment
 > environments carry **required reviewers** (Allen; self-review allowed), so
 > after the tag push the `release.yml` run PAUSES at `publish-pypi` (and again at
 > `publish-container`) awaiting an "Approve deployment" click in the Actions run
-> UI — the Tier-4 per-publish approval enforced by the platform, not just by
+> UI - the Tier-4 per-publish approval enforced by the platform, not just by
 > discipline. Approve each once the preceding jobs are green. These environments
 > are also restricted to `v*` **tag** refs and are consumed ONLY by `release.yml`;
 > do not re-add a branch policy or point another workflow at them without
@@ -504,42 +509,45 @@ If the release.yml workflow fails:
 - For OIDC bootstrap issues (per-package PyPI Trusted Publisher
   registration mismatch), check the per-package
   `https://pypi.org/manage/project/<name>/settings/publishing/`
-  page; correct the entry; re-trigger via re-pushing the tag (delete
-  and re-push, or push a new patch tag).
+  page. Prepare the correction and obtain the required authority.
+  Preserve the existing immutable tag; never delete, move or force-push it.
+  Follow [release rollback](runbooks/release-rollback.md) for approved recovery.
 - For SBOM / attestation issues, fix the workflow YAML, push the
-  fix, push a new tag (don't reuse the failed tag).
+  fix through the protected queue, then obtain approval for a forward patch
+  release. Keep the failed tag and its evidence.
 - For partial publishes (some wheels published, others 403), fix
-  the failing publisher then re-run; `skip-existing: true` in
-  `release.yml` makes retries idempotent.
+  the failing publisher only with explicit authority. Reconcile which artifacts
+  were published before selecting the approved recovery. `skip-existing: true`
+  skips existing files; it does not make every release step idempotent.
 
-### PR flow via merge queue (v0.10.14 — the "never ship a failed test" flip)
+### PR flow via merge queue (v0.10.14 - the "never ship a failed test" flip)
 
 As of v0.10.14, `main` is governed by a **repository ruleset** that makes the
 full CI matrix gate **before** a change lands, not after. This reverses the
 prior direct-push pattern, under which admin pushes bypassed the required
 checks (`enforce_admins: false`), so the full matrix only ran post-merge / at
-release — the structural root cause of the v0.10.12 layered failures (a
+release - the structural root cause of the v0.10.12 layered failures (a
 `python:3.14` base regression + a dead container smoke test surfaced only after
 the PyPI publish).
 
 The ruleset on `main` (created via `gh api repos/.../rulesets`) enforces:
 
-- **Require a pull request before merging** — 0 required approvals (solo
-  maintainer; a PR is still mandatory). `bypass_actors: []` — **no one
+- **Require a pull request before merging** - 0 required approvals (solo
+  maintainer; a PR is still mandatory). `bypass_actors: []` - **no one
   bypasses, including admins**.
-- **Require status checks** — the full meaningful set: the 3-OS `pytest`
+- **Require status checks** - the full meaningful set: the 3-OS `pytest`
   matrix + `pytest no-extras`, `ruff`, `mypy`, `frontend (typecheck + build)`,
   `docker/requirements drift`, `openapi schema drift`, `osv-scanner (SBOM)`,
   `staleness guards …`, `gitleaks …`, `Analyze (python/js/actions)`,
   `CLI<->GUI parity`, `verify-conformance-evidence`,
   `Audit workflow permissions (strict)`, and the container `Build + smoke test`.
-- **Merge queue** (`merge_method: SQUASH`) — re-tests the prospective `main` +
+- **Merge queue** (`merge_method: SQUASH`) - re-tests the prospective `main` +
   PR merge so two individually-green PRs can't break `main`. SQUASH is the only
   method compatible with `required_signatures` + `required_linear_history`
   (`merge` breaks linearity; `rebase` produces commits GitHub cannot sign, which
   would fail the signature rule). Every workflow producing a required check
   carries the `merge_group:` trigger, or the queue stalls waiting for a
-  conclusion that never arrives. Paths-filtered workflows are **not** required —
+  conclusion that never arrives. Paths-filtered workflows are **not** required -
   they do not run on `merge_group` (GitHub does not expand the queue-branch
   diff), so requiring one would hang the queue; the container smoke test avoids
   this by always running and early-exiting on a step-level relevance check
@@ -551,11 +559,11 @@ The ruleset on `main` (created via `gh api repos/.../rulesets`) enforces:
 The classic branch protection was removed so the ruleset is the single source
 of truth.
 
-How to ship a change now — code, docs, **and** releases all go through a PR:
+How to ship a change now - code, docs, **and** releases all go through a PR:
 
 ```bash
 git checkout -b <branch>
-# ... make changes ...   (commits signed; NO Claude attribution per global rules)
+# ... make changes ...   (signed commits authored solely by Allen)
 git push origin <branch>
 gh pr create --base main --head <branch> --title "..." --body "..."
 # wait for the required checks to go green, then add to the merge queue:
@@ -564,25 +572,25 @@ gh pr merge <PR#> --squash --auto     # or "Merge when ready" in the UI
 ```
 
 A direct `git push origin main` now **fails** by design (the ruleset requires a
-PR). Tagging a release is unchanged — `git tag -s vX.Y.Z && git push origin
+PR). Tagging a release is unchanged - `git tag -s vX.Y.Z && git push origin
 vX.Y.Z` fires `release.yml`; the tag is pushed to its own ref, not to `main`.
 Each `git push`, `gh pr merge`, and tag push remains a Tier-4 action requiring
 explicit approval per the global publishing-authority protocol.
 
 ---
 
-## Step 9 — Post-release verification
+## Step 9 - Post-release verification
 
 Within 30 minutes of `release.yml` reporting success:
 
-- [ ] PyPI: each of the 6 packages shows version X.Y.Z at
+- [ ] PyPI: each of the eight packages shows version X.Y.Z at
       `https://pypi.org/project/<name>/`.
 - [ ] **Codecov badge** registers ≥80% coverage (post-v0.7.12 fix:
       coverage.xml emits repo-relative paths via `[tool.coverage.run]
       relative_files = true` so Codecov's path matcher resolves
       against the GitHub tree).
 
-### Step 9.5 — Release notes audit (v0.7.12+)
+### Step 9.5 - Release notes audit (v0.7.12+)
 
 Per Allen's 2026-05-04 directive ("review all release notes for
 missing entries and update accordingly, commit that practice to
@@ -596,9 +604,9 @@ contains:
 - [ ] CHANGELOG `[X.Y.Z]` block content matches the release body
       (or release body summarizes correctly)
 - [ ] Container image stanza (post-v0.7.5; the Dockerfile-
-      published releases) — `ghcr.io/polycentric-labs/evidentia:vX.Y.Z`
+      published releases) - `ghcr.io/polycentric-labs/evidentia:vX.Y.Z`
       with image digest
-- [ ] PEP 740 verification stanza — pypi-attestations verify
+- [ ] PEP 740 verification stanza - pypi-attestations verify
       command line that an operator can copy-paste
 - [ ] Cosign verify stanza for the container (post-v0.7.5)
 - [ ] CycloneDX SBOM noted as a release asset
@@ -610,20 +618,18 @@ contains:
 
 Per the publishing-authority protocol in `~/.claude/CLAUDE.md`,
 any `gh release edit` on a published release is a public-surface
-mutation and requires explicit per-action approval — surface
+mutation and requires explicit per-action approval - surface
 the diff before mutating.
 
 For prior releases (v0.7.0 → previous-X.Y.Z), the same audit
 runs once per cycle to catch any historical gaps. v0.7.12
 introduced this practice retroactively.
 
-### Step 9.6 — Other PyPI checks
+### Step 9.6 - Other PyPI checks
 
 - [ ] PyPI per-file pages show the "Provenance" / PEP 740 attestation
       section with the GitHub Actions workflow URL + commit SHA.
-- [ ] PyPI per-file pages show the "Provenance" / PEP 740 attestation
-      section with the GitHub Actions workflow URL + commit SHA.
-- [ ] **Verify PEP 740 publish attestations (PyPI path)** — primary
+- [ ] **Verify PEP 740 publish attestations (PyPI path)** - primary
       verifier for the per-file Sigstore-signed PEP 740 attestation
       that PyPA's publish action uploads alongside each wheel/sdist:
       ```bash
@@ -631,21 +637,22 @@ introduced this practice retroactively.
           --repository https://github.com/polycentric-labs/evidentia \
           "pypi:evidentia_core-X.Y.Z-py3-none-any.whl"
       ```
-      Repeat for the other 5 wheels. Expect `OK: <wheel>`.
-      `gh attestation verify` does NOT validate this — it defaults
+      Repeat for the other seven wheels and the source distributions.
+      Record each exact filename, digest, publisher identity and result.
+      `gh attestation verify` does NOT validate this - it defaults
       to the SLSA provenance v1 predicate, while PEP 740 publish
       attestations use `https://docs.pypi.org/attestations/publish/v1`.
       Use the SLSA-path verifier below for `gh attestation verify`.
-- [ ] **Verify SLSA L3 build provenance (GitHub path)** — secondary
+- [ ] **Verify SLSA build provenance (GitHub path)** - secondary
       verifier covering the build-provenance attestation that
       `actions/attest-build-provenance` stores under the repo's
       Attestations endpoint (added in v0.7.3 S3 per
-      [`docs/v0.7.3-plan.md`](releases/plans/v0.7.3-plan.md)):
+      [`v0.7.3-plan.md`](releases/plans/v0.7.3-plan.md)):
       ```bash
       gh attestation verify dist/evidentia_core-X.Y.Z-py3-none-any.whl \
           -R Polycentric-Labs/evidentia
       ```
-      Expect `Loaded digest sha256:... ` and `OK`. The same command
+      Expect `Loaded digest sha256:...` and `OK`. The same command
       also validates the CycloneDX SBOM's attestation
       (`gh attestation verify evidentia-sbom.cdx.json -R Polycentric-Labs/evidentia`).
       Pre-v0.7.3 releases (v0.7.0/v0.7.1/v0.7.2) return HTTP 404
@@ -658,14 +665,14 @@ introduced this practice retroactively.
       commands work end-to-end. Also verify `pip install "evidentia[gui]==X.Y.Z"`
       pulls in `evidentia_api` (the `[gui]` extra; required to import
       the FastAPI surface).
-- [ ] **(v0.7.5+) Container image published to ghcr.io** — pulls
+- [ ] **(v0.7.5+) Container image published to ghcr.io** - pulls
       successfully and the in-image CLI works:
       ```bash
       docker pull ghcr.io/polycentric-labs/evidentia:vX.Y.Z
       docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z version
       docker run --rm ghcr.io/polycentric-labs/evidentia:vX.Y.Z catalog list | head -5
       ```
-- [ ] **(v0.9.3+) GHCR package visibility is PUBLIC** — the first
+- [ ] **(v0.9.3+) GHCR package visibility is PUBLIC** - the first
       container push to a new GitHub org defaults to **private**
       visibility. This bit us at v0.9.1 (org migration to
       Polycentric-Labs) and again at v0.9.2. One-time manual fix:
@@ -678,22 +685,23 @@ introduced this practice retroactively.
       After the one-time flip, subsequent pushes to the same package
       inherit public visibility. Only re-check if the org is
       recreated or the package is deleted and re-pushed.
-- [ ] **(v0.7.5+) Verify cosign keyless signature on the image** —
+- [ ] **(v0.7.5+) Verify cosign keyless signature on the image** -
       validates the OIDC identity binding (release.yml@refs/tags/v*):
       ```bash
       cosign verify ghcr.io/polycentric-labs/evidentia:vX.Y.Z \
-          --certificate-identity-regexp 'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
+          --certificate-identity-regexp \
+          'https://github\.com/Polycentric-Labs/evidentia/\.github/workflows/release\.yml@refs/tags/v.*' \
           --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
       ```
       Expect "Verified OK" + the certificate identity URL printed.
 - [ ] **(v0.7.5+) Verify SLSA build provenance on the image digest**
-      — independent of cosign, validates the build-provenance predicate:
+      - independent of cosign, validates the build-provenance predicate:
       ```bash
       gh attestation verify oci://ghcr.io/polycentric-labs/evidentia:vX.Y.Z \
           -R Polycentric-Labs/evidentia
       ```
       Expect "verified" + the workflow run id matching the release.
-- [ ] **(v0.7.5+) Tag and `:latest` resolve to same digest** — sanity
+- [ ] **(v0.7.5+) Tag and `:latest` resolve to same digest** - sanity
       check the rolling-pointer is up to date:
       ```bash
       docker buildx imagetools inspect ghcr.io/polycentric-labs/evidentia:vX.Y.Z --raw | grep -i digest
@@ -703,7 +711,7 @@ introduced this practice retroactively.
 
 ---
 
-## Step 10 — Post-release housekeeping
+## Step 10 - Post-release housekeeping
 
 Within 1-3 days:
 
@@ -723,11 +731,11 @@ Within 1-3 days:
     scenarios if applicable
 - [ ] Optional manual PyPI yank operations (e.g., yank shim wheels
       from prior versions if a contract specified yank at a future
-      version — we did this for v0.5.1 controlbridge-* shims at v0.7.0).
+      version - we did this for v0.5.1 controlbridge-* shims at v0.7.0).
 
 ---
 
-## Step 11 — Quarterly cadence (independent of releases)
+## Step 11 - Quarterly cadence (independent of releases)
 
 Run quarterly regardless of release schedule:
 
@@ -758,7 +766,7 @@ This checklist explicitly aligns with:
 - **CISA Secure by Design Pledge** (signed software, transparency)
 - **PEP 740** (Index-Hosted Attestations for Python Package Index)
 - **SLSA L3** (build provenance with isolated builders, target for
-  v0.7.2 per `docs/v0.7.2-plan.md` item S3 — deferred from v0.7.1
+  v0.7.2 per `docs/releases/plans/v0.7.2-plan.md` item S3 - deferred from v0.7.1
   when that release narrowed to P0-only AI features hardening)
 
 The 11 steps map to GRC release-management discipline:
@@ -782,11 +790,9 @@ The 11 steps map to GRC release-management discipline:
 
 Items currently manual that could be scripted/automated:
 
-- **Step 2 (version bumps)**: a generalized `_bump_version.py` script
-  parameterized by current and target versions, handling all 7
-  pyproject.toml + package.json + 9 inter-package pins atomically.
-  See deprecation header on the existing one-shot
-  `scripts/_bump_version.py`.
+- **Step 2 (version bumps)**: maintain the implemented `scripts/bump_version.py`
+  and its `scripts/version_tracked_files.yaml` manifest as package and
+  documentation surfaces change. Keep its dry-run and consistency checks.
 - **Step 6 (scour)**: a `scripts/_release_scour.sh` script running the
   three grep passes + the email-leak audit.
 - **Step 7 (external review)**: a `scripts/_release_external_check.sh`
