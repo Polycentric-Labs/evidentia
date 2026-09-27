@@ -25,7 +25,7 @@
 | Framework id `occ-sr-26-02` (catalog id) | `occ-sr-26-2` | v0.12.1 (2026-09-05) | **v1.0.0** | V13-15 designator correction: the FRB letter is SR 26-2 (no leading zero, matching the SR 11-7 style) and the OCC bulletin is 2026-13 (no "a" suffix). The old id resolves through a loader alias (`evidentia_core.catalogs.loader`) with a `DeprecationWarning`; a regression test exercises the alias per process rule 5. |
 | ConMon state key `occ-2026-13a-model-risk` (cadence slug in operator `--state-file` YAML) | `occ-2026-13-model-risk` | v0.12.1 (2026-09-05) | **v1.0.0** | Same designator correction, applied to the bundled cadence slug. Both state-file readers (the daemon's `load_state_file` and the CLI loader) migrate the old key to the new one on read with a `DeprecationWarning`; when both keys are present the new key's value wins so a half-migrated file cannot regress a newer completion date. Writes (`conmon mark-completed`) accept the new slug only. |
 
-No other surfaces are currently deprecated as of the v0.13 cycle (current release v0.12.1).
+No other surfaces are currently deprecated as of the v0.13 cycle (current release v0.13.0).
 
 ---
 

@@ -1,6 +1,6 @@
 # Evidentia roadmap
 
-**Last updated: 2026-09-19; current release v0.12.1.**
+**Last updated: 2026-09-26; release candidate v0.13.0.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -10,7 +10,7 @@
 
 Sections run **newest first**: the highest version at the top, the oldest
 shipped release at the bottom. The open `PLANNED` cycle therefore sits at the
-top of the 0.x line, just below any `RESERVED` future milestone whose version
+top, just below any `RESERVED` future milestone whose version
 number is higher. That ordering is mechanically enforced by assertion A5 in
 `scripts/check_roadmap_currency.py`, which fails the `consistency` gate if an
 h2 version heading ever sorts above a newer one.
@@ -19,13 +19,17 @@ Every version heading carries a status word:
 
 | Status | Meaning |
 |---|---|
-| `SHIPPED` | Released. A matching `## [X.Y.Z]` block exists in [`CHANGELOG.md`](../CHANGELOG.md). |
+| `SHIPPED` | Release content has a matching `## [X.Y.Z]` block in [`CHANGELOG.md`](../CHANGELOG.md). |
 | `PLANNED` | The single open cycle. Exactly one may exist, and its intro must link an on-disk plan under [`releases/plans/`](releases/plans/). |
 | `RESERVED` | Scoped but not open. No work is committed against it yet. |
 
 The same script also asserts that nothing marked `PLANNED` or `RESERVED` has
 actually shipped, and that a `PLANNED` umbrella contains no `SHIPPED` entries.
 Those invariants exist because each of them failed silently at least once.
+The checker uses changelog entries to identify release content. A `SHIPPED`
+heading does not establish that a tag or public release has been approved.
+The v0.13.0 candidate still requires independent review and Allen's tag and
+release decision.
 
 ## Where to look
 
@@ -74,10 +78,11 @@ leads with the CLI.
 Validated via a structured research pass (multi-model fleet + a primary-source survey of
 comparable tools + a 3-way adversarial validation).
 
-## v1.0 - Federal compliance shipped + API stability - RESERVED
+## v1.0 - Federal compliance shipped + API stability - PLANNED
 
-**The destination of the 0.x line** (re-homed 2026-08-28 at the v0.13 cycle
-open; previously the open cycle). The trajectory decision recorded in
+**The next planned cycle**, following preparation of the v0.13.0 release
+content. This planning status does not authorize implementation, reviewer
+outreach, tags or publication. The trajectory decision recorded in
 [`v0.13-plan.md`](releases/plans/v0.13-plan.md) moves feature expansion ahead
 of convergence: v1.0.0 tags when the feature surface is built out and
 hardened, so the API-stability freeze freezes something whole. No locked
@@ -113,10 +118,11 @@ videos that travel with the review pack next to the scenario pack in
 maintainer watches live and interrupts; nothing is published from the recording
 without a separate decision.
 
-## v0.13 - The shared spine and the correctness debt - PLANNED
+## v0.13 - The shared spine and the correctness debt - SHIPPED
 
-**The open cycle** (opened 2026-08-28, ratified the same day with all twelve
-of its open questions answered). Full plan:
+**Release content prepared for v0.13.0; independent review and Allen's tag
+and release decision remain pending.** The cycle opened 2026-08-28 and was
+ratified the same day with all twelve open questions answered. Full plan:
 [`v0.13-plan.md`](releases/plans/v0.13-plan.md). Scope philosophy is EXPAND,
 on the reuse ordering: build what three or more sectors share, fix what is
 already wrong, and sequence nothing ahead of the licence answer or

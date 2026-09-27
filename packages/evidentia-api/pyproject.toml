@@ -1,10 +1,11 @@
 [project]
 name = "evidentia-api"
-version = "0.12.1"
+version = "0.13.0"
 description = "FastAPI REST server + bundled React web UI for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 # Ceiling tracks the workspace root cap (litellm <3.14) — see root pyproject.toml for the full rationale + removal trigger; kept in sync by check_version_consistency.py.
 requires-python = ">=3.12,<3.15"
 keywords = ["grc", "compliance", "fastapi", "web-ui", "oscal", "rest-api"]
@@ -22,8 +23,8 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.12.1,<0.13.0",
-    "evidentia-ai>=0.12.1,<0.13.0",
+    "evidentia-core>=0.13.0,<0.14.0",
+    "evidentia-ai>=0.13.0,<0.14.0",
     "fastapi>=0.141.1",
     "uvicorn[standard]>=0.51.0",
     # v0.7.2 supply-chain follow-up: floor bumped from >=0.0.9 to

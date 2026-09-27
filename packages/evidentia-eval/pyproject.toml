@@ -1,10 +1,11 @@
 [project]
 name = "evidentia-eval"
-version = "0.12.1"
+version = "0.13.0"
 description = "DFAH (Decision-Faithfulness Assessment Harness) determinism + faithfulness eval harness for Evidentia — dev-time AI-output quality gates"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 # Ceiling tracks the workspace root cap (litellm <3.14) — see root pyproject.toml for the full rationale + removal trigger; kept in sync by check_version_consistency.py.
 requires-python = ">=3.12,<3.15"
 keywords = ["grc", "compliance", "llm-eval", "dfah", "determinism", "faithfulness", "ai-quality"]
@@ -20,7 +21,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.12.1,<0.13.0",
+    "evidentia-core>=0.13.0,<0.14.0",
 ]
 
 [project.optional-dependencies]
