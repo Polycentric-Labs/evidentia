@@ -1737,10 +1737,11 @@ export interface paths {
         put?: never;
         /**
          * Check Air Gap
-         * @description Audit every subsystem's offline posture without running any network IO.
+         * @description Describe selected configuration without probing network services.
          *
-         *     Returns a per-subsystem status report matching the CLI's
-         *     ``doctor --check-air-gap`` table output.
+         *     Legacy status fields describe this limited diagnostic only. They do not
+         *     establish isolation, resolve every completion option, or verify dependency
+         *     telemetry. Raw model and endpoint values are omitted.
          */
         post: operations["check_air_gap_api_doctor_check_air_gap_post"];
         delete?: never;

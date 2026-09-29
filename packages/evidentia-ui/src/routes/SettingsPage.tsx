@@ -112,14 +112,20 @@ export function SettingsPage() {
         <CardHeader>
           <CardTitle className="row gap-2">
             Air-gap posture
-            {airGap.data?.air_gapped ? (
-              <Badge>air-gap ready</Badge>
+            {airGap.isPending ? (
+              <Badge variant="outline">checking configuration</Badge>
+            ) : airGap.isError ? (
+              <Badge variant="outline">check unavailable</Badge>
+            ) : airGap.data?.air_gapped ? (
+              <Badge>configuration only</Badge>
             ) : (
-              <Badge variant="destructive">would leak</Badge>
+              <Badge variant="destructive">review configuration</Badge>
             )}
           </CardTitle>
           <CardDescription>
-            Audits configured endpoints without issuing network IO.
+            Configuration hints only. This check does not probe completions,
+            inspect traffic, or establish network isolation. Use network
+            controls and qualify actual workload behavior.
           </CardDescription>
         </CardHeader>
         <CardContent className="stack-2 text-sm">
@@ -134,12 +140,12 @@ export function SettingsPage() {
                 </div>
                 <div>{check.detail}</div>
               </div>
-              {check.status === "ok" && <Badge>ok</Badge>}
+              {check.status === "ok" && <Badge>configured</Badge>}
               {check.status === "would_leak" && (
-                <Badge variant="destructive">would leak</Badge>
+                <Badge variant="destructive">review configuration</Badge>
               )}
               {check.status === "skipped" && (
-                <Badge variant="outline">skipped</Badge>
+                <Badge variant="outline">not checked</Badge>
               )}
             </div>
           ))}
@@ -165,9 +171,7 @@ function SettingsForm({ config }: SettingsFormProps) {
   const [organization, setOrganization] = useState(
     () => config.organization ?? "",
   );
-  const [systemName, setSystemName] = useState(
-    () => config.system_name ?? "",
-  );
+  const [systemName, setSystemName] = useState(() => config.system_name ?? "");
   const [frameworks, setFrameworks] = useState(() =>
     config.frameworks.join(", "),
   );

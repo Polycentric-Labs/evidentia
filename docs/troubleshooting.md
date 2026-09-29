@@ -230,24 +230,21 @@ For full air-gap setup including offline Sigstore alternatives + GPG
 key generation, see [`air-gapped.md`](air-gapped.md). One quick
 gotcha:
 
-### `RuntimeError: network egress refused: target 'pypi.org'`
+### `OfflineViolationError` during AI generation
 
-**Symptom**: when running with `--offline` or
-`EVIDENTIA_OFFLINE=1`, any operation that tries to reach the
-internet fails immediately.
+**Symptom**: AI generation refuses a configuration when the CLI uses
+`--offline` or the API uses `EVIDENTIA_API_OFFLINE=1`.
 
-**Why**: `evidentia_core.network_guard.set_offline(True)` flips a
-process-wide flag that refuses non-loopback network targets. This
-is intentional — it's the air-gap guard.
+**Why**: offline completions require a supported Ollama or OpenAI-compatible local server. The effective endpoint is checked before dispatch. Unknown per-call routing options, aliases, custom transports/callbacks and multimodal message content are refused.
 
-**Fix**: this is the correct behavior for air-gap deployments. To
-satisfy the operation:
+**Fix**: inspect the configuration category in the error:
 
-- Pre-pull dependencies onto the air-gap host before disconnecting
-- Pre-fetch catalog data with `evidentia catalog fetch --offline-bundle`
-- Use the `--gpg` signing path instead of Sigstore
-- For LLM features, point `EVIDENTIA_LLM_API_BASE` at a local
-  Ollama / vLLM instance
+- Prepare the local server and model files before disconnecting.
+- Select its model with `EVIDENTIA_LLM_MODEL`. Use `OLLAMA_API_BASE` for Ollama, `OPENAI_API_BASE` or `OPENAI_BASE_URL` for OpenAI-compatible routes, or `HOSTED_VLLM_API_BASE` for vLLM prefixes. Include the server's API root, such as `/v1`, where required.
+- `EVIDENTIA_LLM_API_BASE` only affects diagnostic/status code. Check for conflicting explicit bases and, for Ollama, a conflicting global LiteLLM base.
+- Configure the final local address if the server returns a redirect. Environment proxies are ignored by the offline transport.
+- Migrate in-process vLLM use to a separately running local server for v0.13. See the [deferred qualification work](ROADMAP.md#offline-in-process-inference-follow-up).
+- Keep routing stable, restrict the server's own network access, and enforce host/container network isolation. Doctor output is a configuration diagnostic, not proof that every dependency stays offline.
 
 ---
 

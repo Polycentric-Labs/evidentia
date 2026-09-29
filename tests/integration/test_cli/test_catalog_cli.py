@@ -696,17 +696,25 @@ def test_air_gap_optional_api_preserves_normal_table(available: bool) -> None:
         ("Detail", {}),
     ]
     rows = [
-        ("LLM client", "AIR-GAP READY", "model=ollama/synthetic (local prefix)"),
-        ("Catalog loader", "AIR-GAP READY", "v0.4.0 loads only from bundled + user-dir catalogs (no URL fetch)"),
-        ("AI telemetry", "AIR-GAP READY", "LiteLLM + Instructor do not emit telemetry"),
-        ("Gap store", "AIR-GAP READY", "platformdirs user-data (local filesystem only)"),
+        (
+            "LLM client",
+            "CONFIG ONLY",
+            "A local model prefix is configured; completion routing is checked when a call runs.",
+        ),
+        ("Catalog loader", "CONFIG ONLY", "v0.4.0 loads only from bundled + user-dir catalogs (no URL fetch)"),
+        (
+            "AI telemetry",
+            "NOT CHECKED",
+            "Dependency telemetry is not checked here. Qualify the deployed workload under network isolation.",
+        ),
+        ("Gap store", "CONFIG ONLY", "platformdirs user-data (local filesystem only)"),
     ]
     if available:
-        rows.append(("Web UI", "AIR-GAP READY", "\x60evidentia serve\x60 binds to 127.0.0.1 by default"))
+        rows.append(("Web UI", "CONFIG ONLY", "\x60evidentia serve\x60 binds to 127.0.0.1 by default"))
     assert table.rows == rows
     assert emitted[1] == (
-        "\n[dim]Pass [bold cyan]--offline[/bold cyan] on any command to enforce; "
-        "this report audits the configuration, not live traffic.[/dim]"
+        "\n[dim]This report describes selected configuration only. Use --offline guards "
+        "and host/container network isolation; verify actual workload behavior separately.[/dim]"
     )
 
 

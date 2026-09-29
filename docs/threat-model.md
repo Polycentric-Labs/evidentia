@@ -7,6 +7,26 @@
 > tracked alongside [`docs/enterprise-grade-accepted-findings.md`](enterprise-grade-accepted-findings.md)
 > (the per-finding rationale appendix for static-analysis accepts).
 
+## Offline AI boundary
+
+Offline AI generation supports Ollama and local OpenAI-compatible servers, including vLLM. These calls use a dedicated HTTP transport with environment proxies disabled and redirects refused. The setting is not a process-wide network sandbox; enforce host or container network isolation as well.
+The dedicated completion path bypasses LiteLLM provider dispatch, model
+discovery, tokenizer downloads, callbacks and shared client caches. It
+validates the effective local/private endpoint and rejects unsupported
+per-call routing options before dispatch. It supports text messages,
+function schemas and sync or async streaming.
+
+In-process vLLM loading is deferred for v0.13. Use a separately running
+local OpenAI-compatible server; the [roadmap](ROADMAP.md#offline-in-process-inference-follow-up)
+records the qualification needed before an in-process adapter can return.
+
+Keep routing configuration stable and restrict the server's own network
+access. These controls cannot constrain arbitrary in-process code, all
+dependency import-time activity or forwarding by a local server. Doctor
+and status reports are diagnostics, not completion probes or isolation
+proof. Earlier review entries below describe historical guards; use
+[Air-gapped deployments](air-gapped.md) for current configuration rules.
+
 **Last full deep-pass**: 2026-05-01 (v0.7.6 P1 Q2). 54 surfaces
 walked across 5 tiers. **0 HIGH, 0 MEDIUM, 3 LOW** — all
 design-choice or pre-existing intentional patterns. v0.7.5
@@ -3352,13 +3372,12 @@ for the gating mechanism itself). The result:
    rule, mount the token file into the container; never bake the token
    into the image or pass it on the command line. This token is the
    primary access control — the private-IP guard is not.
-3. **Run with collectors disabled when you don't need them.** Pass
-   `--offline` (or set `EVIDENTIA_API_OFFLINE=1`) so the network guard
-   refuses outbound calls to non-loopback hosts — this neutralizes the
-   SSRF surface regardless of who reaches the API. Use this whenever
-   the deployment only does local gap/risk analysis and never collects
-   live evidence. See [`air-gapped.md`](air-gapped.md) §"Web UI in
-   air-gapped deployments".
+3. **Enable offline checks for local-only workflows.** Use
+   `evidentia --offline serve` or `EVIDENTIA_API_OFFLINE=1` when the
+   deployment does local gap/risk analysis without live collection.
+   Pair this with host/container network isolation; the flag does not
+   establish a process-wide egress boundary or eliminate every SSRF
+   path. See [Air-gapped deployments](air-gapped.md).
 4. **Keep security headers on for network binds.** They are auto-on
    when `--host` is non-loopback (the container's `0.0.0.0` bind
    triggers this) and configurable via `EVIDENTIA_API_SECURITY_HEADERS`

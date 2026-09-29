@@ -3,9 +3,10 @@
 High-assurance environments — classified networks, CMMC/FedRAMP enclaves
 handling CUI, HIPAA networks, isolated OT/SCADA, some financial back offices —
 cannot reach PyPI or send compliance data to third-party SaaS. Evidentia is
-built for this: gap arithmetic runs on-device, the only optional outbound calls
-are LLM API requests, and a first-class `--offline` flag fails closed on any
-non-local network call. This guide covers the offline install (wheelhouse
+built for local operation: gap arithmetic runs on-device, and `--offline`
+enables checks at supported network call sites. It is not a process-wide
+network sandbox; enforce isolation with host or container network policy.
+This guide covers the offline install (wheelhouse
 pattern), offline catalog handling, and the GPG-only signing fallback for when
 Sigstore's Fulcio/Rekor are unreachable.
 
@@ -70,19 +71,17 @@ evidentia version
 
 ## Step 3 — Validate the air-gap posture
 
-Before running anything that matters, confirm every subsystem reports an
-air-gap-ready posture:
+Inspect the configuration before running a workload:
 
 ```bash
 evidentia doctor --check-air-gap
-#  LLM client     AIR-GAP READY   model=ollama/llama3.1:8b (local prefix)
-#  Catalog loader AIR-GAP READY   loads only from bundled + user-dir catalogs
-#  ...
 ```
 
-Any red entry is a configuration mistake to fix before you start. Then run every
-command with the `--offline` global flag, which refuses any outbound call to a
-non-loopback / non-RFC-1918 host *before* the network IO is issued:
+Investigate warnings, then use the `--offline` global flag. The doctor report
+uses selected prefix/base configuration checks; it neither exercises a completion
+nor verifies every effective routing option. A `CONFIG ONLY` result is not proof
+of network isolation or permission to use an unsupported route. The report
+leaves dependency telemetry unverified:
 
 **Bash / Linux / macOS**
 
@@ -102,15 +101,13 @@ evidentia --offline gap analyze `
   --output gap-report.json
 ```
 
-If a call would leak, Evidentia raises a structured `OfflineViolationError`
-(naming the subsystem, target, and remediation) rather than a mystery timeout.
-Fail closed, not open.
+The completion guard raises `OfflineViolationError` for unsupported routing
+before sending a completion request. Service availability, model errors and deployment
+network isolation need separate qualification.
 
 ### LLM features offline
 
-`evidentia risk generate` and other LLM-backed features need a **local**
-inference endpoint in offline mode. Point Evidentia at Ollama or a self-hosted
-OpenAI-compatible server on a loopback/RFC-1918 address:
+Offline AI generation supports Ollama and local OpenAI-compatible servers, including vLLM. These calls use a dedicated HTTP transport with environment proxies disabled and redirects refused. The setting is not a process-wide network sandbox; enforce host or container network isolation as well. Prepare the local server and model files before disconnecting.
 
 **Bash / Linux / macOS**
 
@@ -118,9 +115,8 @@ OpenAI-compatible server on a loopback/RFC-1918 address:
 # Ollama on the same host
 export EVIDENTIA_LLM_MODEL=ollama/llama3.1:8b
 
-# or a self-hosted vLLM/LocalAI endpoint on a private IP
-export EVIDENTIA_LLM_MODEL=gpt-4o-compatible
-export EVIDENTIA_LLM_API_BASE=http://10.50.1.20:8000/v1
+# Optional: an Ollama service on a private IP instead of localhost:11434
+# export OLLAMA_API_BASE=http://10.50.1.20:11434
 
 evidentia --offline risk generate --gap-id GAP-0001 --context system-context.yaml
 ```
@@ -131,15 +127,17 @@ evidentia --offline risk generate --gap-id GAP-0001 --context system-context.yam
 # Ollama on the same host
 $env:EVIDENTIA_LLM_MODEL = "ollama/llama3.1:8b"
 
-# or a self-hosted vLLM/LocalAI endpoint on a private IP
-$env:EVIDENTIA_LLM_MODEL = "gpt-4o-compatible"
-$env:EVIDENTIA_LLM_API_BASE = "http://10.50.1.20:8000/v1"
+# Optional: an Ollama service on a private IP instead of localhost:11434
+# $env:OLLAMA_API_BASE = "http://10.50.1.20:11434"
 
 evidentia --offline risk generate --gap-id GAP-0001 --context system-context.yaml
 ```
 
-The guard checks the `api_base` host, not the model string — any model name
-paired with an RFC-1918 `api_base` is permitted in offline mode.
+To use a local OpenAI-compatible server, select `openai/local-model` and set `OPENAI_API_BASE` to its local API root, for example `http://127.0.0.1:8000/v1`. vLLM servers are supported through the same protocol. In-process vLLM loading is deferred for v0.13; migrate to a separately running local server.
+
+`EVIDENTIA_LLM_API_BASE` only affects diagnostic/status code. Text messages, function schemas, structured output and streaming are supported. Unknown per-call routing options, custom transports/callbacks and multimodal content are refused. Ambient proxies are ignored for these calls; redirects are refused.
+
+Keep routing configuration stable and restrict the inference server's network access. The guard cannot constrain arbitrary in-process code, every dependency import or a server that forwards requests. See [endpoint precedence and the compatibility boundary](../../air-gapped.md#local-inference-server-configuration) and the [in-process qualification follow-up](../../ROADMAP.md#offline-in-process-inference-follow-up). Online provider behavior is unchanged.
 
 ## Offline catalogs
 
@@ -208,13 +206,13 @@ for the full signing workflow.
 
 1. **Environment** — disable outbound network on the host (e.g. on Linux,
    `iptables -A OUTPUT -j DROP` except loopback).
-2. **Preflight** — `evidentia --offline doctor --check-air-gap`; every subsystem
-   reports `AIR-GAP READY`.
+2. **Preflight**: run `evidentia --offline doctor --check-air-gap`, investigate
+   warnings and inspect effective routing. The report alone is not isolation evidence.
 3. **Analysis** — `evidentia --offline gap analyze ...` completes with no
    network errors.
-4. **Risk generation** — with a local LLM configured,
-   `evidentia --offline risk generate ...` produces output (a misconfiguration
-   yields a clear `OfflineViolationError`, not a hang).
+4. **Risk generation**: exercise a supported local-server route under the
+   network policy and retain results. Unsupported routing is refused before
+   request dispatch; service and model failures are separate.
 5. **Signing** — on a host install with gpg present, `--sign-with-gpg` succeeds
    offline; in the distroless container, the equivalent air-gap guarantee is the
    DSSE `--sign-with-key` / `--verify-key` round-trip. `--sign-with-sigstore` is
@@ -232,9 +230,9 @@ for the full signing workflow.
 
 ## Got stuck?
 
-- **`OfflineViolationError`** — a subsystem tried to reach a non-local host. The
-  payload names the subsystem + target + remediation; fix the configuration
-  (usually an LLM endpoint that is not on loopback/RFC-1918).
+- **`OfflineViolationError`**: inspect the reported configuration category.
+  The endpoint may be non-local, or an unsupported provider, routing option,
+  callback may be configured. Use the local-server setup above.
 - **`pip` still reaches the network** — you omitted `--no-index`. With
   `--no-index --find-links ./evidentia-wheelhouse`, pip installs only from the
   wheelhouse.

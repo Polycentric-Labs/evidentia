@@ -49,6 +49,7 @@ from evidentia_core.models.gap import ControlGap
 from evidentia_core.models.risk import (
     ReasoningTrace,
     RiskStatement,
+    RiskTreatment,
     TraceClaim,
 )
 from evidentia_core.network_guard import OfflineViolationError
@@ -293,7 +294,16 @@ class RiskStatementGenerator:
         gap: ControlGap,
         gen_ctx: GenerationContext,
     ) -> RiskStatement:
-        """Apply post-generation enrichment that the LLM doesn't produce."""
+        """Set trusted provenance and return an unreviewed risk draft."""
+        # Schema validation cannot establish that a human reviewed or accepted
+        # model output. Lifecycle decisions belong to a later reviewer action.
+        risk.accepted = False
+        risk.reviewed_by = None
+        risk.reviewed_at = None
+        risk.treatment = RiskTreatment.PENDING
+        risk.treatment_rationale = None
+        risk.generated_by = "evidentia-ai"
+        risk.generated_at = gen_ctx.generated_at
         risk.source_gap_id = gap.id
         risk.model_used = self.model
         risk.framework_mappings = [
@@ -305,8 +315,7 @@ class RiskStatementGenerator:
         # inventory linkage when the operator configured it on the
         # generator. Empty by default (backward-compatible with all
         # pre-v0.7.10 consumers).
-        if self.model_inventory_id is not None:
-            risk.model_inventory_ref = self.model_inventory_id
+        risk.model_inventory_ref = self.model_inventory_id
         return risk
 
     # ── Public API ────────────────────────────────────────────────────

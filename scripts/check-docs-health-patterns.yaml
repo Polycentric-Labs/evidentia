@@ -68,18 +68,9 @@ forbidden_patterns:
     flags: [IGNORECASE]
     reason: "reclaimable vendor-preview host — takeover risk; use owned domains"
 
-  # github.io: any *.github.io project/user page is reclaimable if the account
-  # or repo is deleted, so it is flagged by default — EXCEPT two allowlisted,
-  # stable pages this repo legitimately cites:
-  #   * polycentric-labs.github.io — the project's OWN Pages host (mkdocs.yml,
-  #     pages.yml, the generated wiki API pages). Owned by us.
-  #   * squidfunk.github.io — the canonical docs homepage of the Material for
-  #     MkDocs upstream tool the wiki is built with (a maintained OSS project's
-  #     own page, not a reclaimable deploy-preview). This existing allowance remains.
-  # The negative lookahead allowlists exactly those two hosts and flags every
-  # other github.io host. (Deploy-preview hosts like *.vercel.app have no such
-  # legitimate-upstream-citation case, so they carry no allowlist.)
+  # Allow only the project's own GitHub Pages hostname. Additional hostname
+  # labels must not inherit the exception by sharing that hostname's prefix.
   - name: vendor_host_github_io
-    regex: '\bhttps?://(?!(?:polycentric-labs|squidfunk)\.github\.io)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.github\.io\b'
+    regex: '\bhttps?://(?!(?![^/?#\s]*@)polycentric-labs\.github\.io\.?(?::[0-9]+)?(?=[/?#\s)\]}>,"\x60\x27]|$))(?:[^/?#\s]*@)?(?![^/?#\s]*@)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.github\.io\b'
     flags: [IGNORECASE]
-    reason: "reclaimable vendor-preview host — takeover risk; use owned domains (polycentric-labs.github.io + squidfunk.github.io allowlisted)"
+    reason: "reclaimable vendor host; only the exact project Pages hostname is allowed"

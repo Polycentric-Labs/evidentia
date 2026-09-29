@@ -71,10 +71,11 @@ F-V97-mcp-signer-trust. It does NOT eliminate:
   OIDC credential can sign arbitrary payloads. The transparency log
   records the abuse, but doesn't prevent it.
 - **Replay threats**: a captured signed envelope can be replayed
-  later. Mitigation: the envelope's ``signed_at`` UTC timestamp is
-  itself part of the canonical-JSON-signed bytes via Pydantic's
-  ``model_dump_json`` deterministic ordering, but the wrapping
-  callsite must surface the timestamp to verifiers.
+  later. Schema v1 signs the selected tool-output payload only;
+  ``signed_at`` and ``tool_name`` are unsigned envelope metadata.
+  Signature verification does not establish freshness or bind the
+  payload to a tool name. Callers that require replay protection
+  must enforce it through a separate authenticated protocol.
 - **Transport-tampering threats**: the signed envelope still travels
   over whatever transport the MCP client uses. If the transport is
   unauthenticated (a malicious HTTP intermediary), the envelope is

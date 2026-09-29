@@ -117,7 +117,7 @@ Meanwhile, the compliance workload keeps growing. A single fintech or healthcare
 1. **Open standards, not vendor lock-in.** Inputs and outputs use [OSCAL](https://pages.nist.gov/OSCAL/) — NIST's open standard for control catalogs and assessment results. If you outgrow Evidentia, your data travels with you.
 2. **Library-first, CLI-second, API-third.** The Python library is the canonical interface. The CLI and REST API are thin wrappers. Everything Evidentia can do via the CLI, it can do from a Python script — which means you can embed it in CI pipelines, compliance portals, or custom integrations.
 3. **AI where it helps, not where it hurts.** Evidentia uses LLMs for tasks where language understanding is the bottleneck (writing NIST SP 800-30 risk statements, explaining a control in plain English). It uses deterministic code for tasks where correctness matters (OSCAL parsing, gap arithmetic, cross-framework mapping). AI is opt-in; air-gap deployments work without LLM access.
-4. **Provider-agnostic LLM access.** All AI features route through [LiteLLM](https://docs.litellm.ai/) + [Instructor](https://python.useinstructor.com/), giving structured Pydantic output from any model — OpenAI, Anthropic, Google, Azure, Bedrock, Ollama, vLLM. No vendor lock-in on the AI layer either.
+4. **Provider-agnostic LLM access.** AI features use [LiteLLM](https://docs.litellm.ai/) + [Instructor](https://python.useinstructor.com/) for structured Pydantic output. Online mode supports LiteLLM providers, including OpenAI, Anthropic, Google, Azure, Bedrock, Ollama and vLLM. Offline generation supports Ollama and local OpenAI-compatible servers under the narrower [offline configuration rules](air-gapped.md). In-process vLLM loading is deferred; network isolation remains a deployment responsibility.
 
 ### 2.4 Who it's for
 
@@ -467,11 +467,13 @@ Beyond release attestation, the current security posture includes:
   with no auth token set, the `/api/*` surface is unauthenticated, so an
   operator who deliberately binds a routable interface must set
   `--auth-token-file` (or `EVIDENTIA_API_AUTH_TOKEN_FILE`) and can pass
-  `--offline` to disable outbound collectors entirely. Naming this sharp
-  edge in the threat model, rather than hiding it, is the posture.
-- **Air-gap mode.** The `--offline` flag refuses outbound network egress;
-  Sigstore declines and routes operators to GPG; `evidentia doctor
-  --check-air-gap` validates the posture.
+  `--offline` to enable checks at supported network call sites. Enforce
+  network isolation separately and review the threat-model limits.
+- **Air-gap mode.** The `--offline` flag enforces supported call-site
+  restrictions. Sigstore declines and directs operators to GPG.
+  `evidentia doctor --check-air-gap` reports selected configuration; it
+  does not establish isolation. Restrict host/container egress and qualify
+  the deployed workload.
 - **Structured, SIEM-ingestable logs.** `--json-logs` emits
   ECS 8.11-compliant JSON (one record per line, NIST AU-3-aligned,
   OpenTelemetry-friendly) for Splunk / Elastic / Datadog / Sentinel

@@ -44,6 +44,8 @@ dependencies = [
     # proxy server, so reachability is theoretical; bumped anyway.
     "litellm>=1.96.2,<2.0",
     "instructor>=1.6",
+    "httpx>=0.28.1,<1.0",
+    "openai>=2.24.0,<3.0",
     "tenacity>=9.0",
 ]
 

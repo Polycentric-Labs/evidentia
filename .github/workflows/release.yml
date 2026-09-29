@@ -20,6 +20,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # cancel-in-progress: false so any re-fired release run (e.g. re-running a
@@ -425,7 +429,12 @@ jobs:
           STEPS_VERSION_OUTPUTS_SEMVER: ${{ steps.version.outputs.semver }}
 
       - name: Smoke test — `evidentia catalog list`
-        run: docker run --rm evidentia:rc catalog list | head -10
+        run: |
+          output="${RUNNER_TEMP:?RUNNER_TEMP is required}/evidentia-release-catalog-smoke.txt"
+          trap 'rm -f "$output"' EXIT
+          docker run --rm evidentia:rc catalog list > "$output"
+          test -s "$output"
+          head -n 10 "$output"
 
       - name: Smoke test — image labels
         run: docker inspect evidentia:rc --format '{{json .Config.Labels}}' | python -m json.tool
@@ -437,6 +446,62 @@ jobs:
             echo "FAIL: image User is '$user'; expected 65532"; exit 1
           fi
           echo "OK: image runs as uid $user (nonroot)"
+
+      - name: Smoke test API health offline
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.semver }}
+        run: |
+          # tool-check: ok timeout (GNU coreutils on the Ubuntu runner; checked below)
+          type timeout > /dev/null
+          container_id=$(docker run --detach --network none evidentia:rc --offline serve --host 127.0.0.1 --port 8000 --no-browser)
+          function cleanup() {
+            result=$?
+            trap - EXIT
+            if ! docker rm --force "$container_id" > /dev/null; then
+              echo "::error::API smoke container cleanup failed"
+              exit 1
+            fi
+            exit "$result"
+          }
+          trap cleanup EXIT
+          timeout --signal=TERM --kill-after=5s 70s docker exec --interactive "$container_id" python - "$EXPECTED_VERSION" <<'PY'
+          import json
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
+
+          opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+          deadline = time.monotonic() + 60
+          while True:
+              remaining = deadline - time.monotonic()
+              if remaining <= 0:
+                  raise SystemExit("API smoke did not become healthy before its retry deadline")
+              try:
+                  with opener.open("http://127.0.0.1:8000/api/health", timeout=min(5.0, remaining)) as response:
+                      if response.status != 200:
+                          raise SystemExit("API smoke health status is not 200")
+                      body = response.read(65537)
+                  if time.monotonic() >= deadline:
+                      raise SystemExit("API smoke health response arrived after its retry deadline")
+                  break
+              except (urllib.error.URLError, TimeoutError, OSError):
+                  remaining = deadline - time.monotonic()
+                  if remaining <= 0:
+                      raise SystemExit("API smoke did not become healthy before its retry deadline") from None
+                  time.sleep(min(0.25, remaining))
+          if len(body) > 65536:
+              raise SystemExit("API smoke health response exceeds its limit")
+          health = json.loads(body)
+          if (
+              type(health) is not dict
+              or health.get("status") != "ok"
+              or health.get("version") != sys.argv[1]
+              or health.get("auth_configured") is not False
+          ):
+              raise SystemExit("API smoke health response does not match this release")
+          print("API smoke passed: offline loopback health and exact release version")
+          PY
 
       # Save the EXACT validated image for publish-container to load + push.
       # No post-publish rebuild -> what was smoke-tested is what ships.
