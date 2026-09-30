@@ -485,16 +485,14 @@ async def test_native_stream_keeps_distinct_tool_calls(
     mode: str, indexed: bool, separate_frames: bool, done_reason: str, probe: dict[str, Any]
 ) -> None:
     calls = [
-        {"function": {"name": name, "arguments": {"value": index}}}
-        for index, name in enumerate(("first", "second"))
+        {"function": {"name": name, "arguments": {"value": index}}} for index, name in enumerate(("first", "second"))
     ]
     if indexed:
         for index, call in enumerate(calls):
             call["function"]["index"] = index
     groups = [[call] for call in calls] if separate_frames else [calls]
     probe["native_frames"] = [
-        {"message": {"role": "assistant", "content": "", "tool_calls": group}, "done": False}
-        for group in groups
+        {"message": {"role": "assistant", "content": "", "tool_calls": group}, "done": False} for group in groups
     ] + [{"message": {"content": ""}, "done": True, "done_reason": done_reason}]
     with offline_mode():
         stream = await invoke(mode, model="ollama/local", api_base=LOCAL, messages=MESSAGES, stream=True)
@@ -557,8 +555,7 @@ async def test_native_stream_refuses_repeated_snapshots_without_replay(mode: str
 @pytest.mark.parametrize("mode", ["sync", "async"])
 async def test_native_nonstream_keeps_full_calls_with_repeated_index_metadata(mode: str, probe: dict[str, Any]) -> None:
     probe["native_tool_calls"] = [
-        {"function": {"index": 0, "name": name, "arguments": {"value": name}}}
-        for name in ("first", "second")
+        {"function": {"index": 0, "name": name, "arguments": {"value": name}}} for name in ("first", "second")
     ]
     with offline_mode():
         result = await invoke(mode, model="ollama/local", api_base=LOCAL, messages=MESSAGES)

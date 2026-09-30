@@ -126,8 +126,7 @@ async def check_air_gap() -> AirGapCheckResponse:
                     subsystem="llm_client",
                     status="ok",
                     detail=(
-                        "A local/private endpoint is configured; "
-                        "effective completion options are not fully checked."
+                        "A local/private endpoint is configured; effective completion options are not fully checked."
                     ),
                 )
             )
