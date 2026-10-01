@@ -108,73 +108,89 @@ def _json_string_bytes(value: str) -> int:
 
 
 def _preflight(data: object) -> None:
-    pending = [(data, 0)]
+    pending: list[tuple[Any, int]] = [(data, 0)]
     seen: set[int] = set()
+    keys: dict[str, tuple[int, int]] = {}
+    budget = _ACTIVE_BUDGET.get()
     count = 0
     text_bytes = 0
     wire_bytes = 0
     try:
         while pending:
             value, depth = pending.pop()
-            count += type(value) is not dict
+            kind = type(value)
+            count += kind is not dict
             if count > 262144 or depth > 64:
                 raise NativeSourceError()
-            if count % 256 == 0 and (budget := _ACTIVE_BUDGET.get()) is not None:
+            if count % 256 == 0 and budget is not None:
                 budget.check()
-            kind = type(value)
-            if value is None:
-                wire_bytes += 4
-            elif kind is bool:
-                wire_bytes += 4 if value else 5
-            elif kind is int:
-                if cast(int, value).bit_length() > 426:
-                    raise NativeSourceError()
-                spelling = str(value)
-                if len(spelling) > 128:
-                    raise NativeSourceError()
-                wire_bytes += len(spelling)
-            elif kind is str:
-                wire_bytes += _json_string_bytes(cast(str, value))
-            elif kind is dict or kind is list:
-                length = len(cast(dict[str, Any] | list[Any], value))
-                if length > (64 if kind is dict else 262144):
-                    raise NativeSourceError()
-                wire_bytes += 2 + max(length - 1, 0)
-            if wire_bytes > 16777216:
-                raise NativeSourceError()
-            if value is None or kind is bool or kind is int:
-                continue
             if kind is str:
+                wire_bytes += _json_string_bytes(value)
+                if wire_bytes > 16777216:
+                    raise NativeSourceError()
                 try:
-                    size = len(cast(str, value).encode("utf8"))
+                    size = len(value.encode("utf8"))
                 except UnicodeError:
                     raise NativeSourceError() from None
                 text_bytes += size
                 if size > 8388608 or text_bytes > 16777216:
                     raise NativeSourceError()
             elif kind is dict or kind is list:
+                length = len(value)
+                if length > (64 if kind is dict else 262144):
+                    raise NativeSourceError()
+                wire_bytes += 2 + max(length - 1, 0)
+                if wire_bytes > 16777216:
+                    raise NativeSourceError()
                 identity = id(value)
                 if identity in seen:
                     raise NativeSourceError()
                 seen.add(identity)
                 if kind is dict:
-                    for key, item in cast(dict[str, Any], value).items():
-                        if type(key) is not str or len(key.encode("utf8")) > 1024:
+                    for key, item in value.items():
+                        if type(key) is not str:
                             raise NativeSourceError()
-                        wire_bytes += _json_string_bytes(key) + 1
+                        measured = keys.get(key)
+                        if measured is None:
+                            key_bytes = len(key.encode("utf8"))
+                            if key_bytes > 1024:
+                                raise NativeSourceError()
+                            escaped = _json_string_bytes(key)
+                            if len(keys) < 256:
+                                keys[key] = (key_bytes, escaped)
+                        else:
+                            key_bytes, escaped = measured
+                            if escaped > len(key) + 2 and budget is not None:
+                                budget.check()
+                        wire_bytes += escaped + 1
                         if wire_bytes > 16777216:
                             raise NativeSourceError()
-                        text_bytes += len(key.encode("utf8"))
+                        text_bytes += key_bytes
                         if text_bytes > 16777216:
                             raise NativeSourceError()
                         pending.append((item, depth + 1))
                 else:
-                    pending.extend((item, depth + 1) for item in cast(list[Any], value))
+                    pending.extend((item, depth + 1) for item in value)
             else:
-                raise NativeSourceError()
+                if value is None:
+                    wire_bytes += 4
+                elif kind is bool:
+                    wire_bytes += 4 if value else 5
+                elif kind is int:
+                    if value.bit_length() > 426:
+                        raise NativeSourceError()
+                    spelling = str(value)
+                    if len(spelling) > 128:
+                        raise NativeSourceError()
+                    wire_bytes += len(spelling)
+                else:
+                    raise NativeSourceError()
+                if wire_bytes > 16777216:
+                    raise NativeSourceError()
     finally:
         pending.clear()
         seen.clear()
+        keys.clear()
 
 
 class _NativeModel(BaseModel):

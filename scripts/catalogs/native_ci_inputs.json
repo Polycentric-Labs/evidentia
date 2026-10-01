@@ -25,9 +25,9 @@
   ],
   "expected": {
     "profile": "bsi-grundschutz-plus-plus-367d7750",
-    "bundle_sha256": "331c89538db98142ca5347125bc4c2eff84eb05b2b3544211a2ea357dba203e3",
+    "bundle_sha256": "e0e309c0fcf6abd8ba5ec327e52a2ca2494192f02713e00b240dbb1aa7ba99b5",
     "projection_sha256": "6a0b09c60e665d1af2b07fbb40d41546a3c31da37075b541e882edd9d32b19f5",
-    "wire_sha256": "a6a9e2fd803cdf4936a3820910148bd914d9de6088557b7c6c232da61c53f32e",
+    "wire_sha256": "0c619612fc2621862620414200fd03b839e72472b0ef08703293f892832bf5bb",
     "whole_wire_bytes": 11481584,
     "independent_expected_counts": {
       "catalog": 1,
@@ -41,16 +41,16 @@
     {
       "leaf": "source-index.json",
       "content_bytes": 1765,
-      "content_sha256": "c731d4f18fa29e7dd03e13542d3be8b539cf4556128f2a9629655ea0226b34f5",
+      "content_sha256": "b64a87e98d8bc843ae19f121c111779a55d79d5ca7c7eb356f1a0aa8f97454ff",
       "persisted_bytes": 1766,
-      "persisted_sha256": "4503da204b34db7749ab554e11f81f26cee8425d3aee5f92001604b977e4a2fa"
+      "persisted_sha256": "6f8414bd980a3fac23592a30525d3dd6ba362f6f86d6dac5b62325985da2a900"
     },
     {
       "leaf": "catalog.json",
       "content_bytes": 11481584,
-      "content_sha256": "a6a9e2fd803cdf4936a3820910148bd914d9de6088557b7c6c232da61c53f32e",
+      "content_sha256": "0c619612fc2621862620414200fd03b839e72472b0ef08703293f892832bf5bb",
       "persisted_bytes": 11481585,
-      "persisted_sha256": "20ed89a29a786af3061437e59064a1fce8941b283bdb617c5510208b0ef764e6"
+      "persisted_sha256": "103d4584549cc715aa9f475e3270ba45ff5b83f4344cf69b0b841d18986e8a42"
     }
   ]
 }

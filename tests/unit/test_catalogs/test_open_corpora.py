@@ -1530,3 +1530,78 @@ def test_f3_raised_storage_envelope_enforces_the_publication_table(state):
     publication["error_code"] = "catalog_storage_failed"
     with pytest.raises(ValueError, match="native_source_invalid"):
         CatalogStorageErrorEnvelope.model_validate({"code": "catalog_storage_failed", "publication": publication})
+
+
+@pytest.mark.parametrize("key", ["plain", 'escaped"', "\u00e9", "\U0001f600"])
+def test_native_preflight_measures_repeated_keys_once(monkeypatch, key):
+    from evidentia_core.models import open_corpora as native
+
+    measured = []
+    original = native._json_string_bytes
+
+    def measure(value):
+        measured.append(value)
+        return original(value)
+
+    monkeypatch.setattr(native, "_json_string_bytes", measure)
+    native._preflight([{key: None} for _ in range(600)])
+    assert measured == [key]
+
+
+def test_native_preflight_key_cache_stays_bounded(monkeypatch):
+    from evidentia_core.models import open_corpora as native
+
+    measured = []
+    original = native._json_string_bytes
+
+    def measure(value):
+        measured.append(value)
+        return original(value)
+
+    monkeypatch.setattr(native, "_json_string_bytes", measure)
+    visit_order = [str(index) for index in range(300)] + ["0", "299"]
+    native._preflight([{key: None} for key in reversed(visit_order)])
+    assert measured == [str(index) for index in range(300)] + ["299"]
+
+
+def test_native_preflight_charges_every_cached_key_occurrence():
+    from evidentia_core.models import open_corpora as native
+
+    key = "x" * 1024
+    accepted_count = (16777216 - 1) // (len(key) + 10)
+    native._preflight([{key: None} for _ in range(accepted_count)])
+    with pytest.raises(native.NativeSourceError, match="native_source_invalid"):
+        native._preflight([{key: None} for _ in range(accepted_count + 1)])
+
+
+@pytest.mark.parametrize("key,expected", [("plain", 2), ('escaped"', 302)])
+def test_native_preflight_cached_keys_preserve_budget_checks(key, expected):
+    from evidentia_core.models import open_corpora as native
+
+    class Budget:
+        def __init__(self):
+            self.calls = 0
+
+        def check(self):
+            self.calls += 1
+
+    budget = Budget()
+    token = native._ACTIVE_BUDGET.set(budget)
+    try:
+        native._preflight([{key: None} for _ in range(300)])
+        assert budget.calls == expected
+        assert native._ACTIVE_BUDGET.get() is budget
+    finally:
+        native._ACTIVE_BUDGET.reset(token)
+
+
+def test_native_preflight_clears_local_cache_after_refusal():
+    from evidentia_core.models import open_corpora as native
+
+    with pytest.raises(native.NativeSourceError) as caught:
+        native._preflight({"x": object()})
+    frames = [entry.frame.f_locals for entry in caught.traceback if entry.name == "_preflight"]
+    assert len(frames) == 1
+    assert frames[0]["keys"] == {}
+    assert frames[0]["pending"] == []
+    assert frames[0]["seen"] == set()
