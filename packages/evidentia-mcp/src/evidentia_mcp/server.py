@@ -107,8 +107,11 @@ def _native_tool_refusal(error: BaseException) -> str | None:
             candidate = context.get("error")
     if type(candidate) is not NativeSourceError:
         return None
+    code = getattr(candidate, "code", None)
+    if type(code) is not str:
+        return None
     try:
-        return NativeSourceError(getattr(candidate, "code", None)).code
+        return NativeSourceError(code).code
     except ValueError:
         return None
 

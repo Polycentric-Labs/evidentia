@@ -116,3 +116,50 @@ def test_native_tool_does_not_normalize_unknown_errors(native_server, monkeypatc
         _invoke(native_server)
     assert caught.value.__cause__ is error
     assert native._ACTIVE_BUDGET.get() is before
+
+
+@pytest.mark.parametrize("kind", ["missing", "none", "integer", "boolean", "list", "dict", "object", "str_subclass"])
+@pytest.mark.parametrize("target", ["direct", "_preflight", "native_value"])
+def test_native_tool_does_not_normalize_malformed_codes(native_server, monkeypatch, kind, target):
+    from evidentia_core.catalogs.registry import FrameworkRegistry
+
+    class CodeSubclass(str):
+        pass
+
+    error = native.NativeSourceError("processing_deadline_exceeded")
+    if kind == "missing":
+        del error.code
+    else:
+        error.code = {
+            "none": None,
+            "integer": 1,
+            "boolean": True,
+            "list": ["processing_deadline_exceeded"],
+            "dict": {"code": "processing_deadline_exceeded"},
+            "object": object(),
+            "str_subclass": CodeSubclass("processing_deadline_exceeded"),
+        }[kind]
+    model = native.NativeReadRequest.model_validate({"framework_id": "au-ism", "bundle_sha256": "0" * 64})
+
+    def refuse(*args, **kwargs):
+        raise error
+
+    class Bundle:
+        bundle_sha256 = "0" * 64
+
+        def model_dump(self, **kwargs):
+            if target == "direct":
+                refuse()
+            with monkeypatch.context() as patch:
+                patch.setattr(native, target, refuse)
+                return model.model_dump(mode="json")
+
+    monkeypatch.setattr(FrameworkRegistry, "get_catalog", lambda *args: SimpleNamespace(native_source=Bundle()))
+    before = native._ACTIVE_BUDGET.get()
+    with pytest.raises(UnexpectedToolError) as caught:
+        _invoke(native_server)
+    if target == "direct":
+        assert caught.value.__cause__ is error
+    else:
+        assert type(caught.value.__cause__) is PydanticSerializationError
+    assert native._ACTIVE_BUDGET.get() is before

@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 HERE = Path(__file__).resolve().parent
-INPUT_SHA256 = "4e8527816510ba62820e8de4c568b26b06d9f2ac9f790d99c69d9b21fbc81fbb"
+INPUT_SHA256 = "275f34e45b8f2270e7619bc288a34e5223565cc4c8330dac61c1eb98dd75e4d8"
 NATIVE_TESTS = [
     "test_f2_manifest_save_replaces_one_complete_file",
     "test_f2_legacy_generations_retain_prior_and_remove_does_not_open_payload",
