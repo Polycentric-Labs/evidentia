@@ -150,3 +150,96 @@ class TestCheckReadmeRecentReleasesCurrentRealReadme:
             if f.check == "readme_recent_releases_current" and f.severity == cdh.Severity.FAIL
         ]
         assert fails == [], [f.message for f in fails]
+
+
+class TestPublicVendorHostPolicy:
+    """Exercise the shipped policy with no private configuration overlay."""
+
+    @pytest.fixture
+    def public_config(self, cdh: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+        source = REPO_ROOT / cdh.BASE_CONFIG_PATH
+        destination = tmp_path / cdh.BASE_CONFIG_PATH
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(source.read_bytes())
+        monkeypatch.setattr(cdh, "REPO_ROOT", tmp_path)
+        config, error = cdh.load_phrase_config()
+        assert error is None
+        assert config.is_loaded
+        assert sum(name == "vendor_host_github_io" for name, _ in config.forbidden_patterns) == 1
+        return config
+
+    @pytest.mark.parametrize(
+        "labels",
+        [
+            ("squidfunk", "github", "io"),
+            ("untrusted", "github", "io"),
+            ("polycentric-labs", "github", "io", "untrusted", "github", "io"),
+            ("polycentric-labs", "github", "ioevil", "github", "io"),
+            ("child", "polycentric-labs", "github", "io"),
+            ("polycentric-labs-other", "github", "io"),
+        ],
+        ids=["former-exception", "external", "extended-host", "extended-label", "subdomain", "lookalike"],
+    )
+    def test_external_host_is_rejected(
+        self, cdh: Any, public_config: Any, tmp_path: Path, labels: tuple[str, ...]
+    ) -> None:
+        document = tmp_path / "guide.md"
+        target = "https://" + ".".join(labels) + "/reference/"
+        document.write_text("[Reference](" + target + ")\n", encoding="utf-8")
+        result = cdh.CheckResult()
+        cdh.check_phrase_audit([document], public_config, result)
+        failures = [finding for finding in result.findings if finding.severity == cdh.Severity.FAIL]
+        assert len(failures) == 1
+        assert failures[0].check == "phrase_audit:vendor_host_github_io"
+
+    @pytest.mark.parametrize("host", ["polycentric-labs.github.io", "POLYCENTRIC-LABS.GITHUB.IO"])
+    @pytest.mark.parametrize("suffix", ["", "/", "/reference/", "?q=docs", "#reference", ":443/docs", "./docs"])
+    def test_exact_project_host_is_allowed(
+        self, cdh: Any, public_config: Any, tmp_path: Path, host: str, suffix: str
+    ) -> None:
+        document = tmp_path / "guide.md"
+        document.write_text("[Reference](https://" + host + suffix + ")\n", encoding="utf-8")
+        result = cdh.CheckResult()
+        cdh.check_phrase_audit([document], public_config, result)
+        assert result.fail_count == 0, result.findings
+
+    @pytest.mark.parametrize("separator", ["@", ":443@", ",name@", "'name@", ")name@"])
+    def test_project_hostname_in_userinfo_does_not_exempt_external_destination(
+        self, cdh: Any, public_config: Any, tmp_path: Path, separator: str
+    ) -> None:
+        document = tmp_path / "guide.md"
+        destination = ".".join(("untrusted", "github", "io"))
+        target = "https://polycentric-labs.github.io" + separator + destination + "/"
+        document.write_text("[Reference](" + target + ")\n", encoding="utf-8")
+        result = cdh.CheckResult()
+        cdh.check_phrase_audit([document], public_config, result)
+        failures = [finding for finding in result.findings if finding.severity == cdh.Severity.FAIL]
+        assert len(failures) == 1
+        assert failures[0].check == "phrase_audit:vendor_host_github_io"
+
+    @pytest.mark.parametrize(
+        ("userinfo", "destination_labels", "rejected"),
+        [
+            ("reader", ("untrusted", "github", "io"), True),
+            ("reader", ("polycentric-labs", "github", "io"), True),
+            (".".join(("untrusted", "github", "io")), ("evidentiagrc", "com"), False),
+        ],
+        ids=["external-destination", "owned-pages-with-userinfo", "owned-custom-destination"],
+    )
+    def test_userinfo_is_not_the_destination(
+        self,
+        cdh: Any,
+        public_config: Any,
+        tmp_path: Path,
+        userinfo: str,
+        destination_labels: tuple[str, ...],
+        rejected: bool,
+    ) -> None:
+        document = tmp_path / "guide.md"
+        target = "https://" + userinfo + "@" + ".".join(destination_labels) + "/"
+        document.write_text("[Reference](" + target + ")\n", encoding="utf-8")
+        result = cdh.CheckResult()
+        cdh.check_phrase_audit([document], public_config, result)
+        failures = [finding for finding in result.findings if finding.severity == cdh.Severity.FAIL]
+        assert len(failures) == int(rejected)
+        assert all(finding.check == "phrase_audit:vendor_host_github_io" for finding in failures)

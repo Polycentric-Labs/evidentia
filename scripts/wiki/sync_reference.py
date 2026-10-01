@@ -516,8 +516,8 @@ def render_configuration(
     out.append(
         "Evidentia is configured through three layers, in precedence order: "
         "**CLI flag > environment variable > `evidentia.yaml` > built-in "
-        "default**. There is no global config daemon or hidden state — every "
-        "knob is one of the items below.\n\n"
+        "default**. LiteLLM endpoint routing also reads provider-specific "
+        "configuration; see the offline AI section below.\n\n"
     )
 
     # --- evidentia.yaml ---
@@ -548,6 +548,23 @@ def render_configuration(
     for name in env_vars:
         out.append(f"| `{_md_escape_cell(name)}` |\n")
     out.append("\n")
+
+    out.append("## Offline AI configuration\n\n")
+    out.append(
+        "Offline generation supports Ollama and local OpenAI-compatible servers, includin"
+        "g vLLM. Set `OLLAMA_API_BASE` for Ollama, `OPENAI_API_BASE` or `OPENAI_BASE_URL`"
+        " for OpenAI-compatible routes, or `HOSTED_VLLM_API_BASE` for vLLM prefixes. Incl"
+        "ude the server API root, such as `/v1`, where required. Only Ollama defaults to "
+        "localhost. Conflicting explicit bases are refused. `EVIDENTIA_LLM_API_BASE` affe"
+        "cts diagnostic/status code, not completions.\n\nThe dedicated transport ignores en"
+        "vironment proxies and refuses redirects. Unknown per-call routing options, custo"
+        "m transports/callbacks and multimodal content are refused. Text messages, functi"
+        "on schemas, structured output and streaming remain supported. In-process vLLM lo"
+        "ading is deferred for v0.13; use a separately running local server.\n\nKeep routin"
+        "g stable and restrict the server's own network access. Host/container network is"
+        "olation remains necessary. See [Air-gapped install](../2-guides/air-gapped-insta"
+        "ll.md) for endpoint precedence, migration and qualification limits.\n\n"
+    )
 
     # --- provider keys ---
     out.append("## LLM provider keys\n\n")

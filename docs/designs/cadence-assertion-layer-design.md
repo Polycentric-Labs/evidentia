@@ -1,6 +1,12 @@
 # Design: the cadence assertion layer (V13-01) and vulnerability-scan ingest (V13-05)
 
-Status: built through batch 6 (V13-01 and the file-ingest half of V13-05), 2026-09-06; the API pollers in section 3 remain planned. Scope items V13-01 and V13-05 of
+Current scope (owner decision 2026-09-21): V13-05 covers Nessus v2 and Greenbone
+GMP file imports. Tenable.io, Qualys VMDR, Rapid7 InsightVM and AWS Inspector
+API pollers are explicitly deferred from v0.13; section 6 records the follow-up.
+
+Historical status (2026-09-06): built through batch 6 (V13-01 and the
+file-ingest half of V13-05); API pollers remained planned at that point.
+Scope items V13-01 and V13-05 of
 [the v0.13 plan](../releases/plans/v0.13-plan.md). Ratified constraints that bind
 this design: extension-first (answer 10: fold the layer into existing verbs, at
 most one new leaf), 100 percent console parity at the tag (answer 11), a gap-free
@@ -117,8 +123,10 @@ new version of the evidence it evaluated.
 
 ### 2.6 V13-05: scan ingest as the first consumer
 
-Two file-ingest collectors first, both free and self-hostable, both without
-network access in tests:
+The v0.13 scope is two file-import collectors for supplied XML exports, with
+no network access in their tests. They do not run scanners or poll provider
+APIs. See [the operator guide](../vuln-scan-collectors.md) for the supported
+formats, persistence controls and evidence limits:
 
 - `evidentia collect nessus --file scan.nessus [--cadence-slug ...]`: parses the
   Nessus v2 XML export (Nessus Essentials, 16 IPs). One `SecurityFinding` per
@@ -141,8 +149,9 @@ unauthenticated scans, hosts outside the target list, plugin-feed staleness.
 Both leaves register the standard way (collector package, `collect.py` command,
 `routers/collectors.py` operation, `/collect` console wiring, parity row). Per
 the `check_doc_counts.py` rule, file-import collectors do not raise the README
-collector count; API pollers (Tenable.io, Qualys, Rapid7, AWS Inspector) do, and
-they follow once the ingest shape is stable.
+collector count. Tenable.io, Qualys VMDR, Rapid7 InsightVM and AWS Inspector
+API pollers are outside the owner-confirmed v0.13 scope. Their priority and
+acceptance design remain the explicit follow-up in section 6.
 
 ## 3. Sequencing
 
@@ -158,8 +167,10 @@ they follow once the ingest shape is stable.
    `tests/fixtures/scans/`, evidence artifact write, series end-to-end test.
 3. Batch 6 (V13-05 second half, this batch): Greenbone ingest, `docs/vuln-scan-collectors.md`,
    capability-matrix delta.
-4. Later: API pollers, the evidence-store index sidecar, and a persisted
-   completion history for conmon if the state file's single date proves limiting.
+4. API pollers are deferred from v0.13 by the owner decision recorded in
+   section 6. The evidence-store index sidecar and a persisted completion
+   history for conmon remain the original later-work candidates if the state
+   file's single date proves limiting.
 
 ## 4. Open questions for the review
 
@@ -184,3 +195,21 @@ they follow once the ingest shape is stable.
 [ocsf-mapping.md](../ocsf-mapping.md), [api-stability.md](../api-stability.md),
 [cli-gui-parity.yaml](../cli-gui-parity.yaml),
 [designs/sarif-ingestion-collector-design.md](sarif-ingestion-collector-design.md).
+
+## 6. Deferred API pollers (owner decision 2026-09-21)
+
+The owner confirmed Nessus v2 and Greenbone GMP file imports as V13-05's
+v0.13 scope. Tenable.io, Qualys VMDR, Rapid7 InsightVM and AWS Inspector
+API pollers are deferred; no later release or implementation order is assigned.
+
+At a future priority and design review, select the provider order and endpoints,
+define source fields and provenance, establish product entitlement and an
+authorized credential path with least-privilege grants, and specify bounded
+transport, pagination, error handling and cadence semantics. Define fixtures
+and their limits, CLI/API/console parity and verification criteria before
+implementation. Live-provider verification requires an authorized account and
+the applicable approval; importer tests cannot satisfy it.
+
+The [roadmap deferred register](../ROADMAP.md#deferred--rejected-items) carries
+this follow-up. Original V13-05 batch records establish file-import work only;
+the deferral does not alter other v0.13 requirements.

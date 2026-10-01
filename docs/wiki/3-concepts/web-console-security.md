@@ -36,7 +36,7 @@ tightens it.
 | **CORS** | `CORSMiddleware`; production is **localhost-only**, dev mode (`--dev`) is permissive for the Vite dev server. | Locked to the console origin in production. | Keep the default bind; only use `--dev` for frontend development. |
 | **Rate limiting** | `RateLimitMiddleware` bounds request volume. | On. | — |
 | **Security headers** | `SecurityHeadersMiddleware` injects CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS, Permissions-Policy. | **Auto** — on for a non-loopback `--host`, off for localhost. | Force with `--security-headers`. |
-| **Offline mode** | `network_guard.is_offline()` fail-closes all network egress. | Off (opt-in). | Set `EVIDENTIA_API_OFFLINE` / `--offline` for an air-gapped console. |
+| **Offline mode** | Enables configuration checks at supported call sites. Offline AI uses Ollama or a local OpenAI-compatible server. Its transport ignores environment proxies and refuses redirects; unknown per-call routing options are refused. | Off (opt-in). | Set `EVIDENTIA_API_OFFLINE=1` or use `evidentia --offline serve`; keep routing stable and enforce host/container network isolation. The flag is not a process-wide network sandbox. |
 | **Audit** | Each request carries the authenticated principal (or `anonymous`) for per-action audit events. | On. | Wire authentication so the principal is a real identity, not `anonymous`. |
 
 ## Default posture and the two-layer disclosure

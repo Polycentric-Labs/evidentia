@@ -129,25 +129,35 @@ already wrong, and sequence nothing ahead of the licence answer or
 partnership it depends on. Single-sector work waits.
 
 The cycle leads with the temporal continuity and cadence assertion layer
-(V13-01), the capability both research programmes reached independently: a
-gap-free dated evidence series over the append-only store, satisfying
-recurring-cadence obligations from PCI DSS 11.6.1's weekly series to NERC
-CIP-007 R2's thirty-five-day clock, with the vulnerability-scan ingest
-(V13-05) built alongside as its first consumer. Around that primitive, four
-groups:
+(V13-01), the capability both research programmes reached independently:
+dated evidence series over the append-only store, reporting continuity and
+gaps. A gap-free series is evidence of cadence and does not establish
+compliance. The documented cadence examples include PCI DSS 11.6.1's weekly
+series and NERC CIP-007 R2's thirty-five-day clock, with vulnerability-scan ingest
+(V13-05: Nessus v2 and Greenbone GMP file imports) built alongside as its first
+consumer. The owner confirmed this file-import scope on 2026-09-21 and
+explicitly deferred the Tenable.io, Qualys VMDR, Rapid7 InsightVM and
+AWS Inspector API pollers. Their future priority and acceptance design are
+recorded in the [deferred register](#deferred--rejected-items). Around that
+primitive, four groups:
 
 - **Collectors, the shared spine**: Microsoft Entra ID / M365 posture (the
   most-cited gap in the sector research, 15 of 17 files), an Okta extension
   plus Google Workspace, immutable-storage and retention configuration,
-  incident-clock ingest (ServiceNow, Jira, PagerDuty), and the
-  zero-credential public-registry resolvers behind a single selector leaf.
-- **Catalogs**: ingest the admitted machine-readable corpora (Australian
-  ISM, CISA SCuBA, and BSI Grundschutz++ with share-alike segregation),
-  and fix the currency defects the project ships
-  today (`cisa-cpgs` 2.0, `swift-cscf` v2026, `nerc-cip-v7` designators,
-  `cjis-v6` 6.1 with per-CSA audit versions, and the rest of the V13-09
-  table). FINOS CCC remains excluded from v0.13 pending legal review; its
-  adoption criteria are in the [deferred register](#deferred--rejected-items).
+  incident-clock ingest (ServiceNow, Jira, PagerDuty), and public-registry
+  selectors behind a single leaf. SAM credentials remain server-side,
+  SAM Entity remains partial or unavailable, and SSL Labs live access stays
+  disabled. Source presence does not establish compliance.
+- **Catalogs**: retain reviewed Australian ISM and CISA M365 SCuBA source
+  documents with their source notices. BSI Grundschutz++ is an external-only
+  pinned importer: operators supply the exact source, LICENSE and README files;
+  no BSI source is bundled and no license acceptance is automated. Fix the
+  catalog currency defects (`cisa-cpgs` 2.0, `swift-cscf` v2026,
+  `nerc-cip-v7` designators, `cjis-v6` 6.1 with per-CSA audit versions,
+  and the rest of the V13-09 table). The six selected FINOS CCC source and
+  normalized catalogs remain excluded from v0.13 under the recorded owner
+  disposition. No CSL acceptance is authorized. Future adoption criteria remain
+  in the [deferred register](#deferred--rejected-items).
 - **The correctness debt**: `api-stability.md` §1 repaired with the gate
   extended to cover it; the "cryptographic CIMD signatures" misnomer
   retired; crosswalk and catalog-truth defects; the `catalog pin` phantom
@@ -159,13 +169,18 @@ groups:
   the vendored FedRAMP upstream; Python 3.14 support with `requires-python`
   lifted to `<3.15`; and root-directory cleanup round two behind a fidelity
   gate.
-- **The permission track**: the thirteen licence letters go out at cycle
-  start. Maintainer-sent correspondence; the answers gate v0.14 onward.
+- **The permission track**: sending the licensing letters is deferred from
+  v0.13 by the owner's 2026-09-21 decision. Existing content and use permission
+  gates remain. Corrected owner-reviewed correspondence is a
+  [follow-up](#deferred--rejected-items); it is not a prerequisite for this tag
+  and does not authorize adoption or license acceptance.
 
 Pulled forward on 2026-09-06 from the provisional v0.14 to v0.16 sketches
 (V13-25 to V13-28 in the plan): STIG and SCAP results ingest, the CycloneDX
 VEX 1.7 opt-in flag, an RFC 9116 `security.txt` probe inside the
-registry-selector leaf, and patch cadence from release APIs. Delivery follows
+registry-selector leaf, and upstream release publication cadence. Publication
+spacing does not establish installed patch versions, remediation or compliance.
+Delivery follows
 the ratified plan and recorded owner deferrals. Entra ID / M365 now has all nine collector capabilities and
 CLI/API/console parity. Its approved test path combines authored-synthetic Graph
 transports with a selected recorded CISA DLP export; live-tenant acceptance
@@ -2526,6 +2541,31 @@ ROI framing in ways they don't respond to "coverage %".
 
 ## Deferred / rejected items
 
+- **V13-18 licensing correspondence**: sending is deferred from v0.13, with
+  all existing content and use permission gates retained by owner decision
+  on 2026-09-21. Before later permission-dependent catalog work, refresh the
+  official contact routes and prepare precise requests covering content,
+  versions, modifications, package and standalone exports, public
+  redistribution, and any separately proposed paid or hosted use. Remove
+  promises to accept unknown terms or undertake unapproved contributions.
+  The owner reviews the requests and sends selected letters personally.
+  Preserve requests and responses, review material obligations and record
+  the approved scope before adoption. This follow-up has no promised release
+  date and does not supersede the separate FINOS CCC legal review below.
+  See the [v0.13 owner amendment](releases/plans/v0.13-plan.md#v13-18-owner-correspondence-amendment-2026-09-21).
+- **V13-05 vulnerability-scan API pollers**: Tenable.io, Qualys VMDR,
+  Rapid7 InsightVM and AWS Inspector are explicitly deferred from v0.13 by
+  the owner decision of 2026-09-21. Nessus v2 and Greenbone GMP file imports
+  remain the v0.13 scope. No later release or provider order is assigned.
+  Before scheduling implementation, decide priority, endpoints and source
+  provenance, credential handling and least-privilege grants, product
+  entitlement, bounded collection, cadence semantics, fixture coverage and
+  CLI/API/console parity. Define verification criteria and arrange separately
+  authorized live-provider verification where needed. Existing importer
+  evidence does not establish provider access or acceptance. See the
+  [scope amendment](releases/plans/v0.13-plan.md#v13-05-owner-scope-amendment-2026-09-21)
+  and [scan design follow-up](designs/cadence-assertion-layer-design.md#6-deferred-api-pollers-owner-decision-2026-09-21).
+
 - **FINOS Common Cloud Controls (CCC)**: deferred for legal review, with the
   six selected source and normalized catalogs excluded from v0.13. Revisit
   adoption in a later planning cycle after reviewing the exact releases,
@@ -2558,3 +2598,19 @@ housekeeping (verified absent post-v0.7.1 via
 secrets remain at the repo or env level). The originally-queued
 v0.7.1 deletion-verification step is therefore a no-op carried into
 v0.7.2 only as a bookkeeping line in `docs/v0.7.2-plan.md`.
+## Offline in-process inference follow-up
+
+The v0.13 offline AI boundary supports Ollama and local OpenAI-compatible
+servers, including vLLM. The owner approved this boundary on 2026-09-21.
+Loading vLLM models inside the Evidentia process is explicitly deferred.
+Operators using the old adapter must start a local server and configure its
+API root; [Air-gapped deployments](air-gapped.md#local-inference-server-configuration)
+describes the migration. This decision does not change online routing.
+
+Revisit in-process inference during the next release planning review. Before
+implementation or adoption, qualify model provenance, local artifact loading,
+hardware/runtime requirements, telemetry and network behavior, concurrency,
+resource cleanup and upgrade compatibility. Exercise real workloads under
+outbound network denial with negative controls for downloads, discovery and
+callbacks. Record an independent security review and a new owner scope decision
+before adding an in-process adapter to the supported offline boundary.

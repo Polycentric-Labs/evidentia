@@ -3,7 +3,7 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia is configured through three layers, in precedence order: **CLI flag > environment variable > `evidentia.yaml` > built-in default**. There is no global config daemon or hidden state — every knob is one of the items below.
+Evidentia is configured through three layers, in precedence order: **CLI flag > environment variable > `evidentia.yaml` > built-in default**. LiteLLM endpoint routing also reads provider-specific configuration; see the offline AI section below.
 
 ## `evidentia.yaml`
 
@@ -77,6 +77,14 @@ Evidentia reads the following **54** `EVIDENTIA_*` environment variables. Variab
 | `EVIDENTIA_VENDOR_STORE_DIR` |
 | `EVIDENTIA_WEBHOOK_SECRET` |
 | `EVIDENTIA_WORKFLOW_STORE_DIR` |
+
+## Offline AI configuration
+
+Offline generation supports Ollama and local OpenAI-compatible servers, including vLLM. Set `OLLAMA_API_BASE` for Ollama, `OPENAI_API_BASE` or `OPENAI_BASE_URL` for OpenAI-compatible routes, or `HOSTED_VLLM_API_BASE` for vLLM prefixes. Include the server API root, such as `/v1`, where required. Only Ollama defaults to localhost. Conflicting explicit bases are refused. `EVIDENTIA_LLM_API_BASE` affects diagnostic/status code, not completions.
+
+The dedicated transport ignores environment proxies and refuses redirects. Unknown per-call routing options, custom transports/callbacks and multimodal content are refused. Text messages, function schemas, structured output and streaming remain supported. In-process vLLM loading is deferred for v0.13; use a separately running local server.
+
+Keep routing stable and restrict the server's own network access. Host/container network isolation remains necessary. See [Air-gapped install](../2-guides/air-gapped-install.md) for endpoint precedence, migration and qualification limits.
 
 ## LLM provider keys
 

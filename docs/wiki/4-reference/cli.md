@@ -14,7 +14,7 @@ Applied to every command (pass before the subcommand, e.g. `evidentia --offline 
 | `--verbose, -v` | Enable verbose (DEBUG) logging. |
 | `--quiet, -q` | Suppress non-error output. |
 | `--config` | Path to a evidentia.yaml config file. Defaults to walking CWD -> parents for the first `evidentia.yaml` found. |
-| `--offline` | Air-gapped mode: refuse all outbound network calls. LLM features require an Ollama/vLLM/local endpoint. Use with `evidentia doctor --check-air-gap` to validate posture. |
+| `--offline` | Enable offline configuration guards. AI requires Ollama or a local OpenAI-compatible server. Environment proxies and redirects are disabled for these calls. Use network isolation as well. |
 | `--json-logs` | v0.7.0: emit logs as ECS 8.11-compliant JSON (one record per line) instead of human-readable Rich console output. Drop-in ingestable by Splunk / Elastic / Datadog / Sumo Logic / Microsoft Sentinel. Use in SIEM-ingest pipelines and CI systems that parse structured logs. |
 | `--rbac-identity` | v0.9.6: identity string for CLI RBAC enforcement. Overrides EVIDENTIA_RBAC_IDENTITY env var when set. Policy is loaded from EVIDENTIA_RBAC_POLICY_FILE; default policy is permissive (single-tenant admin). |
 | `--rbac-tenant` | v0.9.8: tenant claim for multi-tenant CLI RBAC. Overrides EVIDENTIA_RBAC_TENANT env var when set. Combined with --rbac-identity as <identity>@@<tenant> at decision time. Ignored when the loaded policy is single-tenant (no behavior change for v0.9.6 operators). |
@@ -677,7 +677,7 @@ Run a diagnostic check of the Evidentia installation.
 
 | Flag / argument | Description |
 | --- | --- |
-| `--check-air-gap` | Run the air-gap validator: enumerate every subsystem that issues network calls and report each one's offline posture (Ollama-ready, custom api_base on loopback, or cloud-only). |
+| `--check-air-gap` | Report configured offline posture. This diagnostic does not exercise completions or prove network isolation. |
 
 ## `evidentia eval`
 

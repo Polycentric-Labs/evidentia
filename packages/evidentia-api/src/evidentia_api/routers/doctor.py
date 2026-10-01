@@ -93,10 +93,11 @@ async def doctor() -> dict[str, object]:
 
 @router.post("/doctor/check-air-gap", response_model=AirGapCheckResponse)
 async def check_air_gap() -> AirGapCheckResponse:
-    """Audit every subsystem's offline posture without running any network IO.
+    """Describe selected configuration without probing network services.
 
-    Returns a per-subsystem status report matching the CLI's
-    ``doctor --check-air-gap`` table output.
+    Legacy status fields describe this limited diagnostic only. They do not
+    establish isolation, resolve every completion option, or verify dependency
+    telemetry. Raw model and endpoint values are omitted.
     """
     checks: list[AirGapCheck] = []
     any_leaks = False
@@ -111,17 +112,22 @@ async def check_air_gap() -> AirGapCheckResponse:
             AirGapCheck(
                 subsystem="llm_client",
                 status="ok",
-                detail=f"model={model} (local prefix)",
+                detail="A local model prefix is configured; completion routing is checked when a call runs.",
             )
         )
     elif api_base:
-        host = urlparse(api_base).hostname or ""
+        try:
+            host = urlparse(api_base).hostname or ""
+        except ValueError:
+            host = ""
         if is_loopback_or_private(host):
             checks.append(
                 AirGapCheck(
                     subsystem="llm_client",
                     status="ok",
-                    detail=f"api_base={api_base} on loopback/RFC-1918",
+                    detail=(
+                        "A local/private endpoint is configured; effective completion options are not fully checked."
+                    ),
                 )
             )
         else:
@@ -131,8 +137,7 @@ async def check_air_gap() -> AirGapCheckResponse:
                     subsystem="llm_client",
                     status="would_leak",
                     detail=(
-                        f"api_base={api_base} is not loopback/RFC-1918. "
-                        "Switch to Ollama or a local OpenAI-compatible endpoint."
+                        "The diagnostic endpoint is not local/private. Configure a supported local inference server."
                     ),
                 )
             )
@@ -143,8 +148,8 @@ async def check_air_gap() -> AirGapCheckResponse:
                 subsystem="llm_client",
                 status="would_leak",
                 detail=(
-                    f"model={model} is a cloud LLM and no local api_base is set. "
-                    "Set EVIDENTIA_LLM_MODEL=ollama/llama3 or similar."
+                    "No local endpoint was found in diagnostic configuration. "
+                    "Configure a supported local inference server."
                 ),
             )
         )
@@ -162,8 +167,8 @@ async def check_air_gap() -> AirGapCheckResponse:
     checks.append(
         AirGapCheck(
             subsystem="ai_telemetry",
-            status="ok",
-            detail="LiteLLM + Instructor do not emit telemetry",
+            status="skipped",
+            detail="Dependency telemetry is not checked here. Qualify the deployed workload under network isolation.",
         )
     )
 

@@ -181,9 +181,9 @@ def _global_options(
         False,
         "--offline",
         help=(
-            "Air-gapped mode: refuse all outbound network calls. LLM "
-            "features require an Ollama/vLLM/local endpoint. Use with "
-            "`evidentia doctor --check-air-gap` to validate posture."
+            "Enable offline configuration guards. AI requires Ollama or a local "
+            "OpenAI-compatible server. Environment proxies and redirects are "
+            "disabled for these calls. Use network isolation as well."
         ),
     ),
     json_logs: bool = typer.Option(
@@ -243,8 +243,8 @@ def _global_options(
 
         set_offline(True)
         logging.getLogger("evidentia.cli").info(
-            "Air-gapped mode enabled (--offline) — outbound network calls "
-            "to non-loopback hosts will raise OfflineViolationError."
+            "Offline configuration guards enabled. Supported call sites check "
+            "their destinations; enforce network isolation separately."
         )
 
     # v0.2.1: load evidentia.yaml once and make it available to every
@@ -295,9 +295,8 @@ def doctor(
         False,
         "--check-air-gap",
         help=(
-            "Run the air-gap validator: enumerate every subsystem that "
-            "issues network calls and report each one's offline posture "
-            "(Ollama-ready, custom api_base on loopback, or cloud-only)."
+            "Report configured offline posture. This diagnostic does not "
+            "exercise completions or prove network isolation."
         ),
     ),
 ) -> None:
@@ -385,9 +384,9 @@ def doctor(
 def _render_air_gap_report() -> None:
     """Print a per-subsystem air-gap posture table.
 
-    Each check answers: if ``--offline`` were on right now, would this
-    subsystem's configured target be refused? Not a live network probe —
-    pure configuration audit.
+    The rows describe selected configuration, not live network behavior or
+    every effective completion option. A positive row does not establish
+    isolation. Raw model and endpoint values are omitted from diagnostics.
     """
     import os
     from importlib.util import find_spec
@@ -411,52 +410,54 @@ def _render_air_gap_report() -> None:
     if any(model.lower().startswith(p) for p in LOCAL_LLM_PREFIXES):
         table.add_row(
             "LLM client",
-            "AIR-GAP READY",
-            f"model={model} (local prefix)",
+            "CONFIG ONLY",
+            "A local model prefix is configured; completion routing is checked when a call runs.",
         )
     elif api_base:
         from urllib.parse import urlparse
 
-        host = urlparse(api_base).hostname or ""
+        try:
+            host = urlparse(api_base).hostname or ""
+        except ValueError:
+            host = ""
         if is_loopback_or_private(host):
             table.add_row(
                 "LLM client",
-                "AIR-GAP READY",
-                f"api_base={api_base} on loopback/RFC-1918",
+                "CONFIG ONLY",
+                "A local/private endpoint is configured; effective completion options are not fully checked.",
             )
         else:
             table.add_row(
                 "LLM client",
-                "WOULD LEAK",
-                f"api_base={api_base} (non-loopback host)",
+                "REVIEW CONFIG",
+                "The diagnostic endpoint is not local/private. Configure a supported local inference server.",
             )
     else:
         table.add_row(
             "LLM client",
-            "WOULD LEAK",
-            f"model={model} is a cloud model; no local api_base set. Set EVIDENTIA_LLM_MODEL=ollama/llama3 or similar.",
+            "REVIEW CONFIG",
+            "No local endpoint was found in diagnostic configuration. Configure a supported local inference server.",
         )
 
     # 2. Catalog loader — v0.4.0 only loads from bundled + user data dirs,
     # no URL-based imports yet. Reserved for v0.5.0 when --from-url lands.
     table.add_row(
         "Catalog loader",
-        "AIR-GAP READY",
+        "CONFIG ONLY",
         "v0.4.0 loads only from bundled + user-dir catalogs (no URL fetch)",
     )
 
-    # 3. AI telemetry — LiteLLM's Anthropic/OpenAI clients do not phone
-    # home; Instructor doesn't either. No additional guards needed.
+    # Configuration inspection cannot establish dependency telemetry behavior.
     table.add_row(
         "AI telemetry",
-        "AIR-GAP READY",
-        "LiteLLM + Instructor do not emit telemetry",
+        "NOT CHECKED",
+        "Dependency telemetry is not checked here. Qualify the deployed workload under network isolation.",
     )
 
     # 4. Gap store — on-disk in platformdirs, no network.
     table.add_row(
         "Gap store",
-        "AIR-GAP READY",
+        "CONFIG ONLY",
         "platformdirs user-data (local filesystem only)",
     )
 
@@ -466,14 +467,14 @@ def _render_air_gap_report() -> None:
 
         table.add_row(
             "Web UI",
-            "AIR-GAP READY",
+            "CONFIG ONLY",
             "`evidentia serve` binds to 127.0.0.1 by default",
         )
 
     console.print(table)
     console.print(
-        "\n[dim]Pass [bold cyan]--offline[/bold cyan] on any command to enforce; "
-        "this report audits the configuration, not live traffic.[/dim]"
+        "\n[dim]This report describes selected configuration only. Use --offline guards "
+        "and host/container network isolation; verify actual workload behavior separately.[/dim]"
     )
 
 

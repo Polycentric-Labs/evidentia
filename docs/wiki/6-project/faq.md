@@ -74,12 +74,11 @@ for the recipes.
 
 ## Can I run Evidentia offline / air-gapped?
 
-Yes — this is a first-class design goal. Evidentia's gap arithmetic runs
-on-device; the only optional outbound calls are LLM API requests. The
-global **`--offline`** flag fails closed on any non-local network call
-(every LLM / network call consults the `network_guard` module, which
-raises before any network IO fires for non-loopback / non-RFC-1918
-targets), and `evidentia doctor --check-air-gap` validates your posture.
+Yes. Gap arithmetic runs on-device, and **`--offline`** enables checks
+at supported network call sites. Offline AI generation supports Ollama and local OpenAI-compatible servers, including vLLM. These calls use a dedicated HTTP transport with environment proxies disabled and redirects refused. The setting is not a process-wide network sandbox; enforce host or container network isolation as well.
+In-process vLLM loading is deferred for v0.13; use a separately running
+local server. Doctor/status reports describe configuration and do not
+exercise completions or prove isolation. See [the full offline guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/air-gapped.md).
 
 For installing without PyPI reach, use the offline wheelhouse pattern
 and the GPG-only signing fallback (for enclaves that cannot reach

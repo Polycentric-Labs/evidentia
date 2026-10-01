@@ -27302,7 +27302,7 @@
     },
     "/api/doctor/check-air-gap": {
       "post": {
-        "description": "Audit every subsystem's offline posture without running any network IO.\n\nReturns a per-subsystem status report matching the CLI's\n``doctor --check-air-gap`` table output.",
+        "description": "Describe selected configuration without probing network services.\n\nLegacy status fields describe this limited diagnostic only. They do not\nestablish isolation, resolve every completion option, or verify dependency\ntelemetry. Raw model and endpoint values are omitted.",
         "operationId": "check_air_gap_api_doctor_check_air_gap_post",
         "responses": {
           "200": {

@@ -264,6 +264,12 @@ owner legal review.
 
 ### Changed
 
+- **Pre-release dependency reconciliation.** Align boto3 and botocore at
+  1.43.98, platformdirs at 4.11.11 and PyMySQL at 1.2.3. Retain the exact
+  AWS signing-version guard and matching container dependency hashes. Pin
+  the Codecov action to the reviewed v7.1.0 commit; its existing advisory
+  upload policy is unchanged.
+
 - **Container platform and base refresh.** Pin the reviewed DHI Python runtime
   base and target `linux/amd64` explicitly in build and release workflows.
   Check the image architecture before smoke tests, artifact transfer and
@@ -436,6 +442,30 @@ owner legal review.
   roadmap entries are left as written.
 
 ### Fixed
+
+- **Configuration diagnostic privacy and scope.** Omit configured model and
+  endpoint values from the CLI and API air-gap report. Mark dependency
+  telemetry as unverified and label console results as configuration only.
+  Pending and unavailable checks have distinct states. The diagnostic does
+  not establish network isolation or resolve every completion option.
+
+- **Offline AI routing.** Use a dedicated local-server transport for Ollama
+  and OpenAI-compatible servers, including vLLM. Offline calls ignore
+  environment proxies, refuse redirects and bypass LiteLLM provider discovery,
+  callbacks and shared client caches. Text messages, function schemas, structured
+  output and streaming remain supported. In-process vLLM model loading is
+  deferred pending qualification; operators must use a separately running local
+  server. Online routing is unchanged. `EVIDENTIA_LLM_API_BASE` remains
+  diagnostic-only. See the offline guide for provider endpoint settings and
+  the roadmap for the in-process follow-up.
+- **Generated risk review state.** Newly generated risks start unaccepted and
+  unreviewed, with treatment PENDING and no treatment rationale. Generated
+  author/time and model-inventory references come from application context and
+  operator configuration. Analytical content and recommendations are retained;
+  existing human-reviewed records still deserialize without resetting their state.
+- **MCP signing documentation.** Correct the replay claim: schema-v1 signatures
+  cover the selected payload, not the envelope timestamp or tool name. Signed
+  bytes, schema and verification behavior are unchanged.
 
 - Include the project Apache 2.0 license text in all eight Python wheels and
   source archives, with explicit license-file metadata and drift checks.

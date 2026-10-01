@@ -30,8 +30,9 @@ If the project has changed materially since the last release (new
 package, new collector, new top-level config, new workflow), add
 the corresponding new checklist items here.
 
-**Last self-update**: 2026-09-20. Reconciled package counts, publisher readiness,
-container validation, protected delivery and immutable-tag recovery for v0.13.
+**Last self-update**: 2026-09-21. Recorded the V13-05 file-import scope amendment
+and poller follow-up. The September 20 package, publisher, container, protected
+delivery and immutable-tag checks remain in place.
 
 ---
 
@@ -41,11 +42,25 @@ Before writing any code for a release:
 
 - [ ] Read `docs/releases/plans/v<X.Y>-plan.md` (or `docs/ROADMAP.md` if no plan
       doc exists for this release). Confirm scope is locked.
+- [ ] For v0.13, apply the
+      [V13-05 owner amendment](releases/plans/v0.13-plan.md#v13-05-owner-scope-amendment-2026-09-21):
+      the v0.13 scope is Nessus v2 and Greenbone GMP file imports.
+      Record Tenable.io, Qualys VMDR, Rapid7 InsightVM and AWS Inspector
+      API pollers as deferred, with the priority, design, credential,
+      entitlement and verification decisions in the
+      [roadmap follow-up](ROADMAP.md#deferred--rejected-items).
+      Importer evidence does not establish live-provider acceptance.
 - [ ] Verify any required design decisions for this release are
       decided (e.g., v0.7.1 had 4 design decisions D1-D4).
 - [ ] Confirm any deferred items from the prior release's
       `capability-matrix.md` HIGH bucket are scheduled or explicitly
       re-deferred.
+- [ ] For v0.13, record the [V13-18 owner-approved sending deferral](releases/plans/v0.13-plan.md#v13-18-owner-correspondence-amendment-2026-09-21).
+      Sending licensing letters is not a prerequisite for this tag. Confirm
+      all existing content and use permission gates remain in force, including
+      FINOS CCC's separate exclusion, and retain the
+      [roadmap follow-up](ROADMAP.md#deferred--rejected-items). No send or
+      permission receipt is implied by this scope decision.
 - [ ] Prepare a release tracking issue if needed; create it only with publication authority.
 
 ---

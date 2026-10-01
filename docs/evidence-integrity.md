@@ -201,12 +201,13 @@ compromised registry mirror) fails verification.
 
 ### 4.2 Air-gapped / on-prem deployment
 
-- `evidentia serve --offline` flips a process-wide
-  air-gap guard. All non-loopback network calls (LLM,
-  Sigstore, registries) refuse with
-  `OfflineViolationError`.
-- Wire LLM through a local Ollama / vLLM / TGI endpoint
-  bound to 127.0.0.1.
+- `evidentia --offline serve` enables checks at supported network
+  call sites. Enforce isolation with host/container network policy;
+  the flag does not intercept every dependency or socket operation.
+- For offline AI generation, use Ollama or a local OpenAI-compatible server.
+  The dedicated transport ignores environment proxies and refuses redirects.
+  Unknown per-call routing extensions are refused. Restrict the server's own
+  network access and keep routing stable. See [Air-gapped deployments](air-gapped.md).
 - Use the local-filesystem WORM backend for evidence
   retention; back the WORM directory with a hardware
   WORM device or air-gapped tape.

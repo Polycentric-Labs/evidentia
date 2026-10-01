@@ -4,15 +4,13 @@ Provides a configured Instructor client that works with any LLM provider
 supported by LiteLLM. Model selection is determined by (in priority order):
 1. Explicit model parameter
 2. EVIDENTIA_LLM_MODEL environment variable
-3. llm.model in evidentia.yaml
-4. Default: "gpt-4o"
+3. Default: "gpt-4o"
 
-v0.4.0: every completion call is guarded by
-:func:`evidentia_core.network_guard.check_llm_model`. When offline
-mode is on (set by the CLI's ``--offline`` flag or the FastAPI app's
-``app.state.offline``), cloud models raise :class:`OfflineViolationError`
-before any network IO is issued. Local models (``ollama/*``, ``vllm/*``)
-and custom endpoints pointing at loopback / RFC-1918 pass through.
+Offline calls use an owned HTTP transport for Ollama and OpenAI-compatible
+local servers. They do not enter LiteLLM provider routing, metadata discovery,
+callbacks or client caches. Both Ollama prefixes use its chat protocol.
+A local vLLM server requires an explicit API base. Online calls retain
+LiteLLM routing. The local server must enforce its own network policy.
 """
 
 from __future__ import annotations
@@ -25,8 +23,9 @@ from typing import Any, cast
 
 import instructor
 import litellm
-from evidentia_core.network_guard import check_llm_model
+from evidentia_core.network_guard import is_offline
 
+from evidentia_ai import _offline_completion
 from evidentia_ai.config import get_default_model as get_default_model
 
 # Suppress LiteLLM's verbose logging by default
@@ -64,17 +63,15 @@ def get_operator_identity() -> str:
 
 def _guarded_completion(*args: Any, **kwargs: Any) -> Any:
     """Sync wrapper around ``litellm.completion`` that enforces offline mode."""
-    model = kwargs.get("model", "")
-    api_base = kwargs.get("api_base") or kwargs.get("base_url")
-    check_llm_model(model, api_base=api_base, subsystem="evidentia_ai")
+    if is_offline():
+        return _offline_completion.completion(*args, **kwargs)
     return litellm.completion(*args, **kwargs)
 
 
 async def _guarded_acompletion(*args: Any, **kwargs: Any) -> Any:
     """Async wrapper around ``litellm.acompletion`` that enforces offline mode."""
-    model = kwargs.get("model", "")
-    api_base = kwargs.get("api_base") or kwargs.get("base_url")
-    check_llm_model(model, api_base=api_base, subsystem="evidentia_ai")
+    if is_offline():
+        return await _offline_completion.acompletion(*args, **kwargs)
     return await litellm.acompletion(*args, **kwargs)
 
 
