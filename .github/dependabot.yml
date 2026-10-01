@@ -44,6 +44,9 @@ updates:
   # ---------------------------------------------------------------------
   - package-ecosystem: "uv"
     directory: "/"
+    exclude-paths:
+      - "docker/requirements.in"
+      - "docker/requirements.txt"
     schedule:
       interval: "weekly"
       day: "monday"

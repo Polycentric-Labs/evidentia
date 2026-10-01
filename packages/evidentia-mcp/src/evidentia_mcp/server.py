@@ -41,7 +41,7 @@ from __future__ import annotations
 import json
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from evidentia_core.catalogs.registry import FrameworkRegistry
 from evidentia_core.gap_analyzer.analyzer import GapAnalyzer
@@ -55,7 +55,8 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.streamable_http_manager import DEFAULT_MAX_SESSIONS, DEFAULT_SESSION_IDLE_TIMEOUT
 from mcp.server.transport_security import DEFAULT_MAX_REQUEST_BODY_SIZE
 from mcp.types import CallToolResult, InputRequiredResult, TextContent
-from pydantic import Field
+from pydantic import Field, ValidationError
+from pydantic_core import PydanticSerializationError
 
 from evidentia_mcp.cimd import CIMDRegistry
 
@@ -87,6 +88,29 @@ ToolDispatch = Callable[
     [str, dict[str, Any], Context[Any, Any] | None],
     Awaitable[CallToolResult | InputRequiredResult],
 ]
+
+
+def _native_tool_refusal(error: BaseException) -> str | None:
+    candidate: object = error
+    if type(error) is PydanticSerializationError:
+        candidate = error.__cause__
+        if type(candidate) is ValidationError:
+            validation = cast(ValidationError, candidate)
+            if validation.error_count() != 1:
+                return None
+            details = validation.errors(include_input=False, include_url=False)
+            if len(details) != 1:
+                return None
+            context = details[0].get("ctx")
+            if type(context) is not dict:
+                return None
+            candidate = context.get("error")
+    if type(candidate) is not NativeSourceError:
+        return None
+    try:
+        return NativeSourceError(getattr(candidate, "code", None)).code
+    except ValueError:
+        return None
 
 
 class EvidentiaMCPServer(MCPServer[Any]):
@@ -1092,8 +1116,11 @@ def _register_tools(server: EvidentiaMCPServer, *, allow_root: Path | None = Non
                 text = json.dumps(data, ensure_ascii=True, allow_nan=False, separators=(",", ":"))
                 budget.check()
                 return CallToolResult(content=[TextContent(type="text", text=text)], structured_content=data)
-        except NativeSourceError as error:
-            raise ToolError(error.code) from None
+        except (NativeSourceError, PydanticSerializationError) as error:
+            code = _native_tool_refusal(error)
+            if code is None:
+                raise
+            raise ToolError(code) from None
 
     # Only this new tool declares closed arguments. Its raw argument gate runs
     # before SDK preprocessing, and every old tool contract remains intact.
