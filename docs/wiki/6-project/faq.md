@@ -78,7 +78,7 @@ Yes. Gap arithmetic runs on-device, and **`--offline`** enables checks
 at supported network call sites. Offline AI generation supports Ollama and local OpenAI-compatible servers, including vLLM. These calls use a dedicated HTTP transport with environment proxies disabled and redirects refused. The setting is not a process-wide network sandbox; enforce host or container network isolation as well.
 In-process vLLM loading is deferred for v0.13; use a separately running
 local server. Doctor/status reports describe configuration and do not
-exercise completions or prove isolation. See [the full offline guide](../../air-gapped.md).
+exercise completions or prove isolation. See [the full offline guide](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/air-gapped.md).
 
 For installing without PyPI reach, use the offline wheelhouse pattern
 and the GPG-only signing fallback (for enclaves that cannot reach

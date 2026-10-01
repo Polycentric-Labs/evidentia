@@ -137,7 +137,7 @@ To use a local OpenAI-compatible server, select `openai/local-model` and set `OP
 
 `EVIDENTIA_LLM_API_BASE` only affects diagnostic/status code. Text messages, function schemas, structured output and streaming are supported. Unknown per-call routing options, custom transports/callbacks and multimodal content are refused. Ambient proxies are ignored for these calls; redirects are refused.
 
-Keep routing configuration stable and restrict the inference server's network access. The guard cannot constrain arbitrary in-process code, every dependency import or a server that forwards requests. See [endpoint precedence and the compatibility boundary](../../air-gapped.md#local-inference-server-configuration) and the [in-process qualification follow-up](../../ROADMAP.md#offline-in-process-inference-follow-up). Online provider behavior is unchanged.
+Keep routing configuration stable and restrict the inference server's network access. The guard cannot constrain arbitrary in-process code, every dependency import or a server that forwards requests. See [endpoint precedence and the compatibility boundary](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/air-gapped.md#local-inference-server-configuration) and the [in-process qualification follow-up](../6-project/roadmap.md#offline-in-process-inference-follow-up). Online provider behavior is unchanged.
 
 ## Offline catalogs
 
