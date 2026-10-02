@@ -114,10 +114,23 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    # Keep future MCP majors out of grouped dependency updates. The matching
-    # <3.0 bounds in both pyprojects also prevent an incidental major during
-    # a uv re-lock. Review the next major in its own protocol migration.
     ignore:
+      # The offline signer uses an exactly qualified SDK helper version.
+      # Routine SDK upgrades require coupled manifest, lock, signer and test review.
+      # Ignore version update types only; security update proposals stay enabled.
+      - dependency-name: "boto3"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "botocore"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      # Keep future MCP majors out of grouped dependency updates. The matching
+      # <3.0 bounds in both pyprojects also prevent an incidental major during
+      # a uv re-lock. Review the next major in its own protocol migration.
       - dependency-name: "mcp"
         update-types:
           - "version-update:semver-major"
