@@ -211,11 +211,21 @@ Run from a clean worktree:
 uv sync --all-extras --all-packages
 uv run --no-sync ruff check
 uv run --no-sync ruff format --check .
-uv run --no-sync python -m mypy \
-  packages/evidentia-core packages/evidentia-collectors \
-  packages/evidentia-api packages/evidentia-ai \
-  packages/evidentia-integrations packages/evidentia \
-  packages/evidentia-mcp packages/evidentia-eval
+typing_failed=0
+for package in \
+  evidentia-core evidentia-collectors evidentia-api evidentia-ai \
+  evidentia-integrations evidentia evidentia-mcp evidentia-eval
+do
+  if uv run --no-sync python -m mypy "packages/$package" --strict-optional; then
+    :
+  else
+    printf 'mypy failed for %s\n' "$package" >&2
+    typing_failed=1
+  fi
+done
+if [ "$typing_failed" -ne 0 ]; then
+  exit 1
+fi
 uv run --no-sync python -m pytest -q --cov=packages
 uv build --all-packages
 uvx twine check dist/*
