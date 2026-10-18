@@ -90,7 +90,7 @@ class MetricObservation(EvidentiaModel):
     """One timestamped observation of a metric."""
 
     observed_at: date = Field(description="Date the observation was recorded.")
-    value: float = Field(description="Numeric value. Units defined by the parent Metric.")
+    value: float = Field(allow_inf_nan=False, description="Numeric value (finite). Units defined by the parent Metric.")
     note: str | None = Field(
         default=None,
         description="Optional contextual note (e.g., 'Q3 backlog spike').",

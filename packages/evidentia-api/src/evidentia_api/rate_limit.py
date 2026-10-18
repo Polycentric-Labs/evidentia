@@ -266,7 +266,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         request: Request,
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
-        key = (request.method, request.url.path)
+        key = (request.method, request.scope["path"])
         if key in self._paths:
             client_host = request.client.host if request.client is not None else "unknown"
             if not self._limiter.check(client_host):

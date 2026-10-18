@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Query
@@ -104,7 +105,20 @@ async def explain(
             payload = result.model_dump(mode="json")
             yield {"data": json.dumps({"phase": "done", "explanation": payload})}
         except Exception as e:
-            logger.exception("Explanation failed")
-            yield {"data": json.dumps({"phase": "error", "detail": str(e), "type": type(e).__name__})}
+            request_id = uuid.uuid4().hex[:12]
+            logger.exception("Explanation failed (request_id=%s)", request_id)
+            # Provider error text can carry masked key suffixes, account ids or
+            # endpoint names (v0.13.0 review, CWE-209): a fixed message plus a
+            # correlation id goes to the client.
+            yield {
+                "data": json.dumps(
+                    {
+                        "phase": "error",
+                        "detail": f"Explanation failed; see the server log (request_id={request_id}).",
+                        "type": type(e).__name__,
+                        "request_id": request_id,
+                    }
+                )
+            }
 
     return EventSourceResponse(_stream())

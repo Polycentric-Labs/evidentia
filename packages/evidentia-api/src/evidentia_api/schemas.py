@@ -80,7 +80,8 @@ class GapAnalyzeRequest(BaseModel):
     )
     inventory_content: str | None = Field(
         default=None,
-        description="Inline inventory YAML/JSON (browser upload).",
+        max_length=8_000_000,
+        description="Inline inventory YAML/JSON (browser upload), at most 8 MB.",
     )
     inventory_format: str = Field(
         default="yaml",

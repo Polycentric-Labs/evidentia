@@ -26,6 +26,10 @@ dependencies = [
     "evidentia-core>=0.13.0,<0.14.0",
     "evidentia-ai>=0.13.0,<0.14.0",
     "fastapi>=0.141.1",
+    # v0.13.0 review: request.url.path is Host-derived before Starlette 1.0.1
+    # (GHSA-86qp-5c8j-p5mr); the middlewares key on scope["path"] and the
+    # floor keeps the fixed resolver in place.
+    "starlette>=1.0.1",
     "uvicorn[standard]>=0.51.0",
     # v0.7.2 supply-chain follow-up: floor bumped from >=0.0.9 to
     # >=0.0.26 to exclude CVE-2026-40347 (GHSA-mj87-hwqh-73pj MEDIUM:

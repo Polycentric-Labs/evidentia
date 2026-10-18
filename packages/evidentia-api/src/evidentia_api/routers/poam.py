@@ -343,6 +343,12 @@ async def delete_poam_item(poam_id: str) -> None:
             resource="poam_item",
             resource_id=poam_id,
         )
+    _log.info(
+        action=EventAction.POAM_DELETED,
+        outcome=EventOutcome.SUCCESS,
+        message=f"POA&M {poam_id} deleted via API",
+        evidentia={"poam_id": poam_id},
+    )
 
 
 # ── milestone management ───────────────────────────────────────────
@@ -371,7 +377,7 @@ class MilestoneUpdatePayload(BaseModel):
     """Body shape for PATCH /api/poam/items/{id}/milestones/{ms_id}."""
 
     target_date: date | None = None
-    description: str | None = Field(default=None, max_length=2048)
+    description: NonBlankStr | None = Field(default=None, max_length=2048)
     status: POAMState | None = None
     evidence_ref: str | None = Field(default=None, max_length=512)
 

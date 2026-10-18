@@ -218,6 +218,8 @@ class EventAction(str, Enum):
     Pairs with POAM_VERIFIED to bracket the auditor sign-off cycle."""
 
     POAM_VERIFIED = "evidentia.poam.verified"
+    """A POA&M record was removed (v0.13.0 review: deletes left no trace)."""
+    POAM_DELETED = "evidentia.poam.deleted"
     """Fired when an auditor (or the operator on the auditor's
     behalf, with appropriate provenance) confirms a closed POA&M.
     Terminal — no further events fire on the same POA&M unless a

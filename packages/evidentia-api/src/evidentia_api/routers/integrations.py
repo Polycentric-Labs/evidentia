@@ -456,7 +456,12 @@ async def tableau_publish(
             )
     except TableauApiError as exc:
         logger.exception("Tableau publish failed (request_id=%s)", request_id)
-        raise api_error(503, "upstream_error", str(exc)) from exc
+        raise api_error(
+            503,
+            "upstream_error",
+            f"Tableau publish failed; request_id={request_id}",
+            request_id=request_id,
+        ) from exc
     except Exception as exc:
         logger.exception(
             "Tableau publish unexpected error (request_id=%s)",
@@ -608,7 +613,12 @@ async def powerbi_publish(
         )
     except PowerBIApiError as exc:
         logger.exception("Power BI publish failed (request_id=%s)", request_id)
-        raise api_error(503, "upstream_error", str(exc)) from exc
+        raise api_error(
+            503,
+            "upstream_error",
+            f"Power BI publish failed; request_id={request_id}",
+            request_id=request_id,
+        ) from exc
     except Exception as exc:
         logger.exception(
             "Power BI publish unexpected error (request_id=%s)",

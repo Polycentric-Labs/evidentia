@@ -172,7 +172,13 @@ async def _stream_risk_generation(
             return index, gap, risk, None
         except Exception as e:
             logger.exception("Risk generation failed for gap %s", gap.id)
-            return index, gap, None, str(e)
+            # Provider error text stays in the log (v0.13.0 review, CWE-209).
+            return (
+                index,
+                gap,
+                None,
+                f"Risk generation failed ({type(e).__name__}); see the server log for gap {gap.id}.",
+            )
 
     for idx, gap in enumerate(selected_gaps):
         tasks.append(asyncio.create_task(_one(idx, gap)))
