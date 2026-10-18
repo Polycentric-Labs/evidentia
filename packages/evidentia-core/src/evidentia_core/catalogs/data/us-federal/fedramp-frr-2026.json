@@ -1,8 +1,8 @@
 {
   "framework_id": "fedramp-frr-2026",
   "framework_name": "FedRAMP Requirements — provider-facing rules (Consolidated Rules for 2026)",
-  "version": "2026.09.13.02 (CR26)",
-  "source": "FedRAMP — https://github.com/FedRAMP/rules @ 58487bda77d7 (fedramp-consolidated-rules.json)",
+  "version": "2026.10.13.01 (CR26)",
+  "source": "FedRAMP — https://github.com/FedRAMP/rules @ a89d78477dde (fedramp-consolidated-rules.json)",
   "tier": "A",
   "category": "control",
   "placeholder": false,
@@ -260,7 +260,7 @@
       "title": "Public Information",
       "description": "Providers MUST publicly share up-to-date information about the cloud service offering in both human-readable and JSON formats, including at least the following information that is available and applicable:",
       "family": "Certification Data Sharing",
-      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- FedRAMP ID\n- Service Model\n- Deployment Model\n- Business Category\n- UEI Number\n- Sales Contact Information\n- Security Contact Information\n- Product Website Link\n- Link to Product Logo\n- Overall Service Description\n- Detailed list of specific services and their security categories (see CDS-CSO-SVC (Public Service List) (Service List))\n- Link to Secure Configuration Guidance\n- Overview of documentation supplied by the provider for the cloud service offering\n- Link to Trust Center landing page that includes instructions on accessing information in the trust center\n- Next Ongoing Certification Report date (see CCM-OCR-NRD (Next Report Date))\n- Current FedRAMP Recognized independent assessment service\n\nUpstream note (verbatim): Generally, this information should be available on a public webpage or publicly shared in a FedRAMP-compatible trust center.\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Certification Report, FedRAMP Recognized, Ongoing Certification, Ongoing Certification Report (OCR), Security Category, Trust Center.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- FedRAMP ID\n- Service Model\n- Deployment Model\n- Business Category\n- UEI Number\n- Sales Contact Information\n- Security Contact Information\n- Product Website Link\n- Link to Product Logo (must be a valid image link, properly named, that will display in a browser without processing - transparent PNG preferred)\n- Overall Service Description\n- Detailed list of specific services and their security categories (see CDS-CSO-SVC (Public Service List) (Service List))\n- Link to Secure Configuration Guidance\n- Overview of documentation supplied by the provider for the cloud service offering\n- Link to Trust Center landing page that includes instructions on accessing information in the trust center\n- Next Ongoing Certification Report date (see CCM-OCR-NRD (Next Report Date))\n- Current FedRAMP Recognized independent assessment service\n\nRelated FedRAMP terms: Cloud Service Offering, FedRAMP Certification Report, FedRAMP Recognized, Ongoing Certification, Ongoing Certification Report (OCR), Security Category, Trust Center.\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-certification-package-overview-schema-2026-06-24.json"
     },
     {
       "id": "CDS-CSO-RIS",
@@ -365,7 +365,7 @@
       "title": "Using Validated Cryptographic Modules",
       "description": "Providers with Class C Certifications SHOULD use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.",
       "family": "Cryptographic Module Use",
-      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class B Certifications MAY use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nRelated FedRAMP terms: Federal Customer Data, Validation."
+      "guidance": "Force: SHOULD.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): Cryptographic modules include specific algorithms by definition; if an update stream of a cryptographic module adds new algorithms that were not previously validated then those algorithms can not be considered within the scope of update stream usage under these rules as they are new algorithms within the module that have never been validated.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class A Certifications MAY use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MAY): Providers with Class B Certifications MAY use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with Class C Certifications SHOULD use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with Class D Certifications MUST use cryptographic modules or update streams of cryptographic modules with active validations under the NIST Cryptographic Module Validation Program when using cryptographic services to protect federal customer data.\n\nRelated FedRAMP terms: Federal Customer Data, Validation."
     },
     {
       "id": "CPO-CSF-CPM",
@@ -538,7 +538,7 @@
     {
       "id": "FRC-CSF-RDY",
       "title": "FedRAMP Ready Conversion",
-      "description": "Providers with FedRAMP Rev5 Ready status MUST convert to a FedRAMP Certification by whichever of the follow dates is later: the expiration of their annual assessment or November 17, 2026 (the legacy FedRAMP Ready status will be entirely removed on December 31, 2027).",
+      "description": "Providers with FedRAMP Rev5 Ready status MUST convert to a FedRAMP Certification by whichever of the following dates is later: the expiration of their annual assessment or November 17, 2026 (the legacy FedRAMP Ready status will be entirely removed on December 31, 2027).",
       "family": "FedRAMP Certification",
       "guidance": "Force: MUST.\n\nApplies to FedRAMP Rev 5 authorizations."
     },
@@ -552,9 +552,9 @@
     {
       "id": "FRC-CSO-JSN",
       "title": "FedRAMP JSON Schemas",
-      "description": "Providers MUST supply machine-readable information in JSON documents that are valid against the corresponding JSON schema when a rule contains a FedRAMP JSON schema, UNLESS otherwise specified in the rule.",
+      "description": "Providers MUST supply machine-readable information in JSON documents that are valid against the corresponding JSON schema when a rule contains a FedRAMP JSON schema, UNLESS otherwise specified in the rule; public JSON data MUST be supplied in a manner compatible with modern web frameworks, including:",
       "family": "FedRAMP Certification",
-      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nUpstream note (verbatim): FedRAMP JSON schemas are designed to be lightweight and flexible to establish a minimum set of structured information while allowing providers to improve on the format and structure of the information as needed to meet their needs and the needs of their customers.\n\nRelated FedRAMP terms: Machine-Readable."
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRequired information (upstream `following_information`, verbatim):\n- Cross-Origin Resource Sharing (CORS) should allow web applications running on a different domain to access the public JSON data directly.\n- Proper web application headers should be supplied for public JSON data, including at least setting Content-Type to application/json and X-Content-Type-Options: nosniff.\n\nRelated FedRAMP terms: Likely, Machine-Readable."
     },
     {
       "id": "FRC-CSO-MRA",
@@ -583,13 +583,6 @@
       "description": "Providers SHOULD apply ALL Key Security Indicators to ALL aspects of their cloud service offering that are within the FedRAMP Minimum Assessment Scope.",
       "family": "FedRAMP Certification",
       "guidance": "Force: SHOULD.\n\nApplies to FedRAMP 20x authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering."
-    },
-    {
-      "id": "FRC-CSX-MOT",
-      "title": "Metrics Over Time for Key Security Indicators",
-      "description": "Providers seeking 20x Class C Certification MUST supply historical metrics including status from persistent validation over at least the past 6 months for all Key Security Indicators.",
-      "family": "FedRAMP Certification",
-      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nUpstream note (verbatim): For initial FedRAMP Certification, providers will need to have mechanisms in place and agree to meet this requirement in the event the cloud service has not been operating with related metrics available for the required period prior to applying for initial certification.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers seeking 20x Class A Certification MAY supply historical metrics for Key Security Indicators.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers seeking 20x Class B Certification SHOULD supply historical metrics for Key Security Indicators.\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking 20x Class C Certification MUST supply historical metrics including status from persistent validation over at least the past 6 months for all Key Security Indicators.\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers seeking 20x Class D Certification MUST provide historical metrics including status from persistent validation over at least the past 18 months for all Key Security Indicators.\n\nRelated FedRAMP terms: Initial Certification, Persistently, Validation."
     },
     {
       "id": "FRC-CSX-VVK",
@@ -1016,7 +1009,7 @@
       "title": "Key Security Indicator Metrics",
       "description": "Providers with 20x Class C Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:",
       "family": "Security Decision Record",
-      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with 20x Class A Certifications MAY also include historical metrics in their Security Decision Record.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class B Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class C Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class D Certifications MUST significantly supersede the minimum requirements for lower Classes, with specifics to be set during the 20x Phase 4 Pilot.\n\nRelated FedRAMP terms: Security Decision Record (SDR).\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-security-decision-record-schema-2026-06-24.json"
+      "guidance": "Force: MUST.\n\nApplies to FedRAMP 20x authorizations.\n\nUpstream note (verbatim): For initial FedRAMP Certification, providers will need to have mechanisms in place and agree to meet this requirement in the event the cloud service has not been operating with related metrics available for the required period prior to applying for initial certification.\n\nClass-A variant (upstream `varies_by_class`, verbatim; force MAY): Providers with 20x Class A Certifications MAY also include historical metrics in their Security Decision Record.\n\nClass-B variant (upstream `varies_by_class`, verbatim; force SHOULD): Providers with 20x Class B Certifications SHOULD also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:\n\nClass-C variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class C Certifications MUST also include historical metrics in their Security Decision Record, supplying at least the following information for each applicable Key Security Indicator:\n\nClass-D variant (upstream `varies_by_class`, verbatim; force MUST): Providers with 20x Class D Certifications MUST significantly supersede the minimum requirements for lower Classes, with specifics to be set during the 20x Phase 4 Pilot.\n\nRelated FedRAMP terms: Initial Certification, Security Decision Record (SDR).\n\nMachine-readable schema: https://fedramp.gov/schemas/fedramp-security-decision-record-schema-2026-06-24.json"
     },
     {
       "id": "SDR-CSX-KSI",
@@ -1189,9 +1182,9 @@
     {
       "id": "VER-EVA-EPA",
       "title": "Estimate Potential Agency Impact",
-      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to estimate the potential agency impact of exploitation on government customers AND assign one of the following Potential Agency Impact N-ratings (PAIN):",
+      "description": "Providers MUST evaluate detected vulnerabilities, considering the context of the cloud service offering, to estimate the likely potential agency impact of exploitation on government customers AND assign one of the following Potential Agency Impact N-ratings (PAIN):",
       "family": "Vulnerability Evaluation and Reporting",
-      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Debilitating Customer Effect, Disruptive Customer Effect, Minimal Customer Effect, Narrow Customer Effect, Potential Agency Impact, Vulnerability, Vulnerability Detection."
+      "guidance": "Force: MUST.\n\nApplies to all FedRAMP authorizations.\n\nRelated FedRAMP terms: Cloud Service Offering, Debilitating Customer Effect, Disruptive Customer Effect, Likely, Minimal Customer Effect, Narrow Customer Effect, Potential Agency Impact, Vulnerability, Vulnerability Detection."
     },
     {
       "id": "VER-EVA-GRV",

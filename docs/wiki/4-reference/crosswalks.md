@@ -3,13 +3,13 @@
 
 > **Auto-generated page.** This page is generated from the live Evidentia codebase by [`scripts/wiki/sync_reference.py`](https://github.com/Polycentric-Labs/evidentia/blob/main/scripts/wiki/sync_reference.py). Do not edit it by hand; change the underlying code/data and re-run the generator (`uv run python scripts/wiki/sync_reference.py`).
 
-Evidentia bundles **16** framework crosswalks (1,595 control-to-control mapping rows in total). A crosswalk maps controls in a source framework to related controls in a target framework, powering cross-framework gap-analysis efficiency. The **verification** column records the posture: crosswalks marked `self-attested-via-upstream` are auto-extracted from an upstream source and not independently hand-verified; an empty posture marks an Evidentia-authored concordance. The **Source ids resolved** / **Target ids resolved** columns show how many of a crosswalk's rows point at ids that exist in the bundled catalogs, as `n/N (p%)`; a target with no bundled catalog to resolve against (`eu-cra`, `nist-800-161`, `pci-dss-4.0`) reads `not bundled`. Always verify a mapping before relying on it for an audit.
+Evidentia bundles **16** framework crosswalks (1,702 control-to-control mapping rows in total). A crosswalk maps controls in a source framework to related controls in a target framework, powering cross-framework gap-analysis efficiency. The **verification** column records the posture: crosswalks marked `self-attested-via-upstream` are auto-extracted from an upstream source and not independently hand-verified; an empty posture marks an Evidentia-authored concordance. The **Source ids resolved** / **Target ids resolved** columns show how many of a crosswalk's rows point at ids that exist in the bundled catalogs, as `n/N (p%)`; a target with no bundled catalog to resolve against (`eu-cra`, `nist-800-161`, `pci-dss-4.0`) reads `not bundled`. Always verify a mapping before relying on it for an audit.
 
 | Crosswalk file | Source framework | Target framework | Verification | Mapping rows | Source ids resolved | Target ids resolved |
 | --- | --- | --- | --- | --- | --- | --- |
 | `fda-524b-appendix1_to_aami-sw96.json` | `fda-524b-appendix1` | `aami-sw96` | self-attested | 9 | 9/9 (100%) | 9/9 (100%) |
 | `fda-524b-appendix1_to_iso-14971.json` | `fda-524b-appendix1` | `iso-14971` | self-attested | 10 | 10/10 (100%) | 10/10 (100%) |
-| `fedramp-ksi-2026_to_nist-800-53-rev5.json` | `fedramp-ksi-2026` | `nist-800-53-rev5` | self-attested-via-upstream | 286 | 286/286 (100%) | 286/286 (100%) |
+| `fedramp-ksi-2026_to_nist-800-53-rev5.json` | `fedramp-ksi-2026` | `nist-800-53-rev5` | self-attested-via-upstream | 393 | 393/393 (100%) | 393/393 (100%) |
 | `fedramp-rev5-moderate_to_cmmc-2-l2.json` | `fedramp-rev5-moderate` | `cmmc-2-l2` | - | 32 | 32/32 (100%) | 32/32 (100%) |
 | `iso-27001-2022_to_nist-800-53-rev5.json` | `iso-27001-2022` | `nist-800-53-rev5` | - | 23 | 23/23 (100%) | 23/23 (100%) |
 | `nist-800-53-rev5_to_hipaa-security.json` | `nist-800-53-rev5` | `hipaa-security` | - | 20 | 20/20 (100%) | 20/20 (100%) |

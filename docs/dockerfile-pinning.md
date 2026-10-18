@@ -20,6 +20,17 @@ It applies only to that reviewed digest and those attestations. Preserve the
 strict failures and repeat the review for a changed digest. See
 [Docker's verification guidance](https://docs.docker.com/dhi/how-to/verify/#handle-missing-transparency-log-entries).
 
+On 2026-10-18 the refresh to index
+`553f074749f9e189ad2f5d5678dab4b5ae20a0496700b6a48042c2e0de34d331`
+(amd64 child `426ddc0fa305…`, arm64 child `4dceb0a4cd8c…`) repeated that review.
+Both strict attempts (`docker scout attest get --verify` for the SBOM and the
+provenance predicate) failed the same way, with the signature absent from the
+transparency log. The public-key path (`--verify --skip-tlog`) passed for both
+predicates: cosign claims validated and signatures verified against Docker's
+published key, each bound to the amd64 child. The strict failures are retained
+with the batch notes. The owner's decision on extending the exception to this
+digest is recorded in the v0.13 plan.
+
 Arm64 publisher verification remains unestablished. A matching metadata subject
 does not establish image-layer integrity, runtime compatibility or vulnerability
 status. Each base refresh requires fresh tag/index correspondence and the normal

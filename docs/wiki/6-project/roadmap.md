@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: 2026-09-26; release candidate v0.13.0.**
+**Last updated: 2026-10-18; release candidate v0.13.0.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -191,6 +191,25 @@ remains unverified. See the [collector design](https://github.com/Polycentric-La
 
 Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
 and 100% GUI coverage is a per-cycle exit condition at the tag.
+
+### v0.13.0 - Evidence provenance and native imports - SHIPPED (release candidate; tag pending)
+
+Release content prepared 2026-09-20 and hardened 2026-10-18; Allen's tag and
+publication decision remains the final gate. What landed, per the CHANGELOG
+block: the cadence evidence series (V13-01) with Nessus and Greenbone file
+imports (V13-05) as its first consumer; the shared-spine collectors for Entra ID
+and Microsoft 365 (V13-02), Google Workspace (V13-03), storage and enterprise
+retention (V13-04), incident clocks (V13-06), public registries (V13-07 and
+V13-27), SCAP results (V13-25) and upstream release cadence (V13-28); native
+catalog sources for Australian ISM and CISA SCuBA with the external-only BSI
+importer (V13-08), the CMS ARS 5.2 and CJIS 6.1 companions and catalog currency
+notices (V13-09); and the correctness debt: api-stability section 1 gated
+(V13-11), text depth on every catalog surface and crosswalk families (V13-13),
+the FedRAMP SCN writer (V13-17), the in-repo FedRAMP baseline extractor (V13-20)
+and explicit CycloneDX 1.7 exports (V13-26). The pre-tag hardening batch bumped
+three advisory-flagged dependencies, refreshed both container bases and re-synced
+the FedRAMP pins to rules 2026.10.13.01. Recorded owner deferrals stand: the
+V13-05 API pollers, the V13-18 licensing letters and FINOS CCC.
 
 ## v0.12 - Pre-1.0 hardening + GUI parity - SHIPPED
 

@@ -22,10 +22,10 @@ from evidentia_core.catalogs.loader import load_catalog
 CATALOG_ID = "fedramp-frr-2026"
 
 
-def test_loads_with_180_rules_across_15_families() -> None:
+def test_loads_with_179_rules_across_15_families() -> None:
     catalog = load_catalog(CATALOG_ID)
     assert catalog.framework_id == CATALOG_ID
-    assert len(catalog.controls) == 180
+    assert len(catalog.controls) == 179
     assert len(catalog.families) == 15
     assert catalog.tier == "A"
     assert catalog.placeholder is False
@@ -94,7 +94,7 @@ def test_every_rule_has_statement_force_and_applicability() -> None:
 def test_class_variant_rules_preserve_every_variant() -> None:
     controls = load_catalog(CATALOG_ID).controls
     variant_rules = [c for c in controls if "varies_by_class" in (c.guidance or "")]
-    assert len(variant_rules) == 29
+    assert len(variant_rules) == 28
     ccm = next(c for c in variant_rules if c.id == "CCM-QTR-MTG")
     guidance = ccm.guidance or ""
     # Class A is MAY, class B is SHOULD — both must survive verbatim.

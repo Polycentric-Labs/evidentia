@@ -20,8 +20,8 @@ directory also holds the schema that `SCRForm.to_scn_document` (in
 | File | Upstream fidelity |
 |------|-------------------|
 | `fedramp-security-decision-record-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-09-06 at schema 1.1.1) |
-| `fedramp-common-definitions-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-09-06 at schema 0.3.0) |
-| `fedramp-significant-change-notifications-schema-2026-06-24.json` | Byte-identical to upstream (vendored 2026-09-07 at schema 0.1.2) |
+| `fedramp-common-definitions-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-10-18 at schema 0.4.1) |
+| `fedramp-significant-change-notifications-schema-2026-06-24.json` | Byte-identical to upstream (re-vendored 2026-10-18 at schema 0.1.3) |
 
 All three copies are verifiable against upstream by git blob SHA: `git
 hash-object <file>` must equal the `blob_sha` recorded in `UPSTREAM.json`.
@@ -84,3 +84,27 @@ generator continues to preserve its documented provider-facing projection.
 A fresh upstream probe found no remaining rules, tracked-schema or baseline
 drift. The three vendored schema files remain byte-identical to their pinned
 upstream copies; this refresh changes the rules pin and generated catalogs.
+
+## History: the 2026-10-18 re-sync (rules 2026.10.13.01, schemas at 0e836c0d)
+
+The weekly sentinel reported MAJOR drift from 2026-09-30 (issue #375). This
+re-sync re-verified every pin together, per the procedure above:
+
+- `FedRAMP/rules` moved to dataset `2026.10.13.01` at commit
+  `a89d78477ddea98dc57eca24f5007794c2b4eeb6`. The KSI section still carries
+  10 families and 46 indicators; its `controls` cross-references widened, so
+  the regenerated 800-53 crosswalk grows from 286 to 393 rows and the one
+  indicator that previously declared `controls: []` now maps (`cp-2.5`,
+  `sc-12.1`). The provider-facing requirements dataset no longer contains
+  `FRC-CSX-MOT` (its upstream note now appears under the SDR metrics rule), so
+  `fedramp-frr-2026` carries
+  179 rules across the same 15 families; several rule texts gained upstream
+  notes or wording corrections, preserved verbatim.
+- `FedRAMP/schemas` moved to commit `0e836c0dabfa4b59a47504892f9b94512abf5fdc`.
+  Two vendored files were re-vendored byte-identical to upstream:
+  common-definitions `0.3.0` to `0.4.1` (adds an optional `contactInformation`
+  definition and the value `0` to the `nRating` enum; the one `$ref` the SDR
+  schema takes is untouched) and significant-change-notifications `0.1.2` to `0.1.3` (the
+  `$schemaVersion` string only). The SDR schema is unchanged at `1.1.1`. The
+  advisor and assessor information schemas took MAJOR bumps to `2.0.0`;
+  neither is vendored or emitted, so only their tracked versions moved.

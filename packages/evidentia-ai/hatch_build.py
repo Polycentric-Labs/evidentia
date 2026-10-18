@@ -10,6 +10,7 @@ release path (hatchling's default sdist selection respects VCS-ignore).
 """
 
 import os
+from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
@@ -17,7 +18,7 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 class SbomBuildHook(BuildHookInterface):
     PLUGIN_NAME = "custom"
 
-    def initialize(self, version, build_data):
+    def initialize(self, version: str, build_data: dict[str, Any]) -> None:
         if self.target_name != "wheel":
             return
         sbom_dir = os.path.join(self.root, "sbom")

@@ -14,7 +14,7 @@
 ARG INSTALL_SOURCE=pypi
 
 # ---- base-builder: slim + venv + install toolchain (has a shell) ------------
-FROM python:3.13-slim@sha256:9d2e5553305c7c7b0097999bb17187c69b921ccd6bc9d40e4bb5ebe652c00285 AS base-builder
+FROM python:3.13-slim@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f AS base-builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1
 RUN python -m venv /opt/venv
@@ -72,7 +72,7 @@ RUN set -eux; \
 # these binaries), but SECURITY.md § Supported versions promises the
 # latest patch carries no disclosed advisories, so it does not get to sit.
 # See docs/releases/reviews/safeguards-resweep-2026-Q3.md § 2.2.
-FROM dhi.io/python:3.13@sha256:ff47bcf5c9a1918cf4ad19368202410a2189c69d902c0637ff4277e1ca3009e4 AS final
+FROM dhi.io/python:3.13@sha256:553f074749f9e189ad2f5d5678dab4b5ae20a0496700b6a48042c2e0de34d331 AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \
