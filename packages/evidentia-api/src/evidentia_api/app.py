@@ -228,11 +228,18 @@ def create_app(
             rbac_policy = load_rbac_policy_auto(Path(rbac_policy_file_env))
             release_policy_provenance = "loaded"
         except (FileNotFoundError, ValueError) as exc:
-            release_policy_provenance = "failed"
-            logger.error(
-                "RBAC policy load failed (%s); falling back to default permissive policy",
-                exc,
-            )
+            # v0.13.0 review H1 (CWE-636): an operator who set the variable
+            # expects it honoured. Falling back to the permissive default
+            # silently made every identity admin on every gated route; the
+            # CLI already fails closed in the same situation
+            # (evidentia.cli._rbac_lifecycle.load_rbac_policy), so the API
+            # now refuses to start instead.
+            logger.error("RBAC policy load failed (%s); refusing to start with the permissive default", exc)
+            raise RuntimeError(
+                "EVIDENTIA_RBAC_POLICY_FILE is set but the policy could not be "
+                f"loaded ({exc.__class__.__name__}: {exc}). Fix the path or the "
+                "file, or unset the variable to run with the default policy."
+            ) from exc
 
     app = FastAPI(
         title="Evidentia API",
