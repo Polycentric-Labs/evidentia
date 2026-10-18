@@ -109,9 +109,9 @@ def test_crosswalk_to_800_53_covers_every_indicator() -> None:
 
     catalog = load_catalog("fedramp-ksi-2026")
     mapped_sources = {m.source_control_id for m in crosswalk.mappings}
-    # Two indicators declare NO 800-53 mapping upstream (`controls: []`
+    # One indicator declares NO 800-53 mapping upstream (`controls: []`
     # at the pinned revision) — the crosswalk faithfully omits them.
-    unmapped_upstream = {"KSI-CNA-OFA", "KSI-PIY-RES"}
+    unmapped_upstream: set[str] = {"KSI-PIY-RES"}
     assert mapped_sources == {c.id for c in catalog.controls} - unmapped_upstream
     # Base-control folding: enhancement citations survive in notes.
     at2 = next(m for m in crosswalk.mappings if m.source_control_id == "KSI-CED-RAT" and m.target_control_id == "AT-2")

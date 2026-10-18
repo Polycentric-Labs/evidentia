@@ -1,9 +1,9 @@
 {
   "source_framework": "fedramp-ksi-2026",
   "target_framework": "nist-800-53-rev5",
-  "version": "FedRAMP Consolidated Rules 2026.09.13.02 / NIST 800-53 Rev 5",
-  "generated_at": "2026-09-13",
-  "source": "https://github.com/FedRAMP/rules @ 58487bda77d7 (fedramp-consolidated-rules.json, dataset version 2026.09.13.02)",
+  "version": "FedRAMP Consolidated Rules 2026.10.13.01 / NIST 800-53 Rev 5",
+  "generated_at": "2026-10-13",
+  "source": "https://github.com/FedRAMP/rules @ a89d78477dde (fedramp-consolidated-rules.json, dataset version 2026.10.13.01)",
   "verification": "self-attested-via-upstream",
   "verification_note": "Control mappings are declared by FedRAMP itself in each KSI indicator's `controls` field; extracted verbatim at the pinned revision, folded to base-control granularity (the bundled nist-800-53-rev5 catalog carries base controls only) with the exact upstream citation preserved in notes.",
   "mappings": [
@@ -23,7 +23,7 @@
       "target_control_title": "Role-based Training",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): at-3.5, at-3"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): at-3, at-3.5"
     },
     {
       "source_control_id": "KSI-CED-RAT",
@@ -37,11 +37,20 @@
     {
       "source_control_id": "KSI-CED-RAT",
       "source_control_title": "Reviewing All Training",
+      "target_control_id": "CM-11",
+      "target_control_title": "User-installed Software",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-11"
+    },
+    {
+      "source_control_id": "KSI-CED-RAT",
+      "source_control_title": "Reviewing All Training",
       "target_control_id": "CP-3",
       "target_control_title": "Contingency Training",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-3"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-3, cp-3.1"
     },
     {
       "source_control_id": "KSI-CED-RAT",
@@ -50,7 +59,25 @@
       "target_control_title": "Incident Response Training",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-2, ir-2.3"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-2, ir-2.1, ir-2.2, ir-2.3"
+    },
+    {
+      "source_control_id": "KSI-CED-RAT",
+      "source_control_title": "Reviewing All Training",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.2, ir-9.4"
+    },
+    {
+      "source_control_id": "KSI-CED-RAT",
+      "source_control_title": "Reviewing All Training",
+      "target_control_id": "PL-4",
+      "target_control_title": "Rules of Behavior",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): pl-4, pl-4.1"
     },
     {
       "source_control_id": "KSI-CED-RAT",
@@ -82,11 +109,20 @@
     {
       "source_control_id": "KSI-CMT-LMC",
       "source_control_title": "Logging Changes",
+      "target_control_id": "CA-7",
+      "target_control_title": "Continuous Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-7.4"
+    },
+    {
+      "source_control_id": "KSI-CMT-LMC",
+      "source_control_title": "Logging Changes",
       "target_control_id": "CM-3",
       "target_control_title": "Configuration Change Control",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-3, cm-3.2"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-3, cm-3.1, cm-3.2, cm-3.6"
     },
     {
       "source_control_id": "KSI-CMT-LMC",
@@ -114,15 +150,6 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-8.3"
-    },
-    {
-      "source_control_id": "KSI-CMT-LMC",
-      "source_control_title": "Logging Changes",
-      "target_control_id": "MA-2",
-      "target_control_title": "Controlled Maintenance",
-      "relationship": "related",
-      "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ma-2"
     },
     {
       "source_control_id": "KSI-CMT-RMV",
@@ -244,6 +271,24 @@
     {
       "source_control_id": "KSI-CMT-VTD",
       "source_control_title": "Validating Throughout Deployment",
+      "target_control_id": "CM-6",
+      "target_control_title": "Configuration Settings",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-6.2"
+    },
+    {
+      "source_control_id": "KSI-CMT-VTD",
+      "source_control_title": "Validating Throughout Deployment",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
+    },
+    {
+      "source_control_id": "KSI-CMT-VTD",
+      "source_control_title": "Validating Throughout Deployment",
       "target_control_id": "SI-2",
       "target_control_title": "Flaw Remediation",
       "relationship": "related",
@@ -258,6 +303,33 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-2"
+    },
+    {
+      "source_control_id": "KSI-CNA-DFP",
+      "source_control_title": "Defining Functionality and Privileges",
+      "target_control_id": "CM-8",
+      "target_control_title": "System Component Inventory",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-8.4"
+    },
+    {
+      "source_control_id": "KSI-CNA-DFP",
+      "source_control_title": "Defining Functionality and Privileges",
+      "target_control_id": "CP-10",
+      "target_control_title": "System Recovery and Reconstitution",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-10.4"
+    },
+    {
+      "source_control_id": "KSI-CNA-DFP",
+      "source_control_title": "Defining Functionality and Privileges",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
     },
     {
       "source_control_id": "KSI-CNA-DFP",
@@ -280,11 +352,74 @@
     {
       "source_control_id": "KSI-CNA-EIS",
       "source_control_title": "Enforcing Intended State",
-      "target_control_id": "CA-7",
-      "target_control_title": "Continuous Monitoring",
+      "target_control_id": "CM-11",
+      "target_control_title": "User-installed Software",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-7.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-11"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "CM-6",
+      "target_control_title": "Configuration Settings",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-6.2"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "CP-10",
+      "target_control_title": "System Recovery and Reconstitution",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-10.4"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "SC-24",
+      "target_control_title": "Fail in Known State",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-24"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "SC-7",
+      "target_control_title": "Boundary Protection",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "SI-4",
+      "target_control_title": "System Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.22"
+    },
+    {
+      "source_control_id": "KSI-CNA-EIS",
+      "source_control_title": "Enforcing Intended State",
+      "target_control_id": "SI-7",
+      "target_control_title": "Software, Firmware, and Information Integrity",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7, si-7.1, si-7.5, si-7.7"
     },
     {
       "source_control_id": "KSI-CNA-IBP",
@@ -312,6 +447,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): pl-10"
+    },
+    {
+      "source_control_id": "KSI-CNA-IBP",
+      "source_control_title": "Implementing Best Practices",
+      "target_control_id": "SC-7",
+      "target_control_title": "Boundary Protection",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18"
     },
     {
       "source_control_id": "KSI-CNA-MAT",
@@ -365,7 +509,7 @@
       "target_control_title": "Boundary Protection",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.3, sc-7.4, sc-7.5, sc-7.8"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18, sc-7.3, sc-7.4, sc-7.5, sc-7.8"
     },
     {
       "source_control_id": "KSI-CNA-MAT",
@@ -404,6 +548,24 @@
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-16"
     },
     {
+      "source_control_id": "KSI-CNA-OFA",
+      "source_control_title": "Optimizing for Availability",
+      "target_control_id": "CP-2",
+      "target_control_title": "Contingency Plan",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-2.5"
+    },
+    {
+      "source_control_id": "KSI-CNA-OFA",
+      "source_control_title": "Optimizing for Availability",
+      "target_control_id": "SC-12",
+      "target_control_title": "Cryptographic Key Establishment and Management",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-12.1"
+    },
+    {
       "source_control_id": "KSI-CNA-RNT",
       "source_control_title": "Restricting Network Traffic",
       "target_control_id": "AC-17",
@@ -437,7 +599,25 @@
       "target_control_title": "Boundary Protection",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.5"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.10, sc-7.18, sc-7.20, sc-7.21, sc-7.5"
+    },
+    {
+      "source_control_id": "KSI-CNA-RNT",
+      "source_control_title": "Restricting Network Traffic",
+      "target_control_id": "SI-10",
+      "target_control_title": "Information Input Validation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-10"
+    },
+    {
+      "source_control_id": "KSI-CNA-RNT",
+      "source_control_title": "Restricting Network Traffic",
+      "target_control_id": "SI-4",
+      "target_control_title": "System Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.11, si-4.18, si-4.4"
     },
     {
       "source_control_id": "KSI-CNA-RNT",
@@ -451,11 +631,29 @@
     {
       "source_control_id": "KSI-CNA-RVP",
       "source_control_title": "Reviewing Protections",
+      "target_control_id": "IR-4",
+      "target_control_title": "Incident Handling",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4.2"
+    },
+    {
+      "source_control_id": "KSI-CNA-RVP",
+      "source_control_title": "Reviewing Protections",
       "target_control_id": "SC-5",
       "target_control_title": "Denial-of-service Protection",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-5"
+    },
+    {
+      "source_control_id": "KSI-CNA-RVP",
+      "source_control_title": "Reviewing Protections",
+      "target_control_id": "SC-7",
+      "target_control_title": "Boundary Protection",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18"
     },
     {
       "source_control_id": "KSI-CNA-RVP",
@@ -487,11 +685,29 @@
     {
       "source_control_id": "KSI-CNA-ULN",
       "source_control_title": "Using Logical Networking",
+      "target_control_id": "AC-4",
+      "target_control_title": "Information Flow Enforcement",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-4.21"
+    },
+    {
+      "source_control_id": "KSI-CNA-ULN",
+      "source_control_title": "Using Logical Networking",
       "target_control_id": "CA-9",
       "target_control_title": "Internal System Connections",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-9"
+    },
+    {
+      "source_control_id": "KSI-CNA-ULN",
+      "source_control_title": "Using Logical Networking",
+      "target_control_id": "CM-11",
+      "target_control_title": "User-installed Software",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-11"
     },
     {
       "source_control_id": "KSI-CNA-ULN",
@@ -518,7 +734,7 @@
       "target_control_title": "Boundary Protection",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7, sc-7.7"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7, sc-7.20, sc-7.21, sc-7.7"
     },
     {
       "source_control_id": "KSI-CNA-ULN",
@@ -536,7 +752,7 @@
       "target_control_title": "Account Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2.2, ac-2.3, ac-2.13"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2.13, ac-2.2, ac-2.3"
     },
     {
       "source_control_id": "KSI-IAM-AAM",
@@ -566,6 +782,15 @@
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-4.4"
     },
     {
+      "source_control_id": "KSI-IAM-AAM",
+      "source_control_title": "Automating Account Management",
+      "target_control_id": "IA-8",
+      "target_control_title": "Identification and Authentication (Non-organizational Users)",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-8.4"
+    },
+    {
       "source_control_id": "KSI-IAM-APM",
       "source_control_title": "Adopting Passwordless Methods",
       "target_control_id": "AC-2",
@@ -590,7 +815,7 @@
       "target_control_title": "Identification and Authentication (Organizational Users)",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-2, ia-2.1, ia-2.2, ia-2.8"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-2, ia-2.1, ia-2.2, ia-2.6, ia-2.8"
     },
     {
       "source_control_id": "KSI-IAM-APM",
@@ -599,7 +824,7 @@
       "target_control_title": "Authenticator Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-5.1, ia-5.2, ia-5.6, ia-5"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-5, ia-5.1, ia-5.2, ia-5.6, ia-5.8"
     },
     {
       "source_control_id": "KSI-IAM-APM",
@@ -617,7 +842,7 @@
       "target_control_title": "Identification and Authentication (Non-organizational Users)",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-8"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-8, ia-8.2, ia-8.4"
     },
     {
       "source_control_id": "KSI-IAM-APM",
@@ -658,11 +883,20 @@
     {
       "source_control_id": "KSI-IAM-ELP",
       "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "AC-18",
+      "target_control_title": "Wireless Access",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-18.4"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
       "target_control_id": "AC-2",
       "target_control_title": "Account Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2.5, ac-2.6"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2.11, ac-2.5, ac-2.6, ac-2.7, ac-2.9"
     },
     {
       "source_control_id": "KSI-IAM-ELP",
@@ -672,6 +906,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-20, ac-20.1"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "AC-21",
+      "target_control_title": "Information Sharing",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-21"
     },
     {
       "source_control_id": "KSI-IAM-ELP",
@@ -698,7 +941,25 @@
       "target_control_title": "Least Privilege",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-6"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-6, ac-6.3, ac-6.8"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "AU-12",
+      "target_control_title": "Audit Record Generation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-12.3"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "AU-6",
+      "target_control_title": "Audit Record Review, Analysis, and Reporting",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-6.7"
     },
     {
       "source_control_id": "KSI-IAM-ELP",
@@ -708,6 +969,24 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-2.7"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "CM-5",
+      "target_control_title": "Access Restrictions for Change",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-5.1, cm-5.5"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "CM-7",
+      "target_control_title": "Least Functionality",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-7.2"
     },
     {
       "source_control_id": "KSI-IAM-ELP",
@@ -766,6 +1045,24 @@
     {
       "source_control_id": "KSI-IAM-ELP",
       "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "IR-4",
+      "target_control_title": "Incident Handling",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4.6"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
       "target_control_id": "PS-2",
       "target_control_title": "Position Risk Designation",
       "relationship": "related",
@@ -811,6 +1108,24 @@
     {
       "source_control_id": "KSI-IAM-ELP",
       "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "RA-5",
+      "target_control_title": "Vulnerability Monitoring and Scanning",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-5.5"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "SC-2",
+      "target_control_title": "Separation of System and User Functionality",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-2"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
       "target_control_id": "SC-20",
       "target_control_title": "Secure Name/Address Resolution Service (Authoritative Source)",
       "relationship": "related",
@@ -847,6 +1162,15 @@
     {
       "source_control_id": "KSI-IAM-ELP",
       "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "SC-3",
+      "target_control_title": "Security Function Isolation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-3"
+    },
+    {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
       "target_control_id": "SC-39",
       "target_control_title": "Process Isolation",
       "relationship": "related",
@@ -872,13 +1196,22 @@
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-3"
     },
     {
+      "source_control_id": "KSI-IAM-ELP",
+      "source_control_title": "Ensuring Least Privilege",
+      "target_control_id": "SI-4",
+      "target_control_title": "System Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.19"
+    },
+    {
       "source_control_id": "KSI-IAM-JIT",
       "source_control_title": "Authorizing Just-in-Time",
       "target_control_id": "AC-17",
       "target_control_title": "Remote Access",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-17"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-17, ac-17.4"
     },
     {
       "source_control_id": "KSI-IAM-JIT",
@@ -887,7 +1220,7 @@
       "target_control_title": "Account Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2, ac-2.1, ac-2.2, ac-2.3, ac-2.4, ac-2.6"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2, ac-2.1, ac-2.11, ac-2.2, ac-2.3, ac-2.4, ac-2.6, ac-2.7"
     },
     {
       "source_control_id": "KSI-IAM-JIT",
@@ -897,6 +1230,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-20.1"
+    },
+    {
+      "source_control_id": "KSI-IAM-JIT",
+      "source_control_title": "Authorizing Just-in-Time",
+      "target_control_id": "AC-21",
+      "target_control_title": "Information Sharing",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-21"
     },
     {
       "source_control_id": "KSI-IAM-JIT",
@@ -932,7 +1274,7 @@
       "target_control_title": "Least Privilege",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-6, ac-6.1, ac-6.2, ac-6.5, ac-6.7, ac-6.9, ac-6.10"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-6, ac-6.1, ac-6.10, ac-6.2, ac-6.3, ac-6.5, ac-6.7, ac-6.8, ac-6.9"
     },
     {
       "source_control_id": "KSI-IAM-JIT",
@@ -946,6 +1288,24 @@
     {
       "source_control_id": "KSI-IAM-JIT",
       "source_control_title": "Authorizing Just-in-Time",
+      "target_control_id": "AU-10",
+      "target_control_title": "Non-repudiation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-10"
+    },
+    {
+      "source_control_id": "KSI-IAM-JIT",
+      "source_control_title": "Authorizing Just-in-Time",
+      "target_control_id": "AU-12",
+      "target_control_title": "Audit Record Generation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-12.3"
+    },
+    {
+      "source_control_id": "KSI-IAM-JIT",
+      "source_control_title": "Authorizing Just-in-Time",
       "target_control_id": "AU-9",
       "target_control_title": "Protection of Audit Information",
       "relationship": "related",
@@ -955,11 +1315,20 @@
     {
       "source_control_id": "KSI-IAM-JIT",
       "source_control_title": "Authorizing Just-in-Time",
+      "target_control_id": "CA-3",
+      "target_control_title": "Information Exchange",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-3.6"
+    },
+    {
+      "source_control_id": "KSI-IAM-JIT",
+      "source_control_title": "Authorizing Just-in-Time",
       "target_control_id": "CM-5",
       "target_control_title": "Access Restrictions for Change",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-5"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-5, cm-5.1, cm-5.5"
     },
     {
       "source_control_id": "KSI-IAM-JIT",
@@ -996,6 +1365,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-7"
+    },
+    {
+      "source_control_id": "KSI-IAM-JIT",
+      "source_control_title": "Authorizing Just-in-Time",
+      "target_control_id": "IR-4",
+      "target_control_title": "Incident Handling",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4.6"
     },
     {
       "source_control_id": "KSI-IAM-JIT",
@@ -1081,6 +1459,15 @@
     {
       "source_control_id": "KSI-IAM-JIT",
       "source_control_title": "Authorizing Just-in-Time",
+      "target_control_id": "SC-3",
+      "target_control_title": "Security Function Isolation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-3"
+    },
+    {
+      "source_control_id": "KSI-IAM-JIT",
+      "source_control_title": "Authorizing Just-in-Time",
       "target_control_id": "SC-39",
       "target_control_title": "Process Isolation",
       "relationship": "related",
@@ -1094,7 +1481,7 @@
       "target_control_title": "Account Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2, ac-2.2"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2, ac-2.2, ac-2.9"
     },
     {
       "source_control_id": "KSI-IAM-SNU",
@@ -1113,6 +1500,24 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-6.5"
+    },
+    {
+      "source_control_id": "KSI-IAM-SNU",
+      "source_control_title": "Securing Non-User Authentication",
+      "target_control_id": "AU-10",
+      "target_control_title": "Non-repudiation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-10"
+    },
+    {
+      "source_control_id": "KSI-IAM-SNU",
+      "source_control_title": "Securing Non-User Authentication",
+      "target_control_id": "IA-2",
+      "target_control_title": "Identification and Authentication (Organizational Users)",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-2.5"
     },
     {
       "source_control_id": "KSI-IAM-SNU",
@@ -1148,7 +1553,7 @@
       "target_control_title": "Account Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2, ac-2.1, ac-2.3, ac-2.13"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2, ac-2.1, ac-2.11, ac-2.12, ac-2.13, ac-2.3"
     },
     {
       "source_control_id": "KSI-IAM-SUS",
@@ -1158,6 +1563,42 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-7"
+    },
+    {
+      "source_control_id": "KSI-IAM-SUS",
+      "source_control_title": "Responding to Suspicious Activity",
+      "target_control_id": "AU-6",
+      "target_control_title": "Audit Record Review, Analysis, and Reporting",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-6.5"
+    },
+    {
+      "source_control_id": "KSI-IAM-SUS",
+      "source_control_title": "Responding to Suspicious Activity",
+      "target_control_id": "CM-5",
+      "target_control_title": "Access Restrictions for Change",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-5.1"
+    },
+    {
+      "source_control_id": "KSI-IAM-SUS",
+      "source_control_title": "Responding to Suspicious Activity",
+      "target_control_id": "CM-6",
+      "target_control_title": "Configuration Settings",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-6.2"
+    },
+    {
+      "source_control_id": "KSI-IAM-SUS",
+      "source_control_title": "Responding to Suspicious Activity",
+      "target_control_id": "IR-4",
+      "target_control_title": "Incident Handling",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4.2, ir-4.6"
     },
     {
       "source_control_id": "KSI-IAM-SUS",
@@ -1176,6 +1617,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ps-8"
+    },
+    {
+      "source_control_id": "KSI-IAM-SUS",
+      "source_control_title": "Responding to Suspicious Activity",
+      "target_control_id": "SI-4",
+      "target_control_title": "System Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4, si-4.1, si-4.19, si-4.20, si-4.22, si-4.4"
     },
     {
       "source_control_id": "KSI-INR-AAR",
@@ -1198,11 +1648,29 @@
     {
       "source_control_id": "KSI-INR-AAR",
       "source_control_title": "Generating After Action Reports",
+      "target_control_id": "IR-5",
+      "target_control_title": "Incident Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-5.1"
+    },
+    {
+      "source_control_id": "KSI-INR-AAR",
+      "source_control_title": "Generating After Action Reports",
       "target_control_id": "IR-8",
       "target_control_title": "Incident Response Plan",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-8"
+    },
+    {
+      "source_control_id": "KSI-INR-AAR",
+      "source_control_title": "Generating After Action Reports",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.3"
     },
     {
       "source_control_id": "KSI-INR-RIR",
@@ -1211,7 +1679,7 @@
       "target_control_title": "Incident Handling",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4, ir-4.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4, ir-4.1, ir-4.11"
     },
     {
       "source_control_id": "KSI-INR-RIR",
@@ -1243,6 +1711,15 @@
     {
       "source_control_id": "KSI-INR-RIR",
       "source_control_title": "Reviewing Incident Response Procedures",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.3"
+    },
+    {
+      "source_control_id": "KSI-INR-RIR",
+      "source_control_title": "Reviewing Incident Response Procedures",
       "target_control_id": "SI-4",
       "target_control_title": "System Monitoring",
       "relationship": "related",
@@ -1265,7 +1742,7 @@
       "target_control_title": "Incident Handling",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4, ir-4.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4, ir-4.1, ir-4.11, ir-4.4"
     },
     {
       "source_control_id": "KSI-INR-RPI",
@@ -1274,7 +1751,7 @@
       "target_control_title": "Incident Monitoring",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-5"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-5, ir-5.1"
     },
     {
       "source_control_id": "KSI-INR-RPI",
@@ -1286,6 +1763,33 @@
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-8"
     },
     {
+      "source_control_id": "KSI-INR-RPI",
+      "source_control_title": "Reviewing Past Incidents",
+      "target_control_id": "RA-5",
+      "target_control_title": "Vulnerability Monitoring and Scanning",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-5.8"
+    },
+    {
+      "source_control_id": "KSI-MLA-ALA",
+      "source_control_title": "Authorizing Log Access",
+      "target_control_id": "AU-12",
+      "target_control_title": "Audit Record Generation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-12.3"
+    },
+    {
+      "source_control_id": "KSI-MLA-ALA",
+      "source_control_title": "Authorizing Log Access",
+      "target_control_id": "AU-6",
+      "target_control_title": "Audit Record Review, Analysis, and Reporting",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-6.7"
+    },
+    {
       "source_control_id": "KSI-MLA-ALA",
       "source_control_title": "Authorizing Log Access",
       "target_control_id": "SI-11",
@@ -1293,6 +1797,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-11"
+    },
+    {
+      "source_control_id": "KSI-MLA-EVC",
+      "source_control_title": "Evaluating Configurations",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19"
     },
     {
       "source_control_id": "KSI-MLA-EVC",
@@ -1319,7 +1832,16 @@
       "target_control_title": "Configuration Settings",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-6"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-6, cm-6.1"
+    },
+    {
+      "source_control_id": "KSI-MLA-EVC",
+      "source_control_title": "Evaluating Configurations",
+      "target_control_id": "RA-3",
+      "target_control_title": "Risk Assessment",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-3"
     },
     {
       "source_control_id": "KSI-MLA-EVC",
@@ -1369,6 +1891,15 @@
     {
       "source_control_id": "KSI-MLA-LET",
       "source_control_title": "Logging Event Types",
+      "target_control_id": "AU-10",
+      "target_control_title": "Non-repudiation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-10"
+    },
+    {
+      "source_control_id": "KSI-MLA-LET",
+      "source_control_title": "Logging Event Types",
       "target_control_id": "AU-12",
       "target_control_title": "Audit Record Generation",
       "relationship": "related",
@@ -1391,7 +1922,25 @@
       "target_control_title": "Audit Record Reduction and Report Generation",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-7.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-7, au-7.1"
+    },
+    {
+      "source_control_id": "KSI-MLA-LET",
+      "source_control_title": "Logging Event Types",
+      "target_control_id": "CM-5",
+      "target_control_title": "Access Restrictions for Change",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-5.1"
+    },
+    {
+      "source_control_id": "KSI-MLA-LET",
+      "source_control_title": "Logging Event Types",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
     },
     {
       "source_control_id": "KSI-MLA-LET",
@@ -1400,7 +1949,7 @@
       "target_control_title": "System Monitoring",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.4, si-4.5"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.19, si-4.20, si-4.4, si-4.5"
     },
     {
       "source_control_id": "KSI-MLA-LET",
@@ -1441,6 +1990,15 @@
     {
       "source_control_id": "KSI-MLA-OSM",
       "source_control_title": "Operating SIEM Capability",
+      "target_control_id": "AU-12",
+      "target_control_title": "Audit Record Generation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-12.1"
+    },
+    {
+      "source_control_id": "KSI-MLA-OSM",
+      "source_control_title": "Operating SIEM Capability",
       "target_control_id": "AU-2",
       "target_control_title": "Event Logging",
       "relationship": "related",
@@ -1472,7 +2030,7 @@
       "target_control_title": "Response to Audit Logging Process Failures",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-5"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-5, au-5.1"
     },
     {
       "source_control_id": "KSI-MLA-OSM",
@@ -1481,7 +2039,7 @@
       "target_control_title": "Audit Record Review, Analysis, and Reporting",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-6.1, au-6.3"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-6.1, au-6.3, au-6.4, au-6.5"
     },
     {
       "source_control_id": "KSI-MLA-OSM",
@@ -1526,16 +2084,7 @@
       "target_control_title": "System Monitoring",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.2, si-4.4"
-    },
-    {
-      "source_control_id": "KSI-MLA-OSM",
-      "source_control_title": "Operating SIEM Capability",
-      "target_control_id": "SI-7",
-      "target_control_title": "Software, Firmware, and Information Integrity",
-      "relationship": "related",
-      "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7.7"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.16, si-4.2, si-4.4"
     },
     {
       "source_control_id": "KSI-MLA-RVL",
@@ -1576,11 +2125,29 @@
     {
       "source_control_id": "KSI-MLA-RVL",
       "source_control_title": "Reviewing Logs",
+      "target_control_id": "AU-7",
+      "target_control_title": "Audit Record Reduction and Report Generation",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-7"
+    },
+    {
+      "source_control_id": "KSI-MLA-RVL",
+      "source_control_title": "Reviewing Logs",
+      "target_control_id": "RA-5",
+      "target_control_title": "Vulnerability Monitoring and Scanning",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-5.8"
+    },
+    {
+      "source_control_id": "KSI-MLA-RVL",
+      "source_control_title": "Reviewing Logs",
       "target_control_id": "SI-4",
       "target_control_title": "System Monitoring",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4, si-4.4"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4, si-4.19, si-4.4"
     },
     {
       "source_control_id": "KSI-PIY-GIV",
@@ -1616,7 +2183,7 @@
       "target_control_title": "System Component Inventory",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-8, cm-8.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-8, cm-8.1, cm-8.2, cm-8.4"
     },
     {
       "source_control_id": "KSI-PIY-GIV",
@@ -1643,7 +2210,7 @@
       "target_control_title": "Control Assessments",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-2"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-2, ca-2.2"
     },
     {
       "source_control_id": "KSI-PIY-RIS",
@@ -1671,6 +2238,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-3.2"
+    },
+    {
+      "source_control_id": "KSI-PIY-RIS",
+      "source_control_title": "Reviewing Investments in Security",
+      "target_control_id": "IR-4",
+      "target_control_title": "Incident Handling",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-4.11"
     },
     {
       "source_control_id": "KSI-PIY-RIS",
@@ -1738,6 +2314,15 @@
     {
       "source_control_id": "KSI-PIY-RSD",
       "source_control_title": "Reviewing Security in the SDLC",
+      "target_control_id": "IA-5",
+      "target_control_title": "Authenticator Management",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ia-5.7"
+    },
+    {
+      "source_control_id": "KSI-PIY-RSD",
+      "source_control_title": "Reviewing Security in the SDLC",
       "target_control_id": "PL-8",
       "target_control_title": "Security and Privacy Architectures",
       "relationship": "related",
@@ -1752,6 +2337,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): pm-7"
+    },
+    {
+      "source_control_id": "KSI-PIY-RSD",
+      "source_control_title": "Reviewing Security in the SDLC",
+      "target_control_id": "RA-9",
+      "target_control_title": "Criticality Analysis",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-9"
     },
     {
       "source_control_id": "KSI-PIY-RSD",
@@ -1860,15 +2454,6 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-9"
-    },
-    {
-      "source_control_id": "KSI-RPL-ABO",
-      "source_control_title": "Aligning Backups with Objectives",
-      "target_control_id": "SI-12",
-      "target_control_title": "Information Management and Retention",
-      "relationship": "related",
-      "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-12"
     },
     {
       "source_control_id": "KSI-RPL-ARP",
@@ -1997,6 +2582,33 @@
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-3, ir-3.2"
     },
     {
+      "source_control_id": "KSI-RPL-TRC",
+      "source_control_title": "Testing Recovery Capabilities",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.3"
+    },
+    {
+      "source_control_id": "KSI-RPL-TRC",
+      "source_control_title": "Testing Recovery Capabilities",
+      "target_control_id": "SC-12",
+      "target_control_title": "Cryptographic Key Establishment and Management",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-12.1"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19"
+    },
+    {
       "source_control_id": "KSI-SCR-MIT",
       "source_control_title": "Mitigating Supply Chain Risk",
       "target_control_id": "AC-20",
@@ -2021,7 +2633,7 @@
       "target_control_title": "Risk Assessment",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-3.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-3, ra-3.1"
     },
     {
       "source_control_id": "KSI-SCR-MIT",
@@ -2039,7 +2651,7 @@
       "target_control_title": "Developer Testing and Evaluation",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-11"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-11, sa-11.1, sa-11.2"
     },
     {
       "source_control_id": "KSI-SCR-MIT",
@@ -2048,7 +2660,34 @@
       "target_control_title": "Development Process, Standards, and Tools",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-15.3"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-15, sa-15.3"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "SA-16",
+      "target_control_title": "Developer-provided Training",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-16"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "SA-17",
+      "target_control_title": "Developer Security and Privacy Architecture and Design",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-17"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "SA-21",
+      "target_control_title": "Developer Screening",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-21"
     },
     {
       "source_control_id": "KSI-SCR-MIT",
@@ -2062,11 +2701,20 @@
     {
       "source_control_id": "KSI-SCR-MIT",
       "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "SA-4",
+      "target_control_title": "Acquisition Process",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-4, sa-4.1, sa-4.2, sa-4.5, sa-4.9"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
       "target_control_id": "SA-9",
       "target_control_title": "External System Services",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-9"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sa-9, sa-9.1, sa-9.2, sa-9.5"
     },
     {
       "source_control_id": "KSI-SCR-MIT",
@@ -2084,7 +2732,25 @@
       "target_control_title": "Software, Firmware, and Information Integrity",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7.1, si-7.15"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "SR-2",
+      "target_control_title": "Supply Chain Risk Management Plan",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sr-2"
+    },
+    {
+      "source_control_id": "KSI-SCR-MIT",
+      "source_control_title": "Mitigating Supply Chain Risk",
+      "target_control_id": "SR-3",
+      "target_control_title": "Supply Chain Controls and Processes",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sr-3"
     },
     {
       "source_control_id": "KSI-SCR-MIT",
@@ -2107,11 +2773,29 @@
     {
       "source_control_id": "KSI-SCR-MON",
       "source_control_title": "Monitoring Supply Chain Risk",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19"
+    },
+    {
+      "source_control_id": "KSI-SCR-MON",
+      "source_control_title": "Monitoring Supply Chain Risk",
       "target_control_id": "AC-20",
       "target_control_title": "Use of External Systems",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-20"
+    },
+    {
+      "source_control_id": "KSI-SCR-MON",
+      "source_control_title": "Monitoring Supply Chain Risk",
+      "target_control_id": "CA-2",
+      "target_control_title": "Control Assessments",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-2.3"
     },
     {
       "source_control_id": "KSI-SCR-MON",
@@ -2143,6 +2827,15 @@
     {
       "source_control_id": "KSI-SCR-MON",
       "source_control_title": "Monitoring Supply Chain Risk",
+      "target_control_id": "RA-3",
+      "target_control_title": "Risk Assessment",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-3"
+    },
+    {
+      "source_control_id": "KSI-SCR-MON",
+      "source_control_title": "Monitoring Supply Chain Risk",
       "target_control_id": "RA-5",
       "target_control_title": "Vulnerability Monitoring and Scanning",
       "relationship": "related",
@@ -2166,6 +2859,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-5"
+    },
+    {
+      "source_control_id": "KSI-SCR-MON",
+      "source_control_title": "Monitoring Supply Chain Risk",
+      "target_control_id": "SR-3",
+      "target_control_title": "Supply Chain Controls and Processes",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sr-3"
     },
     {
       "source_control_id": "KSI-SCR-MON",
@@ -2202,6 +2904,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-2.4"
+    },
+    {
+      "source_control_id": "KSI-SVC-ACM",
+      "source_control_title": "Automating Configuration Management",
+      "target_control_id": "AC-6",
+      "target_control_title": "Least Privilege",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-6.8"
     },
     {
       "source_control_id": "KSI-SVC-ACM",
@@ -2260,6 +2971,24 @@
     {
       "source_control_id": "KSI-SVC-ACM",
       "source_control_title": "Automating Configuration Management",
+      "target_control_id": "SC-45",
+      "target_control_title": "System Time Synchronization",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-45, sc-45.1"
+    },
+    {
+      "source_control_id": "KSI-SVC-ACM",
+      "source_control_title": "Automating Configuration Management",
+      "target_control_id": "SC-7",
+      "target_control_title": "Boundary Protection",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18"
+    },
+    {
+      "source_control_id": "KSI-SVC-ACM",
+      "source_control_title": "Automating Configuration Management",
       "target_control_id": "SI-5",
       "target_control_title": "Security Alerts, Advisories, and Directives",
       "relationship": "related",
@@ -2300,7 +3029,7 @@
       "target_control_title": "Cryptographic Key Establishment and Management",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-12"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-12, sc-12.1"
     },
     {
       "source_control_id": "KSI-SVC-ASM",
@@ -2314,11 +3043,29 @@
     {
       "source_control_id": "KSI-SVC-EIS",
       "source_control_title": "Evaluating and Improving Security",
+      "target_control_id": "CA-7",
+      "target_control_title": "Continuous Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ca-7.4"
+    },
+    {
+      "source_control_id": "KSI-SVC-EIS",
+      "source_control_title": "Evaluating and Improving Security",
       "target_control_id": "CM-12",
       "target_control_title": "Information Location",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-12.1"
+    },
+    {
+      "source_control_id": "KSI-SVC-EIS",
+      "source_control_title": "Evaluating and Improving Security",
+      "target_control_id": "CM-5",
+      "target_control_title": "Access Restrictions for Change",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-5.5"
     },
     {
       "source_control_id": "KSI-SVC-EIS",
@@ -2332,11 +3079,11 @@
     {
       "source_control_id": "KSI-SVC-EIS",
       "source_control_title": "Evaluating and Improving Security",
-      "target_control_id": "MA-2",
-      "target_control_title": "Controlled Maintenance",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ma-2"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
     },
     {
       "source_control_id": "KSI-SVC-EIS",
@@ -2346,6 +3093,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): pl-8"
+    },
+    {
+      "source_control_id": "KSI-SVC-EIS",
+      "source_control_title": "Evaluating and Improving Security",
+      "target_control_id": "RA-3",
+      "target_control_title": "Risk Assessment",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ra-3"
     },
     {
       "source_control_id": "KSI-SVC-EIS",
@@ -2395,11 +3151,56 @@
     {
       "source_control_id": "KSI-SVC-PRR",
       "source_control_title": "Preventing Residual Risk",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19"
+    },
+    {
+      "source_control_id": "KSI-SVC-PRR",
+      "source_control_title": "Preventing Residual Risk",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
+    },
+    {
+      "source_control_id": "KSI-SVC-PRR",
+      "source_control_title": "Preventing Residual Risk",
+      "target_control_id": "SC-12",
+      "target_control_title": "Cryptographic Key Establishment and Management",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-12.1"
+    },
+    {
+      "source_control_id": "KSI-SVC-PRR",
+      "source_control_title": "Preventing Residual Risk",
       "target_control_id": "SC-4",
       "target_control_title": "Information in Shared System Resources",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-4"
+    },
+    {
+      "source_control_id": "KSI-SVC-PRR",
+      "source_control_title": "Preventing Residual Risk",
+      "target_control_id": "SC-7",
+      "target_control_title": "Boundary Protection",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18"
+    },
+    {
+      "source_control_id": "KSI-SVC-RUD",
+      "source_control_title": "Removing Unwanted Data",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9"
     },
     {
       "source_control_id": "KSI-SVC-RUD",
@@ -2420,13 +3221,22 @@
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-18.4"
     },
     {
-      "source_control_id": "KSI-SVC-SIN",
-      "source_control_title": "Securing Information",
-      "target_control_id": "AC-1",
-      "target_control_title": "Policy and Procedures",
+      "source_control_id": "KSI-SVC-RUD",
+      "source_control_title": "Removing Unwanted Data",
+      "target_control_id": "SI-8",
+      "target_control_title": "Spam Protection",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-8, si-8.2"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
+      "target_control_id": "AC-11",
+      "target_control_title": "Device Lock",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-11, ac-11.1"
     },
     {
       "source_control_id": "KSI-SVC-SIN",
@@ -2440,11 +3250,38 @@
     {
       "source_control_id": "KSI-SVC-SIN",
       "source_control_title": "Securing Information",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19.5"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
+      "target_control_id": "AC-21",
+      "target_control_title": "Information Sharing",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-21"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
       "target_control_id": "CP-9",
       "target_control_title": "System Backup",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cp-9.8"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
+      "target_control_id": "IR-9",
+      "target_control_title": "Information Spillage Response",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ir-9.4"
     },
     {
       "source_control_id": "KSI-SVC-SIN",
@@ -2503,11 +3340,74 @@
     {
       "source_control_id": "KSI-SVC-SIN",
       "source_control_title": "Securing Information",
+      "target_control_id": "SC-4",
+      "target_control_title": "Information in Shared System Resources",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-4"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
+      "target_control_id": "SC-7",
+      "target_control_title": "Boundary Protection",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-7.18"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
       "target_control_id": "SC-8",
       "target_control_title": "Transmission Confidentiality and Integrity",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sc-8, sc-8.1"
+    },
+    {
+      "source_control_id": "KSI-SVC-SIN",
+      "source_control_title": "Securing Information",
+      "target_control_id": "SI-4",
+      "target_control_title": "System Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.18"
+    },
+    {
+      "source_control_id": "KSI-SVC-VCM",
+      "source_control_title": "Validating Communications",
+      "target_control_id": "AC-10",
+      "target_control_title": "Concurrent Session Control",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-10"
+    },
+    {
+      "source_control_id": "KSI-SVC-VCM",
+      "source_control_title": "Validating Communications",
+      "target_control_id": "AC-17",
+      "target_control_title": "Remote Access",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-17.4"
+    },
+    {
+      "source_control_id": "KSI-SVC-VCM",
+      "source_control_title": "Validating Communications",
+      "target_control_id": "AC-18",
+      "target_control_title": "Wireless Access",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-18"
+    },
+    {
+      "source_control_id": "KSI-SVC-VCM",
+      "source_control_title": "Validating Communications",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19"
     },
     {
       "source_control_id": "KSI-SVC-VCM",
@@ -2521,11 +3421,65 @@
     {
       "source_control_id": "KSI-SVC-VCM",
       "source_control_title": "Validating Communications",
+      "target_control_id": "SI-4",
+      "target_control_title": "System Monitoring",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-4.22"
+    },
+    {
+      "source_control_id": "KSI-SVC-VCM",
+      "source_control_title": "Validating Communications",
       "target_control_id": "SI-7",
       "target_control_title": "Software, Firmware, and Information Integrity",
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7.1"
+    },
+    {
+      "source_control_id": "KSI-SVC-VRI",
+      "source_control_title": "Validating Resource Integrity",
+      "target_control_id": "AC-17",
+      "target_control_title": "Remote Access",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-17.4"
+    },
+    {
+      "source_control_id": "KSI-SVC-VRI",
+      "source_control_title": "Validating Resource Integrity",
+      "target_control_id": "AC-18",
+      "target_control_title": "Wireless Access",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-18"
+    },
+    {
+      "source_control_id": "KSI-SVC-VRI",
+      "source_control_title": "Validating Resource Integrity",
+      "target_control_id": "AC-19",
+      "target_control_title": "Access Control for Mobile Devices",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): ac-19"
+    },
+    {
+      "source_control_id": "KSI-SVC-VRI",
+      "source_control_title": "Validating Resource Integrity",
+      "target_control_id": "AU-9",
+      "target_control_title": "Protection of Audit Information",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): au-9.3"
+    },
+    {
+      "source_control_id": "KSI-SVC-VRI",
+      "source_control_title": "Validating Resource Integrity",
+      "target_control_id": "CM-14",
+      "target_control_title": "Signed Components",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): cm-14"
     },
     {
       "source_control_id": "KSI-SVC-VRI",
@@ -2570,7 +3524,7 @@
       "target_control_title": "Software, Firmware, and Information Integrity",
       "relationship": "related",
       "confidence": "high",
-      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7, si-7.1"
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): si-7, si-7.1, si-7.15"
     },
     {
       "source_control_id": "KSI-SVC-VRI",
@@ -2580,6 +3534,15 @@
       "relationship": "related",
       "confidence": "high",
       "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sr-10"
+    },
+    {
+      "source_control_id": "KSI-SVC-VRI",
+      "source_control_title": "Validating Resource Integrity",
+      "target_control_id": "SR-11",
+      "target_control_title": "Component Authenticity",
+      "relationship": "related",
+      "confidence": "high",
+      "notes": "Upstream FedRAMP KSI `controls` citation (verbatim, enhancements dot-suffixed): sr-11"
     }
   ]
 }
