@@ -28,7 +28,7 @@ from pydantic import BaseModel, ValidationError
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
-from evidentia_api._credential_env import resolve_credential_env_name
+from evidentia_api._credential_env import prefix_of, resolve_credential_env_name
 from evidentia_api.errors import ErrorEnvelope, api_error, error_responses
 from evidentia_api.rbac_dependency import require_role
 from evidentia_api.routers import enterprise_retention, incident_clock, registry, storage_retention
@@ -640,7 +640,10 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             field="connection_uri",
         )
     password_env = resolve_credential_env_name(
-        payload, "password_env", "EVIDENTIA_POSTGRES_PASSWORD", allowed_prefixes=("EVIDENTIA_POSTGRES_",)
+        payload,
+        "password_env",
+        "EVIDENTIA_POSTGRES_PASSWORD",
+        allowed_prefixes=(prefix_of("EVIDENTIA_POSTGRES_PASSWORD"),),
     )
     password = os.environ.get(password_env)
     if password is None:
@@ -722,7 +725,7 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             field="connection_uri",
         )
     password_env = resolve_credential_env_name(
-        payload, "password_env", "EVIDENTIA_MYSQL_PASSWORD", allowed_prefixes=("EVIDENTIA_MYSQL_",)
+        payload, "password_env", "EVIDENTIA_MYSQL_PASSWORD", allowed_prefixes=(prefix_of("EVIDENTIA_MYSQL_PASSWORD"),)
     )
     password = os.environ.get(password_env)
     if password is None:
@@ -806,7 +809,7 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             field="connection_uri",
         )
     password_env = resolve_credential_env_name(
-        payload, "password_env", "EVIDENTIA_MSSQL_PASSWORD", allowed_prefixes=("EVIDENTIA_MSSQL_",)
+        payload, "password_env", "EVIDENTIA_MSSQL_PASSWORD", allowed_prefixes=(prefix_of("EVIDENTIA_MSSQL_PASSWORD"),)
     )
     password = os.environ.get(password_env)
     if password is None:
@@ -885,7 +888,7 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             field="connection_uri",
         )
     password_env = resolve_credential_env_name(
-        payload, "password_env", "EVIDENTIA_ORACLE_PASSWORD", allowed_prefixes=("EVIDENTIA_ORACLE_",)
+        payload, "password_env", "EVIDENTIA_ORACLE_PASSWORD", allowed_prefixes=(prefix_of("EVIDENTIA_ORACLE_PASSWORD"),)
     )
     password = os.environ.get(password_env)
     if password is None:

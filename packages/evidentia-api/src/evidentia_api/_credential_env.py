@@ -70,3 +70,14 @@ def resolve_credential_env_name(
             allowed_prefixes=list(allowed_prefixes),
         )
     return name
+
+
+def prefix_of(default: str) -> str:
+    """Return the integration prefix a default env var name implies.
+
+    Everything up to and including the last underscore: EVIDENTIA_POSTGRES_PASSWORD
+    gives EVIDENTIA_POSTGRES_. Deriving the prefix keeps the source free of
+    bare prefix tokens that the configuration reference generator would list as
+    variables.
+    """
+    return default[: default.rindex("_") + 1]
