@@ -176,16 +176,33 @@ def find_config_file(start: Path | None = None, stop_at: Path | None = None) -> 
     return None
 
 
-@lru_cache(maxsize=4)
-def _load_config_cached(path: Path) -> EvidentiaConfig:
-    """Parse a specific config file path (cached for repeated loads)."""
+def _parse_config_file(path: Path, *, expand_env: bool) -> EvidentiaConfig:
+    """Parse one config file; ``expand_env`` controls ``${VAR}`` substitution."""
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     if not isinstance(raw, dict):
         raise ValueError(f"{path} must contain a YAML mapping at the top level")
-    raw = _expand_env_vars(raw)
+    if expand_env:
+        raw = _expand_env_vars(raw)
     cfg = EvidentiaConfig.model_validate(raw)
     cfg.source_path = path
     return cfg
+
+
+@lru_cache(maxsize=4)
+def _load_config_cached(path: Path) -> EvidentiaConfig:
+    """Parse a specific config file path (cached for repeated loads)."""
+    return _parse_config_file(path, expand_env=True)
+
+
+def load_config_raw(path: Path) -> EvidentiaConfig:
+    """Load ``path`` as written, without ``${VAR}`` expansion and without caching.
+
+    For surfaces that display or edit the file (the REST config routes and
+    the console settings page). A value stored as ``${SOME_TOKEN}`` comes
+    back as that placeholder text, never as the live environment value;
+    :func:`load_config` keeps expanding for the CLI and library callers.
+    """
+    return _parse_config_file(path, expand_env=False)
 
 
 def load_config(path: Path | None = None) -> EvidentiaConfig:

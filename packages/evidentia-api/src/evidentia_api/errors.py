@@ -65,6 +65,9 @@ Key                          Meaning (typical status)
 ``not_implemented``          Recognized but unimplemented mode (501)
 ``rate_limited``             Token-bucket throttle (429, middleware)
 ``rbac_denied``              RBAC deny (403, dependency)
+``payload_too_large``        Body or serialised document over the
+                             route's documented size cap (413);
+                             context: ``limit_bytes``
 ===========================  ==========================================
 
 Usage::
