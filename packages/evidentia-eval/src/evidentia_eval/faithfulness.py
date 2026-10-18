@@ -56,6 +56,13 @@ from pydantic import Field
 # (sentence-transformers) implementation would raise this to ~0.7.
 DEFAULT_FAITHFULNESS_THRESHOLD: float = 0.3
 
+DEFAULT_SEMANTIC_FAITHFULNESS_THRESHOLD: float = 0.7
+"""Default for ``method=\"semantic\"``: cosine similarity, not Jaccard overlap.
+
+The Jaccard default (0.3) gated the semantic method near-vacuously
+(v0.13.0 review, M20).
+"""
+
 # v0.8.6 P3: per-framework empirical Jaccard thresholds.
 # Numbers from the v0.8.5 P2 sweep
 # (`scripts/tune_faithfulness_threshold.py --corpus-pattern
@@ -288,6 +295,8 @@ def resolve_threshold(
     Returns:
         Threshold in [0, 1].
     """
+    if method == "semantic":
+        return DEFAULT_SEMANTIC_FAITHFULNESS_THRESHOLD
     if method == "jaccard" and framework is not None:
         return DEFAULT_THRESHOLDS_BY_FRAMEWORK_JACCARD.get(framework, DEFAULT_FAITHFULNESS_THRESHOLD)
     return DEFAULT_FAITHFULNESS_THRESHOLD
