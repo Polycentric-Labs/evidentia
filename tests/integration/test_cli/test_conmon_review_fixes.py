@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 from evidentia.cli.main import app
 from typer.testing import CliRunner
+
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+_BOX = re.compile(f"[{chr(0x2500)}-{chr(0x257F)}]")  # box drawing block
+
+
+def _plain(text: str) -> str:
+    """Collapse Rich rendering: strip ANSI codes and box drawing, join wrapped lines."""
+    return " ".join(_BOX.sub(" ", _ANSI.sub("", text)).split())
 
 
 @pytest.fixture()
@@ -32,7 +41,7 @@ def test_missing_evidence_store_is_a_usage_error(runner: CliRunner, tmp_path: Pa
         ["conmon", "check", "--evidence-store", str(tmp_path / "does-not-exist"), "--today", "2026-10-02"],
     )
     assert result.exit_code == 2, result.output
-    assert "does-not-exist" in result.output
+    assert "does-not-exist" in _plain(result.output).replace(" ", "") or "does-not-exist" in result.output
 
 
 def test_mark_completed_rejects_future_dates(runner: CliRunner, tmp_path: Path) -> None:
@@ -43,7 +52,7 @@ def test_mark_completed_rejects_future_dates(runner: CliRunner, tmp_path: Path) 
         ["conmon", "mark-completed", "pci-dss-11-6-1-weekly", "--when", future, "--state-file", str(state_file)],
     )
     assert result.exit_code == 2, result.output
-    assert "in the future" in result.output
+    assert "in the future" in _plain(result.output)
     assert not state_file.exists()
 
 
@@ -53,7 +62,7 @@ def test_series_unknown_slug_with_markup_is_safe(runner: CliRunner, tmp_path: Pa
     result = runner.invoke(app, ["conmon", "series", "[/x]not-a-slug", "--evidence-store", str(store)])
     assert result.exit_code == 2, result.output
     assert "Traceback" not in result.output
-    assert "unknown cadence slug" in result.output
+    assert "unknown cadence slug" in _plain(result.output)
 
 
 def test_series_lookback_is_bounded(runner: CliRunner, tmp_path: Path) -> None:
