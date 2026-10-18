@@ -363,7 +363,14 @@ jobs:
             sleep 15
           done
           echo "Regenerated docker/requirements.txt; evidentia[gui]==${VERSION} pin:"
-          grep -E "^evidentia==" docker/requirements.txt | head -2
+          # pip-compile writes the top-level pin with its extras
+          # (evidentia[gui]==X.Y.Z). The earlier pattern without the extras
+          # matched nothing, and the pipefail default turned the empty grep into
+          # a failed step on the 2026-10-18 preflight. The pin is asserted now.
+          if ! grep -E "^evidentia(\[[^]]*\])?==${VERSION}( |\\\\|$)" docker/requirements.txt; then
+            echo "::error::docker/requirements.txt carries no evidentia==${VERSION} pin after regeneration"
+            exit 1
+          fi
 
       - name: Install osv-scanner (v2.4.0, checksum-verified)
         run: |

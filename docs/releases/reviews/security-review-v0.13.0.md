@@ -56,7 +56,7 @@ reason in `docs/releases/plans/v0.13.1-plan.md`.
 | HIGH | 57 of 89 mutating REST operations ungated while the docs claimed REST was gated | gates by effect class (D8); docs corrected; CLI deferred |
 | HIGH | cadence series counted incomplete runs, import-dated artifacts and every version of a lineage (CWE-345) | provenance metadata, lineage counting, `excluded_observations`, as-of anchor |
 | HIGH | nine new collectors emitted no audit events (CWE-778) | COLLECT_STARTED, COMPLETED and FAILED from each entry point |
-| HIGH | no release.yml change since v0.12.1 had executed | preflight dispatch on main (approved) is a tag precondition |
+| HIGH | no release.yml change since v0.12.1 had executed | preflight dispatch on main (approved) is a tag precondition; the first dispatch (run 39137576670) passed the gate and failed the build job on a latent pin-display grep that the pipefail default surfaced, fixed in the review PR and re-dispatched after it merged |
 | HIGH | Okta admin-assignment lookup failure reported PASS with zero admins | UNKNOWN, active finding |
 | MEDIUM (26 fixed) | bounds, error handling, format checks, IDN pin, offline alert channels, signing flags, state loaders, CSV neutralisation, Power BI clear, ServiceNow outcome, release toolchain pins, gate fidelity (OSPS probe, docs link classifier, Tier C rows, pre-push filter), provider error text, 422 rendering, middleware path, vLLM key, eval gate semantics | see the CHANGELOG `[0.13.0]` review bullets |
 

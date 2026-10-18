@@ -299,7 +299,11 @@ owner legal review.
   are requested, and the semantic faithfulness method defaults to 0.7 instead of
   the Jaccard 0.3.
 - **release.yml pins uv 0.12.12 and syncs with `--locked`**, matching the PR
-  workflows, and two publish-path pins carry their correct version comments.
+  workflows, and two publish-path pins carry their correct version comments. The
+  first 2026-10-18 preflight exposed a latent pattern in the build job: the check
+  that displays the regenerated `evidentia[gui]` pin did not match the extras form
+  pip-compile writes, and the new pipefail default turned the empty grep into a
+  failed step; the pin is asserted with the right pattern now.
 - **Console authentication boundary (known limitation).** The console sends no
   bearer token of its own; its credentialed flows enable only when the server
   reports `auth_configured`. A deployment that sets the token file therefore needs
