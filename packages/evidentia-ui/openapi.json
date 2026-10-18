@@ -21091,7 +21091,7 @@
     },
     "securitySchemes": {
       "bearerAuth": {
-        "description": "Required on every /api route once the server is started with --auth-token-file (EVIDENTIA_API_AUTH_TOKEN_FILE); the liveness, version and schema paths stay open.",
+        "description": "Required on every /api route once the server is started with --auth-token-file (EVIDENTIA_API_AUTH_TOKEN_FILE); the liveness, version and schema paths stay open. Not enforced on this server (no token file configured).",
         "scheme": "bearer",
         "type": "http"
       }
@@ -29491,7 +29491,6 @@
             "description": "Successful Response"
           }
         },
-        "security": [],
         "summary": "Health",
         "tags": [
           "health"
@@ -32792,17 +32791,11 @@
             "description": "Successful Response"
           }
         },
-        "security": [],
         "summary": "Version",
         "tags": [
           "health"
         ]
       }
     }
-  },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ]
+  }
 }

@@ -131,8 +131,12 @@ def _declare_bearer_security(app: FastAPI) -> None:
     The auth middleware enforces ``Authorization: Bearer`` on every ``/api``
     route when a token file is configured, but the generated schema declared
     no security scheme, so generated clients and the interactive docs could
-    not discover it. The declaration is a global requirement with the
-    unauthenticated probe paths opted out; it changes no runtime behaviour.
+    not discover it. The scheme is always declared; the global requirement is
+    added only when an AuthProvider is configured, because the default
+    deployment is anonymous and a schema that claimed otherwise would be
+    wrong (and the DAST ``ignored_auth`` check would rightly object). The
+    unauthenticated probe paths are opted out. Nothing here changes runtime
+    behaviour.
     """
     from evidentia_api.auth_middleware import UNAUTHENTICATED_PATHS
 
@@ -142,6 +146,7 @@ def _declare_bearer_security(app: FastAPI) -> None:
         if app.openapi_schema:
             return app.openapi_schema
         schema = original_openapi()
+        configured = getattr(app.state, "auth_provider", None) is not None
         components = schema.setdefault("components", {})
         components.setdefault("securitySchemes", {})["bearerAuth"] = {
             "type": "http",
@@ -149,14 +154,20 @@ def _declare_bearer_security(app: FastAPI) -> None:
             "description": (
                 "Required on every /api route once the server is started with "
                 "--auth-token-file (EVIDENTIA_API_AUTH_TOKEN_FILE); the liveness, "
-                "version and schema paths stay open."
+                "version and schema paths stay open. "
+                + (
+                    "Enforced on this server."
+                    if configured
+                    else "Not enforced on this server (no token file configured)."
+                )
             ),
         }
-        schema["security"] = [{"bearerAuth": []}]
-        for path in UNAUTHENTICATED_PATHS:
-            for operation in schema.get("paths", {}).get(path, {}).values():
-                if isinstance(operation, dict):
-                    operation["security"] = []
+        if configured:
+            schema["security"] = [{"bearerAuth": []}]
+            for path in UNAUTHENTICATED_PATHS:
+                for operation in schema.get("paths", {}).get(path, {}).values():
+                    if isinstance(operation, dict):
+                        operation["security"] = []
         app.openapi_schema = schema
         return schema
 
