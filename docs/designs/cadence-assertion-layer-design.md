@@ -89,7 +89,8 @@ compliance), and counts are reported as observed, never as total, because the
 store cannot know what was never collected. Each lineage counts once, at its
 current version, so a corrected or re-saved artifact is the same observation
 and not a second one. Importers record provenance on the artifact:
-`metadata.collection_complete` (from `CollectionManifest.is_complete`) and
+`metadata.collection_complete` (false when the export shows no completed scan;
+per-host coverage stays in `CollectionManifest.is_complete`) and
 `metadata.timestamp_source` (`record` when `collected_at` came from the export,
 `collection_time` when the importer fell back to its own clock). The series
 leaves out an artifact marked incomplete or collection-time dated and reports the

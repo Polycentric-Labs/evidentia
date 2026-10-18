@@ -61,6 +61,7 @@ from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
 
+from evidentia_collectors._paths import is_reserved_device_name
 from evidentia_collectors._xml import parse_defused_xml
 from evidentia_collectors.greenbone.mapping import (
     VULNERABILITY_SCAN_MAPPINGS,
@@ -388,7 +389,12 @@ def _build_finding(
         remediation=result.solution or None,
         severity=greenbone_severity_to_severity(result.severity, result.threat),
         source_system="greenbone",
-        source_finding_id=(f"{context.source_system_id}:{result.host_ip}:{result.nvt_oid}:{result.port}"),
+        # The vhost name is part of the identity: two results that share
+        # host_ip, NVT and port but differ by hostname are two findings
+        # (v0.13.0 review, CWE-694).
+        source_finding_id=(
+            f"{context.source_system_id}:{result.host_ip}:{result.hostname or ''}:{result.nvt_oid}:{result.port}"
+        ),
         resource_type="host",
         resource_id=result.host_ip,
         control_mappings=list(VULNERABILITY_SCAN_MAPPINGS),
@@ -564,6 +570,8 @@ def collect_greenbone_file(
     file, an oversized file (over 50 MB), or any parse/mapping failure.
     """
     file_path = Path(path)
+    if is_reserved_device_name(file_path):
+        raise GreenboneIngestError(f"{file_path} names a reserved device, not a scan export")
     try:
         size = file_path.stat().st_size
     except OSError as exc:
@@ -595,7 +603,12 @@ def collect_greenbone_text(
     raises :class:`GreenboneIngestError` on an oversized payload or any
     parse/mapping failure.
     """
-    raw = xml_text.encode("utf-8")
+    try:
+        raw = xml_text.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise GreenboneIngestError(
+            f"{source_name} is not valid UTF-8 text (unpaired surrogate at offset {exc.start})"
+        ) from exc
     if len(raw) > _MAX_INPUT_BYTES:
         raise GreenboneIngestError(f"{source_name} exceeds the {_MAX_INPUT_BYTES}-byte cap ({len(raw)} bytes)")
     return _collect_from_bytes(

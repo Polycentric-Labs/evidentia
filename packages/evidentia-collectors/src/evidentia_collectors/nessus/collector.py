@@ -53,6 +53,7 @@ from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
 
+from evidentia_collectors._paths import is_reserved_device_name
 from evidentia_collectors._xml import parse_defused_xml
 from evidentia_collectors.nessus.mapping import (
     VULNERABILITY_SCAN_MAPPINGS,
@@ -499,11 +500,14 @@ def _collect_from_bytes(
         metadata={
             CADENCE_SLUG_METADATA_KEY: resolved_cadence_slug,
             # Cadence provenance (v0.13.0 review H5): the series layer only
-            # counts a complete run whose timestamp came from the export.
+            # counts an observation whose timestamp came from the export
+            # and whose export shows a completed scan (at least one host
+            # reached HOST_END). Partial host coverage is reported in the
+            # manifest (is_complete, warnings) and does not void the scan.
             TIMESTAMP_SOURCE_METADATA_KEY: (
                 TIMESTAMP_SOURCE_RECORD if parsed.latest_host_end is not None else TIMESTAMP_SOURCE_COLLECTION_TIME
             ),
-            COLLECTION_COMPLETE_METADATA_KEY: is_complete,
+            COLLECTION_COMPLETE_METADATA_KEY: parsed.latest_host_end is not None,
             "scanner": "nessus",
             "report_name": parsed.report_name,
             "run_id": run_id,
@@ -541,6 +545,8 @@ def collect_nessus_file(
     an oversized file (over 50 MB), or any parse/mapping failure.
     """
     file_path = Path(path)
+    if is_reserved_device_name(file_path):
+        raise NessusIngestError(f"{file_path} names a reserved device, not a scan export")
     try:
         size = file_path.stat().st_size
     except OSError as exc:
@@ -572,7 +578,12 @@ def collect_nessus_text(
     raises :class:`NessusIngestError` on an oversized payload or any
     parse/mapping failure.
     """
-    raw = xml_text.encode("utf-8")
+    try:
+        raw = xml_text.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise NessusIngestError(
+            f"{source_name} is not valid UTF-8 text (unpaired surrogate at offset {exc.start})"
+        ) from exc
     if len(raw) > _MAX_INPUT_BYTES:
         raise NessusIngestError(f"{source_name} exceeds the {_MAX_INPUT_BYTES}-byte cap ({len(raw)} bytes)")
     return _collect_from_bytes(

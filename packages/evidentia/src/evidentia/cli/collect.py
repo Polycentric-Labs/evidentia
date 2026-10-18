@@ -1463,7 +1463,11 @@ def collect_nessus(
         from evidentia_core.evidence_store import get_evidence_store_dir, save_evidence
 
         store_dir = get_evidence_store_dir(evidence_store)
-        save_evidence(artifact, evidence_store_dir=evidence_store)
+        try:
+            save_evidence(artifact, evidence_store_dir=evidence_store)
+        except (OSError, ValueError) as exc:
+            console.print(f"[red]Error:[/red] could not save evidence under {store_dir}: {exc.__class__.__name__}")
+            raise typer.Exit(code=1) from exc
         console.print(
             f"[green]Saved evidence[/green] lineage [bold]{artifact.effective_lineage_id}[/bold] "
             f"to {store_dir} ({completeness} scan)"
@@ -1572,7 +1576,11 @@ def collect_greenbone(
         from evidentia_core.evidence_store import get_evidence_store_dir, save_evidence
 
         store_dir = get_evidence_store_dir(evidence_store)
-        save_evidence(artifact, evidence_store_dir=evidence_store)
+        try:
+            save_evidence(artifact, evidence_store_dir=evidence_store)
+        except (OSError, ValueError) as exc:
+            console.print(f"[red]Error:[/red] could not save evidence under {store_dir}: {exc.__class__.__name__}")
+            raise typer.Exit(code=1) from exc
         console.print(
             f"[green]Saved evidence[/green] lineage [bold]{artifact.effective_lineage_id}[/bold] "
             f"to {store_dir} ({completeness} scan)"
@@ -1691,7 +1699,13 @@ def _write_findings(
     payload = [f.model_dump(mode="json") for f in findings_list]
 
     if output is not None:
-        output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        try:
+            output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except OSError as exc:
+            # A directory, a missing parent or a device name: one line, exit 1
+            # (v0.13.0 review, probe finding D4).
+            console.print(f"[red]Error:[/red] could not write findings to {output}: {exc.__class__.__name__}")
+            raise typer.Exit(code=1) from exc
         console.print(f"[green]Wrote {len(findings_list)} findings to[/green] {output}")
     elif not findings_list:
         console.print("[yellow]No findings.[/yellow]")
@@ -2088,6 +2102,11 @@ def collect_enterprise_retention(
     except Exception:
         typer.echo("Enterprise retention profile configuration could not be loaded.", err=True)
         raise typer.Exit(1) from None
+    if output is not None and profile_file and Path(output).resolve() == Path(profile_file).resolve():
+        # The trusted profile registry is an input; it must never be the
+        # output (v0.13.0 review, probe finding D1).
+        typer.echo("The output path must not be the enterprise retention profile registry.", err=True)
+        raise typer.Exit(2)
     try:
         with ReservedOutput(source, Path(output) if output is not None else None) as destination:
             with EnterpriseRetentionCollector(profile=profile) as collector:

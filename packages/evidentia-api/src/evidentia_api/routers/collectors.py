@@ -465,7 +465,7 @@ async def google_workspace_collect(
     else:
         try:
             inactive_threshold_days = int(raw_inactive_threshold_days)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -486,7 +486,7 @@ async def google_workspace_collect(
     else:
         try:
             max_users = int(raw_max_users)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -507,7 +507,7 @@ async def google_workspace_collect(
     else:
         try:
             login_window_days = int(raw_login_window_days)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -528,7 +528,7 @@ async def google_workspace_collect(
     else:
         try:
             max_login_events = int(raw_max_login_events)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1291,7 +1291,7 @@ async def vanta_collect(
     else:
         try:
             max_vendors = int(raw_max_vendors)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1420,7 +1420,7 @@ async def drata_collect(
     else:
         try:
             max_vendors = int(raw_max_vendors)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1535,7 +1535,7 @@ async def bitsight_collect(
     else:
         try:
             max_companies = int(raw_max_companies)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1688,7 +1688,7 @@ async def securityscorecard_collect(
     else:
         try:
             max_companies = int(raw_max_companies)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1943,7 +1943,7 @@ async def nessus_collect(payload: dict[str, Any]) -> NessusCollectResponse:
     else:
         try:
             plugin_output_max_chars = int(raw_max_chars)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_body",
@@ -2085,7 +2085,7 @@ async def greenbone_collect(payload: dict[str, Any]) -> GreenboneCollectResponse
     else:
         try:
             description_max_chars = int(raw_max_chars)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_body",

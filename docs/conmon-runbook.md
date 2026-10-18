@@ -256,7 +256,9 @@ description repeats this every time.
 at its current version, so a corrected or re-saved artifact is the same
 observation and not a second one. The Nessus and Greenbone importers
 record two provenance keys on the artifact: `metadata.collection_complete`
-(false for a partial or zero-host export) and `metadata.timestamp_source`
+(false when the export shows no completed scan: a zero-host Nessus export,
+one whose hosts never reached `HOST_END`, or a Greenbone report without
+`scan_end`) and `metadata.timestamp_source`
 (`record` when `collected_at` came from the scan file, `collection_time`
 when the importer had to use its own clock). An artifact marked incomplete
 or collection-time dated stays in the store but is left out of the series

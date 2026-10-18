@@ -29,9 +29,14 @@ def test_nessus_sample_is_a_complete_record_dated_run() -> None:
     from evidentia_collectors.nessus import collect_nessus_file
 
     _findings, manifest, artifact = collect_nessus_file(FIXTURES / "nessus-sample.nessus", cadence_slug=WEEKLY)
-    # The metadata mirrors the manifest, whatever the sample's completeness.
-    assert artifact.metadata[COLLECTION_COMPLETE_METADATA_KEY] is manifest.is_complete
-    assert artifact.metadata[TIMESTAMP_SOURCE_METADATA_KEY] in {TIMESTAMP_SOURCE_RECORD, TIMESTAMP_SOURCE_COLLECTION_TIME}
+    # The cadence key says the export shows a completed scan (a HOST_END
+    # exists); the manifest's is_complete tracks per-host coverage.
+    assert artifact.metadata[COLLECTION_COMPLETE_METADATA_KEY] is (artifact.content["scan_end"] is not None)
+    assert isinstance(manifest.is_complete, bool)
+    assert artifact.metadata[TIMESTAMP_SOURCE_METADATA_KEY] in {
+        TIMESTAMP_SOURCE_RECORD,
+        TIMESTAMP_SOURCE_COLLECTION_TIME,
+    }
     if artifact.content["scan_end"] is not None:
         assert artifact.metadata[TIMESTAMP_SOURCE_METADATA_KEY] == TIMESTAMP_SOURCE_RECORD
 

@@ -614,10 +614,31 @@ class OktaCollector:
         # — we use the modern aggregate endpoint.
         try:
             assignees = self._api_get("/api/v1/iam/assignees/users")
-        except OktaQueryError:
-            # Fallback: enumerate /api/v1/users + per-user roles
-            # would be O(n) — skip in favor of best-effort signal
-            assignees = []
+        except OktaQueryError as exc:
+            # v0.13.0 review H8: a failed lookup used to read as zero
+            # admins and PASS. It is an unknown posture, reported as such.
+            self._admin_assignments_listed = 0
+            return [
+                SecurityFinding(
+                    title="Okta admin accounts: role-assignment lookup failed",
+                    description=(
+                        "/api/v1/iam/assignees/users could not be read, so the number of users "
+                        "holding admin-role assignments is unknown. AC-6 Least Privilege and "
+                        "AC-2(7) Privileged Accounts cannot be assessed from this run; grant the "
+                        "token okta.roles.read (or an admin-read scope) and re-run."
+                    ),
+                    severity=Severity.MEDIUM,
+                    status=FindingStatus.ACTIVE,
+                    compliance_status=ComplianceStatus.UNKNOWN,
+                    source_system="okta",
+                    source_finding_id=(f"admin-accounts:{context.source_system_id}"),
+                    resource_type="Okta::Org",
+                    resource_id=str(context.source_system_id),
+                    control_mappings=list(PRIVILEGED_ACCOUNT_MAPPINGS),
+                    collection_context=context,
+                    raw_data={"admin_count": None, "lookup_error": type(exc).__name__},
+                )
+            ]
 
         admin_count = len(assignees) if isinstance(assignees, list) else 0
         self._admin_assignments_listed = admin_count

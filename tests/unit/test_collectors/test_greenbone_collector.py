@@ -193,7 +193,9 @@ class TestCollectGreenboneFile:
         low_finding = next(f for f in findings if f.source_finding_id and "200001" in f.source_finding_id)
         assert low_finding.title == "Sitemap Detection on target1.example.internal:80/tcp"
         assert low_finding.source_system == "greenbone"
-        assert low_finding.source_finding_id == "demo-gb-report:10.0.0.21:1.3.6.1.4.1.25623.1.0.200001:80/tcp"
+        assert low_finding.source_finding_id == (
+            "demo-gb-report:10.0.0.21:target1.example.internal:1.3.6.1.4.1.25623.1.0.200001:80/tcp"
+        )
         assert low_finding.severity == Severity.LOW
         # A vulnerability observation is not a control check; the default
         # ComplianceStatus is left alone.
