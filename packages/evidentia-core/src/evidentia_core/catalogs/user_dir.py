@@ -124,6 +124,26 @@ def _directory(path: Path, *, create: bool = False, budget: NativeBudget | None 
     return absolute
 
 
+def _read_directory(path: Path, *, budget: NativeBudget | None = None) -> Path:
+    """Resolve the catalog directory for a read-only operation.
+
+    Reads follow symlinks: a symlinked home directory or a container volume
+    behind a link are ordinary deployments, and before v0.13.0 the strict
+    ancestor walk in :func:`_directory` made ``catalog list`` and every gap
+    analysis fail there (review finding M9). Every mutator still goes through
+    :func:`_directory`.
+    """
+    if ".." in path.parts or str(path).startswith(("\\\\", "//")):
+        raise CatalogStorageError("catalog_storage_unsupported")
+    if budget is not None:
+        budget.check()
+    # resolve() follows the links so the bounded reader below sees real components.
+    absolute = path.resolve()
+    if not absolute.is_dir():
+        raise FileNotFoundError(str(absolute))
+    return absolute
+
+
 def _parent_identity(path: Path, budget: NativeBudget | None = None) -> tuple[tuple[Path, int, int], ...]:
     _directory(path, budget=budget)
     result = []
@@ -1453,7 +1473,7 @@ def load_user_manifest(override: Path | None = None) -> FrameworkManifest:
     """
     with native_operation() as budget:
         try:
-            directory = _directory(_configured_user_dir(override), budget=budget)
+            directory = _read_directory(_configured_user_dir(override), budget=budget)
         except FileNotFoundError:
             return FrameworkManifest(version=1, frameworks=[])
         return _parse_manifest(
@@ -1488,7 +1508,7 @@ def load_registered_native_catalog(
     with native_operation() as budget:
         try:
             try:
-                user_directory = _directory(_configured_user_dir(user_dir_override), budget=budget)
+                user_directory = _read_directory(_configured_user_dir(user_dir_override), budget=budget)
             except FileNotFoundError:
                 return None
             manifest = _parse_manifest(

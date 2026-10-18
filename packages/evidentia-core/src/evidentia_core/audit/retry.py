@@ -66,7 +66,7 @@ _log = get_logger("evidentia.audit.retry")
 
 def _effective_backoff(initial_backoff: float, max_backoff: float) -> tuple[float, float]:
     """Apply the test-mode short-circuit: zero out backoff under EVIDENTIA_TEST_MODE."""
-    if os.environ.get(TEST_MODE_ENV):
+    if is_test_mode():
         return (0.0, 0.0)
     return (initial_backoff, max_backoff)
 

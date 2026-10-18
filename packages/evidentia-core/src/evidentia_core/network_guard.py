@@ -541,6 +541,21 @@ _GETADDRINFO_DELEGATE: Any = socket.getaddrinfo
 _pin_install_lock = threading.Lock()
 
 
+def _pin_key(host: str) -> str:
+    """Registry key for a hostname: the IDNA ASCII form, lower-cased, without a trailing dot.
+
+    urlparse keeps a non-ASCII hostname in Unicode while httpx resolves its
+    IDNA form, so a key built from the raw text never matched the lookup and
+    the pin silently did not apply to such hosts (v0.13.0 review, CWE-367).
+    """
+    candidate = host.strip().rstrip(".")
+    try:
+        candidate = candidate.encode("idna").decode("ascii")
+    except UnicodeError:
+        pass
+    return candidate.lower()
+
+
 def _pinned_getaddrinfo(
     host: object,
     port: object,
@@ -558,7 +573,7 @@ def _pinned_getaddrinfo(
     thread — falls through to the delegate resolver untouched.
     """
     registry: dict[str, list[str]] = getattr(_pin_state, "hosts", {})
-    pinned_ips = registry.get(host.lower()) if isinstance(host, str) else None
+    pinned_ips = registry.get(_pin_key(host)) if isinstance(host, str) else None
     if not pinned_ips:
         return _GETADDRINFO_DELEGATE(  # type: ignore[no-any-return]
             host, port, family, type, proto, flags
@@ -646,7 +661,7 @@ def pin_resolved_host(host: str, public_ips: list[str]) -> Iterator[None]:
         return
 
     _ensure_pin_installed()
-    key = host.lower()
+    key = _pin_key(host)
     registry: dict[str, list[str]] | None = getattr(_pin_state, "hosts", None)
     if registry is None:
         registry = {}
