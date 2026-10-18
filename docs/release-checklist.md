@@ -218,9 +218,7 @@ for package in \
   evidentia-core evidentia-collectors evidentia-api evidentia-ai \
   evidentia-integrations evidentia evidentia-mcp evidentia-eval
 do
-  if uv run --no-sync python -m mypy "packages/$package" --strict-optional; then
-    :
-  else
+  if ! uv run --no-sync python -m mypy "packages/$package" --strict-optional; then
     printf 'mypy failed for %s\n' "$package" >&2
     typing_failed=1
   fi
