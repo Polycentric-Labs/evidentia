@@ -33,6 +33,7 @@ offline/online tenants, revisit.
 
 from __future__ import annotations
 
+import contextlib
 import ipaddress
 import logging
 import socket
@@ -549,10 +550,8 @@ def _pin_key(host: str) -> str:
     the pin silently did not apply to such hosts (v0.13.0 review, CWE-367).
     """
     candidate = host.strip().rstrip(".")
-    try:
+    with contextlib.suppress(UnicodeError):
         candidate = candidate.encode("idna").decode("ascii")
-    except UnicodeError:
-        pass
     return candidate.lower()
 
 
