@@ -270,6 +270,30 @@ owner legal review.
   the Codecov action to the reviewed v7.1.0 commit; its existing advisory
   upload policy is unchanged.
 
+- **Security dependency bump (2026-10-18).** Move fsspec to 2026.9.0, multidict to
+  6.9.1 and werkzeug to 3.1.9, clearing the fixable advisories osv-scanner reported
+  against the lock (PYSEC-2026-4217 / GHSA-27vj-qcqg-25rc, PYSEC-2026-4244 /
+  GHSA-54p9-h82j-f925, PYSEC-2026-4312 / GHSA-g6x2-hccm-hh4m). No other resolved
+  version changes.
+
+- **Container base refresh (2026-10-18).** Move the builder base `python:3.13-slim`
+  to index `70729b46c69b` (shared by the pip-compile steps in `release.yml` and
+  `container-build.yml` and by `Dockerfile.demo`) and the runtime base
+  `dhi.io/python:3.13` to index `553f074749f9`, after the post-publish rescan of the
+  v0.12.1 image reported fixable base advisories, including a Critical glibc fix.
+  The workflow-fidelity policy digest for `container-build.yml` is re-recorded. The
+  runtime's amd64 child verifies its SBOM and provenance attestations against
+  Docker's published key; transparency-log inclusion is still absent for this
+  digest, as the pinning policy records.
+
+- **FedRAMP upstream re-sync (2026-10-18).** Re-verify the CR26 pins against
+  `FedRAMP/rules` dataset 2026.10.13.01 and `FedRAMP/schemas` at `0e836c0d`, closing
+  the sentinel's MAJOR drift (issue #375). The KSI catalog keeps 10 families and 46
+  indicators; its 800-53 crosswalk grows from 286 to 393 rows. `fedramp-frr-2026`
+  carries 179 rules after upstream folded `FRC-CSX-MOT` into the metrics rule.
+  Common-definitions 0.4.1 and the SCN schema 0.1.3 are re-vendored byte-identical;
+  the SDR schema is unchanged.
+
 - **Container platform and base refresh.** Pin the reviewed DHI Python runtime
   base and target `linux/amd64` explicitly in build and release workflows.
   Check the image architecture before smoke tests, artifact transfer and
@@ -442,6 +466,10 @@ owner legal review.
   roadmap entries are left as written.
 
 ### Fixed
+
+- **Package-root typing.** The seven `hatch_build.py` build hooks carry typed
+  `initialize` signatures so `mypy packages/<name>` passes on each package root; the
+  release checklist's typing gate runs mypy per package with `--strict-optional`.
 
 - **Configuration diagnostic privacy and scope.** Omit configured model and
   endpoint values from the CLI and API air-gap report. Mark dependency
