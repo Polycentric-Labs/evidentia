@@ -200,8 +200,9 @@ owner legal review.
 - **FedRAMP Significant Change Notification writer (V13-17).** `SCRForm.to_scn_document()`
   emits the SCN-CSO-INF JSON shape and `evidentia_core.fedramp.validate_scn_document()`
   validates it offline against the vendored
-  `fedramp-significant-change-notifications-schema-2026-06-24.json` (0.1.2, byte-identical
-  to `FedRAMP/schemas@c3ed146`, pinned in `UPSTREAM.json` and watched by the
+  `fedramp-significant-change-notifications-schema-2026-06-24.json` (vendored at 0.1.2,
+  byte-identical to `FedRAMP/schemas@c3ed146`; re-vendored at 0.1.3 from `0e836c0d` in the
+  2026-10-18 re-sync recorded under Changed), pinned in `UPSTREAM.json` and watched by the
   `fedramp-schema-watch` sentinel like the SDR schemas). Two optional `SCRForm` fields carry
   the certification package overview URI and the categorization explanation; the schema
   admits only the Adaptive and Transformative categories, so the writer raises for a
@@ -287,7 +288,8 @@ owner legal review.
   `FedRAMP/rules` dataset 2026.10.13.01 and `FedRAMP/schemas` at `0e836c0d`, closing
   the sentinel's MAJOR drift (issue #375). The KSI catalog keeps 10 families and 46
   indicators; its 800-53 crosswalk grows from 286 to 393 rows. `fedramp-frr-2026`
-  carries 179 rules after upstream folded `FRC-CSX-MOT` into the metrics rule.
+  carries 179 rules: upstream removed `FRC-CSX-MOT`, whose note now appears under
+  the SDR metrics rule.
   Common-definitions 0.4.1 and the SCN schema 0.1.3 are re-vendored byte-identical;
   the SDR schema is unchanged.
 
