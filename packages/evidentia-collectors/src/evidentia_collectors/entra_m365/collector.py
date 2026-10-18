@@ -11,6 +11,7 @@ from typing import Self
 from uuid import uuid4
 
 import httpx
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.models.finding import SecurityFinding
 from pydantic import ValidationError
 
@@ -51,6 +52,9 @@ _READERS: tuple[tuple[CapabilityName, _Reader], ...] = (
     ("defender-alerts", read_defender_alerts),
     ("defender-incidents", read_defender_incidents),
 )
+
+
+_log = get_logger("evidentia.collectors.entra_m365")
 
 
 def _utc_now() -> datetime:
@@ -137,6 +141,11 @@ class EntraM365Collector:
             if validated.dlp_content is not None
             else None
         )
+        _log.info(
+            action=EventAction.COLLECT_STARTED,
+            message="Entra/M365 collection started",
+            evidentia={"collector": "entra-m365", "capabilities": sorted(validated.capabilities)},
+        )
         try:
             context = EntraM365RunContext.start(
                 validated,
@@ -152,8 +161,26 @@ class EntraM365Collector:
                     for name, read in _READERS
                     if name in context.request.capabilities
                 ]
-                return context.build_result(reads)
+                result = context.build_result(reads)
             finally:
                 reader.close()
         except Exception:
+            _log.warning(
+                action=EventAction.COLLECT_FAILED,
+                outcome=EventOutcome.FAILURE,
+                message="Entra/M365 collection failed",
+                evidentia={"collector": "entra-m365", "error": "collector_failed"},
+            )
             raise ValueError("collector_failed") from None
+        _log.info(
+            action=EventAction.COLLECT_COMPLETED,
+            outcome=EventOutcome.SUCCESS,
+            message="Entra/M365 collection completed",
+            evidentia={
+                "collector": "entra-m365",
+                "run_id": result.manifest.run_id,
+                "findings": len(result.findings),
+                "is_complete": result.manifest.is_complete,
+            },
+        )
+        return result

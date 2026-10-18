@@ -45,6 +45,9 @@ from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
     CoverageCount,
+    EventAction,
+    EventOutcome,
+    get_logger,
     new_run_id,
 )
 from evidentia_core.conmon.series import (
@@ -138,6 +141,9 @@ BLIND_SPOTS: list[dict[str, str]] = [
         ),
     },
 ]
+
+
+_log = get_logger("evidentia.collectors.greenbone")
 
 
 class GreenboneIngestError(RuntimeError):
@@ -403,7 +409,21 @@ def _collect_from_bytes(
     if len(raw) > _MAX_INPUT_BYTES:
         raise GreenboneIngestError(f"input exceeds the {_MAX_INPUT_BYTES}-byte cap ({len(raw)} bytes)")
 
-    parsed = parse_greenbone(raw)
+    _log.info(
+        action=EventAction.COLLECT_STARTED,
+        message="Greenbone report ingest started",
+        evidentia={"collector_id": COLLECTOR_ID, "input_bytes": len(raw)},
+    )
+    try:
+        parsed = parse_greenbone(raw)
+    except GreenboneIngestError as exc:
+        _log.warning(
+            action=EventAction.COLLECT_FAILED,
+            outcome=EventOutcome.FAILURE,
+            message="Greenbone report ingest failed",
+            evidentia={"collector_id": COLLECTOR_ID, "error": type(exc).__name__},
+        )
+        raise
     run_id = new_run_id()
     now = utc_now()
     resolved_cadence_slug = cadence_slug or DEFAULT_CADENCE_SLUG
@@ -515,6 +535,18 @@ def _collect_from_bytes(
         control_mappings=list(VULNERABILITY_SCAN_MAPPINGS),
     )
     artifact.compute_hash()
+    _log.info(
+        action=EventAction.COLLECT_COMPLETED,
+        outcome=EventOutcome.SUCCESS,
+        message="Greenbone report ingest completed",
+        evidentia={
+            "collector_id": COLLECTOR_ID,
+            "run_id": run_id,
+            "findings": len(findings),
+            "is_complete": manifest.is_complete,
+            "cadence_slug": resolved_cadence_slug,
+        },
+    )
 
     return findings, manifest, artifact
 

@@ -8,6 +8,7 @@ from time import monotonic, sleep
 from types import TracebackType
 from typing import Any, Self
 
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.audit.provenance import new_run_id
 from evidentia_core.models.finding import SecurityFinding
 
@@ -23,6 +24,8 @@ from ._contracts import (
     validated_request,
 )
 from ._profiles import AuthorizedProfile
+
+_log = get_logger("evidentia.collectors.enterprise_retention")
 
 
 def _utc_now() -> datetime:
@@ -107,6 +110,11 @@ class EnterpriseRetentionCollector:
         if self._closed:
             raise EnterpriseRetentionOperationalError()
         selected = validated_request(request)
+        _log.info(
+            action=EventAction.COLLECT_STARTED,
+            message="enterprise retention collection started",
+            evidentia={"collector": "enterprise-retention", "provider": selected.root.provider},
+        )
         try:
             with EnterpriseReadSession(
                 selected,
@@ -118,6 +126,23 @@ class EnterpriseRetentionCollector:
                 run_id_factory=self._run_id_factory,
             ) as session:
                 resources = tuple(_read_target(target, session) for target in session.context.request.root.targets)
-                return session.finish(resources)
+                result = session.finish(resources)
         except Exception:
+            _log.warning(
+                action=EventAction.COLLECT_FAILED,
+                outcome=EventOutcome.FAILURE,
+                message="enterprise retention collection failed",
+                evidentia={"collector": "enterprise-retention", "error": "operational_error"},
+            )
             raise EnterpriseRetentionOperationalError() from None
+        _log.info(
+            action=EventAction.COLLECT_COMPLETED,
+            outcome=EventOutcome.SUCCESS,
+            message="enterprise retention collection completed",
+            evidentia={
+                "collector": "enterprise-retention",
+                "provider": selected.root.provider,
+                "findings": len(result.root.findings),
+            },
+        )
+        return result

@@ -10,6 +10,7 @@ from types import TracebackType
 from typing import Self
 
 import httpx
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.audit.provenance import new_run_id
 from evidentia_core.models.finding import SecurityFinding
 
@@ -29,6 +30,8 @@ from ._contracts import (
     validated_request,
 )
 from ._credentials import EnvironmentCredentialProvider, StorageCredentialProvider
+
+_log = get_logger("evidentia.collectors.retention")
 
 
 def _utc_now() -> datetime:
@@ -103,6 +106,11 @@ class StorageRetentionCollector:
         if self._closed:
             raise ValueError("collector_closed")
         selected = validated_request(request)
+        _log.info(
+            action=EventAction.COLLECT_STARTED,
+            message="storage retention collection started",
+            evidentia={"collector": "storage-retention", "provider": selected.root.provider},
+        )
         if selected.root.provider == "s3":
             # Only exact missing top-level packages are optional absence.
             # Signing still checks its pinned SDK contract before helper imports.
@@ -142,7 +150,7 @@ class StorageRetentionCollector:
                 or sum(item.decoded_bytes for item in observed) != session.context.decoded_bytes
             ):
                 raise ValueError("component_accounting_mismatch")
-            return make_result(
+            result = make_result(
                 selected,
                 run_id=session.context.run_id,
                 started_at=session.context.started_at,
@@ -151,4 +159,22 @@ class StorageRetentionCollector:
                 diagnostics=tuple(diagnostics),
             )
         except Exception:
+            _log.warning(
+                action=EventAction.COLLECT_FAILED,
+                outcome=EventOutcome.FAILURE,
+                message="storage retention collection failed",
+                evidentia={"collector": "storage-retention", "error": "collector_failed"},
+            )
             raise ValueError("collector_failed") from None
+        _log.info(
+            action=EventAction.COLLECT_COMPLETED,
+            outcome=EventOutcome.SUCCESS,
+            message="storage retention collection completed",
+            evidentia={
+                "collector": "storage-retention",
+                "provider": selected.root.provider,
+                "run_id": session.context.run_id,
+                "findings": len(result.findings),
+            },
+        )
+        return result

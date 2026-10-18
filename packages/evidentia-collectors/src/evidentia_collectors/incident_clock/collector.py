@@ -6,11 +6,14 @@ from importlib import import_module
 from types import TracebackType
 from typing import Self, cast
 
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.models.finding import SecurityFinding
 
 from ._client import IncidentReadSession
 from ._contracts import IncidentClockResult, _result_authority, result_bytes
 from ._profiles import AuthorizedSelection, ProfileUnavailable, validated_selection
+
+_log = get_logger("evidentia.collectors.incident_clock")
 
 
 class IncidentClockCollector:
@@ -47,6 +50,11 @@ class IncidentClockCollector:
         if self._closed:
             raise ValueError("collector_closed")
         selected = validated_selection(self._selection, request)
+        _log.info(
+            action=EventAction.COLLECT_STARTED,
+            message="incident clock collection started",
+            evidentia={"collector": "incident-clock", "provider": selected.provider},
+        )
         session: IncidentReadSession | None = None
         try:
             adapter = import_module("evidentia_collectors.incident_clock." + selected.provider)
@@ -56,9 +64,26 @@ class IncidentClockCollector:
             if _result_authority(result) is not authority:
                 raise ValueError("collector_failed")
             result_bytes(result)
-            return cast(IncidentClockResult, result)
         except Exception:
+            _log.warning(
+                action=EventAction.COLLECT_FAILED,
+                outcome=EventOutcome.FAILURE,
+                message="incident clock collection failed",
+                evidentia={"collector": "incident-clock", "error": "collector_failed"},
+            )
             raise ValueError("collector_failed") from None
         finally:
             if session is not None:
                 session.close()
+        published = cast(IncidentClockResult, result)
+        _log.info(
+            action=EventAction.COLLECT_COMPLETED,
+            outcome=EventOutcome.SUCCESS,
+            message="incident clock collection completed",
+            evidentia={
+                "collector": "incident-clock",
+                "provider": selected.provider,
+                "findings": len(published.findings),
+            },
+        )
+        return published
