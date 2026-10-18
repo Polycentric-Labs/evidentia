@@ -358,6 +358,44 @@ class TestTierCInvariant:
         entries = [_entry("a", tier="A", placeholder=False, license_required=False, text_depth="full")]
         assert check.compare_tier_c_invariant(entries) == []
 
+    def test_placeholder_rows_with_licensed_text_fail(self, check: Any) -> None:
+        # v0.13.0 review: text_depth excludes placeholder rows, so a stub whose
+        # rows keep placeholder: true but carry real text still derives
+        # "headings". The row check reads the text itself.
+        class Row:
+            def __init__(self, control_id: str, title: str, text: str) -> None:
+                self.control_id = control_id
+                self.title = title
+                self.text = text
+
+        class Catalog:
+            def statement_rows(self) -> list[Row]:
+                return [
+                    Row("C-1", "Access control", "[Licensed content - see license_url for authoritative text.]"),
+                    Row("C-2", "Logging", "Logging"),
+                    Row("C-3", "Backups", ""),
+                    Row("C-4", "Encryption", "Encrypt all data at rest with AES-256 and rotate keys yearly."),
+                ]
+
+        entries = [_entry("a", tier="C", placeholder=True, license_required=True, text_depth="headings")]
+        failures = check.compare_tier_c_invariant(entries, {"a": Catalog()})
+        assert len(failures) == 1
+        assert "1 control(s) carry text beyond the placeholder: C-4" in failures[0]
+
+    def test_placeholder_only_rows_pass_the_row_check(self, check: Any) -> None:
+        class Row:
+            def __init__(self, control_id: str, title: str, text: str) -> None:
+                self.control_id = control_id
+                self.title = title
+                self.text = text
+
+        class Catalog:
+            def statement_rows(self) -> list[Row]:
+                return [Row("C-1", "Access control", "[Licensed content - see license_url for authoritative text.]")]
+
+        entries = [_entry("a", tier="C", placeholder=True, license_required=True, text_depth="headings")]
+        assert check.compare_tier_c_invariant(entries, {"a": Catalog()}) == []
+
 
 # ── check 6: the inventory summary block ────────────────────────────
 

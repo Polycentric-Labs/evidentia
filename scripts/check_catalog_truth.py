@@ -316,8 +316,39 @@ def compare_resolutions(
 # ── Tier C invariant (check 5) ─────────────────────────────────────
 
 
-def compare_tier_c_invariant(entries: Sequence[FrameworkManifestEntry]) -> list[str]:
-    """Every Tier C catalog must be a stub: placeholder, license_required, headings."""
+_TIER_C_PLACEHOLDER_PREFIX = "[licensed content"
+
+
+def _collapse_text(value: str) -> str:
+    return " ".join(value.split()).casefold()
+
+
+def _tier_c_text_leaks(catalog: Any) -> list[str]:
+    """Control ids in a Tier C stub whose text is neither empty, the title nor the placeholder.
+
+    ``text_depth`` is derived with placeholder rows excluded, so a stub whose
+    rows keep ``placeholder: true`` but carry real licensed text still derives
+    ``headings`` (v0.13.0 review). This check reads the rows themselves.
+    """
+    leaks: list[str] = []
+    for row in catalog.statement_rows():
+        text = _collapse_text(row.text)
+        if not text or text == _collapse_text(row.title) or text.startswith(_TIER_C_PLACEHOLDER_PREFIX):
+            continue
+        leaks.append(row.control_id)
+    return leaks
+
+
+def compare_tier_c_invariant(
+    entries: Sequence[FrameworkManifestEntry],
+    catalogs: Mapping[str, Any] | None = None,
+) -> list[str]:
+    """Every Tier C catalog must be a stub: placeholder, license_required, headings.
+
+    When ``catalogs`` is given, the loaded Tier C catalogs are also read row
+    by row: any control text that is not empty, not the title and not the
+    licensed-content placeholder is a licence-boundary failure.
+    """
     failures: list[str] = []
     for entry in entries:
         if entry.tier != "C":
@@ -329,6 +360,12 @@ def compare_tier_c_invariant(entries: Sequence[FrameworkManifestEntry]) -> list[
             problems.append("license_required is False")
         if entry.text_depth != "headings":
             problems.append(f"text_depth is {entry.text_depth!r} instead of 'headings'")
+        if catalogs is not None and entry.id in catalogs:
+            leaks = _tier_c_text_leaks(catalogs[entry.id])
+            if leaks:
+                shown = ", ".join(leaks[:5])
+                more = f" and {len(leaks) - 5} more" if len(leaks) > 5 else ""
+                problems.append(f"{len(leaks)} control(s) carry text beyond the placeholder: {shown}{more}")
         if problems:
             failures.append(f"Tier C catalog {entry.id!r} breaks the tier invariant: {'; '.join(problems)}")
     return failures
@@ -524,7 +561,7 @@ def evaluate(inputs: GateInputs) -> dict[str, list[str]]:
             family_ids=inputs.family_ids,
         ),
         "resolution": compare_resolutions(inputs.resolutions),
-        "tier_c": compare_tier_c_invariant(inputs.entries),
+        "tier_c": compare_tier_c_invariant(inputs.entries, inputs.catalogs),
         "inventory_block": compare_inventory_block(INVENTORY_PAGE.read_text(encoding="utf-8"), inputs.rendered_inner),
     }
 
