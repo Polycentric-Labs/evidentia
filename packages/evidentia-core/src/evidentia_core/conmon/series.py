@@ -54,6 +54,18 @@ CADENCE_SLUG_METADATA_KEY = "cadence_slug"
 CADENCE_SOURCE_SYSTEM = "evidentia-cadence"
 """``source_system`` of the findings :func:`series_to_finding` emits."""
 
+TIMESTAMP_SOURCE_METADATA_KEY = "timestamp_source"
+"""``EvidenceArtifact.metadata`` key an importer sets to say where ``collected_at`` came from."""
+
+TIMESTAMP_SOURCE_RECORD = "record"
+"""``timestamp_source`` value when ``collected_at`` came from the collected record itself."""
+
+TIMESTAMP_SOURCE_COLLECTION_TIME = "collection_time"
+"""``timestamp_source`` value when the importer fell back to its own clock."""
+
+COLLECTION_COMPLETE_METADATA_KEY = "collection_complete"
+"""``EvidenceArtifact.metadata`` key an importer sets to ``False`` for an incomplete run."""
+
 DEFAULT_LOOKBACK_DAYS = 365
 """Default look-back window: the twelve months HITECH section 13412 asks for."""
 
@@ -120,14 +132,27 @@ class CadenceSeries(EvidentiaModel):
     observations: list[SeriesObservation] = Field(default_factory=list)
     gaps: list[SeriesGap] = Field(default_factory=list)
     verdict: SeriesVerdict
+    excluded_observations: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Stored artifacts inside the window that were not counted: an incomplete run "
+            "(metadata.collection_complete is false) or a collected_at that the importer "
+            "took from its own clock (metadata.timestamp_source is collection_time)."
+        ),
+    )
 
     def describe(self) -> str:
-        """One paragraph for humans. Never uses the words compliant or compliance."""
+        """One paragraph for humans. The template never asserts compliance."""
         start = self.window_start.date().isoformat()
         end = self.window_end.date().isoformat()
         count = len(self.observations)
         noun = "observation" if count == 1 else "observations"
         head = f"Cadence evidence for {self.slug}: {count} {noun} between {start} and {end}."
+        if self.excluded_observations:
+            left = self.excluded_observations
+            left_noun = "artifact" if left == 1 else "artifacts"
+            head += f" {left} stored {left_noun} left out: incomplete runs or collection-time timestamps."
         verdict = SeriesVerdict(self.verdict)
         if verdict is SeriesVerdict.UNKNOWN:
             body = " The slug is not a registered cadence, so no interval could be assessed."
@@ -180,6 +205,40 @@ def _whole_days(earlier: datetime, later: datetime) -> int:
     return max(0, int((later - earlier).total_seconds() // 86_400))
 
 
+def latest_versions(artifacts: Iterable[EvidenceArtifact]) -> list[EvidenceArtifact]:
+    """One artifact per lineage: the highest version present.
+
+    A corrected version of an observation is the same observation, not a
+    second one, so the series counts lineages and reads each lineage's
+    current version.
+    """
+    latest: dict[str, EvidenceArtifact] = {}
+    for artifact in artifacts:
+        key = artifact.effective_lineage_id
+        current = latest.get(key)
+        if current is None or artifact.version > current.version:
+            latest[key] = artifact
+    return list(latest.values())
+
+
+def is_countable_observation(artifact: EvidenceArtifact) -> bool:
+    """False when the importer marked the run incomplete or dated it from its own clock.
+
+    Importers that know better than the store record it in metadata:
+    :data:`COLLECTION_COMPLETE_METADATA_KEY` is ``False`` for an aborted or
+    partial run, and :data:`TIMESTAMP_SOURCE_METADATA_KEY` is
+    :data:`TIMESTAMP_SOURCE_COLLECTION_TIME` when ``collected_at`` is the
+    import time rather than the time the evidence was produced. Either way
+    the artifact is kept in the store but does not satisfy an interval, so
+    re-importing a stale or partial export cannot manufacture cadence
+    evidence. Artifacts without the keys count as before.
+    """
+    metadata = artifact.metadata
+    if metadata.get(COLLECTION_COMPLETE_METADATA_KEY) is False:
+        return False
+    return metadata.get(TIMESTAMP_SOURCE_METADATA_KEY) != TIMESTAMP_SOURCE_COLLECTION_TIME
+
+
 def assert_series(
     slug: str,
     artifacts: Iterable[EvidenceArtifact],
@@ -190,18 +249,29 @@ def assert_series(
 ) -> CadenceSeries:
     """Build the dated series for ``slug`` inside the window and judge it.
 
-    Only artifacts whose ``metadata["cadence_slug"]`` equals ``slug`` and whose
-    ``collected_at`` falls inside ``[window_start, window_end]`` are counted, so a
-    caller may pass the whole store. ``tolerance_days`` defaults per cadence
-    kind (:func:`default_tolerance_days`). Both window edges are assessed: a
-    long silence before the first observation or after the last one is a gap
-    flagged ``boundary``.
+    Only artifacts whose ``metadata["cadence_slug"]`` equals ``slug`` are
+    considered, so a caller may pass the whole store. Each lineage counts
+    once, at its current version (:func:`latest_versions`); the version's
+    ``collected_at`` must fall inside ``[window_start, window_end]``, and an
+    artifact an importer marked incomplete or collection-time dated is
+    reported in ``excluded_observations`` instead of counted
+    (:func:`is_countable_observation`). ``tolerance_days`` defaults per
+    cadence kind (:func:`default_tolerance_days`). Both window edges are
+    assessed: a long silence before the first observation or after the last
+    one is a gap flagged ``boundary``.
     """
     start = _utc(window_start)
     end = _utc(window_end)
     if end < start:
         raise ValueError("window_end must not precede window_start")
     cadence = get_cadence(slug)
+    in_window = [
+        artifact
+        for artifact in latest_versions(a for a in artifacts if a.metadata.get(CADENCE_SLUG_METADATA_KEY) == slug)
+        if start <= _utc(artifact.collected_at) <= end
+    ]
+    counted = [artifact for artifact in in_window if is_countable_observation(artifact)]
+    excluded = len(in_window) - len(counted)
     observations = sorted(
         (
             SeriesObservation(
@@ -210,8 +280,7 @@ def assert_series(
                 version=artifact.version,
                 source_system=artifact.source_system,
             )
-            for artifact in artifacts
-            if artifact.metadata.get(CADENCE_SLUG_METADATA_KEY) == slug and start <= _utc(artifact.collected_at) <= end
+            for artifact in counted
         ),
         key=lambda o: (o.collected_at, o.lineage_id, o.version),
     )
@@ -223,6 +292,7 @@ def assert_series(
             tolerance_days=tolerance_days or 0,
             observations=observations,
             verdict=SeriesVerdict.UNKNOWN,
+            excluded_observations=excluded,
         )
     tolerance = tolerance_days if tolerance_days is not None else default_tolerance_days(cadence)
     if tolerance < 0:
@@ -235,6 +305,7 @@ def assert_series(
         "window_end": end,
         "tolerance_days": tolerance,
         "observations": observations,
+        "excluded_observations": excluded,
     }
     if len(observations) < 2:
         return CadenceSeries(**base, verdict=SeriesVerdict.INSUFFICIENT)
@@ -302,19 +373,28 @@ def series_to_finding(series: CadenceSeries, *, run_id: str | None = None) -> Se
     )
 
 
-def latest_observations(artifacts: Iterable[EvidenceArtifact]) -> dict[str, date]:
+def latest_observations(artifacts: Iterable[EvidenceArtifact], *, as_of: date | None = None) -> dict[str, date]:
     """Map every cadence slug seen in ``artifacts`` to its latest observation date.
 
-    Only artifacts carrying :data:`CADENCE_SLUG_METADATA_KEY` count. This is the
-    evidence-store stand-in for a state-file date: the last time the store saw
-    evidence for the cadence, in UTC.
+    Only artifacts carrying :data:`CADENCE_SLUG_METADATA_KEY` count, each
+    lineage at its current version, and only artifacts
+    :func:`is_countable_observation` accepts. ``as_of`` bounds the answer:
+    an artifact dated after that day is ignored, so an as-of check does not
+    anchor on evidence the store received later, and a future-dated
+    artifact cannot keep a cadence current. This is the evidence-store
+    stand-in for a state-file date: the last time the store saw evidence for
+    the cadence, in UTC.
     """
     latest: dict[str, date] = {}
-    for artifact in artifacts:
+    for artifact in latest_versions(artifacts):
         slug = artifact.metadata.get(CADENCE_SLUG_METADATA_KEY)
         if not isinstance(slug, str) or not slug:
             continue
+        if not is_countable_observation(artifact):
+            continue
         observed = _utc(artifact.collected_at).date()
+        if as_of is not None and observed > as_of:
+            continue
         if slug not in latest or observed > latest[slug]:
             latest[slug] = observed
     return latest

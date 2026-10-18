@@ -272,7 +272,7 @@ async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
             for artifact in iter_artifacts(get_evidence_store_dir())
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        anchors = merge_evidence_anchors(anchors, latest_observations(artifacts))
+        anchors = merge_evidence_anchors(anchors, latest_observations(artifacts, as_of=today))
         verdicts = {slug: verdict.value for slug, verdict in series_verdicts(artifacts, anchors, today=today).items()}
     for slug, last_completed in anchors.items():
         cadence = get_cadence(slug)
@@ -463,7 +463,7 @@ async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
             for artifact in iter_artifacts(get_evidence_store_dir())
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        state = merge_evidence_anchors(state, latest_observations(artifacts))
+        state = merge_evidence_anchors(state, latest_observations(artifacts, as_of=today))
     report = compute_health(
         state=state,
         today=today,

@@ -39,7 +39,13 @@ from evidentia_core.audit import (
     CoverageCount,
     new_run_id,
 )
-from evidentia_core.conmon.series import CADENCE_SLUG_METADATA_KEY
+from evidentia_core.conmon.series import (
+    CADENCE_SLUG_METADATA_KEY,
+    COLLECTION_COMPLETE_METADATA_KEY,
+    TIMESTAMP_SOURCE_COLLECTION_TIME,
+    TIMESTAMP_SOURCE_METADATA_KEY,
+    TIMESTAMP_SOURCE_RECORD,
+)
 from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
@@ -401,7 +407,7 @@ def _collect_from_bytes(
     ]
 
     hosts_missing_end = [host.name for host in parsed.hosts if host.host_end is None]
-    is_complete = not hosts_missing_end
+    is_complete = bool(parsed.hosts) and not hosts_missing_end
     warnings: list[str] = []
     incomplete_reason: str | None = None
     if hosts_missing_end:
@@ -412,6 +418,11 @@ def _collect_from_bytes(
         incomplete_reason = (
             f"{len(hosts_missing_end)} of {len(parsed.hosts)} host(s) had no parseable HOST_END timestamp"
         )
+    elif not parsed.hosts:
+        # A zero-host export proves nothing ran against anything; it is
+        # stored, but it must not satisfy a cadence interval.
+        warnings.append("report contains no hosts; recorded as an incomplete run")
+        incomplete_reason = "report contains no hosts"
     empty_categories = ["report_items"] if parsed.hosts and not parsed.items else []
 
     manifest = CollectionManifest(
@@ -467,6 +478,12 @@ def _collect_from_bytes(
         content_format="json",
         metadata={
             CADENCE_SLUG_METADATA_KEY: resolved_cadence_slug,
+            # Cadence provenance (v0.13.0 review H5): the series layer only
+            # counts a complete run whose timestamp came from the export.
+            TIMESTAMP_SOURCE_METADATA_KEY: (
+                TIMESTAMP_SOURCE_RECORD if parsed.latest_host_end is not None else TIMESTAMP_SOURCE_COLLECTION_TIME
+            ),
+            COLLECTION_COMPLETE_METADATA_KEY: is_complete,
             "scanner": "nessus",
             "report_name": parsed.report_name,
             "run_id": run_id,

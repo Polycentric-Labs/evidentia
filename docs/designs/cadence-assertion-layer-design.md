@@ -86,9 +86,17 @@ with no I/O, so it is unit-testable with synthetic timestamps. Two wording rules
 are enforced by the model itself: the rendered verdict always reads "cadence
 evidence" (`CadenceSeries.describe()` never contains the words compliant or
 compliance), and counts are reported as observed, never as total, because the
-store cannot know what was never collected. `CollectionManifest.is_complete`
-and `empty_categories` are consulted when the observations come from a collector
-run, so an aborted run is not read as a satisfied interval.
+store cannot know what was never collected. Each lineage counts once, at its
+current version, so a corrected or re-saved artifact is the same observation
+and not a second one. Importers record provenance on the artifact:
+`metadata.collection_complete` (from `CollectionManifest.is_complete`) and
+`metadata.timestamp_source` (`record` when `collected_at` came from the export,
+`collection_time` when the importer fell back to its own clock). The series
+leaves out an artifact marked incomplete or collection-time dated and reports the
+count in `excluded_observations`, so an aborted run or a re-imported stale export
+is not read as a satisfied interval (v0.13.0 review, decision D11). The
+evidence-store anchor used by `conmon check` and `conmon health` applies the same
+rule and ignores artifacts dated after the as-of day.
 
 ### 2.4 Surface: one new leaf, everything else an extension
 

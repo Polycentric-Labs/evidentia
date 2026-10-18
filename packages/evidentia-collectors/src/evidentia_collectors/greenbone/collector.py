@@ -47,7 +47,13 @@ from evidentia_core.audit import (
     CoverageCount,
     new_run_id,
 )
-from evidentia_core.conmon.series import CADENCE_SLUG_METADATA_KEY
+from evidentia_core.conmon.series import (
+    CADENCE_SLUG_METADATA_KEY,
+    COLLECTION_COMPLETE_METADATA_KEY,
+    TIMESTAMP_SOURCE_COLLECTION_TIME,
+    TIMESTAMP_SOURCE_METADATA_KEY,
+    TIMESTAMP_SOURCE_RECORD,
+)
 from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
@@ -415,6 +421,7 @@ def _collect_from_bytes(
     # tier gets a manifest warning since the report carries no reliable
     # completion timestamp at all.
     warnings: list[str] = []
+    timestamp_source = TIMESTAMP_SOURCE_RECORD
     if parsed.scan_end is not None:
         collected_at = parsed.scan_end
     elif parsed.scan_start is not None:
@@ -422,6 +429,7 @@ def _collect_from_bytes(
         warnings.append("report missing <scan_end>; used <scan_start> as a fallback timestamp")
     else:
         collected_at = now
+        timestamp_source = TIMESTAMP_SOURCE_COLLECTION_TIME
         warnings.append("report missing both <scan_end> and <scan_start>; used the collection time as a fallback")
 
     findings = [
@@ -494,6 +502,10 @@ def _collect_from_bytes(
         content_format="json",
         metadata={
             CADENCE_SLUG_METADATA_KEY: resolved_cadence_slug,
+            # Cadence provenance (v0.13.0 review H5): the series layer only
+            # counts a complete run whose timestamp came from the report.
+            TIMESTAMP_SOURCE_METADATA_KEY: timestamp_source,
+            COLLECTION_COMPLETE_METADATA_KEY: is_complete,
             "scanner": "greenbone",
             "report_id": parsed.report_id,
             "task_name": parsed.task_name,

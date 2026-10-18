@@ -361,7 +361,7 @@ def conmon_check(
             for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        last_completed_map = merge_evidence_anchors(last_completed_map, latest_observations(artifacts))
+        last_completed_map = merge_evidence_anchors(last_completed_map, latest_observations(artifacts, as_of=today))
         verdicts = {
             slug: verdict.value for slug, verdict in series_verdicts(artifacts, last_completed_map, today=today).items()
         }
@@ -1219,7 +1219,7 @@ def conmon_health(
             for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        state = merge_evidence_anchors(state, latest_observations(artifacts))
+        state = merge_evidence_anchors(state, latest_observations(artifacts, as_of=today))
     report = compute_health(
         state=state,
         today=today,
