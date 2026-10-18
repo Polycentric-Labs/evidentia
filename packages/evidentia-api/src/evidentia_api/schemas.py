@@ -170,7 +170,10 @@ class RiskGenerateRequest(BaseModel):
     )
     context_path: Path | None = Field(
         default=None,
-        description="Path to system-context.yaml. Defaults to CWD lookup.",
+        description=(
+            "Path to system-context.yaml, inside the server's working directory "
+            "(paths elsewhere are refused with 400). Required for generation."
+        ),
     )
 
 

@@ -8,6 +8,8 @@ actual LLM calls.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 
@@ -43,6 +45,34 @@ class TestRiskGenerateValidation:
         )
         # Pydantic Field(le=50) should reject top_n>50.
         assert r.status_code == 422
+
+    def test_context_path_outside_working_directory_returns_400(self, api_client: TestClient, tmp_path: Path) -> None:
+        # v0.13.0 review H2: context_path is a server path from the body.
+        # It is confined to the working directory before anything touches
+        # the filesystem, so it cannot act as an existence oracle. The
+        # check runs before the report lookup, so no stored report is
+        # needed and the missing report does not mask the 400.
+        outside = tmp_path.parent / "outside-the-working-directory.yaml"
+        r = api_client.post(
+            "/api/risk/generate",
+            json={"report_key": "0123456789abcdef", "top_n": 1, "context_path": str(outside)},
+        )
+        assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert detail["field"] == "context_path"
+        assert str(outside) not in detail["message"]
+
+    def test_context_path_inside_working_directory_reaches_report_lookup(
+        self, api_client: TestClient, tmp_path: Path
+    ) -> None:
+        inside = tmp_path / "system-context.yaml"
+        r = api_client.post(
+            "/api/risk/generate",
+            json={"report_key": "0123456789abcdef", "top_n": 1, "context_path": str(inside)},
+        )
+        assert r.status_code == 404, r.text
+        assert r.json()["detail"]["error"] == "not_found"
 
 
 class TestExplainValidation:
