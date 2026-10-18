@@ -18,6 +18,7 @@ from evidentia_core.network_guard import (
 )
 from fastapi import APIRouter
 
+from evidentia_api.rbac_dependency import require_role
 from evidentia_api.schemas import AirGapCheck, AirGapCheckResponse
 
 router = APIRouter()
@@ -91,7 +92,7 @@ async def doctor() -> dict[str, object]:
     return {"subsystems": subsystems}
 
 
-@router.post("/doctor/check-air-gap", response_model=AirGapCheckResponse)
+@router.post("/doctor/check-air-gap", response_model=AirGapCheckResponse, dependencies=[require_role("read")])
 async def check_air_gap() -> AirGapCheckResponse:
     """Describe selected configuration without probing network services.
 

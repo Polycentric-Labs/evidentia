@@ -40,6 +40,7 @@ from evidentia_core.security.paths import (
 from fastapi import APIRouter, Response
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 from evidentia_api.schemas import (
     GAP_EXPORT_FORMATS,
     GapAnalyzeRequest,
@@ -158,9 +159,11 @@ def _materialize_inventory_content(content: str, inventory_format: str) -> Path:
 
 @router.post(
     "/gap/analyze",
+    dependencies=[require_role("write")],
     response_model=GapAnalysisReport,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: ("Missing/invalid inventory input or a failed inventory parse (``error: invalid_body``)."),
         }
     ),
@@ -241,8 +244,10 @@ def _safe_filename_stem(organization: str) -> str:
 
 @router.post(
     "/gap/export",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Unsupported/unavailable ``format``, ambiguous report "
                 "source, or a malformed report key (``error: "
@@ -405,9 +410,11 @@ async def get_report(key: str) -> GapAnalysisReport:
 
 @router.post(
     "/gap/diff",
+    dependencies=[require_role("read")],
     response_model=GapDiff,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Malformed ``base_key`` / ``head_key`` (``error: invalid_id``)."),
             404: "Base or head report not found (``error: not_found``).",
         }

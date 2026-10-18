@@ -21,6 +21,7 @@ from fastapi import APIRouter, Query
 from sse_starlette.sse import EventSourceResponse
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -28,8 +29,10 @@ router = APIRouter()
 
 @router.post(
     "/explain/{framework}/{control_id:path}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             404: ("Unknown ``framework`` or ``control_id`` (``error: not_found``)."),
             500: ("evidentia-ai import failure (``error: feature_unavailable``)."),
         }

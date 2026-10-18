@@ -52,6 +52,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 
@@ -128,8 +129,10 @@ def _api_offline() -> bool:
 
 @router.post(
     "/oscal/verify",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Both-or-neither pinning violation "
                 "(``error: invalid_body``) or unparseable ``content`` "

@@ -58,6 +58,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 
@@ -181,10 +182,12 @@ async def list_models_endpoint(
 
 @router.post(
     "/model-risk/models",
+    dependencies=[require_role("write")],
     response_model=ModelInventory,
     status_code=201,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             422: ("Body-content semantic failure (``error: invalid_body``)."),
         }
     ),
@@ -253,9 +256,11 @@ async def get_model(model_id: str) -> ModelInventory:
 
 @router.put(
     "/model-risk/models/{model_id}",
+    dependencies=[require_role("write")],
     response_model=ModelInventory,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),
@@ -306,9 +311,11 @@ async def replace_model(model_id: str, payload: ModelInventory) -> ModelInventor
 
 @router.delete(
     "/model-risk/models/{model_id}",
+    dependencies=[require_role("admin")],
     status_code=204,
     responses=error_responses(
         {
+            403: "Admin permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``model_id`` (``error: not_found``)."),
         }
     ),

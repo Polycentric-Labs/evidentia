@@ -52,6 +52,7 @@ from evidentia_core.oscal.traceability_exporter import (
 from fastapi import APIRouter
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 _log = get_logger("evidentia.api.traceability")
@@ -59,8 +60,10 @@ _log = get_logger("evidentia.api.traceability")
 
 @router.post(
     "/traceability/emit",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Schema-valid matrix with no mappings — nothing to emit (``error: invalid_body``)."),
         }
     ),

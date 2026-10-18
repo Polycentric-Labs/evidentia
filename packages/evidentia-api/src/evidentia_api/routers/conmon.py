@@ -222,6 +222,7 @@ async def get_conmon_cadence(slug: str) -> dict[str, str | None]:
 
 @router.post(
     "/conmon/next",
+    dependencies=[require_role("read")],
     responses=error_responses({404: "Unknown cadence ``slug`` (``error: not_found``)."}),
 )
 async def compute_next_due(body: NextDueRequest) -> NextDueResponse:
@@ -249,7 +250,7 @@ async def compute_next_due(body: NextDueRequest) -> NextDueResponse:
 # ── batch check ───────────────────────────────────────────────────
 
 
-@router.post("/conmon/check")
+@router.post("/conmon/check", dependencies=[require_role("read")])
 async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
     """Batch attention-state check across multiple cadences.
 
@@ -355,8 +356,10 @@ class SeriesResponse(BaseModel):
 
 @router.post(
     "/conmon/series",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: "`until` precedes `since` (``error: invalid_window``).",
             404: "Unknown cadence ``slug`` (``error: not_found``).",
         }
@@ -445,7 +448,7 @@ class HealthRequest(BaseModel):
     )
 
 
-@router.post("/conmon/health")
+@router.post("/conmon/health", dependencies=[require_role("read")])
 async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
     """Aggregate CONMON framework health from a state payload.
 

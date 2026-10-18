@@ -47,6 +47,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sse_starlette.sse import EventSourceResponse
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 from evidentia_api.schemas import RiskGenerateRequest
 
 logger = logging.getLogger(__name__)
@@ -214,8 +215,10 @@ async def _stream_risk_generation(
 
 @router.post(
     "/risk/generate",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: ("Malformed ``report_key`` (``error: invalid_id``); raised before the SSE stream starts."),
             404: ("No such stored report (``error: not_found``); raised before the SSE stream starts."),
         }
@@ -332,9 +335,11 @@ class FairMcQuantifyResponse(BaseModel):
 
 @router.post(
     "/risk/quantify",
+    dependencies=[require_role("read")],
     response_model=OpenFairQuantifyResponse | FairMcQuantifyResponse,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Unknown ``method`` (``error: unknown_method``; "
                 "``detail`` carries ``method`` + ``valid``) or a "

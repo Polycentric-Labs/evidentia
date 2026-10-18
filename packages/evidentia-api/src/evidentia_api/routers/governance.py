@@ -764,7 +764,7 @@ async def delete_workflow_record(workflow_id: str) -> None:
 # ════════════════════════════════════════════════════════════════════
 
 
-@router.post("/governance/lines-report", response_class=PlainTextResponse)
+@router.post("/governance/lines-report", response_class=PlainTextResponse, dependencies=[require_role("read")])
 async def lines_report(owners: list[Owner]) -> str:
     """Render a 3LOD distribution report from a posted owner list.
 

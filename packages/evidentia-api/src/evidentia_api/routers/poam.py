@@ -59,6 +59,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 _log = get_logger("evidentia.api.poam")
@@ -170,10 +171,12 @@ async def list_poam_items(
 
 @router.post(
     "/poam/items",
+    dependencies=[require_role("write")],
     response_model=ControlGap,
     status_code=201,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             422: ("Body-content semantic failure (``error: invalid_body``)."),
         }
     ),
@@ -241,9 +244,11 @@ async def get_poam_item(poam_id: str) -> ControlGap:
 
 @router.put(
     "/poam/items/{poam_id}",
+    dependencies=[require_role("write")],
     response_model=ControlGap,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
@@ -309,9 +314,11 @@ async def replace_poam_item(poam_id: str, payload: ControlGap) -> ControlGap:
 
 @router.delete(
     "/poam/items/{poam_id}",
+    dependencies=[require_role("admin")],
     status_code=204,
     responses=error_responses(
         {
+            403: "Admin permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
@@ -371,9 +378,11 @@ class MilestoneUpdatePayload(BaseModel):
 
 @router.post(
     "/poam/items/{poam_id}/milestones",
+    dependencies=[require_role("write")],
     response_model=ControlGap,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``poam_id`` (``error: not_found``)."),
         }
     ),
@@ -425,9 +434,11 @@ async def add_milestone(
 
 @router.patch(
     "/poam/items/{poam_id}/milestones/{milestone_id}",
+    dependencies=[require_role("write")],
     response_model=ControlGap,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: ("Backward/invalid state transition (``error: invalid_body``)."),
             404: ("Unknown or malformed ``poam_id``, or unknown ``milestone_id`` (``error: not_found``)."),
         }
