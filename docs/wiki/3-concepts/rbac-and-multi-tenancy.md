@@ -1,6 +1,6 @@
 # RBAC and multi-tenancy
 
-Evidentia ships role-based access-control (RBAC) primitives and a multi-tenant extension on top of them. This page explains what those primitives do, how the decision functions work, and — critically — what is and is not wired yet. The single-tenant RBAC layer is enforced at the CLI and REST surfaces today; the **multi-tenant** layer is a data-plus-decision layer whose CLI/REST integration is a roadmap item for v0.11+. This page is precise about that boundary so you do not overclaim a capability that hasn't shipped.
+Evidentia ships role-based access-control (RBAC) primitives and a multi-tenant extension on top of them. This page explains what those primitives do, how the decision functions work, and — critically — what is and is not wired yet. The single-tenant RBAC layer is enforced on every mutating REST operation and on the `evidence`, `catalog`, `collect` and `conmon release-series` CLI verbs today (the other CLI mutators rely on the operator shell; CLI gating is a v0.13.1 item); the **multi-tenant** layer is a data-plus-decision layer whose CLI/REST integration is a roadmap item for v0.11+. This page is precise about that boundary so you do not overclaim a capability that hasn't shipped.
 
 The code lives in `packages/evidentia-core/src/evidentia_core/rbac/` (`policy.py` for single-tenant, `multi_tenant.py` for multi-tenant).
 

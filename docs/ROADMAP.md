@@ -191,6 +191,9 @@ and 100% GUI coverage is a per-cycle exit condition at the tag.
 
 ### v0.13.0 - Evidence provenance and native imports - SHIPPED (release candidate; tag pending)
 
+Pre-tag review record: `docs/releases/reviews/security-review-v0.13.0.md`; the deferrals
+and their reasons: `docs/releases/plans/v0.13.1-plan.md`.
+
 Release content prepared 2026-09-20 and hardened 2026-10-18; Allen's tag and
 publication decision remains the final gate. What landed, per the CHANGELOG
 block: the cadence evidence series (V13-01) with Nessus and Greenbone file

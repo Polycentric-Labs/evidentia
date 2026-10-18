@@ -1,4 +1,4 @@
-# Evidentia capability matrix (v0.7.0 baseline · re-validated through v0.11.0)
+# Evidentia capability matrix (v0.7.0 baseline · re-validated through v0.13.0)
 
 > Step-4 deliverable from the v0.7.0 comprehensive review (2026-04-25).
 > Functional + code-review + adversarial smoke testing of every public
@@ -10,6 +10,53 @@
 > bar), [positioning-and-value.md](positioning-and-value.md) (where this
 > sits in the market), [testing-playbook.md](testing-playbook.md) (the
 > operational test loop).
+
+---
+
+## Re-validation snapshot 2026-10-18 (v0.13.0 PRE-TAG): the shared spine
+
+v0.13.0 ships the shared-spine cycle: the cadence evidence series, nine new
+collectors and importers, native catalog sources, SCAP, CycloneDX 1.7 exports,
+the MCP SDK 2.2 dispatch, text depth on every catalog surface and the FedRAMP
+SCN writer. Unchanged subsystems are REUSED from the v0.11.0 and v0.10.x
+matrices; this snapshot covers the delta and the review that gated it.
+
+### Surface delta: new in v0.13.0
+
+| # | New surface | Kind | Verification |
+|---|---|---|---|
+| 1 | `conmon series <slug>`, `POST /api/conmon/series`, MCP `conmon_series`; day-granular cadences; `conmon check` and `health` read the evidence store | CLI/API/MCP/UI | core probe: all four verdicts, `--emit-findings`, wording rule, 18 concurrent writers; review H5 fixed (lineage counting, importer provenance, `excluded_observations`, as-of anchor) |
+| 2 | `collect nessus`, `collect greenbone`, their API routes and console tabs | CLI/API/UI | importers parse with defusedxml; review: write gate added, lone surrogate and device names refused, completeness recorded on the artifact |
+| 3 | `collect scap`, raw XML API, console tab | CLI/API/UI | collector probe 7 of 7 vectors; 8 MiB raw cap (exact boundary UNVERIFIED) |
+| 4 | `collect incident-clock` (Jira, PagerDuty, ServiceNow), API and console | CLI/API/UI | reviewed in full: bounded DNS worker, limit-exact reader, whole-page admission; audit events added |
+| 5 | `collect registry` (FedRAMP, CMVP, FCC snapshots; TLS, RDAP, SAM, InCommon, security.txt live) and `collect release-cadence` | CLI/API/UI | 720 release-cadence tests; registry egress pinned with a thread-id check; snapshot freshness is stale at tag time (owner decision, v0.13.1 plan) |
+| 6 | `collect storage-retention`, `collect enterprise-retention`, `collect entra-m365`, `collect google-workspace` | CLI/API/UI | identity and retention partition: no HIGH; Google Workspace env name confined and route gated in the review |
+| 7 | Native catalog sources (Australian ISM, CISA M365), `catalog import --native`, `POST /api/catalog/import-native`, MCP `get_catalog_native` | CLI/API/MCP/UI | core probe: CLI, API and MCP agree; BSI refusals; locked import and remove; the 16 MiB raw cap is exact |
+| 8 | CycloneDX 1.7 VEX exports, `--vex-spec-version` | CLI/API/UI | 1.6 and 1.7 schema-valid and deterministic; selectors refuse before export effects |
+| 9 | FedRAMP SCN writer and offline validator | Library | golden round trip; review M4 added date format checks and the URI rule |
+| 10 | MCP SDK 2.2 typed dispatch, scope before handler and signer, CIMD registry | MCP | 412 MCP tests; Host/Origin and body-limit tests; 15 tools, append-only |
+| 11 | Catalog truth gate, text depth, withdrawn controls, crosswalk families | Gate/Catalog | `check_catalog_truth` PASS at 107 catalogs (58 A, 4 B, 24 C, 21 D); review added the Tier C row check |
+
+### Parity baseline (G27 cross-surface walk)
+
+`check_parity` is green on all 5 checks. Counts (v0.13.0): **116 full /
+0 api-only / 0 cli-only / 13 exempt = 100.0% GUI coverage**. The console
+reviewer confirmed all 12 new `full` rows are wired through `lib/api.ts`;
+two older rows (`gap analyze`, `risk generate`) still call `fetch` from their
+pages. The API exposes 142 operations on 122 paths and 15 MCP tools; the live
+`--help` tree has 34 groups and 129 leaves, every one exiting 0.
+
+### Review-gated changes in this snapshot
+
+The review added role gates to every mutating REST operation (decision D8:
+`admin` for hard deletes and the configuration, `write` for creates,
+updates, outbound pushes, store writes and paid LLM paths, `read` for
+compute-only operations); the default policy keeps every identity admin, so
+existing deployments see no change. The earlier claims that the ai-gov CLI
+verbs are "RBAC write-gated" referred to their REST twins; the CLI verbs rely
+on the operator shell until v0.13.1. The console carries no bearer token of
+its own, so an authenticated deployment needs a proxy that injects the header
+(documented in the serve guide; a token field is a v0.13.1 item).
 
 ---
 
@@ -26,7 +73,7 @@ v0.10.x matrices; this snapshot covers the federal-wave delta.
 | # | New surface | Kind | Verification |
 |---|---|---|---|
 | 1 | `evidentia conmon ksi` — CR26 Security Decision Record `keySecurityIndicators` emission (10 families / 46 KSIs; schema-valid full-SDR skeleton; official 2026-06-24 schemas vendored at pinned SHAs, re-verified at their 1.0.0 graduation) | CLI | 26 emitter tests incl. jsonschema round-trip against the vendored schemas; emitted output re-validated against upstream 1.0.0 at the graduation re-vendor; the 5 no-base-`statement` KSIs + 2 no-800-53-mapping KSIs covered explicitly |
-| 2 | `ai-gov set-practice` — M-25-21 seven §4(b) practices; a WAIVED practice captures a CAIO waiver object recording the annual re-certification + 30-day OMB-report dates (the `waiver_certification_due` / `waiver_omb_report_overdue` clock helpers evaluate them; surfacing them in a verb/console is a v0.12 item) | CLI/API | 28 tests; waived-status model validator (waiver fields enforced); practice headings verified against the memo PDF; RBAC write-gated |
+| 2 | `ai-gov set-practice` — M-25-21 seven §4(b) practices; a WAIVED practice captures a CAIO waiver object recording the annual re-certification + 30-day OMB-report dates (the `waiver_certification_due` / `waiver_omb_report_overdue` clock helpers evaluate them; surfacing them in a verb/console is a v0.12 item) | CLI/API | 28 tests; waived-status model validator (waiver fields enforced); practice headings verified against the memo PDF; REST verb RBAC write-gated (the CLI verb relies on the operator shell; CLI gating is a v0.13.1 item) |
 | 3 | `ai-gov acquisition register\|list\|show\|set-phase` — M-25-22 six §4 lifecycle phases, §4(a) high-impact tie-in | CLI/API | 26 tests; `AIAcquisitionStore` = registry-store clone (traversal guard, atomic writes, `EVIDENTIA_AI_ACQUISITION_DIR` isolation); phases verified verbatim against the memo |
 | 4 | `fedramp-ksi-2026` catalog (46 indicators) + 800-53 rev5 crosswalk | Catalog | catalog-loader + crosswalk unit tests; `gen_fedramp_ksi.py --check` re-derives both from the pinned `FedRAMP/rules` dataset (2026.07.14.01) on demand (run at each re-vendor; not yet a standing CI gate) |
 | 5 | `fedramp-schema-watch.yml` weekly drift sentinel | CI | Fired-live lesson recorded: upstream moved inside the blind window on 2026-07-15 (SDR 0.1.0 → 1.0.0); a fresh drift probe at the release gate caught it and the schemas were re-vendored pre-tag |
@@ -62,7 +109,7 @@ delta.
 |---|---|---|---|
 | 1 | The Wave 1–4 console build-out — ~12 new consoles (governance, retention, evidence, catalog mgmt, risk-quantify, TPRM, model-risk, AI-gov, OSCAL-verify, traceability, collect, integrations) reaching 22 consoles at ~98% parity | Web UI | vitest 137; live `evidentia serve` adversarial probing; the auth-gated Collect/Integrations consoles (SecurityPostureBanner + UI button-gate) |
 | 2 | ~46 new REST mutation endpoints (the matched API surface for the new consoles) + the bidirectional parity gate (inverse-completeness + `api_extra` allowlist) | REST API | `check_parity` PASS (5/5); Schemathesis DAST ~8,100 cases (the 6 create endpoints' empty-id 500 found + fixed → 422) |
-| 3 | OMB **M-25-21** high-impact AI surface — `omb_m_25_21` core module + `ai-gov set-high-impact` CLI↔REST↔console triple + `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event; legacy M-24-10 retained-deprecated | CLI/API/UI/audit | RBAC write-gated (403 deny-by-default test); Pydantic-validated; backward-compat tests; the M-25-21 facts independently labcoat-verified vs whitehouse.gov primary sources |
+| 3 | OMB **M-25-21** high-impact AI surface — `omb_m_25_21` core module + `ai-gov set-high-impact` CLI↔REST↔console triple + `AI_SYSTEM_HIGH_IMPACT_CLASSIFIED` audit event; legacy M-24-10 retained-deprecated | CLI/API/UI/audit | REST verb RBAC write-gated (403 deny-by-default test; CLI gating is a v0.13.1 item); Pydantic-validated; backward-compat tests; the M-25-21 facts independently labcoat-verified vs whitehouse.gov primary sources |
 | 4 | Coverage-guided fuzzing — 6 atheris harnesses + ClusterFuzzLite CI + Hypothesis property tests over the untrusted-input parsers | Security/CI | found + (this review) completed an OSCAL-verify CWE-248 DoS fix across the whole `verify_digests` chain |
 
 ### Parity baseline (G27 cross-surface walk)

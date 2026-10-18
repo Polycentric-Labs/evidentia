@@ -232,7 +232,7 @@ owner legal review.
   /api/frameworks`, `GET /api/catalog/where` and `GET /api/catalog/license-info/{id}`,
   and in the generated catalogs reference page; imported catalogs get it at import time.
   The redistribution tier keeps its meaning (what may be redistributed) and no longer
-  implies that control text is present: 26 Tier A and 2 Tier D control catalogs and the
+  implies that control text is present: 29 Tier A and 3 Tier D control catalogs and the
   15 state-privacy obligation catalogs ship control numbering and titles only, and every
   surface now says so.
 - **Crosswalk families.** `frameworks.yaml` gains `crosswalk_family`: the NIST SP 800-53
@@ -240,7 +240,7 @@ owner legal review.
   `nist-800-53-rev5`; the three OSPS Baseline maturity levels belong to `osps-baseline`.
   `CrosswalkEngine` consults a member's own key and its family's on every lookup, so a
   gap found against a baseline receives the cross-framework value of the crosswalks keyed
-  on the parent catalog. On the bundled sample inventory, 112 of the 277 gaps against
+  on the parent catalog. On the bundled sample inventory, 118 of the 277 gaps against
   `nist-800-53-rev5-moderate` now carry cross-framework value; through v0.12 the count was
   zero, so the priority formula's cross-framework bonus never fired on the README
   quickstart path. `evidentia_core.catalogs.crosswalk.resolve_crosswalk` and
@@ -262,6 +262,53 @@ owner legal review.
 
 ### Changed
 
+- **Role gates on every mutating REST operation (2026-10-18 review, decision D8).**
+  Hard deletes (ai-gov system, model-risk model, POA&M item, TPRM vendor) and
+  `PUT /api/config` require `admin`; creates, updates, the five outbound pushes, the
+  Nessus and Greenbone store writes, gap analysis, risk generation and explanations
+  require `write`; compute-only operations and every other collect route require
+  `read`. The default policy maps every identity to admin, so deployments without a
+  policy file see no change, and `tests/integration/test_api/test_rbac_coverage.py`
+  fails on any future ungated mutator. CLI gating beyond `evidence`, `catalog`,
+  `collect` and `conmon release-series` is a v0.13.1 item.
+- **Credential env-var names in request bodies are confined (D9).** `token_env`,
+  `password_env`, `pat_name_env`, `pat_secret_env` and `client_secret_env` must match
+  `^[A-Z][A-Z0-9_]{0,63}$` and start with the integration's own prefix; anything else
+  is a 400 before any environment read. The integration flags `overwrite`,
+  `clear_before_push`, `force` and `block_private_ips` must be JSON booleans.
+- **`GET` and `PUT /api/config` return the file as written (D10).** `${VAR}`
+  references come back as placeholders; the library still expands them at load
+  time. PUT refuses unknown top-level keys, caps the document at 1 MiB and writes
+  atomically.
+- **Cadence series count lineages and honour importer provenance (D11).** One
+  observation per lineage at its current version; artifacts marked
+  `collection_complete: false` or `timestamp_source: collection_time` are left out
+  and reported in the new `excluded_observations` field, and the evidence-store
+  anchor used by `conmon check` and `conmon health` ignores artifacts after the
+  as-of day. The Nessus and Greenbone importers write both keys, and a zero-host
+  Nessus export is recorded as incomplete. `conmon series` exits 2 on an unknown
+  slug, as documented, `--evidence-store` must name an existing directory, and
+  annual and longer cadences need `--lookback-days` to span two intervals (runbook).
+- **`save_evidence` publication (operability note).** Since the atomic publication
+  change in this release, saving a new version needs hard-link support on the
+  store's filesystem (FAT, exFAT and some SMB or FUSE mounts refuse), and on POSIX
+  new versions are owner-only (0600). A store shared between users needs a single
+  owner; the mode decision is a v0.13.1 item.
+- **Eval gate semantics.** `eval risk-determinism` hashes the model-controlled
+  fields only, replay and faithfulness violations fail the gate when their checks
+  are requested, and the semantic faithfulness method defaults to 0.7 instead of
+  the Jaccard 0.3.
+- **release.yml pins uv 0.12.12 and syncs with `--locked`**, matching the PR
+  workflows, and two publish-path pins carry their correct version comments.
+- **Console authentication boundary (known limitation).** The console sends no
+  bearer token of its own; its credentialed flows enable only when the server
+  reports `auth_configured`. A deployment that sets the token file therefore needs
+  a reverse proxy that authenticates the user and injects `Authorization: Bearer`
+  for the API (serve guide). A token field in the console is a v0.13.1 item.
+- **Registry snapshot freshness (known limitation).** The packaged FedRAMP and FCC
+  snapshots carry capture dates of 2026-09-10 and 2026-09-09; a found and complete
+  snapshot lookup older than seven days exits 1 with `freshness: stale` until the
+  snapshots are refreshed through the reviewed source procedure.
 - **Pre-release dependency reconciliation.** Align boto3 and botocore at
   1.43.98, platformdirs at 4.11.11 and PyMySQL at 1.2.3. Retain the exact
   AWS signing-version guard and matching container dependency hashes. Pin
@@ -447,8 +494,8 @@ owner legal review.
 - **Catalog documentation matches the files.** The wiki's catalog inventory, the catalogs
   and crosswalks reference pages, the catalog and crosswalk concept pages, the contributor
   guide and the positioning document describe the tier as a redistribution posture and
-  report text depth separately; the counts come from the manifest (97 catalogs: 51 A, 4 B,
-  22 C, 20 D; 32 with full text, 65 with headings only). Links to a never-committed
+  report text depth separately; the counts come from the manifest (107 catalogs: 58 A, 4 B,
+  24 C, 21 D; 36 with full text, 71 with headings only). Links to a never-committed
   `ATTRIBUTION.md` now point at the contributor guide and the manifest's license columns.
   The OCC and FRB designators in the README and the positioning document read `OCC
   Bulletin 2026-13 / FRB SR 26-2`, as the catalog does.
@@ -466,6 +513,37 @@ owner legal review.
 
 ### Fixed
 
+- **Pre-tag review fixes (2026-10-18).** The full pre-release review (eight reviewers,
+  three probers; `docs/releases/reviews/security-review-v0.13.0.md`) closed two
+  CRITICAL, eight HIGH and twenty-six MEDIUM findings before the tag. The
+  configuration routes no longer disclose expanded server env values (CWE-526);
+  request bodies can no longer name an unrelated credential env var (CWE-201); the
+  API refuses to start on an unloadable RBAC policy file instead of falling back to
+  the permissive default (CWE-636); `POST /api/risk/generate` confines
+  `context_path` to the working directory and no longer echoes parser excerpts
+  (CWE-22, CWE-209); the Okta admin lookup failure reads UNKNOWN instead of PASS;
+  the nine v0.13 collectors emit COLLECT_STARTED, COMPLETED and FAILED audit events
+  (CWE-778); the DNS-rebinding pin applies to internationalised hostnames
+  (CWE-367); the SCN and SDR validators assert date formats and the SCR model
+  validates its URI; read-only catalog loads follow a symlinked directory again;
+  `EVIDENTIA_TEST_MODE=0` no longer zeroes the retry backoff; lone surrogates,
+  non-finite numbers, far-future dates, blank milestone descriptions, NaN metric
+  values and oversized inline inventories are refused with 400 or 422 instead of a
+  500 or an unloadable record; `/api/oscal/verify` reports an unverifiable document
+  as not valid and refuses identity pins it cannot check (CWE-347); provider error
+  text stays in the server log; the auth and rate-limit middlewares key on the
+  routing path and the API package floors Starlette at 1.0.1; the offline vLLM
+  path reads `HOSTED_VLLM_API_KEY` (CWE-522); Tableau and Power BI cells are
+  formula-neutralised (CWE-1236) and Power BI treats only a 404 as an empty table;
+  `gap analyze` refuses signing flags with a format it cannot sign (exit 2); YAML
+  timestamps in the CONMON state file load, a failed daemon poll is logged as a
+  failure, `mark-completed` refuses future dates and the alert channels honour
+  `--offline` (CWE-693); the scan CLIs end a write or save failure in one line,
+  refuse Windows device names and refuse an enterprise-retention output that
+  aliases the profile registry; the OSPS evidence probe, the docs link classifier,
+  the Tier C row check and the pre-push OSPS filter close their fail-open gaps; the
+  OpenAPI document declares the bearer scheme, an unknown `/api` path is a JSON
+  404, and the `evidentia-api` wheel ships `py.typed`.
 - **Package-root typing.** The seven `hatch_build.py` build hooks carry typed
   `initialize` signatures so `mypy packages/<name>` passes on each package root; the
   release checklist's typing gate runs mypy per package with `--strict-optional`.
@@ -601,7 +679,8 @@ owner legal review.
 - **FedRAMP CR26 pins re-verified (#275).** The vendored `common-definitions` (0.3.0)
   and `security-decision-record` (1.1.1) schemas are byte-identical to
   `FedRAMP/schemas@c3ed146` again; `FedRAMP/rules` did not move, so the KSI and FRR
-  catalogs are unchanged.
+  catalogs are unchanged. (Both pins moved again in the 2026-10-18 re-sync recorded
+  under Changed: common-definitions ships at 0.4.1 from `0e836c0d`.)
 - **The `catalog pin` promise is withdrawn (V13-14).** `api-stability.md`,
   `v1.0-transition.md` and the wiki's frozen-surfaces and catalog-inventory pages described
   a `catalog pin <framework> <version>` command as the operator escape hatch for bundled

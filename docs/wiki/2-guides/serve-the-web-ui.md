@@ -247,3 +247,9 @@ external state beyond the gap-store files it already wrote.
   every `/api/*` route then needs `Authorization: Bearer <token>` matching the
   file's contents (the liveness probes `/api/health` and `/api/version` are the
   exceptions and stay open).
+- **The console shows 401s once `--auth-token-file` is set**: the console sends no
+  bearer token of its own, and its credentialed flows enable only when the server
+  reports `auth_configured`. Run it behind a reverse proxy that authenticates the
+  user and injects `Authorization: Bearer <token>` on the `/api/` upstream (read the
+  token from a file in the proxy configuration; never write it into the page). A
+  token field in the console is a v0.13.1 item.
