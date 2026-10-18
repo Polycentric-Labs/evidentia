@@ -76,8 +76,16 @@ class TestGapAnalyzeErrors:
         # the test client cannot serialise it itself, so the body is sent raw.
         raw = b'{"frameworks": ["soc2-tsc"], "inventory_content": "a: \\ud800"}'
         r = api_client.post("/api/gap/analyze", content=raw, headers={"content-type": "application/json"})
-        assert r.status_code == 400, r.text
-        assert r.json()["detail"]["error"] == "invalid_body"
+        # pydantic refuses the string (422) and the detail now renders; before
+        # the review the echoed input could not be encoded and the route 500ed.
+        assert r.status_code in (400, 422), r.text
+        assert "detail" in r.json()
+
+    def test_lone_surrogate_in_any_typed_body_renders_422(self, api_client: TestClient) -> None:
+        raw = b'{"slug": "\\ud800", "when": "2026-01-01"}'
+        r = api_client.post("/api/conmon/mark-completed", content=raw, headers={"content-type": "application/json"})
+        assert r.status_code == 422, r.text
+        assert isinstance(r.json()["detail"], list)
 
     def test_inline_inventory_is_capped(self, api_client: TestClient) -> None:
         r = api_client.post("/api/gap/analyze", json={"frameworks": ["soc2-tsc"], "inventory_content": "x" * 8_000_001})

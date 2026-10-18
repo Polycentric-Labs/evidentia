@@ -229,6 +229,34 @@ return (see :func:`body_parse_error_handler`).
 """
 
 
+def _scrub_surrogates(value: Any) -> Any:
+    """Replace lone surrogates so a validation detail can be rendered as UTF-8."""
+    if isinstance(value, str):
+        return value.encode("utf-8", "replace").decode("utf-8")
+    if isinstance(value, dict):
+        return {key: _scrub_surrogates(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_scrub_surrogates(item) for item in value]
+    return value
+
+
+async def request_validation_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Render FastAPI's 422 even when the offending input holds a lone surrogate.
+
+    The default handler echoes the rejected input inside ``detail``. A JSON
+    body carrying the escape ``\\ud800`` decodes to a lone surrogate, pydantic
+    rejects it, and the echo then failed to encode as UTF-8, so every
+    pydantic-typed body route answered 500 (v0.13.0 review). The detail keeps
+    FastAPI's array shape; only unencodable characters are replaced.
+    """
+    from fastapi.encoders import jsonable_encoder
+    from fastapi.exceptions import RequestValidationError
+
+    if not isinstance(exc, RequestValidationError):  # pragma: no cover - registration guarantees the type
+        raise exc
+    return JSONResponse(status_code=422, content={"detail": _scrub_surrogates(jsonable_encoder(exc.errors()))})
+
+
 async def body_parse_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Normalize FastAPI's own body-decode 400 to the structured shape.
 
