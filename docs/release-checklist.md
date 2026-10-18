@@ -30,9 +30,11 @@ If the project has changed materially since the last release (new
 package, new collector, new top-level config, new workflow), add
 the corresponding new checklist items here.
 
-**Last self-update**: 2026-09-21. Recorded the V13-05 file-import scope amendment
-and poller follow-up. The September 20 package, publisher, container, protected
-delivery and immutable-tag checks remain in place.
+**Last self-update**: 2026-10-18. Step 5 now runs mypy once per package root with
+`--strict-optional`. A container base refresh repeats the DHI publisher verification
+recorded in [dockerfile-pinning.md](dockerfile-pinning.md) for the new digest. The
+V13-05 file-import scope and V13-18 correspondence amendments of 2026-09-21 remain in
+force.
 
 ---
 
