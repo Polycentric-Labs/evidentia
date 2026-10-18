@@ -783,7 +783,8 @@ async def servicenow_push(
     # included — only the report key, target table, and outcome counts.
     _audit.info(
         action=EventAction.INTEGRATIONS_SERVICENOW_PUSH,
-        outcome=EventOutcome.SUCCESS,
+        # v0.13.0 review: the event claimed SUCCESS even when records errored.
+        outcome=EventOutcome.SUCCESS if result.errored == 0 else EventOutcome.FAILURE,
         message=(
             f"Pushed gap report {report_key} to ServiceNow table "
             f"{cfg.table_name} via API: created={result.created} "
