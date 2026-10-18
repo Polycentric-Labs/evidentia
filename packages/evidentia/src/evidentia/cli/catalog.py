@@ -277,10 +277,14 @@ def show_crosswalk(
     mappings = crosswalk.get_mapped_controls(source, control, target)
 
     if not mappings:
-        console.print(f"[yellow]No mappings found from {source}:{control} to {target}.[/yellow]")
+        console.print(
+            f"[yellow]No mappings found from {escape(source)}:{escape(control)} to {escape(target)}.[/yellow]"
+        )
         raise typer.Exit(code=0)
 
-    console.print(f"[bold cyan]{source}[/bold cyan]:{control} maps to [bold cyan]{target}[/bold cyan]:")
+    console.print(
+        f"[bold cyan]{escape(source)}[/bold cyan]:{escape(control)} maps to [bold cyan]{escape(target)}[/bold cyan]:"
+    )
     for m in mappings:
         title = m.target_control_title or ""
         rel = f"[dim]\\[{m.relationship}][/dim]"
@@ -533,7 +537,7 @@ def license_info(
     user = load_user_manifest()
     entry = user.get(framework_id) or bundled.get(framework_id)
     if entry is None:
-        console.print(f"[red]Unknown framework '{framework_id}'.[/red]")
+        console.print(f"[red]Unknown framework '{escape(framework_id)}'.[/red]")
         raise typer.Exit(code=1)
 
     lines = [
@@ -565,7 +569,9 @@ def remove_framework(
     user = load_user_manifest(directory)
     entry = user.get(framework_id)
     if entry is None:
-        console.print(f"[red]No user-imported framework '{framework_id}'. Bundled catalogs cannot be removed.[/red]")
+        console.print(
+            f"[red]No user-imported framework '{escape(framework_id)}'. Bundled catalogs cannot be removed.[/red]"
+        )
         raise typer.Exit(code=1)
 
     expected_entry = catalog_entry_sha256(entry)

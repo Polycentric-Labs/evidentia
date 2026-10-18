@@ -823,6 +823,7 @@ class TestConmonSeries:
         assert json.loads(findings_path.read_text(encoding="utf-8")) == []
 
     def test_unknown_slug_exits_2(self, runner: CliRunner, tmp_path: Path) -> None:
+        (tmp_path / "evidence").mkdir()
         result = runner.invoke(
             app,
             [
@@ -833,10 +834,13 @@ class TestConmonSeries:
                 str(tmp_path / "evidence"),
             ],
         )
-        assert result.exit_code == 1
+        # v0.13.0 review: the documented usage-error code, as the docstring
+        # and the runbook state.
+        assert result.exit_code == 2
         assert "unknown cadence slug" in result.output
 
     def test_bad_window_exits_2(self, runner: CliRunner, tmp_path: Path) -> None:
+        (tmp_path / "evidence").mkdir(exist_ok=True)
         result = runner.invoke(
             app,
             [
@@ -855,6 +859,7 @@ class TestConmonSeries:
         assert "is before" in result.output
 
     def test_only_since_given_fills_until_from_default_window(self, runner: CliRunner, tmp_path: Path) -> None:
+        (tmp_path / "evidence").mkdir(exist_ok=True)
         """--until is unset -> filled from default_window's end (~today).
 
         The only assertion pinned here is on --since (fully
