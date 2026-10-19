@@ -8,13 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
 from collections import Counter
 from uuid import UUID, uuid5
 from xml.sax.saxutils import escape, quoteattr
 
 import pytest
-from evidentia_collectors.scap import ScapCompletionAssertion, collect_scap_bytes
+from evidentia_collectors.scap import ScapCompletionAssertion, _limits, collect_scap_bytes
 from evidentia_collectors.scap._limits import ScapFailure
 
 X = "http://checklists.nist.gov/xccdf/1.2"
@@ -23,6 +22,20 @@ STAMP = "2024-03-01T00:00:00Z"
 OUTCOMES = ("pass", "fail", "error", "unknown", "notapplicable", "informational", "fixed", "notchecked", "notselected")
 N_LIMIT = 5_242_880
 A_LIMIT = 2_097_152
+
+
+@pytest.fixture(autouse=True)
+def _inject_import_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Capacity is a size property; keep the product wall-clock budget out of it.
+
+    Flake class 3 (docs/testing-flake-policy.md): the exact-capacity imports take
+    about 17 s uninstrumented and 2.5x longer under coverage, so the 60 s product
+    budget (WALL_SECONDS) expired on a loaded Linux coverage runner. The budget
+    has its own deterministic tests (test_scap_io, test_collectors_scap_stream)
+    that patch start_budget to an already-expired deadline; here it is injected
+    wide enough never to expire, and no test below asserts elapsed time.
+    """
+    monkeypatch.setattr(_limits, "WALL_SECONDS", 3600.0)
 
 
 def encoded(value: object) -> bytes:
@@ -634,11 +647,9 @@ def test_complete_native_capacity_and_exact_refusal(name: str) -> None:
             )
         assert error.value.code == expected["expected"]
         return
-    started = time.monotonic()
     result = collect_scap_bytes(
         source, source_profile="xccdf-1.2-results", assessment_index=0, cadence_slug="nist-800-53-rev5-ca7"
     )
-    assert time.monotonic() - started < 60.0
     native = result.model_dump(mode="json")
     assert native["source"]["sha256"] == digest(source)
     assert native["source"]["bytes"] == len(source)
@@ -1429,7 +1440,6 @@ def test_oval_complete_qualified_capacity(name: str) -> None:
     assert len(claim_bytes) == expected["files"]["claim.json"]["bytes"]
     assert digest(claim_bytes) == expected["files"]["claim.json"]["sha256"]
     claim = ScapCompletionAssertion.model_validate(claim_data)
-    started = time.monotonic()
     result = collect_scap_bytes(
         source,
         source_profile=claim.source_profile,
@@ -1438,7 +1448,6 @@ def test_oval_complete_qualified_capacity(name: str) -> None:
         completion_assertion=claim,
         asserted_by="Synthetic capacity operator",
     )
-    assert time.monotonic() - started < 60.0
     native = result.model_dump(mode="json")
     assert native["native_document"] == graph
     assert native["assessment"] == assessment
