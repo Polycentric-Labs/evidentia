@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (CodeQL #204, CWE-117).** Control characters in either value can no longer start a
   new log record.
 
+### Security
+
+- **aiohttp 3.14.4 (GHSA-2g87-pp6c-29x5 8.7, GHSA-5wr8-gcqf-gqf3 8.2, GHSA-494j-54xm-rwp3), published
+  2026-10-19.** The locked closure moves from 3.14.3 and yarl follows to 1.25.1; the required
+  osv-scanner check failed on every open PR until the lock moved. The container requirements
+  re-pin aiohttp with the PyPI digests; the next image rebuild carries it.
+
 ## [0.13.0] - 2026-10-19
 
 **Theme**: *Evidence provenance and native imports*.
