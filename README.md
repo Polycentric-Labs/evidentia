@@ -133,7 +133,7 @@ No install: a self-hosted [asciinema](https://asciinema.org/) recording of `doct
 
 ## Recent Releases
 
-**v0.13.0 (2026-10-18)** — *Evidence provenance and native imports*. **Upstream release publication cadence (V13-28).** `collect release-cadence`, its API and the Collect screen observe the fixed public GitHub Releases profile.
+**v0.13.0 (2026-10-19)** — *Evidence provenance and native imports*. **Upstream release publication cadence (V13-28).** `collect release-cadence`, its API and the Collect screen observe the fixed public GitHub Releases profile.
 
 **v0.12.1 (2026-09-05)** — *Container rebuild on a fresh hardened base (day-N CVE response), carrying the v0.13 cycle's opening batch*. **Python 3.14 support** (closes #212): `requires-python` lifted to `>=3.12,<3.15` across the workspace after litellm 1.98.x raised its own ceiling (the documented removal trigger), with 3.13/3.14 trove classifiers and 3.14 pytest legs on all three OSes.
 
