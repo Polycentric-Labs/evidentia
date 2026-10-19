@@ -184,7 +184,16 @@ def _prepare(args: tuple[Any, ...], kwargs: dict[str, Any]) -> _Request:
     if api_key is None:
         # Resolve only the selected provider's credential. No secret-manager
         # callback runs and the value is never included in diagnostics.
-        api_key = os.environ.get("OLLAMA_API_KEY" if ollama else "OPENAI_API_KEY")
+        if ollama:
+            key_env = "OLLAMA_API_KEY"
+        elif provider in {"vllm", "hosted_vllm"}:
+            # LiteLLM reads HOSTED_VLLM_API_KEY for this provider; sending the
+            # cloud OPENAI_API_KEY to a local vLLM server disclosed it to that
+            # server (v0.13.0 review, CWE-522).
+            key_env = "HOSTED_VLLM_API_KEY"
+        else:
+            key_env = "OPENAI_API_KEY"
+        api_key = os.environ.get(key_env)
     if api_key is not None:
         if not isinstance(api_key, str) or any(ord(char) < 32 for char in api_key):
             _refuse("Supply a valid explicit local-server API key.")

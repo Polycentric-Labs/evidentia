@@ -267,6 +267,23 @@ def test_privileged_account_finding_high_severity() -> None:
     assert f.status == FindingStatus.ACTIVE
 
 
+def test_privileged_account_lookup_failure_is_unknown_not_pass() -> None:
+    """v0.13.0 review H8: a failed role-assignment read is an unknown posture, not zero admins."""
+    from evidentia_core.models.finding import ComplianceStatus
+
+    responses = _baseline_responses()
+    del responses["/api/v1/iam/assignees/users"]  # the stub answers 404 for unknown paths
+    coll, _ = _make_collector(responses)
+    findings = coll.collect()
+    admin = [f for f in findings if "admin accounts" in f.title]
+    assert len(admin) == 1
+    f = admin[0]
+    assert f.compliance_status == ComplianceStatus.UNKNOWN
+    assert f.status == FindingStatus.ACTIVE
+    assert f.raw_data["admin_count"] is None
+    assert "lookup failed" in f.title
+
+
 def test_mfa_enrollment_finding_low_coverage() -> None:
     coll, _ = _make_collector()
     findings = coll.collect()

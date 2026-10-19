@@ -350,6 +350,8 @@ def load_state_file(
     for slug, value in raw.items():
         if not isinstance(slug, str):
             raise ValueError(f"cadence keys must be strings; got {slug!r}")
+        if isinstance(value, datetime):
+            value = value.date()
         if isinstance(value, date):
             out[slug] = value
         elif isinstance(value, str):
@@ -642,7 +644,7 @@ def run_daemon(
                 _emit_and_dispatch(result, on_due_soon, on_overdue)
                 recognized_count = len(result.overdue) + len(result.due_soon) + len(result.current)
                 unknown_count = len(result.unknown_slugs)
-            except (ValueError, OSError) as exc:
+            except Exception as exc:
                 # State file errors are operator-actionable: we log
                 # but keep polling so a transient FS issue doesn't
                 # kill the daemon (e.g., file briefly absent during

@@ -49,8 +49,9 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
+from urllib.parse import urlparse
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from evidentia_core.ai_governance.fips199 import (
     FIPS199Categorization,
@@ -462,6 +463,19 @@ class SCRForm(EvidentiaModel):
             "KsiStatusDocument.certification_package_overview_uri."
         ),
     )
+
+    @field_validator("certification_package_overview_uri")
+    @classmethod
+    def _overview_uri_is_absolute(cls, value: str | None) -> str | None:
+        # The schema marks the field format: uri, which the offline validator
+        # cannot assert without an optional dependency (v0.13.0 review, M4).
+        if value is None:
+            return value
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("certification_package_overview_uri must be an absolute http(s) URI")
+        return value
+
     change_type_explanation: str | None = Field(
         default=None,
         max_length=8000,
@@ -551,7 +565,7 @@ class SCRForm(EvidentiaModel):
 
         Returns a JSON-serializable dict matching the vendored
         ``fedramp-significant-change-notifications-schema-2026-06-24.json``
-        (schema version 0.1.2). Callers validate the result with
+        (schema version 0.1.3). Callers validate the result with
         ``evidentia_core.fedramp.validate_scn_document``.
         :meth:`to_oscal_scr_notification` keeps emitting the older
         RFC-0007 draft field list unchanged; this method is the

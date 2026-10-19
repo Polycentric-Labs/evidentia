@@ -229,3 +229,45 @@ def test_collect_nessus_missing_extra_exits_1(
     )
     assert result.exit_code == 1
     assert "scan extra" in result.output.lower()
+
+
+def test_collect_nessus_output_directory_is_a_one_line_error(runner: CliRunner, tmp_path: Path) -> None:
+    """v0.13.0 review (probe D4): a write failure ends in one line and exit 1, not a traceback."""
+    pytest.importorskip("defusedxml")
+    result = runner.invoke(
+        app,
+        [
+            "collect",
+            "nessus",
+            "--file",
+            str(FIXTURES / "nessus-sample.nessus"),
+            "--output",
+            str(tmp_path),
+            "--no-save-evidence",
+        ],
+    )
+    assert result.exit_code == 1, result.output
+    assert "could not write findings" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_collect_nessus_evidence_store_file_is_a_one_line_error(runner: CliRunner, tmp_path: Path) -> None:
+    pytest.importorskip("defusedxml")
+    blocker = tmp_path / "store-is-a-file"
+    blocker.write_text("not a directory", encoding="utf-8")
+    result = runner.invoke(
+        app,
+        [
+            "collect",
+            "nessus",
+            "--file",
+            str(FIXTURES / "nessus-sample.nessus"),
+            "--output",
+            str(tmp_path / "findings.json"),
+            "--evidence-store",
+            str(blocker),
+        ],
+    )
+    assert result.exit_code == 1, result.output
+    assert "could not save evidence" in result.output
+    assert "Traceback" not in result.output

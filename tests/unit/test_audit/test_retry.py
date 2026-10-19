@@ -310,3 +310,13 @@ async def test_build_async_retrying_exposes_attempt_state() -> None:
                 raise ConnectionError("flaky")
     assert attempts == 2
     assert last_attempt_number == 2
+
+
+def test_effective_backoff_honours_falsy_test_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    """v0.13.0 review: EVIDENTIA_TEST_MODE=0 used to zero the backoff like a truthy value."""
+    from evidentia_core.audit.retry import _effective_backoff
+
+    monkeypatch.setenv("EVIDENTIA_TEST_MODE", "0")
+    assert _effective_backoff(1.0, 60.0) == (1.0, 60.0)
+    monkeypatch.setenv("EVIDENTIA_TEST_MODE", "1")
+    assert _effective_backoff(1.0, 60.0) == (0.0, 0.0)

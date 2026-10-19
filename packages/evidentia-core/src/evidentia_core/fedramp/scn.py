@@ -36,7 +36,11 @@ def _scn_validator() -> Draft202012Validator:
     """Build the offline Draft 2020-12 validator for the SCN schema.
 
     The registry pre-loads both vendored schemas by their ``$id`` so the
-    SCN schema's one cross-document ``$ref`` resolves locally.
+    SCN schema's one cross-document ``$ref`` resolves locally. The format
+    checker asserts ``date`` with the standard library; ``uri`` and
+    ``date-time`` are asserted only when the optional rfc3987 and
+    rfc3339-validator packages are installed (v0.13.0 review, M4), so the
+    SCR model validates the overview URI itself.
     """
     scn = json.loads(SCN_SCHEMA_PATH.read_text(encoding="utf-8"))
     common = json.loads(COMMON_SCHEMA_PATH.read_text(encoding="utf-8"))
@@ -46,7 +50,7 @@ def _scn_validator() -> Draft202012Validator:
             (common["$id"], Resource.from_contents(common)),
         ]
     )
-    return Draft202012Validator(scn, registry=registry)
+    return Draft202012Validator(scn, registry=registry, format_checker=Draft202012Validator.FORMAT_CHECKER)
 
 
 def validate_scn_document(document: dict[str, Any]) -> list[str]:

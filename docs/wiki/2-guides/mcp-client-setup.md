@@ -277,7 +277,7 @@ shapes; legacy schema validation rejects them. The fourteen registered tools
 declare object outputs. See the
 [API contract](../6-project/api-stability.md#mcp-tool-contract).
 
-## The 14 MCP tools
+## The 15 MCP tools
 
 Tools are exposed in registration order. Purposes are from the
 [MCP tools reference](../4-reference/mcp-tools.md), which is auto-generated from

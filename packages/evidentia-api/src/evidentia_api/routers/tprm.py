@@ -61,6 +61,7 @@ from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel, Field
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 
@@ -158,10 +159,12 @@ async def list_vendors_endpoint(
 
 @router.post(
     "/tprm/vendors",
+    dependencies=[require_role("write")],
     response_model=Vendor,
     status_code=201,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             422: ("Body-content semantic failure (``error: invalid_body``)."),
         }
     ),
@@ -231,9 +234,11 @@ async def get_vendor(vendor_id: str) -> Vendor:
 
 @router.put(
     "/tprm/vendors/{vendor_id}",
+    dependencies=[require_role("write")],
     response_model=Vendor,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
@@ -285,9 +290,11 @@ async def replace_vendor(vendor_id: str, payload: Vendor) -> Vendor:
 
 @router.delete(
     "/tprm/vendors/{vendor_id}",
+    dependencies=[require_role("admin")],
     status_code=204,
     responses=error_responses(
         {
+            403: "Admin permission denied (``error: rbac_denied``).",
             404: ("Unknown or malformed ``vendor_id`` (``error: not_found``)."),
         }
     ),
@@ -431,10 +438,12 @@ async def concentration(
 
 @router.post(
     "/tprm/vendors/{vendor_id}/dd-questionnaire",
+    dependencies=[require_role("read")],
     response_model=Questionnaire,
     status_code=201,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Unknown questionnaire ``format`` (``error: "
                 "unknown_format``); ``detail`` carries ``format`` + "
@@ -554,9 +563,11 @@ class DDQuestionnaireIngestResult(BaseModel):
 
 @router.post(
     "/tprm/vendors/{vendor_id}/dd-questionnaire/ingest",
+    dependencies=[require_role("read")],
     response_model=DDQuestionnaireIngestResult,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Malformed questionnaire content — unparseable or zero correlated responses (``error: invalid_body``)."
             ),

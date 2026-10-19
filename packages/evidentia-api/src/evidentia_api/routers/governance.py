@@ -270,7 +270,7 @@ async def get_challenge(challenge_id: str) -> EffectiveChallenge:
 class MetricObservationPayload(BaseModel):
     """Body shape for POST /governance/metrics/{id}/observations."""
 
-    value: float = Field(description="Observation value.")
+    value: float = Field(allow_inf_nan=False, description="Observation value (finite).")
     observed_at: date = Field(description="ISO-8601 date (YYYY-MM-DD) the observation was recorded.")
     note: str | None = Field(default=None, description="Optional contextual note.")
 
@@ -764,7 +764,7 @@ async def delete_workflow_record(workflow_id: str) -> None:
 # ════════════════════════════════════════════════════════════════════
 
 
-@router.post("/governance/lines-report", response_class=PlainTextResponse)
+@router.post("/governance/lines-report", response_class=PlainTextResponse, dependencies=[require_role("read")])
 async def lines_report(owners: list[Owner]) -> str:
     """Render a 3LOD distribution report from a posted owner list.
 

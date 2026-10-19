@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, cast
 
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.release_cadence._contracts import (
     CHANGE_CODES,
     LocalSaveOutcome,
@@ -66,6 +67,9 @@ _DISCOVERY_REASONS = {
     "deadline_exceeded": "deadline_exceeded",
     "cancelled": "cancelled",
 }
+
+
+_log = get_logger("evidentia.collectors.release_cadence")
 
 
 def _utc_now() -> datetime:
@@ -874,4 +878,25 @@ def poll_release_bytes(request: object, *, evidence_store_dir: object = None) ->
 
 
 def collect_release_cadence(request: object, *, evidence_store_dir: object = None) -> PollResult:
-    return _prepare_poll().begin(request, evidence_store_dir=evidence_store_dir).result()
+    _log.info(
+        action=EventAction.COLLECT_STARTED,
+        message="release cadence poll started",
+        evidentia={"collector": "release-cadence", "persist": evidence_store_dir is not None},
+    )
+    try:
+        result = _prepare_poll().begin(request, evidence_store_dir=evidence_store_dir).result()
+    except Exception as exc:
+        _log.warning(
+            action=EventAction.COLLECT_FAILED,
+            outcome=EventOutcome.FAILURE,
+            message="release cadence poll failed",
+            evidentia={"collector": "release-cadence", "error": type(exc).__name__},
+        )
+        raise
+    _log.info(
+        action=EventAction.COLLECT_COMPLETED,
+        outcome=EventOutcome.SUCCESS,
+        message="release cadence poll completed",
+        evidentia={"collector": "release-cadence"},
+    )
+    return result

@@ -45,13 +45,23 @@ from evidentia_core.audit import (
     CollectionContext,
     CollectionManifest,
     CoverageCount,
+    EventAction,
+    EventOutcome,
+    get_logger,
     new_run_id,
 )
-from evidentia_core.conmon.series import CADENCE_SLUG_METADATA_KEY
+from evidentia_core.conmon.series import (
+    CADENCE_SLUG_METADATA_KEY,
+    COLLECTION_COMPLETE_METADATA_KEY,
+    TIMESTAMP_SOURCE_COLLECTION_TIME,
+    TIMESTAMP_SOURCE_METADATA_KEY,
+    TIMESTAMP_SOURCE_RECORD,
+)
 from evidentia_core.models.common import current_version, utc_now
 from evidentia_core.models.evidence import EvidenceArtifact, EvidenceType
 from evidentia_core.models.finding import SecurityFinding
 
+from evidentia_collectors._paths import is_reserved_device_name
 from evidentia_collectors._xml import parse_defused_xml
 from evidentia_collectors.greenbone.mapping import (
     VULNERABILITY_SCAN_MAPPINGS,
@@ -132,6 +142,9 @@ BLIND_SPOTS: list[dict[str, str]] = [
         ),
     },
 ]
+
+
+_log = get_logger("evidentia.collectors.greenbone")
 
 
 class GreenboneIngestError(RuntimeError):
@@ -376,7 +389,12 @@ def _build_finding(
         remediation=result.solution or None,
         severity=greenbone_severity_to_severity(result.severity, result.threat),
         source_system="greenbone",
-        source_finding_id=(f"{context.source_system_id}:{result.host_ip}:{result.nvt_oid}:{result.port}"),
+        # The vhost name is part of the identity: two results that share
+        # host_ip, NVT and port but differ by hostname are two findings
+        # (v0.13.0 review, CWE-694).
+        source_finding_id=(
+            f"{context.source_system_id}:{result.host_ip}:{result.hostname or ''}:{result.nvt_oid}:{result.port}"
+        ),
         resource_type="host",
         resource_id=result.host_ip,
         control_mappings=list(VULNERABILITY_SCAN_MAPPINGS),
@@ -397,7 +415,21 @@ def _collect_from_bytes(
     if len(raw) > _MAX_INPUT_BYTES:
         raise GreenboneIngestError(f"input exceeds the {_MAX_INPUT_BYTES}-byte cap ({len(raw)} bytes)")
 
-    parsed = parse_greenbone(raw)
+    _log.info(
+        action=EventAction.COLLECT_STARTED,
+        message="Greenbone report ingest started",
+        evidentia={"collector_id": COLLECTOR_ID, "input_bytes": len(raw)},
+    )
+    try:
+        parsed = parse_greenbone(raw)
+    except GreenboneIngestError as exc:
+        _log.warning(
+            action=EventAction.COLLECT_FAILED,
+            outcome=EventOutcome.FAILURE,
+            message="Greenbone report ingest failed",
+            evidentia={"collector_id": COLLECTOR_ID, "error": type(exc).__name__},
+        )
+        raise
     run_id = new_run_id()
     now = utc_now()
     resolved_cadence_slug = cadence_slug or DEFAULT_CADENCE_SLUG
@@ -415,6 +447,7 @@ def _collect_from_bytes(
     # tier gets a manifest warning since the report carries no reliable
     # completion timestamp at all.
     warnings: list[str] = []
+    timestamp_source = TIMESTAMP_SOURCE_RECORD
     if parsed.scan_end is not None:
         collected_at = parsed.scan_end
     elif parsed.scan_start is not None:
@@ -422,6 +455,7 @@ def _collect_from_bytes(
         warnings.append("report missing <scan_end>; used <scan_start> as a fallback timestamp")
     else:
         collected_at = now
+        timestamp_source = TIMESTAMP_SOURCE_COLLECTION_TIME
         warnings.append("report missing both <scan_end> and <scan_start>; used the collection time as a fallback")
 
     findings = [
@@ -494,6 +528,10 @@ def _collect_from_bytes(
         content_format="json",
         metadata={
             CADENCE_SLUG_METADATA_KEY: resolved_cadence_slug,
+            # Cadence provenance (v0.13.0 review H5): the series layer only
+            # counts a complete run whose timestamp came from the report.
+            TIMESTAMP_SOURCE_METADATA_KEY: timestamp_source,
+            COLLECTION_COMPLETE_METADATA_KEY: is_complete,
             "scanner": "greenbone",
             "report_id": parsed.report_id,
             "task_name": parsed.task_name,
@@ -503,6 +541,18 @@ def _collect_from_bytes(
         control_mappings=list(VULNERABILITY_SCAN_MAPPINGS),
     )
     artifact.compute_hash()
+    _log.info(
+        action=EventAction.COLLECT_COMPLETED,
+        outcome=EventOutcome.SUCCESS,
+        message="Greenbone report ingest completed",
+        evidentia={
+            "collector_id": COLLECTOR_ID,
+            "run_id": run_id,
+            "findings": len(findings),
+            "is_complete": manifest.is_complete,
+            "cadence_slug": resolved_cadence_slug,
+        },
+    )
 
     return findings, manifest, artifact
 
@@ -520,6 +570,8 @@ def collect_greenbone_file(
     file, an oversized file (over 50 MB), or any parse/mapping failure.
     """
     file_path = Path(path)
+    if is_reserved_device_name(file_path):
+        raise GreenboneIngestError(f"{file_path} names a reserved device, not a scan export")
     try:
         size = file_path.stat().st_size
     except OSError as exc:
@@ -551,7 +603,12 @@ def collect_greenbone_text(
     raises :class:`GreenboneIngestError` on an oversized payload or any
     parse/mapping failure.
     """
-    raw = xml_text.encode("utf-8")
+    try:
+        raw = xml_text.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise GreenboneIngestError(
+            f"{source_name} is not valid UTF-8 text (unpaired surrogate at offset {exc.start})"
+        ) from exc
     if len(raw) > _MAX_INPUT_BYTES:
         raise GreenboneIngestError(f"{source_name} exceeds the {_MAX_INPUT_BYTES}-byte cap ({len(raw)} bytes)")
     return _collect_from_bytes(

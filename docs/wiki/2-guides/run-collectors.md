@@ -192,7 +192,10 @@ refreshes a package automatically.
 
 Exit 0 means complete found/not_found evidence with current_observation or a
 non-stale dated_snapshot. Exit 1 also covers ambiguous, partial, unavailable,
-stale or unknown-freshness results and operational failures. Exit 2 means invalid
+stale or unknown-freshness results and operational failures. The packaged FedRAMP
+and FCC snapshots carry their capture dates (2026-09-10 and 2026-09-09); a found and
+complete snapshot lookup older than seven days exits 1 with freshness `stale` until
+the snapshots are refreshed through the reviewed source procedure. Exit 2 means invalid
 input; exit 77 means read authorization was denied. Without `--output`, stdout
 contains full JSON only and fixed diagnostics go to stderr. Input must be a named
 regular JSON file of at most 65536 bytes.
@@ -759,9 +762,10 @@ produce identical findings.
 
 ## Got stuck?
 
-- **Console Run buttons are greyed out / "Collectors disabled" banner** — the
+- **Console Run buttons are greyed out / "Collectors disabled" banner**: the
   deployment is unauthenticated. Set `EVIDENTIA_API_AUTH_TOKEN_FILE` and restart
-  `evidentia serve`. Local-only Convert and OCSF *inline* ingest stay enabled
+  `evidentia serve`, and front the console with a reverse proxy that injects the
+  bearer header (the console sends none itself; see the serve guide). Local-only Convert and OCSF *inline* ingest stay enabled
   regardless.
 - **`... collector not installed. Run pip install ...`** — install the provider
   extra named in the message (e.g. `evidentia-collectors[aws]`,

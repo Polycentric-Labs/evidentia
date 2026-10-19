@@ -320,28 +320,24 @@ def analyze(
                 f"[dim]Loaded {len(vendor_list)} vendor(s) from {vendor_inventory} for AR back-matter embedding.[/dim]"
             )
 
-    if sign_with_gpg and format != "oscal-ar":
-        console.print(
-            "[yellow]Note:[/yellow] --sign-with-gpg only applies to "
-            "--format oscal-ar. Ignoring for format=[bold]"
-            f"{format}[/bold]."
-        )
-        sign_with_gpg = None
-
-    if sign_with_sigstore and format != "oscal-ar":
-        console.print(
-            "[yellow]Note:[/yellow] --sign-with-sigstore only applies to "
-            "--format oscal-ar. Ignoring for format=[bold]"
-            f"{format}[/bold]."
-        )
-        sign_with_sigstore = False
-
-    if sign_with_key and format != "oscal-ar":
-        console.print(
-            "[yellow]Note:[/yellow] --sign-with-key only applies to "
-            f"--format oscal-ar. Ignoring for format=[bold]{format}[/bold]."
-        )
-        sign_with_key = None
+    # v0.13.0 review (CWE-636): a signing flag with a format that cannot be
+    # signed used to be dropped with a note and exit 0, so a pipeline that
+    # treats exit 0 as signed published an unsigned report. Usage error now.
+    if format != "oscal-ar":
+        requested = [
+            name
+            for name, enabled in (
+                ("--sign-with-gpg", bool(sign_with_gpg)),
+                ("--sign-with-sigstore", bool(sign_with_sigstore)),
+                ("--sign-with-key", bool(sign_with_key)),
+            )
+            if enabled
+        ]
+        if requested:
+            raise typer.BadParameter(
+                f"{', '.join(requested)} only applies to --format oscal-ar; got --format {format}.",
+                param_hint=requested[0],
+            )
 
     # Export
     vex_options: dict[str, Any] = {}

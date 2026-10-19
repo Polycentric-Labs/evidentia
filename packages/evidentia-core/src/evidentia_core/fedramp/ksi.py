@@ -112,7 +112,7 @@ def _sdr_validator() -> Draft202012Validator:
             (common["$id"], Resource.from_contents(common)),
         ]
     )
-    return Draft202012Validator(sdr, registry=registry)
+    return Draft202012Validator(sdr, registry=registry, format_checker=Draft202012Validator.FORMAT_CHECKER)
 
 
 def validate_sdr_document(document: dict[str, Any]) -> list[str]:

@@ -239,12 +239,13 @@ class PowerBIClient:
         except httpx.HTTPError as e:
             # Network-level failure (timeout, connection refused, etc.)
             raise PowerBIPublishError(f"Clear table '{table_name}' failed: {type(e).__name__}: {e}") from e
-        if r.status_code == 404 or 400 <= r.status_code < 500:
-            # Benign — see docstring. Proceed silently; the caller's
-            # subsequent push_rows call will validate the table is
-            # actually pushable.
+        if r.status_code == 404:
+            # The table does not exist yet: nothing to clear.
             return
-        if r.status_code >= 500:
+        if r.status_code >= 400:
+            # v0.13.0 review: a 401, 403 or 429 used to be swallowed here and
+            # push_rows then appended to the un-cleared table, so a
+            # throttled or unauthorised clear double-counted the dashboard.
             raise PowerBIPublishError(f"Clear table '{table_name}' failed: HTTP {r.status_code} {r.reason_phrase}")
 
     def push_rows(

@@ -1367,10 +1367,11 @@ export interface paths {
         };
         /**
          * Get Config
-         * @description Return the currently-loaded evidentia.yaml contents.
+         * @description Return the current evidentia.yaml contents as written.
          *
-         *     If no file exists in CWD or any parent, returns a default
-         *     (empty) :class:`EvidentiaConfig`.
+         *     If no file exists in CWD or any parent, returns a default (empty)
+         *     :class:`EvidentiaConfig`. ``${VAR}`` references are returned as
+         *     placeholders, not expanded.
          */
         get: operations["get_config_api_config_get"];
         /**
@@ -1379,8 +1380,10 @@ export interface paths {
          *
          *     Writes to the discovered path (walking CWD -> parents), or to
          *     ``./evidentia.yaml`` if none exists yet. Returns the persisted
-         *     config (with ``source_path`` populated so callers can confirm where
-         *     the write landed).
+         *     config as written (with ``source_path`` populated so callers can
+         *     confirm where the write landed). Unknown top-level keys are refused:
+         *     the file model tolerates legacy keys on load, but the API only
+         *     writes the keys it documents.
          */
         put: operations["put_config_api_config_put"];
         post?: never;
@@ -3204,9 +3207,10 @@ export interface paths {
          * Generate
          * @description Generate risk statements for selected gaps, streaming progress via SSE.
          *
-         *     The 400 / 404 documented above are raised by the ``_load_report``
-         *     lookup BEFORE the stream starts; mid-stream failures ride inside
-         *     the event stream as ``phase: error`` messages instead.
+         *     The 400 / 404 documented above are raised by the ``context_path``
+         *     containment check and the ``_load_report`` lookup BEFORE the stream
+         *     starts; mid-stream failures ride inside the event stream as
+         *     ``phase: error`` messages instead.
          */
         post: operations["generate_api_risk_generate_post"];
         delete?: never;
@@ -4002,6 +4006,12 @@ export interface components {
          * @description The dated series for one cadence over a window, with its verdict.
          */
         CadenceSeries: {
+            /**
+             * Excluded Observations
+             * @description Stored artifacts inside the window that were not counted: an incomplete run (metadata.collection_complete is false) or a collected_at that the importer took from its own clock (metadata.timestamp_source is collection_time).
+             * @default 0
+             */
+            excluded_observations: number;
             /** Frequency */
             frequency?: string | null;
             /** Gaps */
@@ -4771,6 +4781,7 @@ export interface components {
             /**
              * Last Completed
              * Format: date
+             * @description ISO-8601 date of the last completion.
              */
             last_completed: string;
             /** Slug */
@@ -6870,7 +6881,7 @@ export interface components {
             frameworks: string[];
             /**
              * Inventory Content
-             * @description Inline inventory YAML/JSON (browser upload).
+             * @description Inline inventory YAML/JSON (browser upload), at most 8 MB.
              */
             inventory_content?: string | null;
             /**
@@ -7740,7 +7751,7 @@ export interface components {
             /**
              * When
              * Format: date
-             * @description ISO-8601 date of cycle completion (YYYY-MM-DD).
+             * @description ISO-8601 date of cycle completion (YYYY-MM-DD); not after tomorrow.
              */
             when: string;
         };
@@ -7877,7 +7888,7 @@ export interface components {
             observed_at: string;
             /**
              * Value
-             * @description Numeric value. Units defined by the parent Metric.
+             * @description Numeric value (finite). Units defined by the parent Metric.
              */
             value: number;
         };
@@ -7899,7 +7910,7 @@ export interface components {
             observed_at: string;
             /**
              * Value
-             * @description Observation value.
+             * @description Observation value (finite).
              */
             value: number;
         };
@@ -9755,7 +9766,7 @@ export interface components {
         RiskGenerateRequest: {
             /**
              * Context Path
-             * @description Path to system-context.yaml. Defaults to CWD lookup.
+             * @description Path to system-context.yaml, inside the server's working directory (paths elsewhere are refused with 400). Required for generation.
              */
             context_path?: string | null;
             /**
@@ -12648,6 +12659,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description ``X-Idempotency-Key`` reuse with a different body (``error: idempotency_key_conflict``). */
             409: {
                 headers: {
@@ -13676,6 +13696,15 @@ export interface operations {
                     "application/json": components["schemas"]["SecurityFinding"][];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -13731,6 +13760,15 @@ export interface operations {
             };
             /** @description Invalid ``max_companies`` / ``rating_threshold`` body field (``error: invalid_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13802,6 +13840,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -13848,6 +13895,15 @@ export interface operations {
             };
             /** @description Missing ``workspace_url`` body field (``error: missing_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13910,6 +13966,15 @@ export interface operations {
             };
             /** @description Invalid ``max_vendors`` body field (``error: invalid_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14225,6 +14290,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Repository not found (``error: not_found``). */
             404: {
                 headers: {
@@ -14296,6 +14370,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -14351,6 +14434,15 @@ export interface operations {
             };
             /** @description Missing/non-string ``content``, malformed XML, a refused entity construct, wrong root element, oversized content (over 50 MB), or an unknown ``cadence_slug`` (``error: invalid_body``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14562,6 +14654,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -14615,6 +14716,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -14661,6 +14771,15 @@ export interface operations {
             };
             /** @description Missing ``org_url`` body field (``error: missing_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15207,6 +15326,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15262,6 +15390,15 @@ export interface operations {
             };
             /** @description Missing ``account`` / ``user`` body field or password env var unset (``error: missing_field`` / ``error: credentials_missing``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15331,6 +15468,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15386,6 +15532,15 @@ export interface operations {
             };
             /** @description Missing ``connection_uri`` body field (``error: missing_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15455,6 +15610,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15517,6 +15681,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15572,6 +15745,15 @@ export interface operations {
             };
             /** @description Missing ``database_path`` body field (``error: missing_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15663,6 +15845,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -15710,6 +15901,24 @@ export interface operations {
                     "application/json": components["schemas"]["EvidentiaConfig-Output"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Config file is not a YAML mapping (``error: internal_error``). */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     put_config_api_config_put: {
@@ -15732,6 +15941,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvidentiaConfig-Output"];
+                };
+            };
+            /** @description Unknown top-level key in the payload (``error: invalid_body``). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Admin permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Serialised document larger than 1 MiB (``error: payload_too_large``). */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Validation Error */
@@ -16252,6 +16488,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unknown cadence ``slug`` (``error: not_found``). */
             404: {
                 headers: {
@@ -16504,6 +16749,15 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unknown ``framework`` or ``control_id`` (``error: not_found``). */
             404: {
                 headers: {
@@ -16741,6 +16995,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -16776,6 +17039,15 @@ export interface operations {
             };
             /** @description Malformed ``base_key`` / ``head_key`` (``error: invalid_id``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16827,6 +17099,15 @@ export interface operations {
             };
             /** @description Unsupported/unavailable ``format``, ambiguous report source, or a malformed report key (``error: unsupported_format`` / ``feature_unavailable`` / ``invalid_body`` / ``invalid_id``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17662,6 +17943,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -17697,6 +17987,15 @@ export interface operations {
             };
             /** @description Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17745,6 +18044,15 @@ export interface operations {
             };
             /** @description Malformed ``report_key`` (``error: invalid_id``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17858,6 +18166,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description No such stored report (``error: not_found``). */
             404: {
                 headers: {
@@ -17917,6 +18234,15 @@ export interface operations {
             };
             /** @description Malformed ``report_key`` (``error: invalid_id``); missing ``workspace_id`` / ``tenant_id`` / ``client_id`` (``error: missing_field``); bad ``risks`` (``error: invalid_field``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17992,6 +18318,15 @@ export interface operations {
             };
             /** @description Malformed ``report_key`` (``error: invalid_id``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18080,6 +18415,15 @@ export interface operations {
             };
             /** @description Malformed ``report_key`` (``error: invalid_id``); missing ``server_url`` (``error: missing_field``); SSRF/offline-refused ``server_url`` or bad ``risks`` (``error: invalid_field``); invalid Tableau configuration (``error: invalid_body``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18238,6 +18582,15 @@ export interface operations {
                     "application/json": components["schemas"]["ModelInventory"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Body-content semantic failure (``error: invalid_body``). */
             422: {
                 headers: {
@@ -18313,6 +18666,15 @@ export interface operations {
                     "application/json": components["schemas"]["ModelInventory"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
             404: {
                 headers: {
@@ -18350,6 +18712,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Admin permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Unknown or malformed ``model_id`` (``error: not_found``). */
             404: {
@@ -18526,6 +18897,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -18655,6 +19035,15 @@ export interface operations {
                     "application/json": components["schemas"]["ControlGap"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Body-content semantic failure (``error: invalid_body``). */
             422: {
                 headers: {
@@ -18730,6 +19119,15 @@ export interface operations {
                     "application/json": components["schemas"]["ControlGap"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
             404: {
                 headers: {
@@ -18767,6 +19165,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Admin permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
             404: {
@@ -18810,6 +19217,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlGap"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Unknown or malformed ``poam_id`` (``error: not_found``). */
@@ -18859,6 +19275,15 @@ export interface operations {
             };
             /** @description Backward/invalid state transition (``error: invalid_body``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19230,8 +19655,17 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Malformed ``report_key`` (``error: invalid_id``); raised before the SSE stream starts. */
+            /** @description Malformed ``report_key`` (``error: invalid_id``) or a ``context_path`` outside the server's working directory (``error: invalid_body``); raised before the SSE stream starts. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19283,6 +19717,15 @@ export interface operations {
             };
             /** @description Unknown ``method`` (``error: unknown_method``; ``detail`` carries ``method`` + ``valid``) or a degenerate/invalid Monte Carlo run (``error: invalid_body``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19415,6 +19858,15 @@ export interface operations {
                     "application/json": components["schemas"]["Vendor"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Body-content semantic failure (``error: invalid_body``). */
             422: {
                 headers: {
@@ -19490,6 +19942,15 @@ export interface operations {
                     "application/json": components["schemas"]["Vendor"];
                 };
             };
+            /** @description Write permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
             404: {
                 headers: {
@@ -19527,6 +19988,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Admin permission denied (``error: rbac_denied``). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
             /** @description Unknown or malformed ``vendor_id`` (``error: not_found``). */
             404: {
@@ -19573,6 +20043,15 @@ export interface operations {
             };
             /** @description Unknown questionnaire ``format`` (``error: unknown_format``); ``detail`` carries ``format`` + ``valid``. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19637,6 +20116,15 @@ export interface operations {
             };
             /** @description Malformed questionnaire content — unparseable or zero correlated responses (``error: invalid_body``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19732,6 +20220,15 @@ export interface operations {
             };
             /** @description Schema-valid matrix with no mappings — nothing to emit (``error: invalid_body``). */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Read permission denied (``error: rbac_denied``). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

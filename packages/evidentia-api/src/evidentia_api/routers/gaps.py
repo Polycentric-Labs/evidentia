@@ -12,12 +12,14 @@ integration) or an inline YAML/JSON blob (typical for browser upload).
 
 from __future__ import annotations
 
+import csv
 import logging
 import tempfile
 from collections.abc import Callable
 from datetime import UTC
 from pathlib import Path
 
+import yaml
 from evidentia_core.gap_analyzer import export_report
 from evidentia_core.gap_analyzer.analyzer import GapAnalyzer
 from evidentia_core.gap_analyzer.inventory import load_inventory
@@ -40,6 +42,7 @@ from evidentia_core.security.paths import (
 from fastapi import APIRouter, Response
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 from evidentia_api.schemas import (
     GAP_EXPORT_FORMATS,
     GapAnalyzeRequest,
@@ -145,8 +148,13 @@ def _materialize_inventory_content(content: str, inventory_format: str) -> Path:
         mode="w", encoding="utf-8", suffix=suffix, delete=False, dir=tmp_root
     )
     try:
-        fd.write(content)
-        fd.flush()
+        try:
+            fd.write(content)
+            fd.flush()
+        except UnicodeEncodeError as exc:
+            fd.close()
+            Path(fd.name).unlink(missing_ok=True)
+            raise api_error(400, "invalid_body", "inventory_content is not valid UTF-8 text.") from exc
         # tempfile.NamedTemporaryFile already returns a path inside the
         # tmp dir; validate_within is the CodeQL-recognizable barrier
         # that lets static analysis stop flagging downstream IO on this
@@ -158,9 +166,11 @@ def _materialize_inventory_content(content: str, inventory_format: str) -> Path:
 
 @router.post(
     "/gap/analyze",
+    dependencies=[require_role("write")],
     response_model=GapAnalysisReport,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: ("Missing/invalid inventory input or a failed inventory parse (``error: invalid_body``)."),
         }
     ),
@@ -199,14 +209,22 @@ async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
 
         try:
             inventory = load_inventory(inventory_source)
-        except (FileNotFoundError, ValueError) as e:
+        except (FileNotFoundError, ValueError, yaml.YAMLError, csv.Error, KeyError, TypeError, AttributeError) as e:
             # Use 400 (not 422) for runtime body-content validation
             # errors — the F-V08-DAST-3 status normalization. 422 stays
             # reserved for Pydantic auto-validation responses (array-
             # shape ``detail``); deliberate errors carry the structured
             # object ``detail`` from ``evidentia_api.errors``
-            # (2026-07-06 error-shape convergence).
-            raise api_error(400, "invalid_body", str(e)) from e
+            # (2026-07-06 error-shape convergence). Fixed text: the parser
+            # message can carry the server path or a CSV header line
+            # (v0.13.0 review, CWE-209).
+            logger.info("Inventory parse failed: %s: %s", type(e).__name__, e)
+            raise api_error(
+                400,
+                "invalid_body",
+                "The inventory could not be parsed; check the format and the required fields.",
+                field="inventory_content" if payload.inventory_content else "inventory_path",
+            ) from e
 
         # CLI-style overrides
         if payload.organization:
@@ -214,7 +232,11 @@ async def analyze(payload: GapAnalyzeRequest) -> GapAnalysisReport:
         if payload.system_name:
             inventory.system_name = payload.system_name
 
-        report = GapAnalyzer().analyze(inventory, payload.frameworks)
+        try:
+            report = GapAnalyzer().analyze(inventory, payload.frameworks)
+        except ValueError as e:
+            # An unknown framework id surfaced as a 500 (v0.13.0 review).
+            raise api_error(400, "invalid_field", str(e), field="frameworks") from e
         save_report(report)
         return report
     finally:
@@ -241,8 +263,10 @@ def _safe_filename_stem(organization: str) -> str:
 
 @router.post(
     "/gap/export",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Unsupported/unavailable ``format``, ambiguous report "
                 "source, or a malformed report key (``error: "
@@ -405,9 +429,11 @@ async def get_report(key: str) -> GapAnalysisReport:
 
 @router.post(
     "/gap/diff",
+    dependencies=[require_role("read")],
     response_model=GapDiff,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Malformed ``base_key`` / ``head_key`` (``error: invalid_id``)."),
             404: "Base or head report not found (``error: not_found``).",
         }

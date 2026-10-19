@@ -20,6 +20,7 @@ from evidentia_core.init_wizard import (
 from fastapi import APIRouter
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 from evidentia_api.schemas import (
     InitWizardCommitRequest,
     InitWizardCommitResponse,
@@ -87,9 +88,11 @@ def _generate(payload: InitWizardRequest) -> tuple[dict[str, str], list[str]]:
 
 @router.post(
     "/init/wizard",
+    dependencies=[require_role("read")],
     response_model=InitWizardResponse,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``."),
         }
     ),
@@ -112,9 +115,11 @@ async def init_wizard(payload: InitWizardRequest) -> InitWizardResponse:
 
 @router.post(
     "/init/commit",
+    dependencies=[require_role("write")],
     response_model=InitWizardCommitResponse,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: ("Unknown ``preset`` (``error: unknown_preset``); ``detail`` carries ``preset`` + ``valid``."),
         }
     ),

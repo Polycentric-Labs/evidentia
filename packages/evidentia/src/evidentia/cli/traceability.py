@@ -91,7 +91,12 @@ def emit(
     sigstore_identity_token: str | None = typer.Option(
         None,
         "--sigstore-identity-token",
-        help="Explicit OIDC token for Sigstore signing (else auto-detected).",
+        envvar="SIGSTORE_ID_TOKEN",
+        help=(
+            "Explicit OIDC token for Sigstore signing (else auto-detected). Prefer the "
+            "SIGSTORE_ID_TOKEN environment variable: a token passed as a flag is visible "
+            "in process listings."
+        ),
     ),
     sign_with_key: Path | None = typer.Option(
         None,

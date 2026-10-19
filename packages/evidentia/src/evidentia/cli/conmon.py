@@ -44,11 +44,12 @@ import signal
 import sys
 import threading
 import warnings
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
 import typer
+from evidentia_core import network_guard
 from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon import (
     DEFAULT_POLL_INTERVAL_SECONDS,
@@ -81,8 +82,10 @@ from evidentia_core.conmon.series import (
     DEFAULT_LOOKBACK_DAYS,
 )
 from evidentia_core.evidence_store import get_evidence_store_dir, iter_artifacts
+from evidentia_core.network_guard import OfflineViolationError
 from evidentia_core.release_cadence._limits import _start_invocation
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from evidentia.cli._rbac import require_role_cli
@@ -140,6 +143,11 @@ def _load_last_completed_map(
         if not isinstance(slug, str):
             console.print(f"[red]Error:[/red] cadence keys must be strings; got {slug!r}")
             raise typer.Exit(code=1)
+        if isinstance(value, datetime):
+            # A YAML timestamp parses as datetime (a date subclass); the
+            # day-based cadences compare it with a date and raised TypeError
+            # (v0.13.0 review).
+            value = value.date()
         if isinstance(value, date):
             out[slug] = value
         elif isinstance(value, str):
@@ -220,7 +228,10 @@ def conmon_next(
     """Compute the next-due date for a registered cadence."""
     cadence = get_cadence(slug)
     if cadence is None:
-        console.print(f"[red]Error:[/red] unknown cadence slug {slug!r}. Run `evidentia conmon list` to see available.")
+        console.print(
+            f"[red]Error:[/red] unknown cadence slug {escape(repr(slug))}. "
+            "Run `evidentia conmon list` to see available."
+        )
         raise typer.Exit(code=1)
 
     anchor = _parse_date_or_exit(last_completed, "--last-completed")
@@ -308,6 +319,10 @@ def conmon_check(
     evidence_store: Path | None = typer.Option(
         None,
         "--evidence-store",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
         help=(
             "Evidence store root. When given, a cadence missing from the state "
             "file takes the date of its latest evidence artifact (matched by "
@@ -361,7 +376,7 @@ def conmon_check(
             for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        last_completed_map = merge_evidence_anchors(last_completed_map, latest_observations(artifacts))
+        last_completed_map = merge_evidence_anchors(last_completed_map, latest_observations(artifacts, as_of=today))
         verdicts = {
             slug: verdict.value for slug, verdict in series_verdicts(artifacts, last_completed_map, today=today).items()
         }
@@ -496,6 +511,23 @@ def conmon_check(
 # ── watch (v0.9.3 P1.1 — poll daemon) ─────────────────────────────
 
 
+def _refuse_offline_egress(url: str, *, subsystem: str, flag: str) -> None:
+    """Under --offline an alert channel may only point at a loopback or private host.
+
+    Before v0.13.0 nothing in the alert path consulted the offline guard, so
+    conmon watch under --offline still resolved and posted to the public
+    internet (review finding, CWE-693).
+    """
+    try:
+        network_guard.check_url(
+            url,
+            subsystem=subsystem,
+            remediation="Point the channel at a loopback or private endpoint, or run without --offline.",
+        )
+    except OfflineViolationError as exc:
+        raise typer.BadParameter(str(exc), param_hint=flag) from exc
+
+
 def _build_alert_channels(
     smtp_host: str | None,
     smtp_port: int,
@@ -517,6 +549,7 @@ def _build_alert_channels(
     channels: list[AlertChannel] = []
 
     if smtp_host is not None:
+        _refuse_offline_egress(f"smtp://{smtp_host}:{smtp_port}", subsystem="conmon-smtp", flag="--smtp-host")
         # All SMTP flags are required together once host is set.
         if smtp_sender is None or not smtp_recipients:
             raise typer.BadParameter("--smtp-host requires --smtp-sender and at least one --smtp-recipient")
@@ -545,6 +578,7 @@ def _build_alert_channels(
         )
 
     if webhook_url is not None:
+        _refuse_offline_egress(webhook_url, subsystem="conmon-webhook", flag="--webhook-url")
         secret = resolve_secret(
             webhook_secret_file,
             "EVIDENTIA_WEBHOOK_SECRET",
@@ -914,6 +948,13 @@ def conmon_mark_completed(
     """
     parsed_when = _parse_date_or_exit(when, "--when")
     assert parsed_when is not None
+    if parsed_when > date.today() + timedelta(days=1):
+        # A typo such as 2062 would silence overdue alerts for decades
+        # (v0.13.0 review); completions are recorded after the fact.
+        console.print(
+            f"[red]Error:[/red] --when {parsed_when.isoformat()} is in the future; record completions after the fact."
+        )
+        raise typer.Exit(code=2)
 
     try:
         previous = mark_completed(state_file, slug, parsed_when, use_lock=state_lock)
@@ -1170,6 +1211,10 @@ def conmon_health(
     evidence_store: Path | None = typer.Option(
         None,
         "--evidence-store",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
         help=(
             "Evidence store root. A cadence missing from the state file takes "
             "the date of its latest evidence artifact (metadata.cadence_slug)."
@@ -1219,7 +1264,7 @@ def conmon_health(
             for artifact in iter_artifacts(get_evidence_store_dir(evidence_store))
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        state = merge_evidence_anchors(state, latest_observations(artifacts))
+        state = merge_evidence_anchors(state, latest_observations(artifacts, as_of=today))
     report = compute_health(
         state=state,
         today=today,
@@ -1399,6 +1444,10 @@ def conmon_series(
     evidence_store: Path | None = typer.Option(
         None,
         "--evidence-store",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        readable=True,
         help=(
             "Evidence store root directory. Defaults to "
             "EVIDENTIA_EVIDENCE_STORE_DIR, else the platform user-data "
@@ -1425,6 +1474,7 @@ def conmon_series(
         DEFAULT_LOOKBACK_DAYS,
         "--lookback-days",
         min=1,
+        max=36_600,
         help=(
             f"Look-back window in days, used to fill any bound --since "
             f"/ --until don't supply. Default {DEFAULT_LOOKBACK_DAYS}."
@@ -1471,8 +1521,11 @@ def conmon_series(
     """
     cadence = get_cadence(slug)
     if cadence is None:
-        console.print(f"[red]Error:[/red] unknown cadence slug {slug!r}. Run `evidentia conmon list` to see available.")
-        raise typer.Exit(code=1)
+        console.print(
+            f"[red]Error:[/red] unknown cadence slug {escape(repr(slug))}. "
+            "Run `evidentia conmon list` to see available."
+        )
+        raise typer.Exit(code=2)
 
     since_parsed = _parse_date_or_exit(since, "--since")
     until_parsed = _parse_date_or_exit(until, "--until")

@@ -7,6 +7,7 @@ from importlib import import_module
 from types import TracebackType
 from typing import Self, cast
 
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.models.finding import SecurityFinding
 
 from ._client import RegistryReadSession
@@ -25,6 +26,9 @@ _MODULES = {
     "ssl-labs": "ssl_labs",
     "security-txt": "security_txt",
 }
+
+
+_log = get_logger("evidentia.collectors.registries")
 
 
 def _read_registry(session: RegistryReadSession) -> RegistryLookupResult:
@@ -79,6 +83,11 @@ class RegistryCollector:
             raise ValueError("registry_collection_failed")
         selected = validated_request(request)
         original = selected.model_dump(mode="python", warnings="error")
+        _log.info(
+            action=EventAction.COLLECT_STARTED,
+            message="registry lookup started",
+            evidentia={"collector": "registry", "registry": str(getattr(selected, "registry", ""))},
+        )
         try:
             session = self._session_factory(selected)
             if type(session) is not RegistryReadSession:
@@ -89,6 +98,23 @@ class RegistryCollector:
             published = RegistryLookupResult.model_validate_json(result_bytes(observed))
             if published.request.model_dump(mode="python", warnings="error") != original:
                 raise ValueError("result_request_mismatch")
-            return published
         except Exception:
+            _log.warning(
+                action=EventAction.COLLECT_FAILED,
+                outcome=EventOutcome.FAILURE,
+                message="registry lookup failed",
+                evidentia={"collector": "registry", "error": "registry_collection_failed"},
+            )
             raise ValueError("registry_collection_failed") from None
+        _log.info(
+            action=EventAction.COLLECT_COMPLETED,
+            outcome=EventOutcome.SUCCESS,
+            message="registry lookup completed",
+            evidentia={
+                "collector": "registry",
+                "lookup_outcome": str(published.lookup_outcome),
+                "collection_status": str(published.collection_status),
+                "findings": len(published.findings),
+            },
+        )
+        return published

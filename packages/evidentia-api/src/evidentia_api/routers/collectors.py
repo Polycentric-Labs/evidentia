@@ -28,6 +28,7 @@ from pydantic import BaseModel, ValidationError
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 
+from evidentia_api._credential_env import prefix_of, resolve_credential_env_name
 from evidentia_api.errors import ErrorEnvelope, api_error, error_responses
 from evidentia_api.rbac_dependency import require_role
 from evidentia_api.routers import enterprise_retention, incident_clock, registry, storage_retention
@@ -167,9 +168,11 @@ def _block_private_ips(body: dict[str, Any]) -> bool:
 
 @router.post(
     "/collectors/aws/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
                 "AWS collector not installed or AWS unreachable "
@@ -224,9 +227,11 @@ async def aws_collect(payload: dict[str, Any] | None = None) -> list[SecurityFin
 
 @router.post(
     "/collectors/github/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing or malformed ``repo`` body field (``error: missing_field``)."),
             404: "Repository not found (``error: not_found``).",
             502: "GitHub API call failed (``error: upstream_error``).",
@@ -287,9 +292,11 @@ async def github_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/okta/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``org_url`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -369,9 +376,11 @@ async def okta_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/google-workspace/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Invalid ``customer`` / ``inactive_threshold_days`` / "
                 "``max_users`` / ``login_window_days`` / "
@@ -456,7 +465,7 @@ async def google_workspace_collect(
     else:
         try:
             inactive_threshold_days = int(raw_inactive_threshold_days)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -477,7 +486,7 @@ async def google_workspace_collect(
     else:
         try:
             max_users = int(raw_max_users)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -498,7 +507,7 @@ async def google_workspace_collect(
     else:
         try:
             login_window_days = int(raw_login_window_days)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -519,7 +528,7 @@ async def google_workspace_collect(
     else:
         try:
             max_login_events = int(raw_max_login_events)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -534,7 +543,9 @@ async def google_workspace_collect(
                 field="max_login_events",
             )
 
-    token_env = str(body.get("token_env") or "GOOGLE_WORKSPACE_ACCESS_TOKEN").strip() or "GOOGLE_WORKSPACE_ACCESS_TOKEN"
+    token_env = resolve_credential_env_name(
+        body, "token_env", "GOOGLE_WORKSPACE_ACCESS_TOKEN", allowed_prefixes=("GOOGLE_WORKSPACE_",)
+    )
     api_token = os.environ.get(token_env)
     if not api_token:
         raise api_error(
@@ -576,9 +587,11 @@ async def google_workspace_collect(
 
 @router.post(
     "/collectors/sql/postgres/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``connection_uri`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -626,8 +639,11 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             "Request body must include 'connection_uri'.",
             field="connection_uri",
         )
-    password_env = (
-        str(payload.get("password_env") or "EVIDENTIA_POSTGRES_PASSWORD").strip() or "EVIDENTIA_POSTGRES_PASSWORD"
+    password_env = resolve_credential_env_name(
+        payload,
+        "password_env",
+        "EVIDENTIA_POSTGRES_PASSWORD",
+        allowed_prefixes=(prefix_of("EVIDENTIA_POSTGRES_PASSWORD"),),
     )
     password = os.environ.get(password_env)
     if password is None:
@@ -659,9 +675,11 @@ async def postgres_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/sql/mysql/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``connection_uri`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -706,7 +724,9 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             "Request body must include 'connection_uri'.",
             field="connection_uri",
         )
-    password_env = str(payload.get("password_env") or "EVIDENTIA_MYSQL_PASSWORD").strip() or "EVIDENTIA_MYSQL_PASSWORD"
+    password_env = resolve_credential_env_name(
+        payload, "password_env", "EVIDENTIA_MYSQL_PASSWORD", allowed_prefixes=(prefix_of("EVIDENTIA_MYSQL_PASSWORD"),)
+    )
     password = os.environ.get(password_env)
     if password is None:
         raise api_error(
@@ -734,9 +754,11 @@ async def mysql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/sql/mssql/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``connection_uri`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -786,7 +808,9 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             "Request body must include 'connection_uri'.",
             field="connection_uri",
         )
-    password_env = str(payload.get("password_env") or "EVIDENTIA_MSSQL_PASSWORD").strip() or "EVIDENTIA_MSSQL_PASSWORD"
+    password_env = resolve_credential_env_name(
+        payload, "password_env", "EVIDENTIA_MSSQL_PASSWORD", allowed_prefixes=(prefix_of("EVIDENTIA_MSSQL_PASSWORD"),)
+    )
     password = os.environ.get(password_env)
     if password is None:
         raise api_error(
@@ -814,9 +838,11 @@ async def mssql_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/sql/oracle/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``connection_uri`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -861,8 +887,8 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
             "Request body must include 'connection_uri'.",
             field="connection_uri",
         )
-    password_env = (
-        str(payload.get("password_env") or "EVIDENTIA_ORACLE_PASSWORD").strip() or "EVIDENTIA_ORACLE_PASSWORD"
+    password_env = resolve_credential_env_name(
+        payload, "password_env", "EVIDENTIA_ORACLE_PASSWORD", allowed_prefixes=(prefix_of("EVIDENTIA_ORACLE_PASSWORD"),)
     )
     password = os.environ.get(password_env)
     if password is None:
@@ -891,9 +917,11 @@ async def oracle_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/sql/sqlite/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``database_path`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -964,9 +992,11 @@ async def sqlite_collect(payload: dict[str, Any]) -> list[SecurityFinding]:
 
 @router.post(
     "/collectors/databricks/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Missing ``workspace_url`` body field (``error: missing_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -1046,9 +1076,11 @@ async def databricks_collect(
 
 @router.post(
     "/collectors/snowflake/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Missing ``account`` / ``user`` body field or "
                 "password env var unset (``error: missing_field`` / "
@@ -1136,7 +1168,9 @@ async def snowflake_collect(
 
     password: str | None = None
     if private_key_path_str is None:
-        password_env = str(payload.get("password_env") or "SNOWFLAKE_PASSWORD").strip() or "SNOWFLAKE_PASSWORD"
+        password_env = resolve_credential_env_name(
+            payload, "password_env", "SNOWFLAKE_PASSWORD", allowed_prefixes=("SNOWFLAKE_",)
+        )
         password = os.environ.get(password_env)
         if not password:
             raise api_error(
@@ -1181,9 +1215,11 @@ async def snowflake_collect(
 
 @router.post(
     "/collectors/vanta/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Invalid ``max_vendors`` body field (``error: invalid_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -1258,7 +1294,7 @@ async def vanta_collect(
     else:
         try:
             max_vendors = int(raw_max_vendors)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1272,7 +1308,7 @@ async def vanta_collect(
                 (f"max_vendors must be in [1, 100000]; got {max_vendors}"),
                 field="max_vendors",
             )
-    token_env = str(body.get("token_env") or "VANTA_API_TOKEN").strip() or "VANTA_API_TOKEN"
+    token_env = resolve_credential_env_name(body, "token_env", "VANTA_API_TOKEN", allowed_prefixes=("VANTA_",))
     api_token = os.environ.get(token_env)
     if not api_token:
         raise api_error(
@@ -1310,9 +1346,11 @@ async def vanta_collect(
 
 @router.post(
     "/collectors/drata/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Invalid ``max_vendors`` body field (``error: invalid_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -1385,7 +1423,7 @@ async def drata_collect(
     else:
         try:
             max_vendors = int(raw_max_vendors)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1399,7 +1437,7 @@ async def drata_collect(
                 (f"max_vendors must be in [1, 100000]; got {max_vendors}"),
                 field="max_vendors",
             )
-    token_env = str(body.get("token_env") or "DRATA_API_TOKEN").strip() or "DRATA_API_TOKEN"
+    token_env = resolve_credential_env_name(body, "token_env", "DRATA_API_TOKEN", allowed_prefixes=("DRATA_",))
     api_token = os.environ.get(token_env)
     if not api_token:
         raise api_error(
@@ -1437,9 +1475,11 @@ async def drata_collect(
 
 @router.post(
     "/collectors/bitsight/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: ("Invalid ``max_companies`` / ``rating_threshold`` body field (``error: invalid_field``)."),
             500: ("Unexpected collector failure (``error: collector_failed``)."),
             503: (
@@ -1498,7 +1538,7 @@ async def bitsight_collect(
     else:
         try:
             max_companies = int(raw_max_companies)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1520,7 +1560,7 @@ async def bitsight_collect(
             ("rating_threshold must be in BitSight's 250-900 range."),
             field="rating_threshold",
         )
-    token_env = str(body.get("token_env") or "BITSIGHT_API_TOKEN").strip() or "BITSIGHT_API_TOKEN"
+    token_env = resolve_credential_env_name(body, "token_env", "BITSIGHT_API_TOKEN", allowed_prefixes=("BITSIGHT_",))
     api_token = os.environ.get(token_env)
     if not api_token:
         raise api_error(
@@ -1554,9 +1594,11 @@ async def bitsight_collect(
 
 @router.post(
     "/collectors/securityscorecard/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Invalid ``portfolio_id`` / ``max_companies`` / "
                 "``score_threshold`` body field "
@@ -1649,7 +1691,7 @@ async def securityscorecard_collect(
     else:
         try:
             max_companies = int(raw_max_companies)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_field",
@@ -1671,7 +1713,9 @@ async def securityscorecard_collect(
             "score_threshold must be in SSC's 0-100 range.",
             field="score_threshold",
         )
-    token_env = str(body.get("token_env") or "SECURITYSCORECARD_API_TOKEN").strip() or "SECURITYSCORECARD_API_TOKEN"
+    token_env = resolve_credential_env_name(
+        body, "token_env", "SECURITYSCORECARD_API_TOKEN", allowed_prefixes=("SECURITYSCORECARD_",)
+    )
     api_token = os.environ.get(token_env)
     if not api_token:
         raise api_error(
@@ -1709,9 +1753,11 @@ async def securityscorecard_collect(
 
 @router.post(
     "/collectors/ocsf/collect",
+    dependencies=[require_role("read")],
     response_model=list[SecurityFinding],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Bad content / URL — missing or conflicting input "
                 "mode, malformed OCSF, non-HTTPS URL, SSRF refusal, "
@@ -1820,9 +1866,11 @@ class NessusCollectResponse(BaseModel):
 
 @router.post(
     "/collectors/nessus/collect",
+    dependencies=[require_role("write")],
     response_model=NessusCollectResponse,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: (
                 "Missing/non-string ``content``, malformed XML, a refused "
                 "entity construct, wrong root element, oversized content "
@@ -1898,7 +1946,7 @@ async def nessus_collect(payload: dict[str, Any]) -> NessusCollectResponse:
     else:
         try:
             plugin_output_max_chars = int(raw_max_chars)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_body",
@@ -1959,9 +2007,11 @@ class GreenboneCollectResponse(BaseModel):
 
 @router.post(
     "/collectors/greenbone/collect",
+    dependencies=[require_role("write")],
     response_model=GreenboneCollectResponse,
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: (
                 "Missing/non-string ``content``, malformed XML, a refused "
                 "entity construct, wrong root element, oversized content "
@@ -2038,7 +2088,7 @@ async def greenbone_collect(payload: dict[str, Any]) -> GreenboneCollectResponse
     else:
         try:
             description_max_chars = int(raw_max_chars)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError, OverflowError) as e:
             raise api_error(
                 400,
                 "invalid_body",
@@ -2083,9 +2133,11 @@ async def greenbone_collect(payload: dict[str, Any]) -> GreenboneCollectResponse
 
 @router.post(
     "/collectors/convert",
+    dependencies=[require_role("read")],
     response_model=list[dict[str, Any]],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Missing ``content``, unsupported ``to_format``, or "
                 "invalid findings (``error: missing_field`` / "

@@ -342,8 +342,10 @@ run_check "check_workflow_perms" \
 run_check "check_uv_lock_pin_drift" \
     run_py "${SCRIPTS_DIR}/check_uv_lock_pin_drift.py" "${RANGE_BASE}" "${RANGE_TIP}" || true
 
-# 10. OSPS crosswalk drift — only when OSPS files are in the push range.
-if printf '%s\n' "${CHANGED_FILES}" | grep -Eq 'mappings/osps-baseline_.*\.json$|/_osps_upstream\.py$'; then
+# 10. OSPS crosswalk drift: only when OSPS generator inputs are in the push
+#     range: the mappings, the upstream module, the generator itself (its
+#     TARGET_ID_FIXES table) and the SSDF catalog it reads (v0.13.0 review).
+if printf '%s\n' "${CHANGED_FILES}" | grep -Eq 'mappings/osps-baseline_.*\.json$|/_osps_upstream\.py$|scripts/catalogs/gen_osps_crosswalks\.py$|us-federal/nist-ssdf-800-218\.json$'; then
     run_check "check_osps_crosswalk_drift" \
         run_py "${REPO_ROOT}/scripts/catalogs/gen_osps_crosswalks.py" --check || true
 else

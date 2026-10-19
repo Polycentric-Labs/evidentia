@@ -14,6 +14,7 @@ from threading import Lock
 from typing import cast
 
 import ulid
+from evidentia_core.audit import EventAction, EventOutcome, get_logger
 from evidentia_core.conmon.calendar import get_cadence
 from pydantic import ValidationError
 
@@ -87,6 +88,9 @@ class _Accepted:
 class _Import:
     budget: Budget
     consume: Callable[[bytes], _Accepted]
+
+
+_log = get_logger("evidentia.collectors.scap")
 
 
 def _claim_native(value: object) -> object:
@@ -466,6 +470,32 @@ def _caller_actor(completion_assertion: object, asserted_by: object) -> object:
     return {"basis": "caller_declared", "subject": asserted_by, "provider": None}
 
 
+def _consume_logged(operation: _Import, raw: bytes, *, source: str) -> ScapCollectionResult:
+    """Run one import with the collect audit events around it (v0.13.0 review H6)."""
+    _log.info(
+        action=EventAction.COLLECT_STARTED,
+        message="SCAP import started",
+        evidentia={"collector": "scap", "source": source, "input_bytes": len(raw)},
+    )
+    try:
+        result = operation.consume(raw).result
+    except Exception as exc:
+        _log.warning(
+            action=EventAction.COLLECT_FAILED,
+            outcome=EventOutcome.FAILURE,
+            message="SCAP import failed",
+            evidentia={"collector": "scap", "source": source, "error": type(exc).__name__},
+        )
+        raise
+    _log.info(
+        action=EventAction.COLLECT_COMPLETED,
+        outcome=EventOutcome.SUCCESS,
+        message="SCAP import completed",
+        evidentia={"collector": "scap", "source": source},
+    )
+    return result
+
+
 def collect_scap_bytes(
     raw: bytes,
     *,
@@ -483,7 +513,7 @@ def collect_scap_bytes(
         completion_assertion=completion_assertion,
         actor=_caller_actor(completion_assertion, asserted_by),
     )
-    return operation.consume(raw).result
+    return _consume_logged(operation, raw, source="bytes")
 
 
 def collect_scap_file(
@@ -506,7 +536,7 @@ def collect_scap_file(
         actor=_caller_actor(completion_assertion, asserted_by),
     )
     raw = read_source(path, operation.budget)
-    return operation.consume(raw).result
+    return _consume_logged(operation, raw, source="file")
 
 
 def _model_native(value: ScapCollectionResult, budget: Budget) -> dict[str, object]:

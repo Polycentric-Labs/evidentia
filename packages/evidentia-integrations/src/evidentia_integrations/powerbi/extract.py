@@ -28,6 +28,7 @@ from typing import Any
 from evidentia_core.audit import CollectionContext
 from evidentia_core.models.gap import GapAnalysisReport
 from evidentia_core.models.risk import RiskStatement
+from evidentia_core.security.csv_safety import csv_safe
 
 
 def _row_value(value: Any) -> Any:
@@ -57,9 +58,13 @@ def _row_value(value: Any) -> Any:
     if isinstance(value, Enum):
         # Pydantic StrEnum / Enum — emit the string value not repr.
         return str(value.value)
-    if isinstance(value, str | int | float):
+    if isinstance(value, str):
+        # A leading formula character is neutralised (CWE-1236); the
+        # analyst exporting the dataset to CSV opens it in a spreadsheet.
+        return csv_safe(value)
+    if isinstance(value, int | float):
         return value
-    return str(value)
+    return csv_safe(str(value))
 
 
 # Fixed schemas — used both to declare the dataset on creation

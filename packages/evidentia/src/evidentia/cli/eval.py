@@ -575,10 +575,11 @@ def risk_determinism(
         risk_stmt = generator.generate(gap, sys_ctx)
         # Canonical JSON for hash comparison. The harness's
         # normalize_for_determinism + hash_output handles
-        # whitespace + trailing-punct invariance; field-level
-        # invariance is implicit in Pydantic's deterministic
-        # model_dump_json.
-        return risk_stmt.model_dump_json()
+        # whitespace + trailing-punct invariance. The server-minted id,
+        # timestamps and generation context differ on every call and would
+        # make a fully deterministic model score 1/N (v0.13.0 review, M19),
+        # so only the model-controlled fields are hashed.
+        return risk_stmt.model_dump_json(exclude={"id", "generated_at", "generation_context"})
 
     def _make_ctx(prompt_id: str) -> GenerationContext:
         return GenerationContext(
@@ -629,12 +630,10 @@ def risk_determinism(
         resolved_threshold = resolve_threshold(framework_for_threshold, method=faithfulness_method)
         threshold_source = f"framework-aware (framework={framework_for_threshold!r})"
     else:
-        from evidentia_eval.faithfulness import (
-            DEFAULT_FAITHFULNESS_THRESHOLD,
-        )
+        from evidentia_eval.faithfulness import resolve_threshold
 
-        resolved_threshold = DEFAULT_FAITHFULNESS_THRESHOLD
-        threshold_source = "fixed (framework-agnostic default)"
+        resolved_threshold = resolve_threshold(None, faithfulness_method)
+        threshold_source = f"fixed ({faithfulness_method} default)"
 
     if check_faithfulness:
         typer.echo(f"  • faithfulness threshold: {resolved_threshold:.2f} ({threshold_source})")
@@ -681,6 +680,18 @@ def risk_determinism(
             f"({prompts_with_violations} prompt(s) with at "
             f"least one below-threshold claim)"
         )
+    # v0.13.0 review (M20): replay and faithfulness violations used to print
+    # and then pass, because only the determinism rate reached the exit code.
+    gate_failures: list[str] = []
+    if check_replay and result.replay_violations:
+        gate_failures.append(f"{len(result.replay_violations)} replay violation(s)")
+    if check_faithfulness and result.faithfulness_violations:
+        gate_failures.append(f"{len(result.faithfulness_violations)} prompt(s) with faithfulness violations")
+    if gate_failures:
+        typer.echo("Eval gate FAILED: " + "; ".join(gate_failures), err=True)
+        if output is not None:
+            typer.echo(f"Full per-prompt report: {output}", err=True)
+        sys.exit(1)
     _exit_per_threshold(
         result.overall_determinism_rate,
         fail_on_determinism_rate_below,

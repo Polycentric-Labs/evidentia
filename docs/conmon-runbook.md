@@ -252,6 +252,30 @@ performed. Completeness of the record set is a scoping judgement the
 operator makes; the tool never asserts it, and the rendered
 description repeats this every time.
 
+**What counts as one observation.** Each evidence lineage counts once,
+at its current version, so a corrected or re-saved artifact is the same
+observation and not a second one. The Nessus and Greenbone importers
+record two provenance keys on the artifact: `metadata.collection_complete`
+(false when the export shows no completed scan: a zero-host Nessus export,
+one whose hosts never reached `HOST_END`, or a Greenbone report without
+`scan_end`) and `metadata.timestamp_source`
+(`record` when `collected_at` came from the scan file, `collection_time`
+when the importer had to use its own clock). An artifact marked incomplete
+or collection-time dated stays in the store but is left out of the series
+and counted in `excluded_observations`, so re-importing a stale or partial
+export never manufactures cadence evidence. Artifacts saved without the
+keys (for example through `POST /api/evidence`) count as before. The same
+rule governs the evidence-store anchor that `conmon check --evidence-store`
+and `conmon health --evidence-store` use, which also ignores artifacts
+dated after `--today`.
+
+**Annual and longer cadences.** The default look-back window is 365 days,
+so an annual cadence rarely holds two observations inside it and a
+biennial or triennial one never does; those report `insufficient` by
+construction. Pass `--lookback-days` (for example `--lookback-days 800`
+for an annual control, `--lookback-days 1200` for a triennial one) so the
+window spans at least two intervals.
+
 **Example.** A weekly PCI DSS 11.6.1 series with one missed week:
 
 ```

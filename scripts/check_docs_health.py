@@ -609,6 +609,21 @@ def check_cross_link_resolve(
                 continue
             if target.endswith("/"):
                 target = target + "index.md"
+            # Classify by string before any filesystem call (v0.13.0 review):
+            # a protocol-relative, UNC or drive-letter target would otherwise
+            # reach Path.resolve(), which on Windows opens an SMB session to
+            # the named host before the containment check can refuse it.
+            if target.startswith(("//", "\\\\")) or re.match(r"^[A-Za-z]:[\\/]", target):
+                result.add(
+                    Finding(
+                        Severity.FAIL,
+                        "cross_link_resolve",
+                        path.as_posix(),
+                        line,
+                        f"link target must be a repository-relative path, not a host or drive path: {target}",
+                    )
+                )
+                continue
             try:
                 abs_target = (path.parent / target).resolve()
             except (ValueError, OSError):

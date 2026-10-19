@@ -215,11 +215,11 @@ class TestResolveThreshold:
 
         assert resolve_threshold(None) == DEFAULT_FAITHFULNESS_THRESHOLD
 
-    def test_non_jaccard_method_returns_default(self) -> None:
-        """Semantic method has no framework-aware map shipped in
-        v0.8.6 — returns the framework-agnostic default."""
-        from evidentia_eval.faithfulness import resolve_threshold
+    def test_semantic_method_returns_its_own_default(self) -> None:
+        """The semantic method has no framework-aware map; since the v0.13.0
+        review it gates at the cosine default (0.7) instead of the Jaccard
+        default (0.3), which was near-vacuous for similarity scores."""
+        from evidentia_eval.faithfulness import DEFAULT_SEMANTIC_FAITHFULNESS_THRESHOLD, resolve_threshold
 
-        # Even with a known framework, the non-jaccard method
-        # path returns the agnostic default.
-        assert resolve_threshold("nist-800-53", method="semantic") == DEFAULT_FAITHFULNESS_THRESHOLD
+        assert resolve_threshold("nist-800-53", method="semantic") == DEFAULT_SEMANTIC_FAITHFULNESS_THRESHOLD
+        assert DEFAULT_SEMANTIC_FAITHFULNESS_THRESHOLD > DEFAULT_FAITHFULNESS_THRESHOLD

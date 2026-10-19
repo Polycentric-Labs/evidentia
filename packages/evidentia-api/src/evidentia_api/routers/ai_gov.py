@@ -31,12 +31,13 @@ under ``/api/ai-gov`` mirror the CLI verbs:
     acquisition register|list|show|set-phase``)
   - ``DELETE /api/ai-gov/systems/{system_id}`` — remove entry
 
-Auth posture: reads are open (matches v0.9.0 POA&M router + v0.9.1
-CONMON router; transport auth applied at the app layer via
-AuthProviderMiddleware). The v0.10.12 mutation verbs carry an opt-in
-``require_role("write")`` RBAC gate — inert under the default
-permissive policy, denying under an operator-configured deny-by-
-default policy (matches the governance router).
+Auth posture: transport auth is applied at the app layer via
+AuthProviderMiddleware. Since v0.13.0 (review decision D8) every
+mutating verb carries an RBAC gate: ``write`` for register and the
+v0.10.12 mutation verbs, ``admin`` for the hard delete, ``read`` for
+classify. The gates are inert under the default permissive policy and
+deny under an operator-configured deny-by-default policy (matches the
+governance router). GET reads stay open behind transport auth.
 """
 
 from __future__ import annotations
@@ -315,6 +316,7 @@ def _save_idempotency_store(store: dict[str, dict[str, str]]) -> None:
 
 @router.post(
     "/ai-gov/classify",
+    dependencies=[require_role("read")],
     responses=error_responses({429: RATE_LIMITED_429}),
 )
 async def ai_gov_classify(
@@ -339,8 +341,10 @@ async def ai_gov_classify(
 
 @router.post(
     "/ai-gov/register",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: (
                 "Body-content/id validation failure "
                 "(``error: invalid_body``), or an undecodable request "
@@ -581,6 +585,7 @@ async def ai_gov_get_system(
 
 @router.delete(
     "/ai-gov/systems/{system_id}",
+    dependencies=[require_role("admin")],
     responses=error_responses({400: "Malformed ``system_id`` (``error: invalid_id``)."}),
 )
 async def ai_gov_delete_system(

@@ -80,7 +80,8 @@ class GapAnalyzeRequest(BaseModel):
     )
     inventory_content: str | None = Field(
         default=None,
-        description="Inline inventory YAML/JSON (browser upload).",
+        max_length=8_000_000,
+        description="Inline inventory YAML/JSON (browser upload), at most 8 MB.",
     )
     inventory_format: str = Field(
         default="yaml",
@@ -170,7 +171,10 @@ class RiskGenerateRequest(BaseModel):
     )
     context_path: Path | None = Field(
         default=None,
-        description="Path to system-context.yaml. Defaults to CWD lookup.",
+        description=(
+            "Path to system-context.yaml, inside the server's working directory "
+            "(paths elsewhere are refused with 400). Required for generation."
+        ),
     )
 
 

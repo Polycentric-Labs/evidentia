@@ -300,10 +300,11 @@ forms carry only a saved-report key plus non-secret options.
   wrong, or the token expired. Re-check the four `JIRA_*` env vars (or the
   `EVIDENTIA_SERVICENOW_*` set) in the *server's* environment. `test` never
   prints the token, so a clean re-export is safe.
-- **Console write buttons are greyed out with "External writes are disabled"** —
+- **Console write buttons are greyed out with "External writes are disabled"**:
   the deployment is anonymous. Configure API authentication
-  (`EVIDENTIA_API_AUTH_TOKEN_FILE`) and restart `evidentia serve`. The read-only
-  probes work without it.
+  (`EVIDENTIA_API_AUTH_TOKEN_FILE`), restart `evidentia serve`, and front the console
+  with a reverse proxy that injects the bearer header (the console sends none itself;
+  see the serve guide). The read-only probes work without it.
 - **"Select a target report above to enable this write."** — no report is
   selected in the **Target report** card. Pick one; if the list is empty, run
   `evidentia gap analyze` to populate the gap store.

@@ -52,6 +52,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 router = APIRouter()
 
@@ -98,6 +99,7 @@ class VerifyRequest(BaseModel):
     )
     dsse_envelope: str | None = Field(
         default=None,
+        max_length=1_000_000,
         description=(
             "Optional DSSE envelope (the <ar>.dsse.json contents), inline as a "
             "JSON string. Requires verify_public_key (both-or-neither)."
@@ -105,6 +107,7 @@ class VerifyRequest(BaseModel):
     )
     verify_public_key: str | None = Field(
         default=None,
+        max_length=20_000,
         description=(
             "Optional PEM public key (Ed25519 or RSA) pinning the DSSE signer. "
             "Requires dsse_envelope (both-or-neither)."
@@ -128,8 +131,10 @@ def _api_offline() -> bool:
 
 @router.post(
     "/oscal/verify",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Both-or-neither pinning violation "
                 "(``error: invalid_body``) or unparseable ``content`` "
@@ -169,6 +174,19 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
             ),
         )
 
+    if payload.expected_sigstore_identity is not None:
+        # This endpoint takes no Sigstore bundle, so a pin could never be
+        # evaluated and the response said nothing about it (v0.13.0 review,
+        # CWE-347). Refuse rather than report a pin that was not checked.
+        raise api_error(
+            400,
+            "invalid_body",
+            (
+                "Sigstore identity pinning needs the signature bundle, which this "
+                "endpoint does not accept; verify Sigstore-signed documents with "
+                "the CLI (evidentia oscal verify --sigstore-bundle)."
+            ),
+        )
     if (payload.dsse_envelope is None) != (payload.verify_public_key is None):
         raise api_error(
             400,
@@ -260,7 +278,9 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
         sigstore_status = "invalid"
 
     return {
-        "overall_valid": report.overall_valid,
+        # A document with no digests and no signature verified nothing; it
+        # is not valid, it is unverifiable (v0.13.0 review, CWE-345).
+        "overall_valid": bool(report.overall_valid and report.has_verification_surface),
         "has_verification_surface": report.has_verification_surface,
         "digests_valid": report.digests_valid,
         "signature_valid": report.signature_valid,

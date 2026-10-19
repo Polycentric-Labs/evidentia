@@ -8,7 +8,7 @@ always means a real problem.
 
 ## The rule: tests must not depend on wall-clock timing
 
-Two flake classes have appeared and been eliminated; both were timing-dependent
+Three flake classes have appeared and been eliminated; all were timing-dependent
 assertions in CI, where shared runners + JIT/import warmup + load make
 wall-clock behaviour non-deterministic.
 
@@ -27,6 +27,18 @@ wall-clock behaviour non-deterministic.
    clock (Windows resolves to ~16 ms) two `utc_now()` calls in the same tick
    return an identical value, so a strict `>` flakes. The vendor / challenge /
    POA&M store tests all anchor their baseline in the past.
+
+3. **No product wall-clock budget inside a capacity test.** The SCAP import
+   carries a 60 s processing budget (`WALL_SECONDS`). The capacity tests import
+   exact-limit documents (10,000 outcomes, 5 MiB native, 2 MiB assessment),
+   which take about 17 s uninstrumented and 2.5x longer under coverage, so the
+   budget expired on a loaded Linux coverage runner (the v0.13.0 review PR,
+   CI round 4). A capacity test proves a size property: it injects a budget
+   that cannot expire (`monkeypatch.setattr(_limits, "WALL_SECONDS", 3600.0)`)
+   and asserts no elapsed time. The budget keeps its own deterministic tests,
+   which patch `start_budget` to an already-expired deadline (`test_scap_io.py`,
+   `test_collectors_scap_stream.py`); import speed belongs in a benchmark.
+
 
 ## General determinism rules
 

@@ -41,12 +41,13 @@ from evidentia_core.risk_quant.open_fair import (
     compute_lef,
     compute_loss_magnitude,
 )
-from evidentia_core.security.paths import PathTraversalError
+from evidentia_core.security.paths import PathTraversalError, validate_within
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sse_starlette.sse import EventSourceResponse
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 from evidentia_api.schemas import RiskGenerateRequest
 
 logger = logging.getLogger(__name__)
@@ -142,8 +143,19 @@ async def _stream_risk_generation(
     try:
         system_context = SystemContext.from_yaml(context_path)
     except Exception as e:
+        # v0.13.0 review H2 (CWE-209): the parser error used to be echoed to
+        # the client, and a pydantic error carries an excerpt of the file's
+        # values. Log the detail server-side and send a fixed message.
         logger.warning("Malformed system context %s: %s", context_path, e)
-        yield json.dumps({"phase": "error", "detail": f"Could not load system_context: {e}"})
+        yield json.dumps(
+            {
+                "phase": "error",
+                "detail": (
+                    "system_context YAML could not be parsed as a SystemContext; "
+                    "see the server log for the parser message."
+                ),
+            }
+        )
         return
 
     generated = 0
@@ -160,7 +172,13 @@ async def _stream_risk_generation(
             return index, gap, risk, None
         except Exception as e:
             logger.exception("Risk generation failed for gap %s", gap.id)
-            return index, gap, None, str(e)
+            # Provider error text stays in the log (v0.13.0 review, CWE-209).
+            return (
+                index,
+                gap,
+                None,
+                f"Risk generation failed ({type(e).__name__}); see the server log for gap {gap.id}.",
+            )
 
     for idx, gap in enumerate(selected_gaps):
         tasks.append(asyncio.create_task(_one(idx, gap)))
@@ -214,9 +232,15 @@ async def _stream_risk_generation(
 
 @router.post(
     "/risk/generate",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
-            400: ("Malformed ``report_key`` (``error: invalid_id``); raised before the SSE stream starts."),
+            403: "Write permission denied (``error: rbac_denied``).",
+            400: (
+                "Malformed ``report_key`` (``error: invalid_id``) or a "
+                "``context_path`` outside the server's working directory "
+                "(``error: invalid_body``); raised before the SSE stream starts."
+            ),
             404: ("No such stored report (``error: not_found``); raised before the SSE stream starts."),
         }
     ),
@@ -224,10 +248,27 @@ async def _stream_risk_generation(
 async def generate(payload: RiskGenerateRequest) -> EventSourceResponse:
     """Generate risk statements for selected gaps, streaming progress via SSE.
 
-    The 400 / 404 documented above are raised by the ``_load_report``
-    lookup BEFORE the stream starts; mid-stream failures ride inside
-    the event stream as ``phase: error`` messages instead.
+    The 400 / 404 documented above are raised by the ``context_path``
+    containment check and the ``_load_report`` lookup BEFORE the stream
+    starts; mid-stream failures ride inside the event stream as
+    ``phase: error`` messages instead.
     """
+    # v0.13.0 review H2 (CWE-22): context_path is a server filesystem path
+    # taken from the body. Confine it to the working directory, as
+    # ``inventory_path`` already is on ``POST /api/gap/analyze``; a path
+    # anywhere else is refused before ``is_file()`` can act as an
+    # existence oracle.
+    context_path: Path | None = None
+    if payload.context_path is not None:
+        try:
+            context_path = validate_within(Path(payload.context_path), Path.cwd())
+        except PathTraversalError as exc:
+            raise api_error(
+                400,
+                "invalid_body",
+                "context_path must point inside the server's working directory.",
+                field="context_path",
+            ) from exc
     report = _load_report(payload.report_key)
     selected = _pick_gaps(report, payload.gap_ids, payload.top_n)
 
@@ -236,7 +277,7 @@ async def generate(payload: RiskGenerateRequest) -> EventSourceResponse:
             report=report,
             selected_gaps=selected,
             model=payload.model,
-            context_path=payload.context_path,
+            context_path=context_path,
         ):
             yield {"data": chunk}
 
@@ -332,9 +373,11 @@ class FairMcQuantifyResponse(BaseModel):
 
 @router.post(
     "/risk/quantify",
+    dependencies=[require_role("read")],
     response_model=OpenFairQuantifyResponse | FairMcQuantifyResponse,
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: (
                 "Unknown ``method`` (``error: unknown_method``; "
                 "``detail`` carries ``method`` + ``valid``) or a "

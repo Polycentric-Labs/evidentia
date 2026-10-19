@@ -483,3 +483,13 @@ def test_only_exact_missing_optional_package_is_absence(
         if absent
         else "Enterprise retention collection could not be loaded.\n"
     )
+
+
+def test_output_may_not_alias_the_profile_registry(state: State, source: Path, tmp_path: Path) -> None:
+    """v0.13.0 review (probe D1): the trusted profile registry is an input, never the output."""
+    registry_path = tmp_path / "synthetic-profiles.json"
+    result = state.invoke(source, output=registry_path)
+    assert result.exit_code == 2, result.output
+    assert "must not be the enterprise retention profile registry" in result.output
+    assert not registry_path.exists()
+    assert state.requests == []

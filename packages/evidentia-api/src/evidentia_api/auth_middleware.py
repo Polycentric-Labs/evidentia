@@ -141,12 +141,12 @@ class AuthProviderMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         # Public paths bypass auth entirely (probes + spec).
-        if request.url.path in UNAUTHENTICATED_PATHS:
+        if request.scope["path"] in UNAUTHENTICATED_PATHS:
             return await call_next(request)
         # Static SPA mount: any path that doesn't start with /api/
         # falls through to the static assets. These are public-by-
         # design - the SPA itself enforces auth in the browser.
-        if not request.url.path.startswith("/api/"):
+        if not request.scope["path"].startswith("/api/"):
             return await call_next(request)
 
         # v0.8.2 F-V81-S2: read provider from app state at

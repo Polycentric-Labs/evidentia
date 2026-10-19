@@ -46,7 +46,7 @@ daemon-status / daemon-history instead).
 from __future__ import annotations
 
 import os
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -76,7 +76,7 @@ from evidentia_core.conmon.series import CADENCE_SLUG_METADATA_KEY
 from evidentia_core.evidence_store import get_evidence_store_dir, iter_artifacts
 from evidentia_core.models.common import NonBlankStr
 from fastapi import APIRouter, Query
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from evidentia_api.errors import (
     RBAC_DENIED_403,
@@ -110,9 +110,21 @@ class NextDueResponse(BaseModel):
     next_due: date
 
 
+def _plausible(value: date) -> date:
+    """Reject years outside 1970 to 9000: next_due arithmetic overflows near the date limits (v0.13.0 review)."""
+    if value.year < 1970 or value.year > 9000:
+        raise ValueError("date must fall between 1970-01-01 and 9000-12-31")
+    return value
+
+
 class CheckEntry(BaseModel):
-    slug: str
-    last_completed: date
+    slug: NonBlankStr = Field(max_length=128)
+    last_completed: date = Field(description="ISO-8601 date of the last completion.")
+
+    @field_validator("last_completed")
+    @classmethod
+    def _plausible_date(cls, value: date) -> date:
+        return _plausible(value)
 
 
 class CheckRequest(BaseModel):
@@ -136,6 +148,7 @@ class CheckRequest(BaseModel):
     window_days: int = Field(
         default=14,
         ge=0,
+        le=3660,
         description="Due-soon window in days (default: 14).",
     )
 
@@ -222,6 +235,7 @@ async def get_conmon_cadence(slug: str) -> dict[str, str | None]:
 
 @router.post(
     "/conmon/next",
+    dependencies=[require_role("read")],
     responses=error_responses({404: "Unknown cadence ``slug`` (``error: not_found``)."}),
 )
 async def compute_next_due(body: NextDueRequest) -> NextDueResponse:
@@ -249,7 +263,7 @@ async def compute_next_due(body: NextDueRequest) -> NextDueResponse:
 # ── batch check ───────────────────────────────────────────────────
 
 
-@router.post("/conmon/check")
+@router.post("/conmon/check", dependencies=[require_role("read")])
 async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
     """Batch attention-state check across multiple cadences.
 
@@ -271,8 +285,11 @@ async def check_conmon_cycles(body: CheckRequest) -> CheckResponse:
             for artifact in iter_artifacts(get_evidence_store_dir())
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        anchors = merge_evidence_anchors(anchors, latest_observations(artifacts))
-        verdicts = {slug: verdict.value for slug, verdict in series_verdicts(artifacts, anchors, today=today).items()}
+        anchors = merge_evidence_anchors(anchors, latest_observations(artifacts, as_of=today))
+        registered = [slug for slug in anchors if get_cadence(slug) is not None]
+        verdicts = {
+            slug: verdict.value for slug, verdict in series_verdicts(artifacts, registered, today=today).items()
+        }
     for slug, last_completed in anchors.items():
         cadence = get_cadence(slug)
         if cadence is None:
@@ -355,8 +372,10 @@ class SeriesResponse(BaseModel):
 
 @router.post(
     "/conmon/series",
+    dependencies=[require_role("read")],
     responses=error_responses(
         {
+            403: "Read permission denied (``error: rbac_denied``).",
             400: "`until` precedes `since` (``error: invalid_window``).",
             404: "Unknown cadence ``slug`` (``error: not_found``).",
         }
@@ -430,6 +449,7 @@ class HealthRequest(BaseModel):
     window_days: int = Field(
         default=14,
         ge=0,
+        le=3660,
         description="Due-soon window in days (default 14).",
     )
     framework: str | None = Field(
@@ -445,7 +465,7 @@ class HealthRequest(BaseModel):
     )
 
 
-@router.post("/conmon/health")
+@router.post("/conmon/health", dependencies=[require_role("read")])
 async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
     """Aggregate CONMON framework health from a state payload.
 
@@ -460,7 +480,7 @@ async def conmon_health_endpoint(body: HealthRequest) -> dict[str, Any]:
             for artifact in iter_artifacts(get_evidence_store_dir())
             if CADENCE_SLUG_METADATA_KEY in artifact.metadata
         ]
-        state = merge_evidence_anchors(state, latest_observations(artifacts))
+        state = merge_evidence_anchors(state, latest_observations(artifacts, as_of=today))
     report = compute_health(
         state=state,
         today=today,
@@ -648,8 +668,17 @@ class MarkCompletedRequest(BaseModel):
         description="Cadence slug (e.g., 'nist-800-53-rev5-ca7').",
     )
     when: date = Field(
-        description="ISO-8601 date of cycle completion (YYYY-MM-DD).",
+        description="ISO-8601 date of cycle completion (YYYY-MM-DD); not after tomorrow.",
     )
+
+    @field_validator("when")
+    @classmethod
+    def _not_in_the_future(cls, value: date) -> date:
+        # A future completion date silences overdue alerts until it passes
+        # (v0.13.0 review); completions are recorded after the fact.
+        if value > date.today() + timedelta(days=1):
+            raise ValueError("when must not be in the future")
+        return _plausible(value)
 
 
 class MarkCompletedResponse(BaseModel):
@@ -720,7 +749,7 @@ async def mark_conmon_completed(
 
     state_file = Path(state_file_env)
     try:
-        previous = mark_completed(state_file, body.slug, body.when)
+        previous = mark_completed(state_file, body.slug, body.when, use_lock=True)
     except ValueError as exc:
         # Unknown cadence slug — mirrors the CLI's exit-1 user error.
         raise api_error(400, "invalid_field", str(exc), field="slug") from exc

@@ -38,6 +38,7 @@ from typing import Any
 from evidentia_core.audit import CollectionContext
 from evidentia_core.models.gap import GapAnalysisReport
 from evidentia_core.models.risk import RiskStatement
+from evidentia_core.security.csv_safety import csv_safe_row
 
 
 def _serialize(value: Any) -> str:
@@ -136,30 +137,32 @@ def build_gap_dataset_csv(report: GapAnalysisReport) -> bytes:
     analyzed_at = _serialize(report.analyzed_at)
     for gap in report.gaps:
         writer.writerow(
-            {
-                "gap_id": gap.id,
-                "organization": org,
-                "analyzed_at": analyzed_at,
-                "framework": gap.framework,
-                "control_id": gap.control_id,
-                "control_title": gap.control_title,
-                "control_family": _serialize(gap.control_family),
-                "gap_severity": _serialize(gap.gap_severity),
-                "implementation_status": gap.implementation_status,
-                "status": _serialize(gap.status),
-                "priority_score": gap.priority_score,
-                "implementation_effort": _serialize(gap.implementation_effort),
-                "equivalent_controls": _serialize(gap.equivalent_controls_in_inventory),
-                "cross_framework_satisfies": _serialize(gap.cross_framework_value),
-                "jira_issue_key": _serialize(gap.jira_issue_key),
-                "servicenow_ticket_id": _serialize(gap.servicenow_ticket_id),
-                "assigned_to": _serialize(gap.assigned_to),
-                "tags": _serialize(gap.tags),
-                "created_at": _serialize(gap.created_at),
-                "remediated_at": _serialize(gap.remediated_at),
-                "gap_description": gap.gap_description,
-                "remediation_guidance": gap.remediation_guidance,
-            }
+            csv_safe_row(
+                {
+                    "gap_id": gap.id,
+                    "organization": org,
+                    "analyzed_at": analyzed_at,
+                    "framework": gap.framework,
+                    "control_id": gap.control_id,
+                    "control_title": gap.control_title,
+                    "control_family": _serialize(gap.control_family),
+                    "gap_severity": _serialize(gap.gap_severity),
+                    "implementation_status": gap.implementation_status,
+                    "status": _serialize(gap.status),
+                    "priority_score": gap.priority_score,
+                    "implementation_effort": _serialize(gap.implementation_effort),
+                    "equivalent_controls": _serialize(gap.equivalent_controls_in_inventory),
+                    "cross_framework_satisfies": _serialize(gap.cross_framework_value),
+                    "jira_issue_key": _serialize(gap.jira_issue_key),
+                    "servicenow_ticket_id": _serialize(gap.servicenow_ticket_id),
+                    "assigned_to": _serialize(gap.assigned_to),
+                    "tags": _serialize(gap.tags),
+                    "created_at": _serialize(gap.created_at),
+                    "remediated_at": _serialize(gap.remediated_at),
+                    "gap_description": gap.gap_description,
+                    "remediation_guidance": gap.remediation_guidance,
+                }
+            )
         )
     return buf.getvalue().encode("utf-8")
 
@@ -221,31 +224,33 @@ def build_risk_dataset_csv(
     for risk in risks:
         ctx = risk.generation_context
         writer.writerow(
-            {
-                "risk_id": risk.id,
-                "asset": risk.asset,
-                "threat_source": risk.threat_source,
-                "threat_event": risk.threat_event,
-                "vulnerability": risk.vulnerability,
-                "predisposing_conditions": _serialize(risk.predisposing_conditions),
-                "likelihood": _serialize(risk.likelihood),
-                "likelihood_rationale": risk.likelihood_rationale,
-                "impact": _serialize(risk.impact),
-                "impact_rationale": risk.impact_rationale,
-                "risk_level": _serialize(risk.risk_level),
-                "recommended_controls": _serialize(risk.recommended_controls),
-                "remediation_priority": risk.remediation_priority,
-                "estimated_remediation_effort": _serialize(risk.estimated_remediation_effort),
-                "treatment": _serialize(risk.treatment),
-                "treatment_rationale": _serialize(risk.treatment_rationale),
-                "generated_by": risk.generated_by,
-                "generated_at": _serialize(risk.generated_at),
-                "model_used": _serialize(risk.model_used),
-                "temperature": (_serialize(ctx.temperature) if ctx else ""),
-                "prompt_hash": (_serialize(ctx.prompt_hash) if ctx else ""),
-                "run_id": _serialize(ctx.run_id) if ctx else "",
-                "risk_description": risk.risk_description,
-            }
+            csv_safe_row(
+                {
+                    "risk_id": risk.id,
+                    "asset": risk.asset,
+                    "threat_source": risk.threat_source,
+                    "threat_event": risk.threat_event,
+                    "vulnerability": risk.vulnerability,
+                    "predisposing_conditions": _serialize(risk.predisposing_conditions),
+                    "likelihood": _serialize(risk.likelihood),
+                    "likelihood_rationale": risk.likelihood_rationale,
+                    "impact": _serialize(risk.impact),
+                    "impact_rationale": risk.impact_rationale,
+                    "risk_level": _serialize(risk.risk_level),
+                    "recommended_controls": _serialize(risk.recommended_controls),
+                    "remediation_priority": risk.remediation_priority,
+                    "estimated_remediation_effort": _serialize(risk.estimated_remediation_effort),
+                    "treatment": _serialize(risk.treatment),
+                    "treatment_rationale": _serialize(risk.treatment_rationale),
+                    "generated_by": risk.generated_by,
+                    "generated_at": _serialize(risk.generated_at),
+                    "model_used": _serialize(risk.model_used),
+                    "temperature": (_serialize(ctx.temperature) if ctx else ""),
+                    "prompt_hash": (_serialize(ctx.prompt_hash) if ctx else ""),
+                    "run_id": _serialize(ctx.run_id) if ctx else "",
+                    "risk_description": risk.risk_description,
+                }
+            )
         )
     return buf.getvalue().encode("utf-8")
 
@@ -288,15 +293,17 @@ def build_collection_run_dataset_csv(
     writer.writeheader()
     for ctx in contexts:
         writer.writerow(
-            {
-                "run_id": ctx.run_id,
-                "collector_id": ctx.collector_id,
-                "collector_version": ctx.collector_version,
-                "collected_at": _serialize(ctx.collected_at),
-                "credential_identity": ctx.credential_identity,
-                "source_system_id": ctx.source_system_id,
-                "filter_applied": json.dumps(ctx.filter_applied, sort_keys=True, default=str),
-                "evidentia_version": ctx.evidentia_version,
-            }
+            csv_safe_row(
+                {
+                    "run_id": ctx.run_id,
+                    "collector_id": ctx.collector_id,
+                    "collector_version": ctx.collector_version,
+                    "collected_at": _serialize(ctx.collected_at),
+                    "credential_identity": ctx.credential_identity,
+                    "source_system_id": ctx.source_system_id,
+                    "filter_applied": json.dumps(ctx.filter_applied, sort_keys=True, default=str),
+                    "evidentia_version": ctx.evidentia_version,
+                }
+            )
         )
     return buf.getvalue().encode("utf-8")

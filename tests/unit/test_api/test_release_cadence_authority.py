@@ -105,7 +105,14 @@ def test_existing_middleware_401_is_unchanged(monkeypatch):
 @pytest.mark.parametrize("mode", ["failed", "missing", "status", "substituted", "mutated", "unsupported"])
 def test_policy_provenance_refuses_before_body(monkeypatch, endpoint, mode):
     policy = RBACPolicy(identities={"alice": "reader"}, default_role="deny")
-    app = make_app(monkeypatch, policy=policy if mode != "unsupported" else object(), load_fail=mode == "failed")
+    if mode == "failed":
+        # v0.13.0 review H1: an unloadable policy file now stops app
+        # construction (RuntimeError) instead of recording a failed
+        # provenance and serving requests under the permissive default.
+        with pytest.raises(RuntimeError, match="could not be loaded"):
+            make_app(monkeypatch, policy=policy, load_fail=True)
+        return
+    app = make_app(monkeypatch, policy=policy if mode != "unsupported" else object())
     if mode == "missing":
         del app.state.release_cadence_policy_provenance
     elif mode == "status":

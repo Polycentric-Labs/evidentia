@@ -170,30 +170,53 @@ def translate_url(url: str) -> tuple[str, str]:
     return (url, "unmapped")
 
 
-def _endpoint_returns_404(api_endpoint: str) -> bool:
-    """Call ``gh api`` for ``api_endpoint``; return True iff HTTP 404.
+_STATUS_LINE = re.compile(r"^HTTP/[0-9.]+ (\d{3})", re.MULTILINE)
+
+
+def _probe_endpoint(api_endpoint: str) -> tuple[str, str]:
+    """Call ``gh api`` for ``api_endpoint``; return ``(outcome, detail)``.
+
+    ``outcome`` is ``"resolved"`` when gh exits 0, ``"missing"`` on an HTTP
+    404, and ``"error"`` for anything else (401 bad or missing token, 403
+    rate limit, 5xx, a network failure, gh not installed). Before v0.13.0
+    only a literal 404 status line counted as a failure, so every other
+    non-success passed as "resolved" (review finding, CWE-636).
 
     Uses an argument list (no shell). The ``-i`` flag includes response
-    headers, which we parse for the status line. ``gh api`` writes headers
-    to stderr when the call returns a non-2xx status (the body lands on
-    stdout regardless), so we check both streams for the 404 status line
-    to be robust to gh's stream routing across versions.
+    headers; ``gh api`` writes them to stderr on a non-2xx status (the body
+    lands on stdout regardless), so both streams are searched for the
+    status line.
     """
-    result = subprocess.run(
-        [
-            "gh",
-            "api",
-            "-i",
-            "-H",
-            "Accept: application/vnd.github+json",
-            api_endpoint,
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            [
+                "gh",
+                "api",
+                "-i",
+                "-H",
+                "Accept: application/vnd.github+json",
+                api_endpoint,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        return "error", f"gh could not be run: {exc.__class__.__name__}"
+    if result.returncode == 0:
+        return "resolved", "HTTP 200"
     combined = result.stdout + "\n" + result.stderr
-    return "HTTP/2.0 404" in combined or "HTTP/1.1 404" in combined or "HTTP/2 404" in combined
+    statuses = _STATUS_LINE.findall(combined)
+    status = statuses[-1] if statuses else None
+    if status == "404":
+        return "missing", "HTTP 404"
+    detail = f"HTTP {status}" if status else f"gh exit {result.returncode}"
+    return "error", detail
+
+
+def _endpoint_returns_404(api_endpoint: str) -> bool:
+    """Compatibility shim for callers of the pre-v0.13.0 name."""
+    return _probe_endpoint(api_endpoint)[0] == "missing"
 
 
 def parse_claims(markdown: str) -> list[tuple[str, str]]:
@@ -225,6 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"::notice::Parsed {len(claims)} PASS-claimed controls; verifying evidence URLs...")
 
     failures: list[tuple[str, str]] = []
+    probe_errors: list[tuple[str, str, str]] = []
     unmapped: list[tuple[str, str]] = []
     checked = 0
     for control_id, evidence_cell in claims:
@@ -245,10 +269,18 @@ def main(argv: list[str] | None = None) -> int:
                     file=sys.stderr,
                 )
                 continue
-            if _endpoint_returns_404(api_endpoint):
+            outcome, detail = _probe_endpoint(api_endpoint)
+            if outcome == "missing":
                 failures.append((control_id, url))
                 print(
                     f"::error::404 on evidence for {control_id} (shape={shape}, endpoint={api_endpoint}): {url}",
+                    file=sys.stderr,
+                )
+            elif outcome == "error":
+                probe_errors.append((control_id, url, detail))
+                print(
+                    f"::error::evidence probe for {control_id} did not resolve "
+                    f"({detail}; shape={shape}, endpoint={api_endpoint}): {url}",
                     file=sys.stderr,
                 )
 
@@ -256,6 +288,18 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"::error::{len(failures)} of {checked} evidence link(s) returned "
             "HTTP 404. Update OSPS-CONFORMANCE.md before the next release.",
+            file=sys.stderr,
+        )
+        return 1
+
+    if probe_errors:
+        # A 401, 403, 5xx or network failure is not evidence that the link
+        # resolves. Fail the run and name the status so the operator can
+        # tell an expired token or a rate limit from a missing resource.
+        print(
+            f"::error::{len(probe_errors)} of {checked} evidence probe(s) could not be "
+            "completed (auth, rate limit, server or network failure). The links are "
+            "unverified; re-run with a working `gh auth` session.",
             file=sys.stderr,
         )
         return 1

@@ -224,6 +224,7 @@ describe("ConmonPage", () => {
         frequency: "weekly",
         interval_days: 7,
         tolerance_days: 2,
+        excluded_observations: 0,
         verdict: "gapped",
         window_start: "2026-01-01T00:00:00Z",
         window_end: "2026-09-01T00:00:00Z",

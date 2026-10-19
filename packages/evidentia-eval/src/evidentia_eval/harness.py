@@ -158,6 +158,11 @@ class EvalResult(EvidentiaModel):
         """Replay results that failed (replay hash != original hash)."""
         return [r for r in self.replay_results if not r.equivalent]
 
+    @property
+    def faithfulness_violations(self) -> list[PromptFaithfulnessResult]:
+        """Faithfulness results with at least one below-threshold claim (v0.13.0 review)."""
+        return [r for r in self.faithfulness_results if r.failed_count > 0]
+
 
 class DFAHarness:
     """Run determinism + replay checks against a generator function.
@@ -441,7 +446,8 @@ class DFAHarness:
 
         violations = result.determinism_violations
         replay_violations = result.replay_violations
-        all_pass = not violations and not replay_violations
+        faithfulness_violations = result.faithfulness_violations
+        all_pass = not violations and not replay_violations and not faithfulness_violations
         _log.info(
             action=EventAction.AI_EVAL_COMPLETED,
             outcome=(EventOutcome.SUCCESS if all_pass else EventOutcome.FAILURE),
@@ -456,6 +462,7 @@ class DFAHarness:
                 "overall_determinism_rate": (result.overall_determinism_rate),
                 "determinism_violations": len(violations),
                 "replay_violations": len(replay_violations),
+                "faithfulness_violations": len(faithfulness_violations),
                 "prompt_count": len(samples),
             },
         )

@@ -27,20 +27,21 @@ import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from evidentia_core.security.paths import (
     PathTraversalError,
     validate_within,
 )
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from evidentia_api import __version__
-from evidentia_api.errors import body_parse_error_handler
+from evidentia_api.errors import body_parse_error_handler, request_validation_error_handler
 
 if TYPE_CHECKING:
     from evidentia_collectors.enterprise_retention._profiles import ProfileRegistry
@@ -122,6 +123,55 @@ async def _auth_lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 STATIC_DIR = Path(__file__).parent / "static"
 """Absolute path to the bundled SPA assets (populated at build time)."""
+
+
+def _declare_bearer_security(app: FastAPI) -> None:
+    """Advertise the bearer scheme in the OpenAPI document (v0.13.0 review, probe-4).
+
+    The auth middleware enforces ``Authorization: Bearer`` on every ``/api``
+    route when a token file is configured, but the generated schema declared
+    no security scheme, so generated clients and the interactive docs could
+    not discover it. The scheme is always declared; the global requirement is
+    added only when an AuthProvider is configured, because the default
+    deployment is anonymous and a schema that claimed otherwise would be
+    wrong (and the DAST ``ignored_auth`` check would rightly object). The
+    unauthenticated probe paths are opted out. Nothing here changes runtime
+    behaviour.
+    """
+    from evidentia_api.auth_middleware import UNAUTHENTICATED_PATHS
+
+    original_openapi = app.openapi
+
+    def openapi_with_bearer() -> dict[str, Any]:
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = original_openapi()
+        configured = getattr(app.state, "auth_provider", None) is not None
+        components = schema.setdefault("components", {})
+        components.setdefault("securitySchemes", {})["bearerAuth"] = {
+            "type": "http",
+            "scheme": "bearer",
+            "description": (
+                "Required on every /api route once the server is started with "
+                "--auth-token-file (EVIDENTIA_API_AUTH_TOKEN_FILE); the liveness, "
+                "version and schema paths stay open. "
+                + (
+                    "Enforced on this server."
+                    if configured
+                    else "Not enforced on this server (no token file configured)."
+                )
+            ),
+        }
+        if configured:
+            schema["security"] = [{"bearerAuth": []}]
+            for path in UNAUTHENTICATED_PATHS:
+                for operation in schema.get("paths", {}).get(path, {}).values():
+                    if isinstance(operation, dict):
+                        operation["security"] = []
+        app.openapi_schema = schema
+        return schema
+
+    app.openapi = openapi_with_bearer  # type: ignore[method-assign]
 
 
 def create_app(
@@ -228,11 +278,18 @@ def create_app(
             rbac_policy = load_rbac_policy_auto(Path(rbac_policy_file_env))
             release_policy_provenance = "loaded"
         except (FileNotFoundError, ValueError) as exc:
-            release_policy_provenance = "failed"
-            logger.error(
-                "RBAC policy load failed (%s); falling back to default permissive policy",
-                exc,
-            )
+            # v0.13.0 review H1 (CWE-636): an operator who set the variable
+            # expects it honoured. Falling back to the permissive default
+            # silently made every identity admin on every gated route; the
+            # CLI already fails closed in the same situation
+            # (evidentia.cli._rbac_lifecycle.load_rbac_policy), so the API
+            # now refuses to start instead.
+            logger.error("RBAC policy load failed (%s); refusing to start with the permissive default", exc)
+            raise RuntimeError(
+                "EVIDENTIA_RBAC_POLICY_FILE is set but the policy could not be "
+                f"loaded ({exc.__class__.__name__}: {exc}). Fix the path or the "
+                "file, or unset the variable to run with the default policy."
+            ) from exc
 
     app = FastAPI(
         title="Evidentia API",
@@ -267,6 +324,9 @@ def create_app(
     # HTTPException from starlette.exceptions), so this is the exact
     # dict key that must be overwritten for the handler to fire at all.
     app.add_exception_handler(StarletteHTTPException, body_parse_error_handler)
+    # v0.13.0 review: FastAPI's default 422 echoes the rejected input; a lone
+    # surrogate in it could not be encoded and the route answered 500.
+    app.add_exception_handler(RequestValidationError, request_validation_error_handler)
 
     # v0.8.2 F-V81-S2: pre-populate app.state.auth_provider with
     # the explicit-injection value (if any). The lifespan only
@@ -491,6 +551,8 @@ def create_app(
     # Static SPA mount - everything that isn't /api/* falls through to index.html.
     _mount_spa(app)
 
+    _declare_bearer_security(app)
+
     return app
 
 
@@ -512,11 +574,16 @@ def _mount_spa(app: FastAPI) -> None:
             )
 
         @app.get("/{full_path:path}", include_in_schema=False)
-        async def _spa_fallback(full_path: str, request: Request) -> FileResponse:
+        async def _spa_fallback(full_path: str, request: Request) -> Response:
             """Serve index.html for every non-API path so React Router owns routing."""
             if full_path.startswith("api/"):
-                # Defensive - FastAPI routing should have caught these already.
-                return FileResponse(STATIC_DIR / "index.html", status_code=404)
+                # An unknown API path is an API 404, not the SPA shell: with
+                # the console built this used to answer text/html (v0.13.0
+                # review, probe-8), so clients saw two 404 shapes.
+                return JSONResponse(
+                    status_code=404,
+                    content={"detail": {"error": "not_found", "message": f"No API route at /{full_path}."}},
+                )
             # full_path is user-controlled (URL path component). Validate
             # the resolved candidate sits inside STATIC_DIR before
             # serving - a request for ``../../etc/passwd`` resolves

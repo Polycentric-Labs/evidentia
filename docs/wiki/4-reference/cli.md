@@ -1621,7 +1621,7 @@ Emit the Control↔Threat Traceability Matrix as a signable OSCAL profile.
 | `--output, -o` | Where to write the emitted OSCAL profile JSON. |
 | `--sign-with-gpg` | GPG key id/fingerprint to detached-sign the emitted profile (writes <output>.asc). The air-gap signing path. |
 | `--sign-with-sigstore` | Sigstore keyless-sign the emitted profile (writes <output>.sigstore.json). Requires network + an OIDC credential. |
-| `--sigstore-identity-token` | Explicit OIDC token for Sigstore signing (else auto-detected). |
+| `--sigstore-identity-token` | Explicit OIDC token for Sigstore signing (else auto-detected). Prefer the SIGSTORE_ID_TOKEN environment variable: a token passed as a flag is visible in process listings. |
 | `--sign-with-key` | PEM/PKCS#8 private key (Ed25519 or RSA) to DSSE-sign the emitted profile to <output>.dsse.json — air-gap-clean (no gpg binary). Encrypted keys: $EVIDENTIA_SIGNING_KEY_PASSPHRASE. |
 
 ## `evidentia version`

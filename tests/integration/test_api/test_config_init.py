@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -53,6 +54,81 @@ class TestConfig:
         }
         r = api_client.put("/api/config", json=bad)
         assert r.status_code == 422
+
+    def test_get_returns_placeholders_not_env_values(
+        self, api_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """v0.13.0 review C1: GET must not expand ``${VAR}`` references."""
+        monkeypatch.setenv("EVIDENTIA_TEST_CONFIG_SENTINEL", "live-value-must-not-leak")
+        (tmp_path / "evidentia.yaml").write_text(
+            "organization: ${EVIDENTIA_TEST_CONFIG_SENTINEL}\nframeworks: [soc2-tsc]\n",
+            encoding="utf-8",
+        )
+        r = api_client.get("/api/config")
+        assert r.status_code == 200, r.text
+        assert r.json()["organization"] == "${EVIDENTIA_TEST_CONFIG_SENTINEL}"
+        assert "live-value-must-not-leak" not in r.text
+
+    def test_put_returns_placeholders_not_env_values(
+        self, api_client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """PUT echoes the file as written; the library still expands on load."""
+        monkeypatch.setenv("EVIDENTIA_TEST_CONFIG_SENTINEL", "live-value-must-not-leak")
+        r = api_client.put(
+            "/api/config",
+            json={"organization": "${EVIDENTIA_TEST_CONFIG_SENTINEL}", "frameworks": []},
+        )
+        assert r.status_code == 200, r.text
+        assert r.json()["organization"] == "${EVIDENTIA_TEST_CONFIG_SENTINEL}"
+        assert "live-value-must-not-leak" not in r.text
+        written = (tmp_path / "evidentia.yaml").read_text(encoding="utf-8")
+        assert "${EVIDENTIA_TEST_CONFIG_SENTINEL}" in written
+        assert "live-value-must-not-leak" not in written
+
+        from evidentia_core.config import load_config
+
+        assert load_config(tmp_path / "evidentia.yaml").organization == "live-value-must-not-leak"
+
+    def test_put_rejects_unknown_top_level_keys(self, api_client: TestClient, tmp_path: Path) -> None:
+        r = api_client.put("/api/config", json={"organisation": "Acme", "frameworks": []})
+        assert r.status_code == 400, r.text
+        detail = r.json()["detail"]
+        assert detail["error"] == "invalid_body"
+        assert detail["unknown_keys"] == ["organisation"]
+        assert not (tmp_path / "evidentia.yaml").exists()
+
+    def test_put_rejects_oversized_document(self, api_client: TestClient, tmp_path: Path) -> None:
+        r = api_client.put("/api/config", json={"system_name": "A" * 1_100_000, "frameworks": []})
+        assert r.status_code == 413, r.text
+        assert r.json()["detail"]["error"] == "payload_too_large"
+        assert not (tmp_path / "evidentia.yaml").exists()
+
+    def test_put_write_is_atomic_leaves_no_temp_file(self, api_client: TestClient, tmp_path: Path) -> None:
+        r = api_client.put("/api/config", json={"organization": "Acme", "frameworks": ["soc2-tsc"]})
+        assert r.status_code == 200, r.text
+        leftovers = [p.name for p in tmp_path.iterdir() if p.name.startswith("evidentia.yaml.")]
+        assert leftovers == []
+
+
+class TestConfigRBAC:
+    """Under a read-only policy GET passes and PUT is denied."""
+
+    @pytest.fixture
+    def readonly_client(self, api_client: TestClient) -> TestClient:
+        from evidentia_core.rbac import RBACPolicy, Role
+
+        api_client.app.state.rbac_policy = RBACPolicy(identities={}, default_role=Role.READER)  # type: ignore[attr-defined]
+        return api_client
+
+    def test_get_allowed_for_reader(self, readonly_client: TestClient) -> None:
+        r = readonly_client.get("/api/config")
+        assert r.status_code == 200, r.text
+
+    def test_put_denied_for_reader(self, readonly_client: TestClient, tmp_path: Path) -> None:
+        r = readonly_client.put("/api/config", json={"organization": "Acme", "frameworks": []})
+        assert r.status_code == 403, r.text
+        assert r.json()["detail"]["error"] == "rbac_denied"
+        assert not (tmp_path / "evidentia.yaml").exists()
 
 
 class TestInitWizard:
@@ -180,7 +256,8 @@ def test_config_init_error_statuses_documented_in_openapi(
     schema (schemathesis undocumented-status noise → contract)."""
     schema = api_client.get("/api/openapi.json").json()
     expected = [
-        ("/api/config", "put", ["500"]),
+        ("/api/config", "get", ["403", "500"]),
+        ("/api/config", "put", ["400", "403", "413", "500"]),
         ("/api/init/wizard", "post", ["400"]),
         ("/api/init/commit", "post", ["400"]),
     ]

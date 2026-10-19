@@ -15,12 +15,14 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Query
 from sse_starlette.sse import EventSourceResponse
 
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -28,8 +30,10 @@ router = APIRouter()
 
 @router.post(
     "/explain/{framework}/{control_id:path}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             404: ("Unknown ``framework`` or ``control_id`` (``error: not_found``)."),
             500: ("evidentia-ai import failure (``error: feature_unavailable``)."),
         }
@@ -101,7 +105,20 @@ async def explain(
             payload = result.model_dump(mode="json")
             yield {"data": json.dumps({"phase": "done", "explanation": payload})}
         except Exception as e:
-            logger.exception("Explanation failed")
-            yield {"data": json.dumps({"phase": "error", "detail": str(e), "type": type(e).__name__})}
+            request_id = uuid.uuid4().hex[:12]
+            logger.exception("Explanation failed (request_id=%s)", request_id)
+            # Provider error text can carry masked key suffixes, account ids or
+            # endpoint names (v0.13.0 review, CWE-209): a fixed message plus a
+            # correlation id goes to the client.
+            yield {
+                "data": json.dumps(
+                    {
+                        "phase": "error",
+                        "detail": f"Explanation failed; see the server log (request_id={request_id}).",
+                        "type": type(e).__name__,
+                        "request_id": request_id,
+                    }
+                )
+            }
 
     return EventSourceResponse(_stream())

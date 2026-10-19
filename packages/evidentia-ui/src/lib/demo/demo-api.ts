@@ -1077,6 +1077,7 @@ export const demoApi = {
           },
         ],
         gaps: [],
+        excluded_observations: 0,
         verdict: "continuous",
       },
       description: `Cadence evidence for ${body.slug}: 3 observations between 2026-06-01 and 2026-06-21. Every interval holds an observation within tolerance. Verdict: continuous. A gap-free dated series is evidence of cadence and nothing more; the counts are what the evidence store holds, not what was performed.`,

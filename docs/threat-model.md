@@ -3521,6 +3521,78 @@ contact an operator's signing service or use live evidence. In-process ASGI
 checks cover valid requests as well as denied origins, hosts and oversized
 bodies. Product OS/Python CI remains separate from these local checks.
 
+## v0.13.0 attack-surface delta (PRE-TAG 2026-10-18)
+
+The shared-spine cycle adds nine collectors and importers, a second catalog
+import path, the cadence evidence series and the SDK 2.2 MCP dispatch. The
+pre-tag review (eight reviewers, three probers) changed the boundaries below;
+everything else in this document stands.
+
+### Authorization on the REST surface (decision D8)
+
+Every mutating REST operation now carries a role gate. Hard deletes (ai-gov
+system, model-risk model, POA&M item, TPRM vendor) and `PUT /api/config`
+require `admin`; creates, updates, the five outbound pushes, the Nessus and
+Greenbone store writes, gap analysis, risk generation and explanations require
+`write`; compute-only operations and every other collect route require `read`.
+The default policy maps every identity to admin, so the gates are inert until
+an operator installs a policy file, and an unloadable policy file now stops
+the server instead of falling back to that default. The CLI mutators outside
+`evidence`, `catalog`, `collect` and `conmon release-series` still rely on the
+operator shell (v0.13.1).
+
+### Credential names in request bodies (decision D9)
+
+Routes that let the body name the env var holding a credential accept only a
+name matching `^[A-Z][A-Z0-9_]{0,63}$` that starts with the integration's own
+prefix (`TABLEAU_`, `POWERBI_`, `GOOGLE_WORKSPACE_`, `VANTA_`,
+`EVIDENTIA_POSTGRES_` and so on). A body can no longer point a route at an
+unrelated variable and have its value sent to a host the same body chose. The
+residual, an integration's own credential sent to a caller-supplied host by a
+writer, is listed for an operator allowlist in the v0.13.1 plan.
+
+### Configuration (decision D10)
+
+`GET` and `PUT /api/config` return the file as written. The library keeps
+expanding `${VAR}` at load time; the API no longer discloses the expansion.
+
+### Evidence provenance (decision D11)
+
+The cadence series counts one observation per lineage and excludes artifacts
+an importer marked incomplete or collection-time dated, so a re-imported
+stale export cannot manufacture cadence evidence. The Nessus and Greenbone
+importers record `collection_complete` and `timestamp_source`; an artifact
+saved through `POST /api/evidence` carries neither and counts as before, which
+is why that route requires `write`.
+
+### New egress and parsers
+
+The incident clock resolves through a bounded worker process and connects to
+a numeric address with hostname verification; the registry collector pins its
+answers with a thread-id check and never lets SAM reach httpx; the storage
+and enterprise retention collectors run on one captured session with a run
+budget. The Nessus, Greenbone and SCAP importers parse with defusedxml, refuse
+entity constructs, cap input at 50 MB (scan exports) or 8 MiB (SCAP raw), and
+refuse Windows device names before opening anything. The DNS-rebinding pin now
+keys on the IDNA form of the host, so internationalised hostnames are pinned
+like ASCII ones.
+
+### Console boundary
+
+The console gates its credentialed flows on `auth_configured` and sends no
+bearer token itself. An authenticated deployment therefore needs a reverse
+proxy that authenticates the user and injects `Authorization: Bearer` for the
+API; without one the console's write and collector flows cannot complete.
+This fails closed. The serve guide documents the pattern; a token field is a
+v0.13.1 item.
+
+### Sigstore signing in MCP servers
+
+Each signed tool result costs one Fulcio issuance and one public Rekor entry,
+so the signing identity, the time and the SHA-256 of the output become public.
+A long-running server keeps the identity token it started with; once it
+expires, results arrive unsigned with `signature=None` (v0.13.1 item).
+
 ---
 
 *First published v0.7.7 (2026-05). Origin: promoted from a

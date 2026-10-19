@@ -26,10 +26,29 @@ from evidentia_core.security.paths import PathTraversalError
 from fastapi import APIRouter
 from pydantic import ValidationError
 
+from evidentia_api._credential_env import resolve_credential_env_name
 from evidentia_api.errors import api_error, error_responses
+from evidentia_api.rbac_dependency import require_role
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _body_flag(body: dict[str, Any], name: str, default: bool) -> bool:
+    """Read an optional boolean body flag strictly.
+
+    ``bool("false")`` is ``True``, so the previous ``bool(payload.get(...))``
+    reading let a JSON string reverse the caller's intent (v0.13.0 review,
+    CWE-843). A missing or ``null`` flag takes ``default``; any other
+    non-boolean value is a 400 ``invalid_field``.
+    """
+    value = body.get(name)
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    raise api_error(400, "invalid_field", f"{name} must be a JSON boolean.", field=name)
+
 
 # Structured audit logger for credentialed external writes.
 _audit = get_logger("evidentia.api.integrations")
@@ -138,8 +157,10 @@ async def jira_status() -> dict[str, Any]:
 
 @router.post(
     "/integrations/jira/push/{report_key}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: "Malformed ``report_key`` (``error: invalid_id``).",
             404: "No such stored report (``error: not_found``).",
             503: ("Jira env configuration incomplete (``error: credentials_missing``)."),
@@ -205,8 +226,10 @@ async def jira_push(
 
 @router.post(
     "/integrations/jira/sync/{report_key}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: "Malformed ``report_key`` (``error: invalid_id``).",
             404: "No such stored report (``error: not_found``).",
             503: ("Jira env configuration incomplete (``error: credentials_missing``)."),
@@ -265,8 +288,10 @@ async def jira_status_map() -> dict[str, dict[str, str]]:
 
 @router.post(
     "/integrations/tableau/publish/{report_key}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: (
                 "Malformed ``report_key`` (``error: invalid_id``); "
                 "missing ``server_url`` (``error: missing_field``); "
@@ -346,7 +371,7 @@ async def tableau_publish(
     # (169.254.169.254) address and exfiltrate the Tableau PAT. Same
     # chokepoint every collector uses; block_private_ips defaults True (an
     # explicit `false` opts out for a trusted internal Tableau Server).
-    block_private = payload.get("block_private_ips", True) is not False
+    block_private = _body_flag(payload, "block_private_ips", True)
     try:
         network_guard.check_url(
             server_url,
@@ -387,8 +412,12 @@ async def tableau_publish(
             server_url=server_url,
             site_id=str(payload.get("site_id") or ""),
             project_name=str(payload.get("project_name") or "default"),
-            pat_name_env=str(payload.get("pat_name_env") or "TABLEAU_PAT_NAME"),
-            pat_secret_env=str(payload.get("pat_secret_env") or "TABLEAU_PAT_SECRET"),
+            pat_name_env=resolve_credential_env_name(
+                payload, "pat_name_env", "TABLEAU_PAT_NAME", allowed_prefixes=("TABLEAU_",)
+            ),
+            pat_secret_env=resolve_credential_env_name(
+                payload, "pat_secret_env", "TABLEAU_PAT_SECRET", allowed_prefixes=("TABLEAU_",)
+            ),
         )
     except ValidationError as exc:
         # e.g. the server_url https-scheme field_validator rejects a
@@ -403,7 +432,7 @@ async def tableau_publish(
 
     report = _load_report(report_key)
 
-    overwrite = bool(payload.get("overwrite", True))
+    overwrite = _body_flag(payload, "overwrite", True)
 
     host = urlparse(server_url).hostname or ""
     try:
@@ -427,7 +456,12 @@ async def tableau_publish(
             )
     except TableauApiError as exc:
         logger.exception("Tableau publish failed (request_id=%s)", request_id)
-        raise api_error(503, "upstream_error", str(exc)) from exc
+        raise api_error(
+            503,
+            "upstream_error",
+            f"Tableau publish failed; request_id={request_id}",
+            request_id=request_id,
+        ) from exc
     except Exception as exc:
         logger.exception(
             "Tableau publish unexpected error (request_id=%s)",
@@ -448,8 +482,10 @@ async def tableau_publish(
 
 @router.post(
     "/integrations/powerbi/publish/{report_key}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: (
                 "Malformed ``report_key`` (``error: invalid_id``); "
                 "missing ``workspace_id`` / ``tenant_id`` / "
@@ -554,15 +590,19 @@ async def powerbi_publish(
                 field="risks",
             ) from exc
 
+    secret_env_name = resolve_credential_env_name(
+        payload, "client_secret_env", "POWERBI_CLIENT_SECRET", allowed_prefixes=("POWERBI_",)
+    )
+    clear_before_push = _body_flag(payload, "clear_before_push", True)
+
     report = _load_report(report_key)
 
     cfg = PowerBIConfig(
         workspace_id=workspace_id,
         tenant_id=tenant_id,
         client_id=client_id,
-        client_secret_env=str(payload.get("client_secret_env") or "POWERBI_CLIENT_SECRET"),
+        client_secret_env=secret_env_name,
     )
-    clear_before_push = bool(payload.get("clear_before_push", True))
 
     try:
         result = publish_report(
@@ -573,7 +613,12 @@ async def powerbi_publish(
         )
     except PowerBIApiError as exc:
         logger.exception("Power BI publish failed (request_id=%s)", request_id)
-        raise api_error(503, "upstream_error", str(exc)) from exc
+        raise api_error(
+            503,
+            "upstream_error",
+            f"Power BI publish failed; request_id={request_id}",
+            request_id=request_id,
+        ) from exc
     except Exception as exc:
         logger.exception(
             "Power BI publish unexpected error (request_id=%s)",
@@ -662,8 +707,10 @@ async def servicenow_status() -> dict[str, Any]:
 
 @router.post(
     "/integrations/servicenow/push/{report_key}",
+    dependencies=[require_role("write")],
     responses=error_responses(
         {
+            403: "Write permission denied (``error: rbac_denied``).",
             400: "Malformed ``report_key`` (``error: invalid_id``).",
             404: "No such stored report (``error: not_found``).",
             503: (
@@ -727,7 +774,7 @@ async def servicenow_push(
         raise api_error(503, "credentials_missing", str(e)) from e
 
     body = payload or {}
-    force = bool(body.get("force", False))
+    force = _body_flag(body, "force", False)
 
     with ServiceNowClient(cfg) as client:
         result = sn_push_open_gaps(report, client, force=force)
@@ -736,7 +783,8 @@ async def servicenow_push(
     # included — only the report key, target table, and outcome counts.
     _audit.info(
         action=EventAction.INTEGRATIONS_SERVICENOW_PUSH,
-        outcome=EventOutcome.SUCCESS,
+        # v0.13.0 review: the event claimed SUCCESS even when records errored.
+        outcome=EventOutcome.SUCCESS if result.errored == 0 else EventOutcome.FAILURE,
         message=(
             f"Pushed gap report {report_key} to ServiceNow table "
             f"{cfg.table_name} via API: created={result.created} "
