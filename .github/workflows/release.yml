@@ -170,7 +170,7 @@ jobs:
       # packages/evidentia-ui; the hatchling build hook drives `npm run build`
       # during `uv build`, so Node must be provisioned.
       - name: Set up Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.0 # zizmor: ignore[cache-poisoning]
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0 # zizmor: ignore[cache-poisoning]
         with:
           node-version: "24"
           # No npm cache in the release build (zizmor cache-poisoning hardening):
