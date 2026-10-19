@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: 2026-10-18; release candidate v0.13.0.**
+**Last updated: 2026-10-19; v0.13.0 shipped 2026-10-19.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -31,8 +31,8 @@ actually shipped, and that a `PLANNED` umbrella contains no `SHIPPED` entries.
 Those invariants exist because each of them failed silently at least once.
 The checker uses changelog entries to identify release content. A `SHIPPED`
 heading does not establish that a tag or public release has been approved.
-The v0.13.0 candidate still requires independent review and Allen's tag and
-release decision.
+v0.13.0 went through the independent pre-tag review and was tagged and published
+on 2026-10-19 (tag `v0.13.0` on `61010ce5`).
 
 ## Where to look
 
@@ -123,8 +123,8 @@ without a separate decision.
 
 ## v0.13 - The shared spine and the correctness debt - SHIPPED
 
-**Release content prepared for v0.13.0; independent review and Allen's tag
-and release decision remain pending.** The cycle opened 2026-08-28 and was
+**v0.13.0 shipped 2026-10-19 (tag `v0.13.0` on `61010ce5`) after the independent
+pre-tag review.** The cycle opened 2026-08-28 and was
 ratified the same day with all twelve open questions answered. Full plan:
 [`v0.13-plan.md`](https://github.com/Polycentric-Labs/evidentia/blob/main/docs/releases/plans/v0.13-plan.md). Scope philosophy is EXPAND,
 on the reuse ordering: build what three or more sectors share, fix what is
@@ -192,7 +192,7 @@ remains unverified. See the [collector design](https://github.com/Polycentric-La
 Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
 and 100% GUI coverage is a per-cycle exit condition at the tag.
 
-### v0.13.0 - Evidence provenance and native imports - SHIPPED (release candidate; tag pending)
+### v0.13.0 - Evidence provenance and native imports - SHIPPED (2026-10-19)
 
 Pre-tag review record: `docs/releases/reviews/security-review-v0.13.0.md`; the deferrals
 and their reasons: `docs/releases/plans/v0.13.1-plan.md`.

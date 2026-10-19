@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.13.0] - 2026-10-18
+### Fixed
+
+- **OSCAL verify API returns error categories only (CodeQL #203, CWE-209).** `POST
+  /api/oscal/verify` strips verifier detail (exception text, server paths) from each
+  `errors` entry and returns the category, for example `DSSE verification failed`;
+  the CLI keeps the full message.
+- **Risk generation logs the malformed system-context path and parser text escaped
+  (CodeQL #204, CWE-117).** Control characters in either value can no longer start a
+  new log record.
+
+## [0.13.0] - 2026-10-19
 
 **Theme**: *Evidence provenance and native imports*.
 

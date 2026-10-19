@@ -344,3 +344,22 @@ def test_oscal_error_statuses_documented_in_openapi(
         responses = schema["paths"][path][method]["responses"]
         for status in statuses:
             assert status in responses, (path, method, status)
+
+
+class TestVerifyErrorScrub:
+    def test_errors_carry_no_verifier_detail(self, oscal_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Post-v0.13.0 CodeQL #203 (CWE-209): the API returns the category of each
+        verifier error, never the library detail or a server path (G-9)."""
+        from evidentia_api.routers import oscal as oscal_router
+        from evidentia_core.oscal.verify import VerifyReport
+
+        def fake_verify(ar_path: Path, **kwargs: object) -> VerifyReport:
+            report = VerifyReport(ar_path=ar_path)
+            report.errors.append("DSSE verification failed: bad signature for key 0xabc (/srv/tmp/ar.dsse.json)")
+            report.dsse_signature_valid = False
+            return report
+
+        monkeypatch.setattr(oscal_router, "verify_ar_file", fake_verify)
+        resp = oscal_client.post("/api/oscal/verify", json={"content": json.dumps(_valid_ar_doc())})
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["errors"] == ["DSSE verification failed"]
