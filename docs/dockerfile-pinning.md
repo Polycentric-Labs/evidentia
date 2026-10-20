@@ -31,6 +31,20 @@ published key, each bound to the amd64 child. The strict failures are retained
 with the batch notes. The owner's decision on extending the exception to this
 digest is recorded in the v0.13 plan.
 
+On 2026-10-19 the v0.13.1 day-N rebuild refreshed the pin to index
+`ae6f4847a4276233c54c31e40f404fb3fc9cf24868ac0d7899bb909309166b31`
+(amd64 child `5a833fd5b79c…`, arm64 child `0f9fb247d0e7…`), after the post-publish
+rescan of the published v0.13.0 image found six fixable expat advisories in the
+base. The SBOM predicate now verifies strictly (`docker scout attest get --verify`
+found the signature in the transparency log and validated the cosign claims). The
+provenance predicate still fails strict verification with the signature absent
+from the transparency log; the public-key path (`--verify --skip-tlog`) passed,
+with the claims validated and the signature verified against Docker's published
+key, bound to the amd64 child. The reviewed index manifest and all four outputs
+are kept with the release batch notes. The exception therefore extends to the
+provenance predicate of this digest only; the owner's decision is recorded in the
+v0.13.1 release pull request.
+
 Arm64 publisher verification remains unestablished. A matching metadata subject
 does not establish image-layer integrity, runtime compatibility or vulnerability
 status. Each base refresh requires fresh tag/index correspondence and the normal

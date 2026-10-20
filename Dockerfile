@@ -72,7 +72,13 @@ RUN set -eux; \
 # these binaries), but SECURITY.md § Supported versions promises the
 # latest patch carries no disclosed advisories, so it does not get to sit.
 # See docs/releases/reviews/safeguards-resweep-2026-Q3.md § 2.2.
-FROM dhi.io/python:3.13@sha256:553f074749f9e189ad2f5d5678dab4b5ae20a0496700b6a48042c2e0de34d331 AS final
+# Digest bumped 2026-10-19 (v0.13.1, day-N rebuild): the post-publish rescan
+# of the published v0.13.0 image (run 39317584999) found six FIXABLE expat
+# advisories in the DHI base (DEBIAN-CVE-2026-102633, -66046, -76956, -76957,
+# -77214, -93990; expat 2.8.3-1~deb13u1+dhi5, fixed in 2.9.0-1~deb13u1) and
+# the base-freshness digest had moved. Publisher verification of the amd64
+# child is recorded in docs/dockerfile-pinning.md.
+FROM dhi.io/python:3.13@sha256:ae6f4847a4276233c54c31e40f404fb3fc9cf24868ac0d7899bb909309166b31 AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \
