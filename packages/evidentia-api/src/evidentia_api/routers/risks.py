@@ -85,14 +85,19 @@ def _load_report(key: str) -> GapAnalysisReport:
     return report
 
 
+def _single_line(text: str) -> str:
+    """Remove line breaks so a request-derived value cannot start a new log record."""
+    return text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+
+
 def _warn_malformed_context(context_path: Path, exc: BaseException) -> None:
     """Log a malformed system-context file without forging log lines (CWE-117).
 
     Both values are request-derived (the path comes from the body, the parser
-    text from the file it names); ``%r`` escapes CR, LF and other control
-    characters so neither can start a new log record.
+    text from the file it names). Line breaks are removed before logging and
+    ``%r`` escapes the remaining control characters.
     """
-    logger.warning("Malformed system context %r: %r", str(context_path), str(exc))
+    logger.warning("Malformed system context %r: %r", _single_line(str(context_path)), _single_line(str(exc)))
 
 
 def _pick_gaps(

@@ -39,5 +39,5 @@ def test_malformed_context_warning_escapes_control_characters(caplog: pytest.Log
     assert len(messages) == 1
     assert chr(10) not in messages[0]
     assert chr(13) not in messages[0]
-    assert repr(detail) in messages[0]
-    assert repr(str(path)) in messages[0]
+    assert "line one WARNING forged record tail" in messages[0]
+    assert "ctx forged.yaml" in messages[0]
