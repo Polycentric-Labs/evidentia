@@ -57,6 +57,23 @@ from evidentia_api.rbac_dependency import require_role
 router = APIRouter()
 
 
+def _public_text(message: str) -> str:
+    """Return the category of a verifier message without its detail (CWE-209).
+
+    The verifier appends exception text and server paths after the first colon
+    or parenthesis ("DSSE verification failed: <library detail>", "AR file not
+    found: <path>"). The CLI prints the full text to the operator; the API
+    returns the category only, so a client never sees library internals or a
+    server filesystem path (CodeQL py/stack-trace-exposure; G-9).
+    """
+    cut = len(message)
+    for separator in (": ", " ("):
+        index = message.find(separator)
+        if index != -1:
+            cut = min(cut, index)
+    return message[:cut].rstrip(" .;:")
+
+
 # ── request / response shapes ──────────────────────────────────────
 
 
@@ -303,7 +320,7 @@ async def verify_assessment_result(payload: VerifyRequest) -> dict[str, Any]:
             if report.dsse_signature_valid is None
             else ("valid" if report.dsse_signature_valid else "invalid")
         ),
-        "errors": report.errors,
+        "errors": [_public_text(message) for message in report.errors],
         "warnings": report.warnings,
         "digest_checks": [
             {

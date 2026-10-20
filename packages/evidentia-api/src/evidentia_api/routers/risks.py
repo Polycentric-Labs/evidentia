@@ -85,6 +85,21 @@ def _load_report(key: str) -> GapAnalysisReport:
     return report
 
 
+def _single_line(text: str) -> str:
+    """Remove line breaks so a request-derived value cannot start a new log record."""
+    return text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+
+
+def _warn_malformed_context(context_path: Path, exc: BaseException) -> None:
+    """Log a malformed system-context file without forging log lines (CWE-117).
+
+    Both values are request-derived (the path comes from the body, the parser
+    text from the file it names). Line breaks are removed before logging and
+    ``%r`` escapes the remaining control characters.
+    """
+    logger.warning("Malformed system context %r: %r", _single_line(str(context_path)), _single_line(str(exc)))
+
+
 def _pick_gaps(
     report: GapAnalysisReport,
     gap_ids: list[str] | None,
@@ -146,7 +161,7 @@ async def _stream_risk_generation(
         # v0.13.0 review H2 (CWE-209): the parser error used to be echoed to
         # the client, and a pydantic error carries an excerpt of the file's
         # values. Log the detail server-side and send a fixed message.
-        logger.warning("Malformed system context %s: %s", context_path, e)
+        _warn_malformed_context(context_path, e)
         yield json.dumps(
             {
                 "phase": "error",
