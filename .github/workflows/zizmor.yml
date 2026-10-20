@@ -21,7 +21,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # push:[main] runs are keyed by commit: GitHub allows one pending run per group
+  # and cancels the older pending run when a newer one arrives, whatever
+  # cancel-in-progress says, so rapid merge-queue merges used to cancel each
+  # other's main runs (2026-10-20). PR runs keep the ref-based group.
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}
   # Cancel only on PR iteration; push:[main] + merge_group run to a green
   # conclusion (matches the other required-check workflows — green-checks MUST).
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
