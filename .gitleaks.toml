@@ -75,4 +75,8 @@ regexes = [
     # verification policy. The generic rule treats its field name as a
     # credential assignment. Match only this independently verified digest.
     '''^4818415e7e79184a3c3fb17e4c1b048d3e392f131b4244758e111628d78a8d23$''',
+    # 2026-10-20: the reviewed digest of secret-scan.yml moved when its
+    # concurrency group was keyed by commit; same false-positive class, same
+    # narrow match on the independently verified digest only.
+    '''^0c8829205f865881510189ea969fc21b1217d87c61f4e9dfdc4a70a99aa271fe$''',
 ]
