@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: 2026-10-19; v0.13.0 shipped 2026-10-19.**
+**Last updated: 2026-10-19; v0.13.1 (day-N rebuild) prepared, tag pending.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -191,6 +191,15 @@ remains unverified. See the [collector design](https://github.com/Polycentric-La
 
 Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
 and 100% GUI coverage is a per-cycle exit condition at the tag.
+
+### v0.13.1 - Container rebuild on a fresh hardened base (day-N CVE response) - SHIPPED (tag pending)
+
+A rebuild patch in the v0.12.1 pattern: the post-publish rescan of the published
+v0.13.0 image found six fixable expat advisories in the DHI runtime base (fixed in
+expat 2.9.0-1~deb13u1), so the base moves to its current digest and the image is
+rebuilt, re-signed and re-attested. The same tag carries aiohttp 3.14.4 (three
+advisories published on the release day) and the two CodeQL findings fixed after
+the release. The v0.13.0 review deferrals move to v0.13.2.
 
 ### v0.13.0 - Evidence provenance and native imports - SHIPPED (2026-10-19)
 
