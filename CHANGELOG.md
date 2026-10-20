@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-19
+
+**Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A
+rebuild patch in the v0.12.1 pattern: the post-publish rescan of the published
+v0.13.0 image (run 39317584999, the day of the release) found six fixable expat
+advisories in the DHI runtime base with the fix available upstream, and the
+standing policy is "a fix is available, so rebuild the published image on a fresh
+base". The runtime base moves to its current digest, the image is rebuilt,
+smoke-tested, re-signed and re-attested end to end, and the post-publish rescan
+re-verifies it afterwards. The same tag carries the aiohttp advisories published
+on the release day and the two CodeQL findings that opened on `main` after the
+release.
+
+**Deferred**: the v0.13.0 review deferrals recorded in
+[`docs/releases/plans/v0.13.1-plan.md`](docs/releases/plans/v0.13.1-plan.md) now
+target the next patch (v0.13.2); the file keeps its name and carries a banner.
+
+### Security
+
+- **The `dhi.io/python:3.13` runtime base moves to index `ae6f4847…`** (amd64 child
+  `5a833fd5…`). The published v0.13.0 image carried expat 2.8.3-1~deb13u1+dhi5 with
+  DEBIAN-CVE-2026-102633 (Medium 5.9), -66046 (High 8.7), -76956 (High 7.5), -76957
+  (High 7.8), -77214 (High 8.3) and -93990 (High 8.7), fixed in 2.9.0-1~deb13u1; the
+  rebuilt image picks up the patched base. Publisher verification of the amd64 child
+  is recorded in `docs/dockerfile-pinning.md` (SBOM strict, provenance by public key).
+- **aiohttp 3.14.4 (GHSA-2g87-pp6c-29x5 8.7, GHSA-5wr8-gcqf-gqf3 8.2, GHSA-494j-54xm-rwp3), published
+  2026-10-19.** The locked closure moves from 3.14.3 and yarl follows to 1.25.1; the required
+  osv-scanner check failed on every open PR until the lock moved. The container requirements
+  re-pin aiohttp with the PyPI digests; the rebuilt image carries it.
+
 ### Fixed
 
 - **OSCAL verify API returns error categories only (CodeQL #203, CWE-209).** `POST
@@ -16,13 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Risk generation logs the malformed system-context path and parser text escaped
   (CodeQL #204, CWE-117).** Control characters in either value can no longer start a
   new log record.
-
-### Security
-
-- **aiohttp 3.14.4 (GHSA-2g87-pp6c-29x5 8.7, GHSA-5wr8-gcqf-gqf3 8.2, GHSA-494j-54xm-rwp3), published
-  2026-10-19.** The locked closure moves from 3.14.3 and yarl follows to 1.25.1; the required
-  osv-scanner check failed on every open PR until the lock moved. The container requirements
-  re-pin aiohttp with the PyPI digests; the next image rebuild carries it.
 
 ## [0.13.0] - 2026-10-19
 
