@@ -45,6 +45,16 @@ are kept with the release batch notes. The exception therefore extends to the
 provenance predicate of this digest only; the owner's decision is recorded in the
 v0.13.1 release pull request.
 
+On 2026-10-21 the v0.13.2 day-N rebuild refreshed the pin to index
+`207a4534771cbfa776ab0fe5484fb5407f429771c35e6800ba5c58c60f97aefd`
+(amd64 child `d2e9030d44f4…`, arm64 child `4c4a1098f3a8…`) and moved the
+`python:3.13-slim` builder to `98ce6fb13b38…` at its four pin sites. Both DHI
+predicates verified strictly (`docker scout attest get --verify` found the SBOM
+and the provenance signatures in the transparency log and validated the cosign
+claims), so no exception applies to this digest; the public-key path was run as
+well and agrees. The reviewed index manifest and the four outputs are kept with
+the release batch notes.
+
 Arm64 publisher verification remains unestablished. A matching metadata subject
 does not establish image-layer integrity, runtime compatibility or vulnerability
 status. Each base refresh requires fresh tag/index correspondence and the normal

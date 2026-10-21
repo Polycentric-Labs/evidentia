@@ -1,6 +1,6 @@
 [project]
 name = "evidentia-api"
-version = "0.13.1"
+version = "0.13.2"
 description = "FastAPI REST server + bundled React web UI for Evidentia"
 readme = "README.md"
 authors = [{name = "Allen Byrd", email = "allen@allenfbyrd.com"}]
@@ -23,8 +23,8 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "evidentia-core>=0.13.1,<0.14.0",
-    "evidentia-ai>=0.13.1,<0.14.0",
+    "evidentia-core>=0.13.2,<0.14.0",
+    "evidentia-ai>=0.13.2,<0.14.0",
     "fastapi>=0.141.1",
     # v0.13.0 review: request.url.path is Host-derived before Starlette 1.0.1
     # (GHSA-86qp-5c8j-p5mr); the middlewares key on scope["path"] and the

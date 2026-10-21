@@ -3,7 +3,7 @@
 
 # Evidentia roadmap
 
-**Last updated: 2026-10-19; v0.13.1 (day-N rebuild) prepared, tag pending.**
+**Last updated: 2026-10-21; v0.13.2 (day-N rebuild) prepared, tag pending.**
 
 > **Engineering practices**, how Evidentia is built, tested, and shipped (the
 > PR-flow + merge-queue gate, atomic releases, supply-chain integrity, and the
@@ -192,7 +192,16 @@ remains unverified. See the [collector design](https://github.com/Polycentric-La
 Parity discipline for the cycle: every coverable new CLI leaf lands `full`,
 and 100% GUI coverage is a per-cycle exit condition at the tag.
 
-### v0.13.1 - Container rebuild on a fresh hardened base (day-N CVE response) - SHIPPED (tag pending)
+### v0.13.2 - Second day-N rebuild: the certifi Critical and fresh bases - SHIPPED (tag pending)
+
+One day after v0.13.1: PYSEC-2026-4320 (Critical 9.1) was published against certifi
+2026.7.22 after the v0.13.1 artifacts were built, and both pinned bases had moved
+again. The closure moves to certifi 2026.10.19, both bases move to their current
+digests (the DHI attestations verify strictly this time), and the image is rebuilt,
+re-signed and re-attested. The tag also carries the closed-vocabulary OSCAL verify
+error categories (CodeQL #203).
+
+### v0.13.1 - Container rebuild on a fresh hardened base (day-N CVE response) - SHIPPED (tagged 2026-10-20)
 
 A rebuild patch in the v0.12.1 pattern: the post-publish rescan of the published
 v0.13.0 image found six fixable expat advisories in the DHI runtime base (fixed in
