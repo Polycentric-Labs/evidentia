@@ -14,7 +14,7 @@
 ARG INSTALL_SOURCE=pypi
 
 # ---- base-builder: slim + venv + install toolchain (has a shell) ------------
-FROM python:3.13-slim@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f AS base-builder
+FROM python:3.13-slim@sha256:98ce6fb13b3803744fbca11434f00818f1e300e4e48a4f204e07b2c928b6218e AS base-builder
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1
 RUN python -m venv /opt/venv
@@ -78,7 +78,11 @@ RUN set -eux; \
 # -77214, -93990; expat 2.8.3-1~deb13u1+dhi5, fixed in 2.9.0-1~deb13u1) and
 # the base-freshness digest had moved. Publisher verification of the amd64
 # child is recorded in docs/dockerfile-pinning.md.
-FROM dhi.io/python:3.13@sha256:ae6f4847a4276233c54c31e40f404fb3fc9cf24868ac0d7899bb909309166b31 AS final
+# Digest bumped 2026-10-21 (v0.13.2, second day-N rebuild): both bases had
+# moved again; the certifi Critical (PYSEC-2026-4320) that triggers v0.13.2
+# is in the Python closure, and the rebuild takes the current bases with it.
+# Both DHI predicates verified strictly this time (docs/dockerfile-pinning.md).
+FROM dhi.io/python:3.13@sha256:207a4534771cbfa776ab0fe5484fb5407f429771c35e6800ba5c58c60f97aefd AS final
 COPY --from=venv-fix --chown=65532:65532 /opt/venv /opt/venv
 COPY --from=venv-fix --chown=65532:65532 /build/home/ /home/nonroot/
 ENV PATH="/opt/venv/bin:${PATH}" \
