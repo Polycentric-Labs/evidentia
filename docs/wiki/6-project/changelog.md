@@ -10,12 +10,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-21
+
+**Theme**: *Second day-N rebuild: the certifi Critical and fresh bases.* A rebuild
+patch in the v0.12.1 pattern, one day after v0.13.1: PYSEC-2026-4320 (Critical 9.1)
+was published against certifi 2026.7.22 after the v0.13.1 artifacts were built, and
+both pinned container bases had moved again. The closure moves to certifi
+2026.10.19, both bases move to their current digests, and the image is rebuilt,
+smoke-tested, re-signed and re-attested end to end. The same tag carries the
+closed-vocabulary rewrite of the OSCAL verify API error categories.
+
 ### Security
 
 - **certifi 2026.10.19 (PYSEC-2026-4320 / GHSA-6q48-6c7w-9gw2, Critical 9.1), published
   2026-10-20.** The locked closure moves from 2026.7.22 and the container requirements re-pin
   certifi with the PyPI digests. The v0.13.1 artifacts were built before the advisory was
-  published; the next image rebuild carries the fix.
+  published; this rebuild carries the fix.
+- **Both pinned container bases move to their current digests**: the `python:3.13-slim`
+  builder (`70729b46…` to `98ce6fb1…`, also in `container-build.yml`, `release.yml` and
+  `docker/Dockerfile.demo`) and the `dhi.io/python:3.13` runtime (`ae6f4847…` to
+  `207a4534…`, amd64 child `d2e9030d…`). Both DHI predicates verified strictly against the
+  transparency log this time, so no publisher-verification exception applies to this
+  digest (`docs/dockerfile-pinning.md`).
+
+### Fixed
+
+- **OSCAL verify API error categories come from a closed vocabulary (CodeQL #203).** The
+  v0.13.1 scrub returned a slice of the verifier message, which the taint analysis still
+  treated as verifier text; the API now returns one literal from a fixed set of categories
+  and `Verification error` for anything else. The CLI output is unchanged.
 
 ## [0.13.1] - 2026-10-19
 

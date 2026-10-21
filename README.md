@@ -61,7 +61,7 @@ Workspace (AI risk-statements, REST API, all collectors, MCP server):
 pip install 'evidentia[ai,api,collectors,mcp]'
 ```
 
-Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.13.1`
+Container: `docker pull ghcr.io/polycentric-labs/evidentia:v0.13.2`
 (cosign keyless OIDC + SLSA Provenance v1).
 
 [Getting Started](https://github.com/Polycentric-Labs/evidentia/wiki/Getting-Started) covers air-gapped install, virtualenv setup and all extras.
@@ -133,11 +133,11 @@ No install: a self-hosted [asciinema](https://asciinema.org/) recording of `doct
 
 ## Recent Releases
 
+**v0.13.2 (2026-10-21)** — *Second day-N rebuild: the certifi Critical and fresh bases*. **OSCAL verify API error categories come from a closed vocabulary (CodeQL #203).** The v0.13.1 scrub returned a slice of the verifier message, which the taint analysis still treated as verifier text; the API now returns one literal from a fixed set of categories and `Verification error` for anything else.
+
 **v0.13.1 (2026-10-19)** — *Container rebuild on a fresh hardened base*. **OSCAL verify API returns error categories only (CodeQL #203, CWE-209).** `POST /api/oscal/verify` strips verifier detail (exception text, server paths) from each `errors` entry and returns the category, for example `DSSE verification failed`; the CLI keeps the full message.
 
 **v0.13.0 (2026-10-19)** — *Evidence provenance and native imports*. **Upstream release publication cadence (V13-28).** `collect release-cadence`, its API and the Collect screen observe the fixed public GitHub Releases profile.
-
-**v0.12.1 (2026-09-05)** — *Container rebuild on a fresh hardened base (day-N CVE response), carrying the v0.13 cycle's opening batch*. **Python 3.14 support** (closes #212): `requires-python` lifted to `>=3.12,<3.15` across the workspace after litellm 1.98.x raised its own ceiling (the documented removal trigger), with 3.13/3.14 trove classifiers and 3.14 pytest legs on all three OSes.
 
 Full release history: [`CHANGELOG.md`](CHANGELOG.md) | [GitHub Releases](https://github.com/Polycentric-Labs/evidentia/releases)
 
