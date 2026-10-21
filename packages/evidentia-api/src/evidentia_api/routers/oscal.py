@@ -57,21 +57,39 @@ from evidentia_api.rbac_dependency import require_role
 router = APIRouter()
 
 
+# The closed vocabulary of verifier error categories the API may return. Each
+# entry is the prefix verify_ar_file writes before any detail; the response
+# carries one of these literals, never a substring of the verifier message.
+_ERROR_CATEGORIES: tuple[str, ...] = (
+    "AR file not found",
+    "Malformed JSON",
+    "Signature required but none found",
+    "GPG signature verification failed",
+    "Sigstore module unavailable",
+    "Sigstore verification unavailable",
+    "Sigstore verification failed",
+    "Sigstore verification rejected",
+    "DSSE envelope found",
+    "DSSE verification failed",
+)
+_OTHER_CATEGORY = "Verification error"
+
+
 def _public_text(message: str) -> str:
     """Return the category of a verifier message without its detail (CWE-209).
 
-    The verifier appends exception text and server paths after the first colon
-    or parenthesis ("DSSE verification failed: <library detail>", "AR file not
-    found: <path>"). The CLI prints the full text to the operator; the API
-    returns the category only, so a client never sees library internals or a
-    server filesystem path (CodeQL py/stack-trace-exposure; G-9).
+    The verifier appends exception text and server paths after the category
+    ("DSSE verification failed: <library detail>", "AR file not found: <path>").
+    The CLI prints the full text to the operator; the API returns a literal from
+    the closed vocabulary above, so a client never sees library internals or a
+    server filesystem path (CodeQL py/stack-trace-exposure; G-9). Returning a
+    literal rather than a slice of the message also keeps the verifier text out
+    of the response by construction.
     """
-    cut = len(message)
-    for separator in (": ", " ("):
-        index = message.find(separator)
-        if index != -1:
-            cut = min(cut, index)
-    return message[:cut].rstrip(" .;:")
+    for category in _ERROR_CATEGORIES:
+        if message.startswith(category):
+            return category
+    return _OTHER_CATEGORY
 
 
 # ── request / response shapes ──────────────────────────────────────

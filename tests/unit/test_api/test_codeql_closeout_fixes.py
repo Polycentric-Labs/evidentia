@@ -23,7 +23,8 @@ from evidentia_api.routers.risks import _warn_malformed_context
         ),
         ("Sigstore verification rejected: identity did not match", "Sigstore verification rejected"),
         ("Signature required but none found: a.sig, b.sigstore, or c.dsse", "Signature required but none found"),
-        ("Plain category", "Plain category"),
+        ("Plain category", "Verification error"),
+        ("Sigstore verification failed", "Sigstore verification failed"),
     ],
 )
 def test_public_text_keeps_the_category_only(message: str, expected: str) -> None:
