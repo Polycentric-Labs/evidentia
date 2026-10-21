@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **certifi 2026.10.19 (PYSEC-2026-4320 / GHSA-6q48-6c7w-9gw2, Critical 9.1), published
+  2026-10-20.** The locked closure moves from 2026.7.22 and the container requirements re-pin
+  certifi with the PyPI digests. The v0.13.1 artifacts were built before the advisory was
+  published; the next image rebuild carries the fix.
+
 ## [0.13.1] - 2026-10-19
 
 **Theme**: *Container rebuild on a fresh hardened base (day-N CVE response).* A
