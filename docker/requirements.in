@@ -1,2 +1,3 @@
 evidentia[gui]==0.13.2
 urllib3>=2.7.0
+filelock>=4.2.1

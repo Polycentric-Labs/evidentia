@@ -343,7 +343,9 @@ jobs:
           # Keep the committed .in's deliberate urllib3 security floor (the
           # regen would otherwise silently drop it; the osv-scan below is the
           # backstop, the floor is the defense-in-depth minimum).
-          printf 'evidentia[gui]==%s\nurllib3>=2.7.0\n' "${VERSION}" > docker/requirements.in
+          # filelock>=4.2.1: the same floor as container-build.yml's regeneration step
+          # (litellm 1.104.0 to 1.106.6 cap filelock<4.0; see that step's comment).
+          printf 'evidentia[gui]==%s\nurllib3>=2.7.0\nfilelock>=4.2.1\n' "${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
           until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim@sha256:98ce6fb13b3803744fbca11434f00818f1e300e4e48a4f204e07b2c928b6218e \

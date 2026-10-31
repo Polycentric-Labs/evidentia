@@ -228,12 +228,22 @@ jobs:
       # PARITY: pip-compile runs under the SAME base (python:3.13-slim, NOT
       # 3.14 — litellm requires-python <3.14) so the resolved+hashed closure
       # is exactly what the image installs.
+      #
+      # Floors (the same input lines as release.yml's regeneration): urllib3>=2.7.0
+      # is the standing security floor; filelock>=4.2.1 (2026-10-31) clears
+      # GHSA-v4x8-3wr5-3wq8 and twelve more filelock advisories that litellm 1.104.0
+      # to 1.106.6 otherwise hold at 3.32.7 through a filelock<4.0 cap (lifted
+      # upstream in BerriAI/litellm#49137 on 2026-10-30, not yet released). With the
+      # floor pip-compile backtracks litellm to the newest release without the cap
+      # (1.103.x) and takes the newest litellm again once the lift ships. The floor
+      # then stays inert; drop it together with the [tool.uv] filelock override or
+      # keep it as a security floor like urllib3.
       - name: Regenerate hash-pinned requirements.txt against PyPI
         if: steps.relevant.outputs.relevant == 'true'
         env:
           VERSION: ${{ steps.pin.outputs.version }}
         run: |
-          echo "evidentia[gui]==${VERSION}" > docker/requirements.in
+          printf 'evidentia[gui]==%s\nurllib3>=2.7.0\nfilelock>=4.2.1\n' "${VERSION}" > docker/requirements.in
           attempts=0
           max_attempts=3
           until docker run --rm -v "$PWD:/work" -w /work python:3.13-slim@sha256:98ce6fb13b3803744fbca11434f00818f1e300e4e48a4f204e07b2c928b6218e \

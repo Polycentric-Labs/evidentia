@@ -36,7 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   BerriAI/litellm#49137 on 2026-10-30 with no release carrying it yet. snowflake-connector-python
   moves from 4.8.0 to 4.8.1, which lifted its own `filelock<4` cap. The override goes once a
   stable litellm release carrying the lift is locked. Six further filelock advisories visible only
-  to the osv-scanner gate close with the same move.
+  to the osv-scanner gate close with the same move. The container pins are regenerated from PyPI at
+  tag time and in the container smoke test, where the same litellm cap resolved filelock 3.32.7, so
+  both regeneration inputs (`release.yml`, `container-build.yml`) and `docker/requirements.in` gain a
+  `filelock>=4.2.1` floor beside the standing `urllib3>=2.7.0` one; pip-compile then backtracks
+  litellm to 1.103.10 and resolves filelock 4.2.6 with no osv-scanner finding, and takes the newest
+  litellm again once the lift ships. `container-build.yml` is policy-tracked, so its reviewed source
+  digest and `POLICY_SHA256` are refreshed.
 - **pypa/gh-action-pypi-publish v1.14.3 (GHSA-5xjx-3w67-w9x9, Critical), published 2026-10-30.**
   The advisory covers the revocation of a certificate authority in the chain Sigstore uses for
   Trusted Publishing and PyPI digital attestations; releases up to 1.14.2 are affected. The
