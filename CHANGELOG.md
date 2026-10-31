@@ -34,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   moves from 4.8.0 to 4.8.1, which lifted its own `filelock<4` cap. The override goes once a
   stable litellm release carrying the lift is locked. Six further filelock advisories visible only
   to the osv-scanner gate close with the same move.
+- **pypa/gh-action-pypi-publish v1.14.3 (GHSA-5xjx-3w67-w9x9, Critical), published 2026-10-30.**
+  The advisory covers the revocation of a certificate authority in the chain Sigstore uses for
+  Trusted Publishing and PyPI digital attestations; releases up to 1.14.2 are affected. The
+  `release.yml` publish step moves from 1.14.2 to 1.14.3, SHA-pinned to the signed tag's commit.
+  zizmor's known-vulnerable-actions audit, a required check, failed on every open pull request
+  until the pin moved.
 
 ## [0.13.2] - 2026-10-21
 
