@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **graphql-core 3.2.13 (GHSA-vj8h-fx38-h3vc / CVE-2026-75507 and GHSA-r77w-qph3-7vf8 /
+  CVE-2026-75508, both High 7.5), published 2026-10-22.** The locked closure moves from 3.2.8;
+  the fix release is 3.2.12. graphql-core reaches the lock only through schemathesis (dev
+  group).
+- **opentelemetry-api 1.45.2 (GHSA-xcq7-p3pf-p88h / CVE-2026-114603, Medium 5.3), published
+  2026-10-22.** The locked closure moves from 1.44.0; the fix release is 1.45.1.
+- **setuptools 84.2.1 (GHSA-xmj3-9gf7-h52w, Low), published 2026-10-23.** The locked closure
+  moves from 83.0.0; the fix release is 84.1.0.
+- **dnspython 2.9.1 (GHSA-45c3-73f7-pv4m / CVE-2026-114605, High 7.5), published 2026-10-27,
+  and pyasn1 0.6.5 (GHSA-fm9c-5rcf-2q5p, GHSA-9m75-vc3g-4x39, GHSA-2qm8-x737-gmw5 and
+  GHSA-mm57-4v3p-rchx / CVE-2026-119194 to CVE-2026-119197, all High 7.5), published
+  2026-10-30.** Both are osv-scanner SBOM gate findings with no Dependabot alert; the required
+  gate failed on every open pull request until the lock moved. The locked closure moves from
+  2.8.0 and 0.6.4; the fix releases are 2.9.0 and 0.6.5.
+- **filelock 4.2.6 in the container requirements (GHSA-v4x8-3wr5-3wq8 / CVE-2026-112940, High
+  7.1; GHSA-9vhv-jxww-xfm5 / CVE-2026-112913, Low 3.3; GHSA-567q-5qvw-pf92 / CVE-2026-112907,
+  Low 2.5), published 2026-10-23.** `docker/requirements.txt` moves from 3.32.5 and re-pins
+  filelock with the two PyPI digests; the fix release is 4.2.1, and the container closure
+  reaches filelock only through huggingface-hub. The locked closure stays on 3.25.2 for now:
+  litellm 1.104.0 to 1.106.6 cap filelock below 4.0 and snowflake-connector-python 4.8.0 caps
+  it below 4.
+
 ## [0.13.2] - 2026-10-21
 
 **Theme**: *Second day-N rebuild: the certifi Critical and fresh bases.* A rebuild
