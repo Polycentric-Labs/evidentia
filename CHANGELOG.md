@@ -23,13 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   2026-10-30.** Both are osv-scanner SBOM gate findings with no Dependabot alert; the required
   gate failed on every open pull request until the lock moved. The locked closure moves from
   2.8.0 and 0.6.4; the fix releases are 2.9.0 and 0.6.5.
-- **filelock 4.2.6 in the container requirements (GHSA-v4x8-3wr5-3wq8 / CVE-2026-112940, High
-  7.1; GHSA-9vhv-jxww-xfm5 / CVE-2026-112913, Low 3.3; GHSA-567q-5qvw-pf92 / CVE-2026-112907,
-  Low 2.5), published 2026-10-23.** `docker/requirements.txt` moves from 3.32.5 and re-pins
-  filelock with the two PyPI digests; the fix release is 4.2.1, and the container closure
-  reaches filelock only through huggingface-hub. The locked closure stays on 3.25.2 for now:
-  litellm 1.104.0 to 1.106.6 cap filelock below 4.0 and snowflake-connector-python 4.8.0 caps
-  it below 4.
+- **filelock 4.2.6 (GHSA-v4x8-3wr5-3wq8 / CVE-2026-112940, High 7.1; GHSA-9vhv-jxww-xfm5 /
+  CVE-2026-112913, Low 3.3; GHSA-567q-5qvw-pf92 / CVE-2026-112907, Low 2.5), published
+  2026-10-23.** The fix release is 4.2.1. `docker/requirements.txt` moves from 3.32.5 and re-pins
+  filelock with the two PyPI digests; the container closure reaches filelock only through
+  huggingface-hub. The locked closure moves from 3.25.2 behind a `[tool.uv]`
+  `override-dependencies` entry (`filelock>=4.2.1,<5`): litellm 1.104.0 to 1.106.6 declare
+  `filelock<4.0` without importing it, and upstream lifted the cap to `<5` in
+  BerriAI/litellm#49137 on 2026-10-30 with no release carrying it yet. snowflake-connector-python
+  moves from 4.8.0 to 4.8.1, which lifted its own `filelock<4` cap. The override goes once a
+  stable litellm release carrying the lift is locked. Six further filelock advisories visible only
+  to the osv-scanner gate close with the same move.
 
 ## [0.13.2] - 2026-10-21
 

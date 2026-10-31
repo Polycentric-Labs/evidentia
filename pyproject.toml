@@ -38,6 +38,21 @@ description = "Workspace root for the Evidentia GRC tool monorepo"
 # regressing. REMOVAL TRIGGER: moto raises its own joserfc floor to >=1.6.7 (it
 # currently caps only >=0.9.0), or the advisory is withdrawn. Re-validate by 2026-12-26.
 constraint-dependencies = ["joserfc>=1.6.7"]
+# Security version-floor OVERRIDE for a TRANSITIVE dependency. filelock reaches the lock only
+# through huggingface-hub, litellm, torch and snowflake-connector-python; no workspace package
+# imports it. filelock releases up to 4.2.0 carry GHSA-v4x8-3wr5-3wq8 / CVE-2026-112940 (High 7.1,
+# from 3.20.4), GHSA-9vhv-jxww-xfm5 / CVE-2026-112913 (Low, from 3.20.4) and GHSA-567q-5qvw-pf92 /
+# CVE-2026-112907 (Low, from 3.22.0) plus six advisories that only the osv-scanner gate reports;
+# the fix release is 4.2.1 (published 2026-10-17). litellm 1.104.0 to 1.106.6 declare filelock<4.0
+# without importing it anywhere (checked in the installed 1.105.0 wheel), and upstream lifted the
+# cap to <5 in BerriAI/litellm#49137 (merged 2026-10-30) with no release carrying it yet. An
+# override differs from a constraint: it REPLACES every declared requirement on filelock during
+# resolution, so the stale <4.0 metadata no longer pins the lock; like a constraint it never adds a
+# package and does not reach published wheel metadata. The <5 bound keeps the shape upstream chose.
+# REMOVAL TRIGGER: a stable litellm release carrying #49137 is locked (then `uv lock
+# --upgrade-package litellm --upgrade-package filelock` resolves filelock>=4.2.1 with no override).
+# Re-validate by 2026-11-30.
+override-dependencies = ["filelock>=4.2.1,<5"]
 
 [tool.uv.workspace]
 members = [
