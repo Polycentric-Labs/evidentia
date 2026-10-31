@@ -34,7 +34,7 @@ establishes it:
 | `fedramp-conmon-poam` | fedramp-rev5-mod | monthly | FedRAMP ConMon Strategy & Guide v3.0 §3.4 |
 | `fedramp-conmon-scans` | fedramp-rev5-mod | monthly | FedRAMP ConMon Strategy & Guide v3.0 §3.3 |
 | `fedramp-conmon-annual` | fedramp-rev5-mod | annual | FedRAMP ConMon Strategy & Guide v3.0 §4 |
-| `cmmc-l2-triennial` | cmmc-v2 | triennial | DoD CMMC 2.0 Program Rule (48 CFR Part 204) |
+| `cmmc-l2-triennial` | cmmc-v2 | triennial | DoD CMMC Program Rule (32 CFR Part 170) |
 | `dod-rmf-annual` | dod-rmf | annual | DoDI 8510.01 §3.5.b |
 | `occ-2026-13a-model-risk` | occ-2026-13a | annual | OCC Bulletin 2026-13a; FRB SR 26-02 |
 
