@@ -99,7 +99,9 @@ cases; **FedRAMP CR26 live since June 25 2026 / mandatory Jan 1
 decade; **FedRAMP RFC-0024 machine-readable Class D / High-impact
 authorization packages: Nov 1 2027** per NOTICE-0009 March 25
 2026 — the original Sept 30 2026 deadline was superseded + scope
-narrowed; **CMMC Phase 2 Nov 10 2026** for DoD solicitations;
+narrowed; **CMMC Phase 2** (planned Nov 10 2026) suspended since
+July 13 2026 by DoD CIO memo, Phase 1 self-assessments still
+required in DoD solicitations;
 **EU AI Act Article 50** transparency Aug 2 2026 + watermarking
 Dec 2 2026 + Annex III high-risk **deferred to Dec 2 2027** per
 the May 7 2026 Omnibus political agreement, NOT Aug 2 2026; **PCAOB

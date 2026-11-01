@@ -243,7 +243,7 @@ BUNDLED_CADENCES: list[ConmonCadence] = [
             "C3PAO. Required to maintain DoD contractor eligibility "
             "for CUI-handling contracts."
         ),
-        citation="DoD CMMC 2.0 Program Rule (48 CFR Part 204)",
+        citation="DoD CMMC Program Rule (32 CFR Part 170)",
     ),
     ConmonCadence(
         slug="dod-rmf-annual",
