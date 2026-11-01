@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **graphql-core 3.2.13 (GHSA-vj8h-fx38-h3vc / CVE-2026-75507 and GHSA-r77w-qph3-7vf8 /
+  CVE-2026-75508, both High 7.5), published 2026-10-22.** The locked closure moves from 3.2.8;
+  the fix release is 3.2.12. graphql-core reaches the lock only through schemathesis (dev
+  group).
+- **opentelemetry-api 1.45.2 (GHSA-xcq7-p3pf-p88h / CVE-2026-114603, Medium 5.3), published
+  2026-10-22.** The locked closure moves from 1.44.0; the fix release is 1.45.1.
+- **setuptools 84.2.1 (GHSA-xmj3-9gf7-h52w, Low), published 2026-10-23.** The locked closure
+  moves from 83.0.0; the fix release is 84.1.0.
+- **dnspython 2.9.1 (GHSA-45c3-73f7-pv4m / CVE-2026-114605, High 7.5), published 2026-10-27,
+  and pyasn1 0.6.5 (GHSA-fm9c-5rcf-2q5p, GHSA-9m75-vc3g-4x39, GHSA-2qm8-x737-gmw5 and
+  GHSA-mm57-4v3p-rchx / CVE-2026-119194 to CVE-2026-119197, all High 7.5), published
+  2026-10-30.** Both are osv-scanner SBOM gate findings with no Dependabot alert; the required
+  gate failed on every open pull request until the lock moved. The locked closure moves from
+  2.8.0 and 0.6.4; the fix releases are 2.9.0 and 0.6.5.
+- **filelock 4.2.6 (GHSA-v4x8-3wr5-3wq8 / CVE-2026-112940, High 7.1; GHSA-9vhv-jxww-xfm5 /
+  CVE-2026-112913, Low 3.3; GHSA-567q-5qvw-pf92 / CVE-2026-112907, Low 2.5), published
+  2026-10-23.** The fix release is 4.2.1. `docker/requirements.txt` moves from 3.32.5 and re-pins
+  filelock with the two PyPI digests; the container closure reaches filelock only through
+  huggingface-hub. The locked closure moves from 3.25.2 behind a `[tool.uv]`
+  `override-dependencies` entry (`filelock>=4.2.1,<5`): litellm 1.104.0 to 1.106.6 declare
+  `filelock<4.0` without importing it, and upstream lifted the cap to `<5` in
+  BerriAI/litellm#49137 on 2026-10-30 with no release carrying it yet. snowflake-connector-python
+  moves from 4.8.0 to 4.8.1, which lifted its own `filelock<4` cap. The override goes once a
+  stable litellm release carrying the lift is locked. Six further filelock advisories visible only
+  to the osv-scanner gate close with the same move. The container pins are regenerated from PyPI at
+  tag time and in the container smoke test, where the same litellm cap resolved filelock 3.32.7, so
+  both regeneration inputs (`release.yml`, `container-build.yml`) and `docker/requirements.in` gain a
+  `filelock>=4.2.1` floor beside the standing `urllib3>=2.7.0` one; pip-compile then backtracks
+  litellm to 1.103.10 and resolves filelock 4.2.6 with no osv-scanner finding, and takes the newest
+  litellm again once the lift ships. `container-build.yml` is policy-tracked, so its reviewed source
+  digest and `POLICY_SHA256` are refreshed.
+- **pypa/gh-action-pypi-publish v1.14.3 (GHSA-5xjx-3w67-w9x9, Critical), published 2026-10-30.**
+  The advisory covers the revocation of a certificate authority in the chain Sigstore uses for
+  Trusted Publishing and PyPI digital attestations; releases up to 1.14.2 are affected. The
+  `release.yml` publish step moves from 1.14.2 to 1.14.3, SHA-pinned to the signed tag's commit.
+  zizmor's known-vulnerable-actions audit, a required check, failed on every open pull request
+  until the pin moved.
+
 ## [0.13.2] - 2026-10-21
 
 **Theme**: *Second day-N rebuild: the certifi Critical and fresh bases.* A rebuild
