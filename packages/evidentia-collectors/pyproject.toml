@@ -67,7 +67,11 @@ databricks = ["databricks-sdk>=0.30"]
 # deprecated by Snowflake — production deployments should prefer
 # key-pair auth (private key on disk, public key in
 # `ALTER USER ... SET RSA_PUBLIC_KEY = ...`).
-snowflake = ["snowflake-connector-python>=3.10"]
+# Capped below 5: the 5.x driver runs its networking in a Rust core, so the
+# collector's DNS-rebind pin (a patched socket.getaddrinfo in
+# evidentia_core.network_guard) would no longer cover the connection. A
+# transport change needs a boundary replay before this cap moves.
+snowflake = ["snowflake-connector-python>=3.10,<5"]
 # v0.10.1: OCSF JSON ingestion (Prowler, AWS Security Hub). Wraps
 # evidentia_core.ocsf (which lazy-imports py-ocsf-models). Mirrored
 # under [ocsf] so `pip install 'evidentia-collectors[ocsf]'` Just Works
@@ -87,7 +91,7 @@ all = [
     "pyodbc>=5.0",
     "oracledb>=4.0.2",
     "databricks-sdk>=0.30",
-    "snowflake-connector-python>=3.10",
+    "snowflake-connector-python>=3.10,<5",
     "py-ocsf-models>=0.9.0,<0.11.0",
     "defusedxml>=0.7.1",
     "signxml==5.2.0",
