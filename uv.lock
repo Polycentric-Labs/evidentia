@@ -2344,15 +2344,15 @@ wheels = [
 
 [[package]]
 name = "jwcrypto"
-version = "1.5.7"
+version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/90/f065668004d22715c1940d6e88e4c3afc8ee16d5664e4478d2c8fd23a250/jwcrypto-1.5.7.tar.gz", hash = "sha256:70204d7cca406eda8c82352e3c41ba2d946610dafd19e54403f0a1f4f18633c6", size = 89535, upload-time = "2026-04-07T00:35:36.116Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/8f/e802d77957903483129813ce6fa01a72a906f9cdd454039d1ec1e6d1e44a/jwcrypto-1.6.1.tar.gz", hash = "sha256:a1e1570da5c2e35dbcd375ec1d2891a24de8eb35ee2c1fe8e91978efb72cfe90", size = 116287, upload-time = "2026-09-15T21:22:33.286Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/72/24/fb7da4d6613de7001feaf540d4b5969c6b5a1c42839043b0196cb13aa057/jwcrypto-1.5.7-py3-none-any.whl", hash = "sha256:729463fefe28b6de5cf1ebfda3e94f1a1b41d2799148ef98a01cb9678ebe2bb0", size = 94799, upload-time = "2026-04-07T00:35:35.085Z" },
+    { url = "https://files.pythonhosted.org/packages/31/a4/ee780473e42a3edaf65da1ad37f5c601a9c740e215c1e09db36bf90f3f59/jwcrypto-1.6.1-py3-none-any.whl", hash = "sha256:77e856818e514cb3d64a1043b6885a7d52f5cc37773f5e944de02103c8d3a54f", size = 121267, upload-time = "2026-09-15T21:22:32.27Z" },
 ]
 
 [[package]]
@@ -3325,7 +3325,7 @@ wheels = [
 
 [[package]]
 name = "okta"
-version = "3.4.6"
+version = "3.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aenum" },
@@ -3341,9 +3341,9 @@ dependencies = [
     { name = "requests" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/bc/f2bbc2767342b039095e6608f745531058f1bdf7de93599b4d70402a7d10/okta-3.4.6.tar.gz", hash = "sha256:068a91390c9b9f9998a84ee2d42cd5c08352ca3a2c447682ea604ff4050ccdf7", size = 3347086, upload-time = "2026-09-21T05:31:45.018Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/3e/918d7029f618993b0cf33e35f5a5247a05123b907a95e25d49e66582d3ce/okta-3.4.7.tar.gz", hash = "sha256:bb08d11a86b7b5133896128ab9b54bafb16961d18ffbe85689f2ff994023f953", size = 2440470, upload-time = "2026-10-27T11:10:57.089Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/73/09ecb97feed562edd39ab1111f490949c1ed93dbe21e669e36b00eeee71e/okta-3.4.6-py3-none-any.whl", hash = "sha256:93ff7b8249fa0450ceffdedc39282dc2c306656a4e6d309e4b5ccc52a814d788", size = 3871876, upload-time = "2026-09-21T05:31:40.618Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/39/5c559917d628457a7a18acd313f5c4fa221835fabba04e73f13c92769c93/okta-3.4.7-py3-none-any.whl", hash = "sha256:9d571ec13f56f7a92a8347432b2b983c4853e54bea02b01c2df54197ae854f64", size = 3906629, upload-time = "2026-10-27T11:10:55.228Z" },
 ]
 
 [[package]]
@@ -3956,14 +3956,14 @@ wheels = [
 
 [[package]]
 name = "pydash"
-version = "8.0.6"
+version = "8.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/c1/1c55272f49d761cec38ddb80be9817935b9c91ebd6a8988e10f532868d56/pydash-8.0.6.tar.gz", hash = "sha256:b2821547e9723f69cf3a986be4db64de41730be149b2641947ecd12e1e11025a", size = 164338, upload-time = "2026-01-17T16:42:56.576Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/49/45cd795ce88bde203c7b4cfd7c911c9078b32582afa3b9af579824d8789d/pydash-8.1.0.tar.gz", hash = "sha256:30914c3e9d377ea2cd0d3c0a4f252889b08392f730a5eb4d117e5b598cdf1d52", size = 167696, upload-time = "2026-08-29T20:17:56.907Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/b7/cc5e7974699db40014d58c7dd7c4ad4ffc244d36930dc9ec7d06ee67d7a9/pydash-8.0.6-py3-none-any.whl", hash = "sha256:ee70a81a5b292c007f28f03a4ee8e75c1f5d7576df5457b836ec7ab2839cc5d0", size = 101561, upload-time = "2026-01-17T16:42:55.448Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/96/215b447e97025c68272a077713c89fb0db122c390110bedda515b4f2d200/pydash-8.1.0-py3-none-any.whl", hash = "sha256:61df790f303288df7da3a766c3ca6ea5a8f3ec882b28712bac8d13573dbaba97", size = 102816, upload-time = "2026-08-29T20:17:55.714Z" },
 ]
 
 [[package]]
