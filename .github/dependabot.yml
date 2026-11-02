@@ -128,6 +128,23 @@ updates:
           - "version-update:semver-major"
           - "version-update:semver-minor"
           - "version-update:semver-patch"
+      # signxml and httpcore are pinned exactly in evidentia-collectors. The InCommon
+      # verifier refuses any other signxml version because it replaces a private
+      # SignXML hook (_c14n), and an httpcore transport change requires boundary
+      # replay (docs/designs/enterprise-retention-collector-design.md). A move needs
+      # a reviewed upstream diff with the coupled pin, gate and test change, so a
+      # grouped bump only blocks its group (python-runtime PR 434, 2026-11).
+      # Ignore version update types only; security update proposals stay enabled.
+      - dependency-name: "signxml"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "httpcore"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
       # Keep future MCP majors out of grouped dependency updates. The matching
       # <3.0 bounds in both pyprojects also prevent an incidental major during
       # a uv re-lock. Review the next major in its own protocol migration.
