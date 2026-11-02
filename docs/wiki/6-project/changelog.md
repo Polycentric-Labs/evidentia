@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **signxml 5.2.0, after review (supersedes Dependabot PR 434).** The `registries` extra pins
+  signxml exactly, and the InCommon verifier refuses any other installed version because it
+  replaces SignXML's private `_c14n` hook to keep canonicalized source bytes out of the debug
+  log. The upstream 5.1.0 to 5.2.0 diff changes typing syntax, one default-argument object and
+  a schema-validation exception path this verifier does not use; `_c14n` is unchanged, and the
+  one functional change (leading zeros in `ECKeyValue` points) is on the EC signing path. The
+  two pins, the version gate and the install-profile test move together. platformdirs 4.13.7,
+  sentence-transformers 6.2.0, sigstore 4.5.1, sse-starlette 3.5.1 and tableauserverclient
+  0.42 move in the lock. Dependabot now ignores version updates for signxml and httpcore, the
+  two exact pins the install-profile test enforces, as it already does for boto3 and botocore;
+  security updates are still proposed.
+- **CI action pins (supersedes Dependabot PR 420).** github/codeql-action 4.39.0,
+  CodSpeedHQ/action 5.5.0 (Ubuntu 26.04 support) and zizmorcore/zizmor-action 0.7.1,
+  SHA-pinned. `codeql.yml`, `codspeed.yml` and `zizmor.yml` are policy-tracked, so their
+  reviewed source digests and `POLICY_SHA256` are re-recorded.
+
 ### Fixed
 
 - **`cmmc-l2-triennial` cadence citation.** The bundled CONMON cadence cited
