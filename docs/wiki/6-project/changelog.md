@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   most weeks and one minor no longer holds a batch of patches back. In the 90 days before the
   split, 86 of 108 group PRs carried a patch but only 15 were patch-only. The uv and npm
   open-PR caps rise from 5 to 8 and 7 to fit the extra groups.
+- **CI action pins (supersedes Dependabot PR 440).** CodSpeedHQ/action 5.6.0, actions/setup-python
+  7.1.0, astral-sh/setup-uv 10.3.2, docker/login-action 4.7.0, github/codeql-action 4.39.1 and
+  zizmorcore/zizmor-action 0.8.0, SHA-pinned to the commits their release tags point to, across
+  25 workflows. The 13 policy-tracked ones get their reviewed source digests re-recorded; the
+  Meridian job's unnamed setup-uv step is recorded by its default name, which carries the pin, so
+  that step identity moves too; `POLICY_SHA256` is refreshed.
 
 ### Removed
 
