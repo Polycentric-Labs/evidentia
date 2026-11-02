@@ -58,6 +58,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **Snowflake connector capped below 5.** `evidentia-collectors[snowflake]` declared
+  `snowflake-connector-python>=3.10` with no upper bound, so a fresh install resolved to the 5.x
+  line. Per the vendor, 5.x runs its networking in a Rust core rather than Python's HTTP stack, so
+  the collector's DNS-rebind pin (a patched `socket.getaddrinfo`) would silently stop covering the
+  connection while the pre-connect public-host check still ran. The `snowflake` and `all` extras
+  now require `<5`, and Dependabot ignores 5.x majors until a boundary replay reviews them. The
+  lock already held 4.8.1, so nothing installed in CI changes.
 - **graphql-core 3.2.13 (GHSA-vj8h-fx38-h3vc / CVE-2026-75507 and GHSA-r77w-qph3-7vf8 /
   CVE-2026-75508, both High 7.5), published 2026-10-22.** The locked closure moves from 3.2.8;
   the fix release is 3.2.12. graphql-core reaches the lock only through schemathesis (dev

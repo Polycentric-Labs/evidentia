@@ -181,6 +181,13 @@ updates:
       - dependency-name: "mcp"
         update-types:
           - "version-update:semver-major"
+      # snowflake-connector-python 5.x runs its networking in a Rust core that the
+      # collector's DNS-rebind pin does not cover, so both collectors extras cap it
+      # below 5 (PR 453, 2026-11-02). REMOVAL TRIGGER: a boundary replay of the 5.x
+      # transport lifts the cap; drop this rule in the same PR.
+      - dependency-name: "snowflake-connector-python"
+        update-types:
+          - "version-update:semver-major"
       # typer is DELIBERATELY capped <0.27 in packages/evidentia/pyproject.toml
       # (0.x minors are breaking-prone; the bump gets isolated review). Without
       # this ignore, Dependabot's uv job still tries 0.27.x every week, hits the
