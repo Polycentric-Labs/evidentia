@@ -31,7 +31,7 @@ def test_registry_extra_keeps_exact_verifier_and_parser_requirements() -> None:
     extra = _requirements("registries")
     assert set(extra) == {"defusedxml", "signxml"}
     assert str(extra["defusedxml"].specifier) == ">=0.7.1"
-    assert str(extra["signxml"].specifier) == "==5.1.0"
+    assert str(extra["signxml"].specifier) == "==5.2.0"
     assert all(requirement.marker is None and not requirement.extras for requirement in extra.values())
 
 

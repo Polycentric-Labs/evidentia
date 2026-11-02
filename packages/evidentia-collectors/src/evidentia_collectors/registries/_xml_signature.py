@@ -73,7 +73,7 @@ def require_xml_extra() -> None:
         if failure is not None:
             raise XMLSignatureError(failure)
     try:
-        if importlib.metadata.version("signxml") != "5.1.0":
+        if importlib.metadata.version("signxml") != "5.2.0":
             failure = "dependency_failure"
         importlib.import_module("lxml.etree")
     except Exception:
@@ -214,7 +214,7 @@ def _verify(root_bytes: bytes, certificate: Any, observed_at: datetime) -> Any:
     etree = importlib.import_module("lxml.etree")
 
     class _QuietVerifier(XMLVerifier):
-        # SignXML 5.1.0 logs canonicalized source bytes in this private hook.
+        # SignXML 5.2.0 logs canonicalized source bytes in this private hook.
         # Keep the version-bound adapter identical for the admitted subset.
         def _c14n(self, nodes: Any, algorithm: Any, inclusive_ns_prefixes: Any = None) -> bytes:
             if algorithm.value != _EXCLUSIVE or inclusive_ns_prefixes is not None:

@@ -1162,8 +1162,8 @@
   "workflow_sources": {
     ".github/workflows/action-smoke-test.yml": "eb9c83d22b5d9740f1f39e7507f8518396fc2cd6018c0400fa5ef8e2c031d126",
     ".github/workflows/cflite-pr.yml": "2b1c4503bbfcc6b30bd261fb0a42652cd7a08dea87a35adf9bc12df123472486",
-    ".github/workflows/codeql.yml": "4ceab9c998c26463d3c5f292be2e498407fe412d394e4e2d0ab21f9a5706abcc",
-    ".github/workflows/codspeed.yml": "b51676543f7a1294cfd5f25a7c06419aad1407653812aa4bee0c57144b129223",
+    ".github/workflows/codeql.yml": "b24cc06dc360b79f0a3a9271f9047e92a6a2af7ec566d6215d305e8660b24fb5",
+    ".github/workflows/codspeed.yml": "dd5ed01e85c80b7ea8eeba4e611d62fb8daea29a69e64eec18e759eac015c8ba",
     ".github/workflows/consistency.yml": "852e131ed95c00896d451322a730bf3279e120de2bd577a68c762c25d09ac3e3",
     ".github/workflows/container-build.yml": "692f83a6e7516d95d6d934311cbd50e3b8caa4b9b971212b87d3278d82c0f700",
     ".github/workflows/dast.yml": "ef2aee4ea7a30b50c9b24800960cf7e80aa43cc580bf896df5389c6cb351d4c2",
@@ -1176,7 +1176,7 @@
     ".github/workflows/verify-changelog.yml": "264df97c1f6edd7863e30e82670988792279fd02f0114303c91c0cb313b7c59f",
     ".github/workflows/verify-osps-conformance.yml": "91cb5eecbd1b68497ff3a3cddbf3695cdca57a67a3876135e3a9fc21636ab621",
     ".github/workflows/verify-workflow-perms.yml": "137a11e85dad06d27cec9e7504bd25def0c0cd9bd534a9f1af5417dfe189f48e",
-    ".github/workflows/zizmor.yml": "d1ba6e03d131d492229ef6b156e730dd74cbad2cda6d19ded9e5a61c5412acf3"
+    ".github/workflows/zizmor.yml": "a97344a170e80510e104043c99a6ebaab9646dbc75bb639582d083602d21ec8f"
   },
   "codspeed_linkage": {
     "minimum_commit_prefix_length": 7,
