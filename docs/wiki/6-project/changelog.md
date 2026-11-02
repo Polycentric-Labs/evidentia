@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`cmmc-l2-triennial` cadence citation.** The bundled CONMON cadence cited
+  "48 CFR Part 204" for the CMMC program rule; the program rule is 32 CFR
+  Part 170 (48 CFR carries the acquisition clauses). The `conmon` output and the
+  deployment guide now cite 32 CFR Part 170.
+- **Stale public-doc facts.** The positioning doc counted 19 bundled state
+  privacy catalogs (15 ship) and said no open-source GRC project had changed
+  its licence in 2024 to 2026 (OpenGRC and Eramba had); the federal walkthrough
+  still gave 2026-11-10 for CMMC Phase 2, suspended on 2026-07-13. The v0.10.7
+  and v0.13 plans carry dated errata for the Phase 2 date and for the DFARS
+  "renumbering" wording (the clauses were replaced by class deviation).
+
 ### Security
 
 - **graphql-core 3.2.13 (GHSA-vj8h-fx38-h3vc / CVE-2026-75507 and GHSA-r77w-qph3-7vf8 /
