@@ -21,8 +21,12 @@
 #     yanked / hotfixed bad release is superseded before Dependabot
 #     proposes it (longer for majors than patches). Security advisories
 #     bypass cooldown (they are not version updates).
-#   - `update-types: [minor, patch]` on the routine groups raises every
-#     *major* as its own PR - a major is never buried in a batch.
+#   - The routine groups come in patch and minor pairs, one `update-types`
+#     level each, so every *major* is raised as its own PR (a major is
+#     never buried in a batch) and one minor no longer holds a batch of
+#     patches back. Groups match in file order; each pair is disjoint by
+#     update type. Split 2026-11-02: in the 90 days before, 86 of 108
+#     group PRs carried a patch, but only 15 were patch-only.
 #   - A dedicated `python-frameworks` group pulls the breaking-prone
 #     web/CLI core (pydantic / fastapi / starlette / typer / click /
 #     uvicorn / httpx) into a small, separately-reviewable PR. A
@@ -53,7 +57,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "America/New_York"
-    open-pull-requests-limit: 5
+    # Six groups after the patch/minor split, plus room for two majors.
+    open-pull-requests-limit: 8
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
@@ -88,11 +93,11 @@ updates:
           - "click"
           - "uvicorn*"
           - "httpx*"
-      python-runtime:
+      # Routine groups come in patch and minor pairs (see the header).
+      python-runtime-patch:
         applies-to: version-updates
         dependency-type: "production"
         update-types:
-          - "minor"
           - "patch"
         exclude-patterns:
           - "boto3"
@@ -105,16 +110,40 @@ updates:
           - "click"
           - "uvicorn*"
           - "httpx*"
-      python-dev:
+      python-runtime-minor:
         applies-to: version-updates
-        dependency-type: "development"
+        dependency-type: "production"
+        update-types:
+          - "minor"
         exclude-patterns:
           - "boto3"
           - "botocore"
           - "s3transfer"
+          - "pydantic*"
+          - "fastapi"
+          - "starlette"
+          - "typer"
+          - "click"
+          - "uvicorn*"
+          - "httpx*"
+      python-dev-patch:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
+          - "patch"
+        exclude-patterns:
+          - "boto3"
+          - "botocore"
+          - "s3transfer"
+      python-dev-minor:
+        applies-to: version-updates
+        dependency-type: "development"
         update-types:
           - "minor"
-          - "patch"
+        exclude-patterns:
+          - "boto3"
+          - "botocore"
+          - "s3transfer"
     ignore:
       # The offline signer uses an exactly qualified SDK helper version.
       # Routine SDK upgrades require coupled manifest, lock, signer and test review.
@@ -176,7 +205,8 @@ updates:
       day: "monday"
       time: "06:00"
       timezone: "America/New_York"
-    open-pull-requests-limit: 5
+    # Four groups after the patch/minor split, plus room for three majors.
+    open-pull-requests-limit: 7
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
@@ -189,18 +219,27 @@ updates:
       semver-minor-days: 7
       semver-patch-days: 3
     groups:
-      npm-runtime:
+      # Routine groups come in patch and minor pairs (see the header).
+      npm-runtime-patch:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types:
+          - "patch"
+      npm-runtime-minor:
         applies-to: version-updates
         dependency-type: "production"
         update-types:
           - "minor"
+      npm-dev-patch:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
           - "patch"
-      npm-dev:
+      npm-dev-minor:
         applies-to: version-updates
         dependency-type: "development"
         update-types:
           - "minor"
-          - "patch"
 
   # ---------------------------------------------------------------------
   # GitHub Actions (workflow files in .github/workflows/)
