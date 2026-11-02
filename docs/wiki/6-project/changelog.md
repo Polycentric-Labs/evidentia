@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   SHA-pinned. `codeql.yml`, `codspeed.yml` and `zizmor.yml` are policy-tracked, so their
   reviewed source digests and `POLICY_SHA256` are re-recorded.
 
+### Removed
+
+- **Dependabot auto-merge workflow.** `dependabot-auto-merge.yml` never added a PR to the
+  merge queue: GitHub does not let a workflow's built-in token enqueue, so each request waited
+  until a maintainer queued the PR or a newer group replaced it. Its security exclusion also
+  assumed security updates are never grouped, and the grouped `pip` security update for the
+  litellm advisory passed it. A maintainer now queues every Dependabot PR. The workflow's three
+  verification-policy entries are removed and `POLICY_SHA256` is refreshed. The policy loader,
+  the PR readiness checker and the workflow gate fidelity check drop the conditional-skip and
+  job-conditional exceptions that existed only for this workflow, so a re-added
+  `allow_non_dependabot_skip` field is rejected. The docs that described the auto-merge record
+  its retirement.
+
 ### Fixed
 
 - **`cmmc-l2-triennial` cadence citation.** The bundled CONMON cadence cited

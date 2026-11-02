@@ -180,11 +180,12 @@ Evidentia's releases are designed to be independently verifiable end to end:
   is held a few days, so a yanked or hot-fixed bad release is superseded before it
   is proposed); breaking-prone framework packages are isolated into their own
   reviewable PR; per-ecosystem open-PR caps bound the queue; and security
-  advisories are never grouped — each rides its own PR. Patch updates in the
-  lower-risk ecosystems (Python and npm) auto-merge once the full required-check
-  suite is green (narrow, fail-closed; see lesson #1); majors, minors, container
-  and Actions updates, and security updates always get human review, because CI
-  verifies correctness, not the *intent* of a possibly-poisoned dependency.
+  advisories never ride in a version-update group. A maintainer queues every
+  Dependabot PR once the full required-check suite is green. The routine Python
+  and npm groups come in patch and minor pairs, so patch batches can be reviewed
+  and queued together while minors, majors, container and Actions updates, and
+  security updates get a closer look, because CI verifies correctness, not the
+  *intent* of a possibly-poisoned dependency (see lesson #1).
 
 These are also the signals OpenSSF Scorecard scores, which the project tracks
 publicly.
@@ -396,6 +397,16 @@ workflow that never executes pull-request code. The incident was a *minor*
 narrow policy excludes that class twice over, and every major or security change
 still gets a human. The narrow policy was settled by a multi-model,
 primary-source research pass before it shipped.
+
+**Retired 2026-11-02.** The narrow auto-merge never merged a pull request after
+the merge queue arrived on 2026-06-24: GitHub does not let a workflow's built-in
+token add pull requests to a merge queue, so each request it made waited until a
+maintainer queued the PR or a newer group replaced it. Its security exclusion
+also assumed security updates are never grouped, and a grouped security update
+(the `pip` group PR for a litellm advisory) passed its gate. The workflow was
+removed rather than given a GitHub App credential, because few PRs met the
+patch-only rule while patch and minor updates shared a group; the routine groups
+were split into patch and minor pairs at the same time.
 
 **2. The gate that should have caught it had silently died.** The container
 smoke test had been exiting early on a version-extraction step for several

@@ -28,13 +28,14 @@
 #     uvicorn / httpx) into a small, separately-reviewable PR. A
 #     major-only split would NOT have caught the breaking *minors* that
 #     bit us; isolating these packages by name does. Their version
-#     upper-bound caps + human review (auto-merge is off) are the
-#     complementary guards.
+#     upper-bound caps + human review are the complementary guards.
 #
-# Security update PRs are NEVER grouped (see `applies-to: version-updates`
-# scope on each group below) - each advisory deserves its own PR with a
-# clear advisory reference, per the v0.7.2 supply-chain follow-up
-# pattern (commit 8baa93d).
+# Security updates never ride in these version-update groups (see the
+# `applies-to: version-updates` scope on each group below), per the v0.7.2
+# supply-chain follow-up pattern (commit 8baa93d). GitHub can still bundle
+# security updates into an ecosystem-named group of their own: the litellm
+# advisory fix of 2026-11-01 arrived as the `pip` group. A maintainer queues
+# every Dependabot PR; there is no auto-merge (retired 2026-11-02).
 
 version: 2
 updates:
