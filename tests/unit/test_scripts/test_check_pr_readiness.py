@@ -130,10 +130,7 @@ def synthetic_snapshot(checker: Any, policy: Any) -> ROW:
                 "check_run_url": checker.API_REPO + f"/check-runs/{next_job}",
                 "steps": [{**completed(name), "number": number} for number, name in enumerate(requirement["steps"], 1)],
             }
-            if requirement.get("allow_non_dependabot_skip"):
-                job.update(conclusion="skipped", steps=[])
-                run["conclusion"] = "skipped"
-            elif workflow == checker.TEST and requirement["context"].startswith("pytest ("):
+            if workflow == checker.TEST and requirement["context"].startswith("pytest ("):
                 inactive = (
                     {checker.NONLINUX} if "ubuntu" in requirement["context"] else {checker.LINUX, checker.CODECOV}
                 )
@@ -338,8 +335,6 @@ def test_each_reviewed_job_and_mandatory_step_is_required(checker: Any, policy: 
         snapshot["jobs"][f"{missing['run_id']}:1"].remove(missing)
         snapshot["checks"] = [row for row in snapshot["checks"] if row["id"] != missing["id"]]
         reject(checker, policy, snapshot, requirement["context"])
-        if requirement.get("allow_non_dependabot_skip"):
-            continue
         for name in requirement["mandatory_steps"]:
             snapshot = synthetic_snapshot(checker, policy)
             row = job(snapshot, requirement["context"])
@@ -511,12 +506,6 @@ def test_changed_file_completeness_rejects(checker: Any, policy: Any, snapshot: 
     else:
         snapshot["files"][0]["status"] = "mystery"
     reject(checker, policy, snapshot, "file" if change in {"short", "ceiling"} else "evidence")
-
-
-def test_skipped_dependabot_job_requires_exact_actor_and_empty_steps(checker: Any, policy: Any, snapshot: ROW) -> None:
-    for name in ("pr_start", "pr_end"):
-        snapshot[name]["user"]["login"] = "dependabot[bot]"
-    reject(checker, policy, snapshot, "not successful")
 
 
 def test_container_skip_requires_irrelevant_files_and_successful_classifier(

@@ -497,6 +497,10 @@ engineering-hardening batch addressed all three:
   earlier broad patch+minor auto-merge was removed after a docker-minor base-image
   break, see engineering-practices.md lesson #1). The workflow passes the required
   zizmor gate; it is validated end-to-end on the next real Dependabot patch PR.
+  **Retired 2026-11-02:** GitHub does not let a workflow's built-in token add PRs
+  to the merge queue, so it never merged one; the workflow was removed and the
+  routine groups split into patch and minor pairs (engineering-practices.md
+  lesson #1).
 - **Post-publish container rescan, gate on FIXABLE only, DONE.** The
   `post-publish-rescan.yml` container job no longer goes permanently red on day-N **base-OS**
   CVEs that have no upstream fix (an osv-scanner dispatch on the published v0.10.13 image

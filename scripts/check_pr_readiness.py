@@ -79,8 +79,6 @@ REPO = "Polycentric-Labs/evidentia"
 API_REPO = "https://api.github.com/repos/" + REPO
 ACTIONS = 15368
 MANAGED = "dynamic/github-code-quality/codeql"
-DEPENDABOT = ".github/workflows/dependabot-auto-merge.yml"
-DEPENDABOT_JOB = "Enable auto-merge (Dependabot patch)"
 CONTAINER = ".github/workflows/container-build.yml"
 TEST = ".github/workflows/test.yml"
 MERIDIAN = ".github/workflows/evidentia.yml"
@@ -555,7 +553,6 @@ def check_steps(
 def check_suite_evidence(
     snapshot: Snapshot,
     selected: list[JsonObject],
-    action_jobs: dict[int, tuple[str, bool]],
     head: str,
     errors: list[str],
 ) -> list[int]:
@@ -587,20 +584,8 @@ def check_suite_evidence(
         ):
             idle.append(suite_id)
             continue
-        skipped_children = bool(children) and all(
-            row["status"] == "completed"
-            and row["conclusion"] == "skipped"
-            and action_jobs.get(row["id"], ("", False))[1]
-            for row in children
-        )
-        if not (
-            suite["status"] == "completed"
-            and children
-            and (
-                suite["conclusion"] == "success" or (skipped_children and suite["conclusion"] in {"neutral", "skipped"})
-            )
-        ):
-            errors.append(f"Suite is not a successful or reviewed skipped execution: {suite_id}")
+        if not (suite["status"] == "completed" and children and suite["conclusion"] == "success"):
+            errors.append(f"Suite is not a successful execution: {suite_id}")
     return sorted(idle)
 
 
@@ -669,7 +654,7 @@ def evaluate(
         ):
             errors.append("Check-suite evidence incomplete or truncated")
         selected = selected_runs(snapshot["runs"])
-        action_jobs: dict[int, tuple[str, bool]] = {}
+        action_jobs: dict[int, str] = {}
         for run in selected:
             path = run["path"]
             if (
@@ -693,16 +678,7 @@ def evaluate(
                 if run["event"] != "pull_request" or len(matches) != 1:
                     errors.append("Workflow lacks the intended PR association: " + path)
             jobs = snapshot["jobs"][f"{run['id']}:{run['run_attempt']}"]
-            bot_skip = (
-                path == DEPENDABOT
-                and before["user"]["login"] != "dependabot[bot]"
-                and len(jobs) == 1
-                and jobs[0]["name"] == DEPENDABOT_JOB
-                and jobs[0]["conclusion"] == "skipped"
-                and jobs[0]["status"] == "completed"
-                and jobs[0]["steps"] == []
-            )
-            if not success(run) and not (bot_skip and run["status"] == "completed" and run["conclusion"] == "skipped"):
+            if not success(run):
                 errors.append("Workflow attempt not successful: " + path)
             if not jobs:
                 errors.append("Workflow attempt has no job evidence: " + path)
@@ -724,7 +700,7 @@ def evaluate(
                 if not valid:
                     errors.append("Job/check/run/attempt/suite binding failed: " + job["name"])
                     continue
-                action_jobs[job["id"]] = (path, bot_skip)
+                action_jobs[job["id"]] = path
                 bindings.append(
                     {
                         "check_id": job["id"],
@@ -735,41 +711,26 @@ def evaluate(
                         "suite_id": run["check_suite_id"],
                     }
                 )
-                if bot_skip:
-                    allowed.append(path + " / " + job["name"])
-                else:
-                    if not success(job):
-                        errors.append("Job not successful: " + job["name"])
-                    check_steps(job, run, paths, policy, errors, allowed)
+                if not success(job):
+                    errors.append("Job not successful: " + job["name"])
+                check_steps(job, run, paths, policy, errors, allowed)
         for check in checks:
             if check["head_sha"] != head:
                 errors.append("Stale check head: " + check["name"])
-            binding = action_jobs.get(check["id"])
-            if check["app"]["id"] == ACTIONS and binding is None:
+            if check["app"]["id"] == ACTIONS and check["id"] not in action_jobs:
                 errors.append("Actions check lacks a selected attempt binding: " + check["name"])
-            if not success(check) and not (
-                binding and binding[1] and check["conclusion"] == "skipped" and check["status"] == "completed"
-            ):
+            if not success(check):
                 errors.append("Check not successful: " + check["name"])
-        empty_queued_suites = check_suite_evidence(snapshot, selected, action_jobs, head, errors)
+        empty_queued_suites = check_suite_evidence(snapshot, selected, head, errors)
         for requirement in expected:
             matches = [
                 check
                 for check in checks
                 if check["name"] == requirement["context"]
                 and check["app"]["id"] == requirement["integration_id"]
-                and (
-                    requirement["workflow"] is None
-                    or action_jobs.get(check["id"], (None,))[0] == requirement["workflow"]
-                )
+                and (requirement["workflow"] is None or action_jobs.get(check["id"]) == requirement["workflow"])
             ]
-            accepted = len(matches) == 1 and (
-                success(matches[0])
-                or (
-                    requirement.get("allow_non_dependabot_skip") is True
-                    and action_jobs.get(matches[0]["id"], (None, False))[1]
-                )
-            )
+            accepted = len(matches) == 1 and success(matches[0])
             if not accepted:
                 errors.append(
                     "Expected workflow/application check missing, ambiguous or not successful: "

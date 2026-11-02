@@ -27,6 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CodSpeedHQ/action 5.5.0 (Ubuntu 26.04 support) and zizmorcore/zizmor-action 0.7.1,
   SHA-pinned. `codeql.yml`, `codspeed.yml` and `zizmor.yml` are policy-tracked, so their
   reviewed source digests and `POLICY_SHA256` are re-recorded.
+- **Dependabot groups split by update type.** The `python-runtime`, `python-dev`,
+  `npm-runtime` and `npm-dev` groups become patch and minor pairs, so a patch-only PR exists
+  most weeks and one minor no longer holds a batch of patches back. In the 90 days before the
+  split, 86 of 108 group PRs carried a patch but only 15 were patch-only. The uv and npm
+  open-PR caps rise from 5 to 8 and 7 to fit the extra groups.
+
+### Removed
+
+- **Dependabot auto-merge workflow.** `dependabot-auto-merge.yml` never added a PR to the
+  merge queue: GitHub does not let a workflow's built-in token enqueue, so each request waited
+  until a maintainer queued the PR or a newer group replaced it. Its security exclusion also
+  assumed security updates are never grouped, and the grouped `pip` security update for the
+  litellm advisory passed it. A maintainer now queues every Dependabot PR. The workflow's three
+  verification-policy entries are removed and `POLICY_SHA256` is refreshed. The policy loader,
+  the PR readiness checker and the workflow gate fidelity check drop the conditional-skip and
+  job-conditional exceptions that existed only for this workflow, so a re-added
+  `allow_non_dependabot_skip` field is rejected. The docs that described the auto-merge record
+  its retirement.
 
 ### Fixed
 

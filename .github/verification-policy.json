@@ -198,10 +198,6 @@
       "Sync workspace",
       "Run DAST suites (stateless + stateful schemathesis)"
     ],
-    "Enable auto-merge (Dependabot patch)": [
-      "Fetch Dependabot metadata",
-      "Enable auto-merge for in-scope patch updates"
-    ],
     "Dependency review (PR delta)": [
       "Review PR dependency changes"
     ],
@@ -594,22 +590,6 @@
         "Sync workspace",
         "Run DAST suites (stateless + stateful schemathesis)"
       ]
-    },
-    {
-      "context": "Enable auto-merge (Dependabot patch)",
-      "integration_id": 15368,
-      "workflow": ".github/workflows/dependabot-auto-merge.yml",
-      "job_id": "auto-merge",
-      "paths": null,
-      "steps": [
-        "Fetch Dependabot metadata",
-        "Enable auto-merge for in-scope patch updates"
-      ],
-      "mandatory_steps": [
-        "Fetch Dependabot metadata",
-        "Enable auto-merge for in-scope patch updates"
-      ],
-      "allow_non_dependabot_skip": true
     },
     {
       "context": "Dependency review (PR delta)",
@@ -1167,7 +1147,6 @@
     ".github/workflows/consistency.yml": "852e131ed95c00896d451322a730bf3279e120de2bd577a68c762c25d09ac3e3",
     ".github/workflows/container-build.yml": "692f83a6e7516d95d6d934311cbd50e3b8caa4b9b971212b87d3278d82c0f700",
     ".github/workflows/dast.yml": "ef2aee4ea7a30b50c9b24800960cf7e80aa43cc580bf896df5389c6cb351d4c2",
-    ".github/workflows/dependabot-auto-merge.yml": "ea85f822d63763aacd80a89776b4385f2d82dd141fdc963a713bb0ab1e41a508",
     ".github/workflows/dependency-review.yml": "08a61e51f5105f44ad8105fe796b827c1447bacf42c003ce97c99551efc0daa1",
     ".github/workflows/evidentia.yml": "d1ddcf0441b0cc06a1753d37baf55bc826bffefefec178ddbe03e09b3c77b982",
     ".github/workflows/parity.yml": "f2036bf4c293ef54aff96df5f8c2404bc5dbb07a0636f76244fb08686a3a55cc",

@@ -162,7 +162,7 @@ hygiene/docs cycle).
 | 4 | Explain web screen (`/explain`) — framework + control-id picker + SSE-streamed plain-English explanation with LLM-provider guard | Web UI | vitest; DAST; SSE start-then-terminal frame; same `PlainEnglishExplanation` shape as `evidentia explain control` |
 | 5 | CLI↔GUI parity manifest (`docs/cli-gui-parity.yaml`) + `check_parity.py` gate (completeness + API-existence + GUI-existence + cli-only debt-ratchet) | Tooling/CI | `parity.yml` advisory this cycle (blocking in v0.10.9); **13 full / 42 api-only / 43 cli-only / 11 exempt = 13.3% GUI coverage**; ratchet floor 43 |
 | 6 | Release-hardening automation — tag-time `gate` job (`publish` `needs: gate`), `consistency.yml` CI staleness mirror, pre-push README auto-regen, `secret-scan.yml` (gitleaks) | CI / supply-chain | `run_gate_suite.py` SSOT (one check-list shared by tag-gate + CI + pre-push, per the v0.9.8 gate-fidelity lesson); `audit_workflow_permissions --strict` clean |
-| 7 | Phase-G upkeep automations — stale-branch flagging (read-only), Dependabot patch/minor auto-merge (actor-gated, post-gate), quarterly safeguards re-sweep | CI | least-privilege; the 2 write-scoped workflows carry JUSTIFIED annotations |
+| 7 | Phase-G upkeep automations: stale-branch flagging (read-only), quarterly safeguards re-sweep; the Dependabot auto-merge was retired 2026-11-02 | CI | least-privilege; the write-scoped re-sweep workflow carries a JUSTIFIED annotation |
 
 ### Parity baseline (G27 cross-surface walk)
 

@@ -28,18 +28,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_WORKFLOW = ".github/workflows/test.yml"
 CONTAINER_WORKFLOW = ".github/workflows/container-build.yml"
 REFRESH_WORKFLOW = ".github/workflows/catalog-refresh.yml"
-DEPENDABOT_WORKFLOW = ".github/workflows/dependabot-auto-merge.yml"
 PR_ONLY = {".github/workflows/codspeed.yml", ".github/workflows/cflite-pr.yml"}
 MATRIX_EXPRESSION = re.compile(r"\$\{\{\s*matrix\.([a-zA-Z_][a-zA-Z0-9_-]*)\s*\}\}")
-DEPENDABOT_JOB_IF = "github.event.pull_request.user.login == 'dependabot[bot]'"
-DEPENDABOT_STEP_IF = (
-    "steps.meta.outputs.update-type == 'version-update:semver-patch' "
-    "&& steps.meta.outputs.dependency-group != '' "
-    "&& steps.meta.outputs.dependency-group != 'python-frameworks' "
-    "&& (steps.meta.outputs.package-ecosystem == 'uv' "
-    "|| steps.meta.outputs.package-ecosystem == 'pip' "
-    "|| steps.meta.outputs.package-ecosystem == 'npm')"
-)
 
 
 class WorkflowFidelityError(ValueError):
@@ -188,12 +178,6 @@ def _step_condition(path: str, job_id: str, name: str, index: int) -> str | None
             "Verify native catalog storage under coverage": "matrix.os != 'windows-latest'",
             "Retain native catalog verification receipts": "always() && matrix.os != 'windows-latest'",
         }.get(name)
-    if (
-        path == DEPENDABOT_WORKFLOW
-        and job_id == "auto-merge"
-        and name == "Enable auto-merge for in-scope patch updates"
-    ):
-        return DEPENDABOT_STEP_IF
     if path == ".github/workflows/evidentia.yml" and job_id == "compliance":
         return {
             "Seed baseline on cache miss (first run ever or key bump)": "steps.baseline.outputs.cache-hit != 'true'",
@@ -350,8 +334,7 @@ def _check_job(
     _execution_controls(job)
     if "uses" in job or "needs" in job:
         raise WorkflowFidelityError(path + ": unsupported reusable or dependent job")
-    expected_if = DEPENDABOT_JOB_IF if path == DEPENDABOT_WORKFLOW and job_id == "auto-merge" else None
-    if _condition(job.get("if")) != expected_if:
+    if _condition(job.get("if")) is not None:
         raise WorkflowFidelityError(path + ": unreviewed job conditional")
     _suppression(
         job.get("continue-on-error"),

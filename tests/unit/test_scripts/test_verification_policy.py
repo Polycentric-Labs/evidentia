@@ -156,19 +156,10 @@ def test_workflow_check_cannot_claim_an_external_application(seam: Any, policy: 
         seam.validate_policy(policy)
 
 
-def test_skip_exception_cannot_be_transferred_to_another_job(seam: Any, policy: dict[str, Any]) -> None:
+def test_conditional_skip_field_is_rejected(seam: Any, policy: dict[str, Any]) -> None:
+    # The only reviewed conditional skip belonged to the retired Dependabot auto-merge job.
     policy["workflow_jobs"][0]["allow_non_dependabot_skip"] = True
-    with pytest.raises(seam.PolicyError, match="restricted"):
-        seam.validate_policy(policy)
-
-
-@pytest.mark.parametrize("field,value", [("job_id", "other-job"), ("context", "other-context")])
-def test_skip_exception_requires_exact_dependabot_identity(
-    seam: Any, policy: dict[str, Any], field: str, value: str
-) -> None:
-    job = next(row for row in policy["workflow_jobs"] if row.get("allow_non_dependabot_skip"))
-    job[field] = value
-    with pytest.raises(seam.PolicyError, match="restricted"):
+    with pytest.raises(seam.PolicyError, match="Unknown or missing policy fields"):
         seam.validate_policy(policy)
 
 

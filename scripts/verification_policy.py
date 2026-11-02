@@ -6,10 +6,10 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Literal, NotRequired, TypedDict, cast
+from typing import Literal, TypedDict, cast
 
 POLICY_PATH = Path(__file__).resolve().parents[1] / ".github" / "verification-policy.json"
-POLICY_SHA256 = "f5f8ae0fb9a3b0e7785ca4362979f9056347d5e481d09b852c5be2635f237e57"
+POLICY_SHA256 = "31d13d7bd9edba691978c515646f668ed4f8f72f4ed0e1044c316d38222e867c"
 
 
 class CheckIdentity(TypedDict):
@@ -23,7 +23,6 @@ class WorkflowJob(CheckIdentity):
     paths: list[str] | None
     steps: list[str]
     mandatory_steps: list[str]
-    allow_non_dependabot_skip: NotRequired[bool]
 
 
 class CodSpeedLinkage(TypedDict):
@@ -95,7 +94,7 @@ def _identity(value: object, *, job: bool = False) -> dict[str, object]:
     fields = {"context", "integration_id", "workflow"}
     if job:
         fields |= {"job_id", "paths", "steps", "mandatory_steps"}
-    row = _object(value, fields, {"allow_non_dependabot_skip"} if job else set())
+    row = _object(value, fields)
     if not isinstance(row["context"], str) or not row["context"].strip():
         raise PolicyError("Blank check context")
     if type(row["integration_id"]) is not int or row["integration_id"] <= 0:
@@ -121,20 +120,6 @@ def _identity(value: object, *, job: bool = False) -> dict[str, object]:
         mandatory = _strings(row["mandatory_steps"], nonempty=True)
         if not set(mandatory) <= set(steps):
             raise PolicyError("Mandatory step is not present in its job")
-        if "allow_non_dependabot_skip" in row and type(row["allow_non_dependabot_skip"]) is not bool:
-            raise PolicyError("Invalid conditional skip flag")
-        if row.get("allow_non_dependabot_skip") is True and (
-            row["workflow"],
-            row["job_id"],
-            row["context"],
-            row["integration_id"],
-        ) != (
-            ".github/workflows/dependabot-auto-merge.yml",
-            "auto-merge",
-            "Enable auto-merge (Dependabot patch)",
-            15368,
-        ):
-            raise PolicyError("Conditional skip is restricted to the reviewed Dependabot job")
     return row
 
 
